@@ -37,6 +37,19 @@ main{max-width:1180px;padding:26px 36px}h1{font-size:34px}.tiles{grid-template-c
 .ov{align-items:stretch;justify-content:flex-end;background:rgba(0,0,0,.45)}.sh{max-width:480px;height:100%;max-height:100vh;border-radius:26px 0 0 26px;padding:26px 24px;animation:r .22s}@keyframes r{from{transform:translateX(40px);opacity:.4}}
 .sc{padding:13px 4px;font-size:13px}.sch td.nm{max-width:180px;font-size:14px}.chips{flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+.chb{display:inline-block;color:#fff;font:700 10px/1 system-ui,sans-serif;padding:3px 7px;border-radius:99px;font-style:normal}
+.cha{position:relative;flex:none;width:44px;height:44px;border-radius:50%;background:var(--c2);display:grid;place-items:center;font-weight:700;color:var(--ac)}.cha .chb{position:absolute;right:-5px;bottom:-3px;padding:2px 5px;font-size:9px}
+.chi{display:flex;gap:12px;align-items:center;padding:11px 12px;border-radius:16px;cursor:pointer;margin:2px 0}.chi:hover,.chi.on{background:var(--card)}.chi .bd{flex:1;min-width:0}.chi .bd b,.chi .bd span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.chi .bd span{font-size:13px;color:var(--mut)}.chi .rt{text-align:right;font-size:12px;color:var(--mut);flex:none}
+.chu{display:inline-block;min-width:20px;padding:2px 6px;border-radius:99px;background:var(--ac);color:var(--on);font-size:12px;font-weight:700;text-align:center;margin-top:4px}
+.chc{display:flex;flex-direction:column;height:calc(100dvh - 120px);min-height:420px;background:var(--card);border-radius:20px;box-shadow:var(--sh);overflow:hidden}
+.chh{padding:12px 14px;border-bottom:1px solid var(--line)}.chcl{padding:8px 14px;border-bottom:1px solid var(--line);font-size:13px}.cht{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:var(--bg)}
+.chm{max-width:82%;padding:8px 12px;border-radius:16px;font-size:15px;line-height:1.35;word-break:break-word}.chm span{display:block;font-size:11px;opacity:.65;margin-top:3px}.chm.in{align-self:flex-start;background:var(--card);border-bottom-left-radius:5px}.chm.out{align-self:flex-end;background:var(--ac);color:var(--on);border-bottom-right-radius:5px}
+.chh .acts{flex-wrap:nowrap;overflow-x:auto;margin-top:10px;gap:6px}.chh .acts .btn{flex:none;min-width:0;white-space:nowrap;min-height:34px;padding:6px 12px;font-size:13px}.chq .chip{background:var(--c2);color:var(--ink)}.chq{flex-wrap:nowrap!important}
+.chd{align-self:center;font-size:12px;color:var(--mut);margin:8px 0 2px}
+.chf{padding:10px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:flex-end}.chf textarea{min-height:44px;max-height:120px;resize:none;flex:1}
+.nb{position:absolute;top:2px;right:8px;min-width:17px;padding:2px 5px;border-radius:99px;background:var(--bad);color:#fff;font-size:10px;font-weight:700}nav button{position:relative}
+@media(max-width:899px){.chw.open .chl{display:none}.chw:not(.open) .chc{display:none}}
+@media(min-width:900px){.chw{display:grid;grid-template-columns:350px 1fr;gap:18px;align-items:start}.chl{max-height:calc(100vh - 60px);overflow-y:auto}.chc{position:sticky;top:20px;height:calc(100vh - 60px)}}
 </style></head><body>
 <main id="v"><p class="mut">Подключение…</p></main><nav id="nav" hidden></nav><div id="m"></div><div id="toast" hidden></div>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -68,7 +81,7 @@ function login(msg){subs.forEach(u=>u());subs=[];$("nav").hidden=true;$("v").inn
  $("lf").onsubmit=e=>{e.preventDefault();run(()=>auth.signInWithEmailAndPassword($("em").value.trim(),$("pw").value))};
  $("rs").onclick=()=>run(async()=>{const m=$("em").value.trim();if(!m)return toast("Введите email");await auth.sendPasswordResetEmail(m);toast("Письмо для сброса отправлено")})}
 
-auth.onAuthStateChanged(async u=>{U=u;S=null;O=[];SF={};PRS=[];INV=[];INV0=[];CST={};DL=[];BQ=[];LG=[];VS=[];CU={};SC=[];LD=[];EX=[];SHL=[];subs.forEach(f=>f());subs=[];if(!u)return login();
+auth.onAuthStateChanged(async u=>{U=u;S=null;O=[];SF={};PRS=[];INV=[];INV0=[];CST={};DL=[];BQ=[];LG=[];VS=[];CU={};SC=[];LD=[];EX=[];SHL=[];CHS=[];CHERR="";chStop();subs.forEach(f=>f());subs=[];if(!u)return login();
  try{const d=await db.collection("staff").doc(u.uid).get();const s=d.exists?d.data():null;if(s&&s.active===true&&(s.role==="owner"||String(u.email||"").toLowerCase()===OWN_EM)){s.own=true;s.role="admin"}
   if(!s||s.active!==true||!RL[s.role]){await auth.signOut();return login(!s?"Профиль сотрудника не создан. Обратитесь к администратору.":"Аккаунт отключён или роль не задана.")}
   S=s;if(s.role!=="admin"&&s.loc)LOC=s.loc;try{if(!sessionStorage.getItem("lg")){sessionStorage.setItem("lg","1");log("Вход в систему",{bn:""})}}catch(x){}
@@ -81,7 +94,7 @@ auth.onAuthStateChanged(async u=>{U=u;S=null;O=[];SF={};PRS=[];INV=[];INV0=[];CS
  if(["admin","operator","florist","assistant"].includes(S.role))subs.push(db.collection("showcase").onSnapshot(s=>{SC=s.docs.map(d=>({id:d.id,...d.data()}));draw()},e=>toast("Витрина: "+er(e))));
  if(["admin","operator","florist","assistant"].includes(S.role))subs.push(db.collection("visits").where("date",">=",addD(today(),-365)).onSnapshot(s=>{VS=s.docs.map(d=>({id:d.id,...d.data()}));if(tab==="show")draw()},e=>toast("Посетители: "+er(e))));
  if(own())subs.push(db.collection("invcost").onSnapshot(s=>{CST={};s.forEach(d=>CST[d.id]=d.data());INV=invM();draw()},e=>toast("Цены: "+er(e))));
- subs.push(db.collection("presence").onSnapshot(s=>{PRS=s.docs.map(d=>d.data());pbU()},e=>{}));beat();
+ chSubs();subs.push(db.collection("presence").onSnapshot(s=>{PRS=s.docs.map(d=>d.data());pbU()},e=>{}));beat();
  if(mgr())subs.push(db.collection("deals").onSnapshot(s=>{DL=s.docs.map(d=>({id:d.id,...d.data()}));draw()},e=>toast("Сделки: "+er(e))));
  if(mgr())subs.push(db.collection("leads").onSnapshot(s=>{LD=s.docs.map(d=>({id:d.id,...d.data()}));draw()},e=>toast("Заявки: "+er(e))));
  if(adm())subs.push(db.collection("activityLogs").orderBy("ts","desc").limit(500).onSnapshot(s=>{LG=s.docs.map(d=>d.data());if(tab==="jr")draw()},e=>toast("Журнал: "+er(e))));
@@ -91,11 +104,11 @@ auth.onAuthStateChanged(async u=>{U=u;S=null;O=[];SF={};PRS=[];INV=[];INV0=[];CS
  subs.push(db.collection("settings").doc("main").onSnapshot(d=>{SH=d.exists?d.data():{};applySet();draw()},e=>toast("Настройки: "+er(e))));
  tab="home";draw()});
 
-function draw(){if(!S)return;const T=[["home","⌂","Главная"],["orders","☰","Заказы"]];if(["admin","operator","florist","assistant"].includes(S.role))T.push(["stock","▦","Склад"]);if(["admin","operator","florist","assistant"].includes(S.role))T.push(["show","▤","Витрина"]);T.push(["sched","◷","График"]);if(mgr())T.push(["crm","♥","Клиенты"],["deals","◫","Сделки"],["leads","✉","Заявки"]);if(own())T.push(["fin","₸","Финансы"],["an","◔","Аналитика"]);if(adm())T.push(["team","☺","Команда"],["jr","✎","Журнал"]);T.push(["me","⚙","Профиль"]);
- const n=$("nav");n.hidden=false;n.dataset.brand=SH.name||"Mirflowers";const wide=matchMedia("(min-width:900px)").matches,pf=({admin:own()?["home","orders","stock","fin"]:["home","orders","stock","team"],operator:["home","orders","stock","show"],florist:["home","orders","stock","show"],assistant:["home","orders","stock","show"],courier:["home","orders","sched","me"]})[S.role]||[],PR=wide?T:pf.map(k=>T.find(t=>t[0]===k)).filter(Boolean);MORE=wide?[]:T.filter(t=>!pf.includes(t[0]));
- const NV=MORE.length?[...PR,["more","⋯","Ещё"]]:PR,inMore=tab==="more"||MORE.some(t=>t[0]===tab);n.innerHTML=NV.map(t=>`<button class="${t[0]===tab||(t[0]==="more"&&inMore)?"on":""}" data-t="${t[0]}"><i>${t[1]}</i>${t[2]}</button>`).join("");
+function draw(){if(!S)return;const T=[["home","⌂","Главная"],["orders","☰","Заказы"]];if(["admin","operator","florist","assistant"].includes(S.role))T.push(["stock","▦","Склад"]);if(["admin","operator","florist","assistant"].includes(S.role))T.push(["show","▤","Витрина"]);T.push(["sched","◷","График"]);if(mgr())T.push(["crm","♥","Клиенты"],["chats","✆","Чаты"],["deals","◫","Сделки"],["leads","✉","Заявки"]);if(own())T.push(["fin","₸","Финансы"],["an","◔","Аналитика"]);if(adm())T.push(["team","☺","Команда"],["jr","✎","Журнал"]);T.push(["me","⚙","Профиль"]);
+ const n=$("nav");n.hidden=false;n.dataset.brand=SH.name||"Mirflowers";const wide=matchMedia("(min-width:900px)").matches,pf=({admin:own()?["home","orders","chats","stock","fin"]:["home","orders","chats","stock","team"],operator:["home","orders","chats","stock"],florist:["home","orders","stock","show"],assistant:["home","orders","stock","show"],courier:["home","orders","sched","me"]})[S.role]||[],PR=wide?T:pf.map(k=>T.find(t=>t[0]===k)).filter(Boolean);MORE=wide?[]:T.filter(t=>!pf.includes(t[0]));
+ const NV=MORE.length?[...PR,["more","⋯","Ещё"]]:PR,inMore=tab==="more"||MORE.some(t=>t[0]===tab);n.innerHTML=NV.map(t=>`<button class="${t[0]===tab||(t[0]==="more"&&inMore)?"on":""}" data-t="${t[0]}"><i>${t[1]}</i>${t[2]}${t[0]==="chats"&&chUn()?`<b class="nb">${chUn()}</b>`:""}</button>`).join("");
  n.onclick=e=>{const b=e.target.closest("button");if(b){tab=b.dataset.t;draw();scrollTo(0,0)}};
- if(LOC&&!locs().some(x=>x.id===LOC))LOC="";$("v").innerHTML=pbHtml()+locBar()+scoped(()=>({home,orders,team,me,stock,show:vit,crm,leads,fin:own()?fin:home,sched,jr:logv,more:moreV,deals:dealsV,an:own()?anV:home})[tab]())+(mgr()&&(tab==="home"||tab==="orders")?`<button class="btn fab" data-a="new">＋ Заказ</button>`:"");bind()}
+ const cf=chFocus();if(LOC&&!locs().some(x=>x.id===LOC))LOC="";$("v").innerHTML=pbHtml()+locBar()+scoped(()=>({home,orders,team,me,stock,show:vit,crm,chats,leads,fin:own()?fin:home,sched,jr:logv,more:moreV,deals:dealsV,an:own()?anV:home})[tab]())+(mgr()&&(tab==="home"||tab==="orders")?`<button class="btn fab" data-a="new">＋ Заказ</button>`:"");bind();if(tab==="chats")chBind();chAfter(cf)}
 
 function next(o){const s=+o.st;if(mgr())return s<4?[s===2&&!o.dv?4:s+1,(s===3&&o.dv?"Доставлено"+(wait(o)>0?" · "+mmss(wait(o)):""):["Начать сборку","Готов","Передать курьеру","Выдать","—"][s===2&&!o.dv?3:s])]:null;
  if(["florist","assistant"].includes(S.role)&&s<2)return[s+1,s?"Готов":"Начать сборку"];if(S.role==="courier"&&s===3)return[4,"✓ Доставлено"];return null}
@@ -486,4 +499,119 @@ matchMedia("(min-width:900px)").addEventListener("change",()=>{if(S)draw()});
 document.addEventListener("focusin",e=>{const i=e.target;if(i.matches&&i.matches("input[type=number]")&&i.value==="0"){i.value="";i.dataset.z="1"}});
 document.addEventListener("focusout",e=>{const i=e.target;if(i.matches&&i.matches("input[type=number]")&&i.dataset.z==="1"){if(i.value==="")i.value="0";delete i.dataset.z;i.dispatchEvent(new Event("input",{bubbles:true}))}});
 new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType!==1)return;(n.matches("input[type=number]")?[n]:[...n.querySelectorAll("input[type=number]")]).forEach(i=>{if(i.value==="0"){i.value="";i.placeholder="0"}})}))).observe(document.body,{childList:true,subtree:true});
+/* ===== Чаты: WhatsApp / Instagram / Telegram / 2ГИС =====
+   Данные: chats/{канал_идКлиента}  +  chats/{id}/msgs/{id}
+   Серверная часть (webhook) пишет входящие в эти же коллекции и отправляет сообщения со st:"pending".
+   Пока канал не подключён, работает тестовый режим (кнопка «Тест»). */
+const CHN={wa:{n:"WhatsApp",s:"WA",c:"#1f9d55",src:"WhatsApp"},ig:{n:"Instagram",s:"IG",c:"#c13584",src:"Instagram"},tg:{n:"Telegram",s:"TG",c:"#2a8fd0",src:"Другое"},gis:{n:"2ГИС",s:"2Г",c:"#2f9e2f",src:"2ГИС"}},
+CHTPL=["Здравствуйте! Подскажите, на какую дату и в какой бюджет подобрать букет?","Спасибо! Букет принят в работу, напишем, когда будет готов.","Отправим фото готовых букетов с витрины, вам что-то подобрать по цене?"];
+let CHS=[],CHERR="",chOpen="",chMsgs=[],chSub=null,chF="all",chC="",chV="list",chDraft="",chPer="30",chPrev=null;
+const chOn=k=>((SH.channels||{})[k]||{}).on===true,
+chW=c=>c.st!=="closed"&&c.lastDir==="in",
+chUn=()=>CHS.filter(chW).length,
+chTs=t=>{const d=new Date(t||0),n=new Date();return d.toDateString()===n.toDateString()?d.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString("ru-RU",{day:"2-digit",month:"2-digit"})},
+chDur=ms=>{if(ms==null||!(ms>=0))return"—";const m=Math.round(ms/6e4);if(m<1)return"<1 мин";if(m<60)return m+" мин";const h=Math.floor(m/60);return h<24?h+" ч "+(m%60)+" м":Math.floor(h/24)+" д"},
+chAv=c=>{const k=CHN[c.ch]||{s:"?",c:"#888"};return `<span class="cha">${esc((c.name||"?").trim().charAt(0).toUpperCase()||"?")}<i class="chb" style="background:${k.c}">${k.s}</i></span>`},
+chInL=c=>!c.loc||inL(c);
+
+function chSubs(){if(!mgr())return;
+ subs.push(db.collection("chats").orderBy("lastTs","desc").limit(300).onSnapshot(s=>{
+  const nw=s.docs.map(d=>({id:d.id,...d.data()}));
+  if(chPrev){nw.forEach(c=>{const p=chPrev[c.id];if(c.lastDir==="in"&&c.id!==chOpen&&(!p||c.lastTs>p))toast("Новое сообщение · "+(CHN[c.ch]||{n:c.ch}).n+" · "+(c.name||""))})}
+  chPrev={};nw.forEach(c=>{chPrev[c.id]=c.lastTs;if(c.id===chOpen&&c.unread)db.collection("chats").doc(c.id).update({unread:0}).catch(()=>{})});CHS=nw;CHERR="";draw()},
+  e=>{CHERR=e.code||e.message;draw()}))}
+function chStop(){if(chSub){chSub();chSub=null}chOpen="";chMsgs=[];chPrev=null}
+function chStart(id){chStop();chOpen=id;chDraft="";
+ chSub=db.collection("chats").doc(id).collection("msgs").orderBy("ts").limitToLast(200).onSnapshot(s=>{chMsgs=s.docs.map(d=>({id:d.id,...d.data()}));draw()},e=>toast("Сообщения: "+er(e)));
+ const c=CHS.find(x=>x.id===id);if(c&&c.unread)db.collection("chats").doc(id).update({unread:0}).catch(()=>{});draw()}
+
+/* входящее сообщение. То же самое будет делать серверный webhook */
+async function chIn(o){const key=dg(o.phone)||String(o.handle||"").toLowerCase().replace(/[^a-z0-9._а-яё-]/gi,"")||("u"+Date.now()),id=o.ch+"_"+key,ref=db.collection("chats").doc(id),ts=Date.now(),old=CHS.find(x=>x.id===id),b=db.batch(),inc=n=>firebase.firestore.FieldValue.increment(n);
+ const base={last:o.t,lastDir:"in",lastTs:ts,unread:inc(1),nIn:inc(1),st:"open"};
+ if(old)b.update(ref,base);else b.set(ref,{...base,ch:o.ch,name:o.name||"Без имени",phone:o.phone||"",handle:o.handle||"",loc:myLoc(),resp:"",nOut:0,firstTs:ts,firstReplyTs:0,leadId:"",ts});
+ b.set(ref.collection("msgs").doc(),{dir:"in",t:o.t,ts});await b.commit();return id}
+
+/* исходящее. Сервер подхватит st:"pending", отправит через API и поставит "sent" или "failed" */
+async function chSend(c,t){const ts=Date.now(),ref=db.collection("chats").doc(c.id),b=db.batch(),u={last:t,lastDir:"out",lastTs:ts,unread:0,nOut:firebase.firestore.FieldValue.increment(1)};
+ if(!c.resp)u.resp=U.uid;if(!c.firstReplyTs&&c.firstTs)u.firstReplyTs=ts;
+ b.update(ref,u);b.set(ref.collection("msgs").doc(),{dir:"out",t,ts,by:U.uid,byName:S.name||"",st:c.ch==="gis"?"manual":"pending"});await b.commit()}
+function chSendUi(){const c=CHS.find(x=>x.id===chOpen),i=$("chin"),t=(i?i.value:chDraft).trim();if(!c||!t)return;chDraft="";if(i){i.value="";i.style.height="auto"}run(()=>chSend(c,t))}
+
+function chFocus(){const t=$("cht"),a=document.activeElement;return{f:!!(a&&a.id==="chin"),s:a&&a.id==="chin"?a.selectionStart:0,top:t?t.scrollTop:0,bot:t?t.scrollHeight-t.scrollTop-t.clientHeight<80:true,id:chOpen}}
+function chAfter(cf){if(tab!=="chats")return;const t=$("cht");if(t)t.scrollTop=(!cf||cf.bot||cf.id!==chOpen)?t.scrollHeight:cf.top;
+ const i=$("chin");if(i&&cf&&cf.f){i.focus();try{i.setSelectionRange(cf.s,cf.s)}catch(e){}}}
+function chBind(){const i=$("chin");if(i){i.oninput=()=>{chDraft=i.value;i.style.height="auto";i.style.height=Math.min(i.scrollHeight,120)+"px"};
+ i.onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey&&matchMedia("(pointer:fine)").matches){e.preventDefault();chSendUi()}};if(chDraft)i.style.height=Math.min(i.scrollHeight,120)+"px"}}
+
+function chats(){if(CHERR)return chErr();
+ const tabs=`<div class="chips">${[["list","Диалоги"],["stats","Статистика"],["ch","Каналы"]].map(x=>`<button class="chip ${chV===x[0]?"on":""}" data-a="ch_v" data-id="${x[0]}">${x[1]}${x[0]==="list"&&chUn()?" · "+chUn():""}</button>`).join("")}</div>`;
+ if(chV==="stats")return `<h1>Чаты</h1>${tabs}${chStats()}`;
+ if(chV==="ch")return `<h1>Чаты</h1>${tabs}${chSetup()}`;
+ const c=CHS.find(x=>x.id===chOpen);
+ return `<div class="chw ${c?"open":""}"><div class="chl"><h1>Чаты</h1>${tabs}${chList()}</div><div class="chc">${c?chConv(c):`<div class="mut" style="margin:auto;text-align:center;padding:20px">Выберите диалог слева<br>или создайте тестовое сообщение</div>`}</div></div>`}
+
+function chErr(){return `<h1>Чаты</h1><div class="card"><b>Нет доступа к чатам</b><p class="mut">Код: ${esc(CHERR)}. В Firestore Rules нужно разрешить доступ сотрудникам к <b>chats</b> и <b>chats/{id}/msgs</b>. Пример:</p><pre style="white-space:pre-wrap;font-size:12px;background:var(--c2);padding:10px;border-radius:12px;overflow:auto">match /chats/{id} {
+  allow read, write: if isStaff();
+  match /msgs/{m} { allow read, write: if isStaff(); }
+}
+function isStaff() {
+  return request.auth != null &amp;&amp;
+    exists(/databases/$(database)/documents/staff/$(request.auth.uid)) &amp;&amp;
+    get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.active == true;
+}</pre><p class="mut">Если у вас уже есть такая функция, используйте её. Нужен composite-индекс не нужен: запрос по одному полю.</p></div>`}
+
+function chList(){const q=fq.toLowerCase(),
+ l=CHS.filter(chInL).filter(c=>(!chC||c.ch===chC)&&(chF==="all"?c.st!=="closed":chF==="wait"?chW(c):chF==="mine"?c.resp===U.uid&&c.st!=="closed":c.st==="closed")&&(!q||`${c.name} ${c.phone} ${c.handle} ${c.last}`.toLowerCase().includes(q))),now=Date.now();
+ const f=[["all","Открытые"],["wait","Ждут ответа"],["mine","Мои"],["closed","Закрытые"]],cc=[["","Все каналы"],...Object.keys(CHN).map(k=>[k,CHN[k].n])];
+ return `<input id="q" placeholder="Поиск: имя, телефон, текст" value="${esc(fq)}"><div class="chips">${f.map(x=>`<button class="chip ${chF===x[0]?"on":""}" data-a="ch_f" data-id="${x[0]}">${x[1]}</button>`).join("")}</div><div class="chips" style="margin-top:0">${cc.map(x=>`<button class="chip ${chC===x[0]?"on":""}" data-a="ch_c" data-id="${x[0]}">${x[1]}</button>`).join("")}</div><div class="acts" style="margin:0 0 6px"><button class="btn g s" data-a="ch_new">＋ Тестовое сообщение</button></div>`+
+ (l.map(c=>{const w=chW(c)&&now-c.lastTs>3e5;return `<div class="chi ${c.id===chOpen?"on":""}" data-a="ch_open" data-id="${c.id}">${chAv(c)}<div class="bd"><b>${esc(c.name||"Без имени")}</b><span>${c.lastDir==="out"?"Вы: ":""}${esc(c.last||"")}</span></div><div class="rt">${chTs(c.lastTs)}${c.unread?`<br><span class="chu">${c.unread}</span>`:w?`<br><span class="pill warn">ждёт ${chDur(now-c.lastTs)}</span>`:""}</div></div>`}).join("")||`<div class="card mut" style="text-align:center">${CHS.length?"Ничего не найдено":"Диалогов пока нет. Нажмите «Тестовое сообщение», чтобы посмотреть, как это работает."}</div>`)}
+
+function chConv(c){const k=CHN[c.ch]||{n:c.ch},ld=LD.find(x=>x.id===c.leadId),g=c.ch==="gis";let cur="";
+ const th=chMsgs.map(m=>{const d=new Date(m.ts).toLocaleDateString("ru-RU",{day:"numeric",month:"long"});let s="";if(d!==cur){cur=d;s=`<div class="chd">${d}</div>`}
+  const st=m.dir!=="out"?"":m.st==="pending"?(chOn(c.ch)?"отправляется…":"не отправлено: канал не подключён"):m.st==="failed"?"ошибка отправки":m.st==="manual"?"записано вручную":"✓";
+  return s+`<div class="chm ${m.dir}"><div>${esc(m.t).replace(/\n/g,"<br>")}</div><span>${chTs(m.ts)}${m.dir==="out"&&m.byName?" · "+esc(m.byName):""}${st?" · "+st:""}</span></div>`}).join("");
+ return `<div class="chh"><div class="row"><div class="row" style="justify-content:flex-start;gap:12px">${chAv(c)}<div><b>${esc(c.name||"Без имени")}</b><div class="mut" style="font-size:13px">${k.n}${c.phone?" · "+esc(c.phone):""}${c.handle?" · @"+esc(String(c.handle).replace(/^@/,"")):""}${c.resp?" · "+esc(nm(c.resp)):""}</div></div></div><button class="btn g s" data-a="ch_back">✕</button></div>
+ <div class="acts"><button class="btn g s" style="min-width:0" data-a="ch_me">${c.resp===U.uid?"Это мой":"Взять себе"}</button>${ld?`<span class="pill ok" style="align-self:center">Заявка: ${esc(LSN[ld.st]||"")}</span>`:`<button class="btn g s" style="min-width:0" data-a="ch_lead">В заявку</button>`}<button class="btn s" style="min-width:0" data-a="ch_ord">Создать заказ</button><button class="btn g s" style="min-width:0" data-a="ch_ph">Телефон</button><button class="btn ${c.st==="closed"?"":"g "}s" style="min-width:0" data-a="ch_cl">${c.st==="closed"?"Открыть":"Закрыть"}</button></div></div>
+ ${chClient(c)}
+ <div class="cht" id="cht">${th||'<div class="chd">Сообщений пока нет</div>'}</div>
+ ${g?`<div class="mut" style="padding:8px 14px;font-size:13px">У 2ГИС нет API для ответов: отправьте ответ в <a href="https://account.2gis.com" target="_blank" rel="noopener" style="color:var(--ac)">кабинете 2ГИС</a>, а здесь запишите, что ответили. Так сохранится история и время ответа.</div>`:""}
+ <div class="chips chq" style="margin:0;padding:6px 10px 0">${CHTPL.map((t,i)=>`<button class="chip" data-a="ch_tpl" data-id="${i}" style="font-size:12px;padding:6px 11px">${esc(t.slice(0,26))}…</button>`).join("")}<button class="chip" data-a="ch_sim" style="font-size:12px;padding:6px 11px">Тест: ответ клиента</button></div>
+ <div class="chf"><textarea id="chin" rows="1" placeholder="${g?"Что ответили в 2ГИС…":"Сообщение…"}">${esc(chDraft)}</textarea><button class="btn" data-a="ch_send">${g?"Записать":"Отправить"}</button></div>`}
+
+/* карточка клиента в чате: его заказы по телефону, открываются как в обычной CRM */
+function chClient(c){const d=dg(c.phone);if(!d)return `<div class="chcl mut">Телефон не указан: нажмите «Телефон», чтобы видеть заказы клиента и считать статистику.</div>`;
+ const os=O.filter(o=>dg(o.phone)===d).sort((a,b)=>(b.ts||0)-(a.ts||0)),live=os.filter(o=>+o.st!==5),sum=live.reduce((s,o)=>s+(+o.p||0)+(+o.fee||0),0);
+ if(!os.length)return `<div class="chcl mut">Новый клиент: заказов пока нет</div>`;
+ return `<div class="chcl"><b>${live.length} ${pl(live.length,"заказ","заказа","заказов")} · ${M(sum)}</b><div class="chips" style="margin:6px 0 0">${os.slice(0,6).map(o=>`<button class="chip" data-a="det" data-id="${o.id}" style="font-size:12px;padding:6px 11px">${esc(o.bn||"Заказ")} · ${esc(ST[+o.st]||"")}${o.date?" · "+esc(o.date.slice(5).split("-").reverse().join(".")):""}</button>`).join("")}</div></div>`}
+
+function chStats(){const from=chPer==="all"?0:Date.now()-(+chPer)*864e5,cs=CHS.filter(chInL).filter(c=>(c.firstTs||c.ts||0)>=from),tot=o=>(+o.p||0)+(+o.fee||0),os=O.filter(o=>+o.st!==5&&(o.ts||0)>=from),
+ rows=Object.keys(CHN).map(k=>{const a=cs.filter(c=>c.ch===k),rt=a.filter(c=>c.firstReplyTs&&c.firstTs).map(c=>c.firstReplyTs-c.firstTs),avg=rt.length?rt.reduce((x,y)=>x+y,0)/rt.length:null,ph=[...new Set(a.map(c=>dg(c.phone)).filter(Boolean))],ord=os.filter(o=>ph.includes(dg(o.phone)));
+  return{k,n:a.length,w:a.filter(chW).length,avg,rt,lead:a.filter(c=>c.leadId).length,cl:ph.filter(p=>ord.some(o=>dg(o.phone)===p)).length,ord:ord.length,sum:ord.reduce((s,o)=>s+tot(o),0)}}),
+ all=rows.reduce((s,r)=>s+r.n,0),rts=rows.flatMap(r=>r.rt),avg=rts.length?rts.reduce((x,y)=>x+y,0)/rts.length:null,lead=rows.reduce((s,r)=>s+r.lead,0),cl=rows.reduce((s,r)=>s+r.cl,0),
+ src={};SRC.forEach(s=>src[s]=0);os.forEach(o=>{const s=SRC.includes(o.src)?o.src:"Другое";src[s]+=tot(o)});const mx=Math.max(1,...Object.values(src));
+ return `<div class="chips">${[["7","7 дней"],["30","30 дней"],["all","Всё время"]].map(x=>`<button class="chip ${chPer===x[0]?"on":""}" data-a="ch_p" data-id="${x[0]}">${x[1]}</button>`).join("")}</div>
+ <div class="k4"><div class="tile"><b>${all}</b><span>Диалогов</span></div><div class="tile"><b>${chUn()}</b><span>Ждут ответа сейчас</span></div><div class="tile"><b>${chDur(avg)}</b><span>Среднее время первого ответа</span></div><div class="tile"><b>${all?Math.round(cl/all*100):0}%</b><span>Диалогов с заказом (по телефону)</span></div></div>
+ <h2>По каналам</h2>${rows.map(r=>`<div class="card"><div class="row"><b>${chBadgeHtml(r.k)} ${CHN[r.k].n}</b><span class="mut">${r.n} ${pl(r.n,"диалог","диалога","диалогов")}</span></div><div class="k4"><div class="tile"><b>${chDur(r.avg)}</b><span>Первый ответ</span></div><div class="tile"><b>${r.lead}</b><span>Заявок</span></div><div class="tile"><b>${r.ord}</b><span>Заказов</span></div><div class="tile"><b>${M(r.sum)}</b><span>Выручка</span></div></div>${r.w?`<p class="mut" style="margin:8px 0 0">Ждут ответа: <b style="color:var(--warn)">${r.w}</b></p>`:""}</div>`).join("")}
+ <h2>Выручка по источнику заказа</h2><div class="card">${SRC.map(s=>`<div class="hb"><span>${s}</span><div class="t"><b style="width:${Math.round(src[s]/mx*100)}%"></b></div><b>${M(src[s])}</b></div>`).join("")}<p class="mut" style="margin:10px 0 0;font-size:13px">Считается по полю «Источник» в заказах, поэтому работает и без подключённых каналов.</p></div>`}
+function chBadgeHtml(k){const c=CHN[k];return `<span class="chb" style="background:${c.c}">${c.s}</span>`}
+
+function chSetup(){const D={wa:"WhatsApp Business Platform (Cloud API от Meta). Нужен номер, аккаунт Meta Business и сервер, принимающий webhook.",ig:"Instagram Messaging API: бизнес-аккаунт, привязанный к странице Facebook, и проверка приложения в Meta.",tg:"Бот через @BotFather. Самый простой канал для старта: токен и webhook, без проверок.",gis:"Официального API для чатов и ответов нет. Только мониторинг и ручная запись ответов."};
+ return Object.keys(CHN).map(k=>`<div class="card"><div class="row"><b>${chBadgeHtml(k)} ${CHN[k].n}</b><span class="pill ${chOn(k)?"ok":""}">${chOn(k)?"Подключён":k==="gis"?"Вручную":"Не подключён"}</span></div><p class="mut" style="margin:8px 0 0">${D[k]}</p></div>`).join("")+
+ `<div class="card"><b>Как подключаются каналы</b><p class="mut">Сервер (webhook) принимает сообщения из WhatsApp, Instagram и Telegram и записывает их в <b>chats</b> и <b>chats/…/msgs</b>. Ответы из этого окна попадают туда же со статусом «pending», сервер отправляет их в канал. Пока сервера нет, можно проверять интерфейс через тестовые сообщения.</p><div class="acts"><button class="btn" data-a="ch_new">＋ Тестовое сообщение</button></div></div>`}
+
+function chNewForm(){modal(hd("Тестовое сообщение")+`<form id="chf2"><p class="mut">Имитирует входящее сообщение клиента. Так же будет работать реальный канал.</p><label>Канал</label><select name="ch">${Object.keys(CHN).map(k=>`<option value="${k}">${CHN[k].n}</option>`).join("")}</select><label>Имя клиента *</label><input name="name" required><label>Телефон</label><input name="phone" type="tel" value="+7"><label>Ник (для Instagram/Telegram)</label><input name="handle"><label>Текст *</label><textarea name="t" required>Здравствуйте! Хочу заказать букет на завтра</textarea>${btns("Отправить")}</form>`);
+ $("chf2").onsubmit=e=>{e.preventDefault();const f=new FormData($("chf2")),g=k=>f.get(k).toString().trim(),p=g("phone");if(!g("name")||!g("t"))return;if(!g("handle")&&!(p&&dg(p).length>5))return toast("Укажите телефон или ник");
+  run(async()=>{const id=await chIn({ch:g("ch"),name:g("name"),phone:dg(p).length>5?p:"",handle:g("handle"),t:g("t")});modal("");tab="chats";chV="list";chStart(id);toast("Сообщение получено")})}}
+
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a^="ch_"]');if(!b||!S)return;const a=b.dataset.a,id=b.dataset.id,c=CHS.find(x=>x.id===chOpen),R=()=>c&&db.collection("chats").doc(c.id);
+ if(a==="ch_v"){chV=id;draw()}else if(a==="ch_f"){chF=id;draw()}else if(a==="ch_c"){chC=id;draw()}else if(a==="ch_p"){chPer=id;draw()}
+ else if(a==="ch_open")chStart(id);else if(a==="ch_back"){chStop();draw()}else if(a==="ch_new")chNewForm();else if(a==="ch_send")chSendUi();
+ else if(a==="ch_tpl"){chDraft=CHTPL[+id]||"";draw();const i=$("chin");if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}}
+ else if(a==="ch_me"&&c)run(async()=>{await R().update({resp:U.uid})});
+ else if(a==="ch_cl"&&c)run(async()=>{await R().update({st:c.st==="closed"?"open":"closed"})});
+ else if(a==="ch_ph"&&c){const p=prompt("Телефон клиента",c.phone||"+7");if(p!==null&&dg(p).length>5)run(async()=>{await R().update({phone:p.trim()})});else if(p!==null)toast("Проверьте номер телефона")}
+ else if(a==="ch_lead"&&c)run(async()=>{const r=await db.collection("leads").add({loc:c.loc||myLoc(),src:(CHN[c.ch]||{}).src||"Другое",name:c.name||"Клиент",phone:c.phone||"",want:"",budget:0,note:"Из чата"+(c.handle?" (@"+String(c.handle).replace(/^@/,"")+")":"")+": "+(c.last||""),st:"new",resp:c.resp||"",by:U.uid,ts:Date.now(),chat:c.id});await R().update({leadId:r.id,resp:c.resp||U.uid});toast("Заявка создана")});
+ else if(a==="ch_ord"&&c){const ld=LD.find(x=>x.id===c.leadId);if(ld&&c.phone)PL={id:ld.id,phone:c.phone};form({loc:c.loc,client:c.name,phone:c.phone||"",src:(CHN[c.ch]||{}).src||"Другое"})}
+ else if(a==="ch_sim"&&c){const t=prompt("Текст сообщения от клиента","Спасибо, а можно с доставкой к 18:00?");if(t&&t.trim())run(async()=>{await chIn({ch:c.ch,name:c.name,phone:c.phone,handle:c.handle,t:t.trim()})})}});
+
 </script></body></html>
