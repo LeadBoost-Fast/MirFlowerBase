@@ -5,21 +5,24 @@
 ## 1. Что это
 CRM-сайт цветочного магазина Mirflowers (Актау): заказы, склад, витрина, клиенты, чаты, график, отчёты, статистика сотрудников, финансы. Владелец хочет продавать систему другим бизнесам. Интерфейс на русском, светлая и тёмная тема, телефон и широкий экран.
 
-Стек: один файл `public/index.html` (~215 КБ, HTML+CSS+JS, без сборки, шаблонные строки), Firebase compat 10.12.2 (Auth, Firestore, Functions). Проект Firebase: `mirflowersbase`. Cloud Functions на Node 20.
+Стек: один файл `index.html` в корне репозитория (~430 КБ, HTML+CSS+JS, без сборки, шаблонные строки), Firebase compat 10.12.2 (Auth, Firestore, Functions). Проект Firebase: `mirflowersbase`. Cloud Functions на Node 22 (`firebase.json` → `runtime: nodejs22`). Сайт публикуется GitHub Pages из `main`; Firebase Hosting в `firebase.json` не настроен.
 
 ## 2. Файлы
 | Файл | Назначение |
 |---|---|
-| `public/index.html` | Весь сайт |
+| `index.html` | Весь сайт |
 | `firestore.rules` | Правила доступа Firestore |
-| `functions/index.js` | `deleteStaff`, `setStaffPassword`, `aiReply`, push: `pushNewOrder`, `pushOrderChange`, `pushNewLead`, `pushClientMsg`, `pushNewReport`, `pushReportReminder`, `pushTest` |
-| `public/firebase-messaging-sw.js`, `manifest.json`, `icon-*.png` | Push и установка на экран «Домой» |
+| `functions/index.js` | `deleteStaff`, `setStaffPassword`, `aiReply`, push: `pushNewOrder`, `pushOrderChange`, `pushNewLead`, `pushClientMsg`, `pushNewReport`, `pushReportReminder`, `pushTest`, `pushLowStock`; `orderStatus` (HTTP), автокопия `dailyBackup`, `backupNow` |
+| `functions/channels.js` | Каналы связи: `waHook`, `igHook`, `tgHook`, `tgSetup`, `sendChannelMsg` (см. разд. 15–16) |
+| `firebase-messaging-sw.js`, `manifest.json`, `icon-*.png` | Push и установка на экран «Домой» |
 | `functions/package.json` | firebase-admin 12, firebase-functions 5 |
-| `firebase.json`, `.firebaserc` | Деплой: hosting + firestore rules + functions |
-| `PROJECT.md`, `PLAN.md` | Описание и план развития (сайту не нужны) |
-| `public/status.html` | Страница статуса заказа для клиента (по ссылке из заказа) |
+| `firebase.json`, `.firebaserc` | Деплой: firestore rules + storage rules + functions |
+| `storage.rules` | Правила Firebase Storage (фото заказов, отчётов, витрины) |
+| `.github/workflows/deploy.yml` | Автодеплой правил и функций при push в `main` (секрет `FIREBASE_SERVICE_ACCOUNT`) |
+| `PROJECT.md` | Описание проекта (сайту не нужен; `PLAN.md` в репозитории нет, план — разд. 18) |
+| `status.html` | Страница статуса заказа для клиента (по ссылке из заказа) |
 
-Деплой: `firebase deploy` или частями `--only hosting`, `--only firestore:rules`, `--only functions`. Для функций нужен тариф Blaze. Ключ ИИ: `firebase functions:secrets:set ANTHROPIC_API_KEY`.
+Деплой: `firebase deploy` или частями `--only firestore:rules`, `--only storage`, `--only functions` (обычно делает `.github/workflows/deploy.yml`). Для функций нужен тариф Blaze. Ключ ИИ: `firebase functions:secrets:set ANTHROPIC_API_KEY`.
 
 ## 3. Роли
 Владелец `tilegen615@gmail.com` (в базе имя «bastyk») и главный админ `nash0082008@icloud.com` (создатель сайта) имеют **одинаковые права**. Определяются по email: в коде `OWN_EM`, `HEAD_EM`, `isOwnEm`, в правилах `ownerMail`, `headMail`, `isTopMail`. В приложении у них `S.own=true`, `S.role="admin"`, у главного ещё `S.head=true` (подпись «Главный администратор»). Их профили в `staff` должны быть `active:true`.
@@ -62,11 +65,11 @@ CRM-сайт цветочного магазина Mirflowers (Актау): за
 Профиль, блок «Резервная копия и экспорт» (`expCard`, admin и владельцы). «💾 Резервная копия (JSON)»: выбор коллекций (`EXPC`), опция «без фото», скачивается один файл `mirflowers-backup-ДАТА.json` (Timestamp превращаются в `{ts:мс}`, чаты идут вместе с сообщениями). CSV для Excel (разделитель `;`, UTF-8 с BOM): заказы (все, не только последние 300), клиенты, расходы (только владельцы). Расходы и закупочные цены в копию попадают только у владельцев. Действия пишутся в журнал. Автокопия по расписанию описана в 6.5.
 
 ### 6.2г Push-уведомления (когда сайт закрыт)
-Технология: Firebase Cloud Messaging (веб-push). Файлы: `public/firebase-messaging-sw.js` (сервис-воркер, показывает уведомление из data-сообщения), `public/manifest.json` и иконки `icon-180/192/512.png` (для установки на экран «Домой», на iPhone push работают только так, iOS 16.4+), `firebase.json` (заголовок no-cache для сервис-воркера).
+Технология: Firebase Cloud Messaging (веб-push). Файлы: `firebase-messaging-sw.js` (сервис-воркер, показывает уведомление из data-сообщения), `manifest.json` и иконки `icon-180/192/512.png` (для установки на экран «Домой», на iPhone push работают только так, iOS 16.4+), `firebase.json` (заголовок no-cache для сервис-воркера).
 Клиент (`index.html`, блок «Push-уведомления»): карточка «Push на телефон» в Профиле (`pushCard`): включить/выключить, выбор типов (`PUSHEV`: ord, ready, courier, lead, chat, rep, remind), «Прислать проверку». Токен устройства хранится в `pushTokens/{токен}`: `uid`, `role`, `ev{тип:false}`, `ua`, `ts`. Ключ VAPID вставляет владелец в той же карточке (`settings/main.vapid`). При выходе токен удаляется, при входе другого пользователя токен переходит к нему (`pushSync`).
 Сервер (`functions/index.js`): `pushNewOrder` (новый заказ), `pushOrderChange` (готов к приёмке, переделка, назначена доставка), `pushNewLead`, `pushClientMsg` (входящее сообщение клиента), `pushNewReport` (админам и владельцам), `pushReportReminder` (каждый день 20:00 Asia/Aqtau тем, кто по графику работал и не сдал отчёт), `pushTest`. Общая функция `push(type,who,msg,exclude)` выбирает токены по роли и настройкам, автору действия не шлёт, мёртвые токены удаляет. Если при деплое ошибка региона, задайте `OPT={region:"..."}` по региону Firestore.
 Правила: `pushTokens`: сотрудник читает, создаёт, меняет и удаляет только свои токены (`uid == request.auth.uid`).
-Деплой: `firebase deploy --only hosting,firestore:rules,functions` (нужен тариф Blaze; Cloud Scheduler включится сам). Старые уведомления внутри открытого сайта (`nf*`, `np_*`) остались и работают отдельно.
+Деплой: `firebase deploy --only firestore:rules,functions` (нужен тариф Blaze; Cloud Scheduler включится сам). Старые уведомления внутри открытого сайта (`nf*`, `np_*`) остались и работают отдельно.
 
 ### 6.3 Отчёты (вкладка «Отчёты», карточка на главной)
 Типы (`RPT`) и кто сдаёт (`RPW`): `show` «Витрина: свежесть» (помощник, флорист, оператор, админ), `desk` «Рабочее место» (чисто/не чисто, при «не чисто» обязателен комментарий, ИИ фото не оценивает), `op` «Смена оператора» (чек-лист `OPCK`, касса, снимок дня `mySnap`).
@@ -105,7 +108,7 @@ CRM-сайт цветочного магазина Mirflowers (Актау): за
 
 ### 6.9 Работа на GitHub Pages (6 ноября 2026)
 - Пути к `firebase-messaging-sw.js`, `manifest.json` и иконкам сделаны относительными (раньше начинались с `/` и ломались, если сайт лежит не в корне домена, например `user.github.io/repo/`). Ссылки из push тоже учитывают папку сайта.
-- Удалена неиспользуемая функция `orderStatus`.
+- Удалена неиспользуемая функция `orderStatus` (позже возвращена: сейчас есть в `functions/index.js`, HTTP-запрос статуса заказа).
 - Курьерам точка не нужна: окно «Где вы сегодня?», выбор точки и закрепление за точкой для них не действуют, курьер видит свои доставки везде.
 - Курьер видит на каждой своей доставке метку «📍 точка» (первая или вторая).
 - Исправлено: поля даты и времени в форме заказа выезжали за край экрана на iPhone (CSS для `date`/`time`/`datetime-local`).
@@ -144,7 +147,7 @@ CRM-сайт цветочного магазина Mirflowers (Актау): за
 7. Старые сборки каталога без витрины в статистику не попадают, считается с момента добавления `builds`.
 
 ## 11. Готовый запрос для другого ИИ
-«Вот проект Mirflowers CRM (`public/index.html`, `firestore.rules`, `functions/`) и PROJECT.md. Продолжи работу: [задача]. Сохраняй стиль кода (шаблонные строки, делегирование data-a, префиксы модулей, esc() на пользовательском вводе). Не ломай существующие данные. Учитывай статусы заказа 0–5 и поле rv. При изменении прав правь и интерфейс, и firestore.rules. После правок проверяй синтаксис скрипта (node --check) и обновляй PROJECT.md».
+«Вот проект Mirflowers CRM (`index.html`, `firestore.rules`, `functions/`) и PROJECT.md. Продолжи работу: [задача]. Сохраняй стиль кода (шаблонные строки, делегирование data-a, префиксы модулей, esc() на пользовательском вводе). Не ломай существующие данные. Учитывай статусы заказа 0–5 и поле rv. При изменении прав правь и интерфейс, и firestore.rules. После правок проверяй синтаксис скрипта (node --check) и обновляй PROJECT.md».
 
 
 ## 12. Правки 6 ноября 2026 (сессия)
@@ -206,7 +209,7 @@ CRM-сайт цветочного магазина Mirflowers (Актау): за
 ### Правила и функции
 - `firestore.rules`, заказы: курьер может взять свободный заказ (без смены статуса), подтвердить свой, отказаться от своего; «Доставлено» разрешено только после подтверждения (`cAcc > 0`), `proof` может быть пустой строкой.
 - `functions/index.js`: push операторам и владельцам при отказе курьера.
-- Деплой: `firebase deploy --only hosting,firestore:rules,functions`. Правила обязательно выкладывать вместе с сайтом, иначе у курьеров будут ошибки доступа.
+- Деплой: `firebase deploy --only firestore:rules,functions`. Правила обязательно выкладывать вместе с сайтом, иначе у курьеров будут ошибки доступа.
 - Проверялось: `node --check`, браузер (Chromium, подставная база, телефонный экран, роли оператор, флорист, администратор, 2 курьера). С настоящим Firebase и правилами (эмулятор) не запускалось.
 
 
@@ -267,7 +270,7 @@ CRM-сайт цветочного магазина Mirflowers (Актау): за
 - **Фото в Firebase Storage (Blaze):** `upImg(dataUrl,"orders")` для `img`, `rimg`, `proof`, `chk`; в заказе хранится ссылка, старые base64 читаются. При ошибке загрузки сохраняется base64. Подключён `firebase-storage-compat`, правила `storage.rules`, в `firebase.json` нужен блок `storage`.
 - **Автокопия:** вернул кнопку «Копия на сервер сейчас» (`bk_now`). `dailyBackup` 03:00, `backupNow`, `pushLowStock` включаются деплоем functions.
 - **Каналы связи:** `functions/channels.js` (`waHook`, `igHook`, `tgHook`, `sendChannelMsg`, `tgSetup`). Ключи в `secrets/channels` (пишет владелец, читать нельзя), ввод в Профиле, карточка «Каналы связи» (`chnCard`). Для WhatsApp и Instagram нужны приложение Meta, токены и проверка бизнеса. 2ГИС без API, ответы вручную.
-- Деплой: `firebase deploy --only hosting,firestore:rules,functions,storage`.
+- Деплой: `firebase deploy --only firestore:rules,functions,storage`.
 
 
 ## 16. Каналы связи и деплой (6 ноября 2026, Blaze подключён)
@@ -277,7 +280,7 @@ CRM-сайт цветочного магазина Mirflowers (Актау): за
 - WhatsApp: свободный текст можно слать только в течение 24 часов после последнего сообщения клиента, иначе нужен одобренный шаблон (шаблоны не реализованы, сообщение получит `failed` с пояснением). Instagram: токен `IG...` идёт через graph.instagram.com, остальные (`EAA...`) через graph.facebook.com. Telegram: секрет webhook обязателен (если пуст, `tgSetup` создаёт сам).
 - `firestore.rules`: добавлено правило `secrets` (пишет владелец, читать нельзя). `storage.rules`: `orders/` пишут вошедшие сотрудники (картинка или PDF до 5 МБ), всё остальное закрыто (сервер обходит правила).
 - Сайт: при `failed` под сообщением показывается причина (`err`).
-- Деплой: `firebase deploy --only hosting,firestore:rules,functions,storage`.
+- Деплой: `firebase deploy --only firestore:rules,functions,storage`.
 
 
 ## 17. Проверка и исправления (6 ноября 2026, вечер)
@@ -326,5 +329,14 @@ CRM-сайт цветочного магазина Mirflowers (Актау): за
 - Тариф: Blaze был отключён и снова включён (проект привязан к платёжному аккаунту «Firebase Payment»). Рекомендовано бюджет-оповещение 1 USD. Без Blaze не работают функции (push, удаление сотрудника/пароль, автокопия, каналы, ИИ) и, вероятно, Storage (сайт тогда хранит фото base64 в документах).
 - Обсуждался гибрид: Firebase Spark (база, вход) + VPS на PS.kz (Node.js с кодом функций: push через FCM, удаление/пароль через Admin SDK, автокопия на диск, webhooks, сайт под своим доменом). Не начато.
 
-## 22. Как продолжить в новом чате
-Ветка с последней работой: `claude/upbeat-newton-v38xox`. Сайт — `index.html` (один файл), правила — `firestore.rules`/`storage.rules`, функции — `functions/`, автодеплой правил и функций — `.github/workflows/deploy.yml` (секрет `FIREBASE_SERVICE_ACCOUNT`), сайт публикует GitHub Pages из `main`. Проверка: эмулятор Firebase (auth, firestore, storage, functions) + Playwright: обход всех кнопок под ролями, сквозной сценарий заказа (32 проверки), навигация телефона, замер скорости.
+## 22. Дизайн по макетам: переключатель, главная, карточки (6–7 ноября 2026, PR #8–#10)
+- **Переключатель дизайна** (Профиль → Оформление → «Дизайн», массив `DESIGNS`, `setDesign`): пресет задаёт и раскладку (`html[data-ui]`), и палитру. A «Тинт» — тёмный, фиолетовый акцент, панель с подписями; B «Графит» — светлая панель-«пилюля» с круглыми кнопками, пастельные плитки статусов, большие скругления; C «iOS» — сгруппированные списки с отступом разделителей, панель-капсула и отдельная круглая «+» справа. Палитра «Ч/Б»: в тёмной теме белые кнопки на чёрном, в светлой — чёрные на белом.
+- **Главная** (владелец, админы, оператор; `dashHero`, `hpRange`, `data-a="hp"`): переключатель периода (сегодня / 7 дней / месяц), KPI-карточки с изменением к прошлому такому же периоду (выручка, заказы, средний чек, не оплачено), график выручки в две линии (всего / оплачено), кольцо источников заказов, компактный список последних заказов. Старые дублирующие графики и денежные плитки убраны. Отменённые (`st=5`) не считаются.
+- **Карточка заказа**: номер и время, чипы статуса / доставки / оплаты, шаги прогресса с подписями, крупные кнопки «Позвонить», WhatsApp, 2ГИС.
+- **Клиенты**: KPI (всего, постоянные, VIP, новые за 30 дней), поиск, строки с аватаром-инициалом, суммой и чипом VIP/постоянный. Карточка клиента: большой аватар, заказы / сумма / средний чек, кнопки «Позвонить», WhatsApp, «Новый заказ» (`c_no`) над прежней формой и историей.
+- **Склад**: блок «Заканчивается» с красным счётчиком и крупным остатком, полоса остатка у каждой позиции, укороченная плитка «Стоимость склада» (действия `s_low`, `s_val`, `s_all` и др.).
+- **Заказы**: цветные плитки как в планировщике (новый / сборка / готов / в пути) фильтруют список, повторное нажатие сбрасывает фильтр.
+- Проверено только в браузере с подставной базой; на реальных телефонах не смотрелось.
+
+## 23. Как продолжить в новом чате
+Ветка `claude/upbeat-newton-v38xox` влита в `main` (PR #10), новую работу начинать от `main`. Сайт — `index.html` (один файл), правила — `firestore.rules`/`storage.rules`, функции — `functions/`, автодеплой правил и функций — `.github/workflows/deploy.yml` (секрет `FIREBASE_SERVICE_ACCOUNT`), сайт публикует GitHub Pages из `main`. Проверка: эмулятор Firebase (auth, firestore, storage, functions) + Playwright: обход всех кнопок под ролями, сквозной сценарий заказа (32 проверки), навигация телефона, замер скорости.
