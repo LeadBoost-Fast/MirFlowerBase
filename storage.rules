@@ -1,17 +1,16 @@
 rules_version = '2';
-// Хранилище фото. Сайт кладёт фото заказов, чеков и отчётов в папку orders/.
-// Ссылки на фото (getDownloadURL) работают по токену в адресе, поэтому клиент видит фото на странице статуса без входа.
-// Папку backups/ пишет только сервер (автокопия), из сайта её не прочитать.
 service firebase.storage {
   match /b/{bucket}/o {
+    // Фото заказов, фото вручения, чеки: загружают только вошедшие сотрудники, картинка или PDF до 5 МБ
     match /orders/{file} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null
-        && request.resource.size < 15 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*');
-      allow update, delete: if false;
+      allow create, update: if request.auth != null
+        && request.resource.size < 5 * 1024 * 1024
+        && (request.resource.contentType.matches('image/.*') || request.resource.contentType == 'application/pdf');
+      allow delete: if request.auth != null;
     }
-    match /{all=**} {
+    // Файлы переписки с клиентами (chmedia/) и резервные копии (backups/) пишет только сервер, с сайта доступа нет
+    match /{allPaths=**} {
       allow read, write: if false;
     }
   }

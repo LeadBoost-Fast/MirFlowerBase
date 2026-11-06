@@ -47,7 +47,7 @@ exports.setStaffPassword=onCall(async req=>{
 exports.aiReply=onCall({secrets:[KEY]},async req=>{
   if(!req.auth)throw new HttpsError("unauthenticated","Войдите в систему");
   const me=await admin.firestore().doc("staff/"+req.auth.uid).get();
-  if(!me.exists||me.data().active!==true||!["admin","operator","florist"].includes(me.data().role))throw new HttpsError("permission-denied","Нет доступа");
+  if(!me.exists||me.data().active!==true||!["admin","operator","florist","assistant"].includes(me.data().role))throw new HttpsError("permission-denied","Нет доступа");
   const d=req.data||{},sh=d.shop||{};
   const sys=`Ты помощник цветочного магазина ${sh.name||""}. Напиши один ответ клиенту: коротко, по делу, без приветствия и лишних слов, с 1-2 уместными смайликами. Не выдумывай цены, состав и наличие: если не знаешь, напиши, что уточнишь у флориста. Данные магазина: адрес ${sh.addr||"—"}, телефон ${sh.phone||"—"}, часы ${sh.hours||"—"}. Верни только текст ответа.`;
   const m=[];
@@ -61,10 +61,9 @@ exports.aiReply=onCall({secrets:[KEY]},async req=>{
 });
 
 // ================= PUSH-УВЕДОМЛЕНИЯ =================
-// Регион функций с триггерами базы. Если при деплое ошибка региона, укажите регион базы Firestore,
-// например OPT={region:"europe-west1"}, то же самое в channels.js
+// Если при деплое ошибка региона, укажите регион базы Firestore, например OPT={region:"europe-west1"}
 const OPT={};
-const TZ="Asia/Aqtau",OPS=["admin","operator","florist"],ALLW=["admin","operator","florist","assistant"];
+const TZ="Asia/Aqtau",OPS=["admin","operator","florist","assistant"],ALLW=["admin","operator","florist","assistant"];
 
 // type: ord | ready | courier | lead | chat | rep | remind (сотрудник может отключить любой тип)
 // who({uid,role,top}) решает, кому отправить; exclude — кому не слать (автор действия)
@@ -106,12 +105,12 @@ exports.pushOrderChange=onDocumentUpdated({...OPT,document:"orders/{id}"},async 
     await push("ready",u=>isOpsOrTop(u),{title:"✅ Заказ готов, нужна приёмка",body:name+(b.client?" · "+b.client:""),tag:"rv_"+id,url:"/?o="+id},b.asm||b.by);
   if(b.rv==="redo"&&a.rv!=="redo"&&b.asm)
     await push("ready",u=>u.uid===b.asm,{title:"↩ Заказ на переделку",body:name+(b.redoNote?": "+b.redoNote:""),tag:"redo_"+id,url:"/?o="+id});
-  // Назначили курьера (сам курьер, взявший свободную доставку, push себе не получает)
+  if(b.xfSt==="wait"&&a.xfSt!=="wait"&&b.xfTo)
+    await push("ord",u=>u.uid===b.xfTo,{title:"🔁 Передача заказа",body:name+" · передаёт "+(b.xfFrom||"флорист")+", ответь в течение минуты",tag:"xf_"+id,url:"/?o="+id},b.xfFrom);
   if(b.courier&&b.courier!==a.courier)
-    await push("courier",u=>u.uid===b.courier,{title:"🚚 Вам назначена доставка",body:[name,b.addr,b.time].filter(Boolean).join(" · "),tag:"cur_"+id,url:"/?o="+id},b.statusBy);
-  // Курьер отказался: заказ снова свободный, сообщаем операторам
-  if(a.courier&&!b.courier&&b.cRelAt&&b.cRelAt!==a.cRelAt&&+b.st<4)
-    await push("courier",u=>isOpsOrTop(u),{title:"⚠ Курьер отказался от доставки",body:name+(b.cRelNote?": "+b.cRelNote:""),tag:"crel_"+id,url:"/?o="+id},b.cRelBy);
+    await push("courier",u=>u.uid===b.courier,{title:"🚚 Вам назначена доставка",body:[name,b.addr,b.time].filter(Boolean).join(" · "),tag:"cur_"+id,url:"/?o="+id});
+  if(a.courier&&!b.courier&&b.cRelAt&&b.cRelAt!==a.cRelAt)
+    await push("ord",u=>isOpsOrTop(u),{title:"🚚 Курьер отказался от доставки",body:name+(b.cRelNote?": "+b.cRelNote:""),tag:"crel_"+id,url:"/?o="+id},a.courier);
 });
 
 // Новая заявка
@@ -222,6 +221,5 @@ exports.backupNow=onCall({...OPT,memory:"1GiB",timeoutSeconds:540},async req=>{
   try{return{ok:true,files:await runBackup()}}catch(err){throw new HttpsError("internal","Копия не сохранена: "+(err.message||err))}
 });
 
-// ================= КАНАЛЫ СВЯЗИ: WhatsApp, Instagram, Telegram =================
-// waHook, igHook, tgHook, tgSetup, sendChannelMsg
+// WhatsApp, Instagram, Telegram
 Object.assign(exports,require("./channels"));
