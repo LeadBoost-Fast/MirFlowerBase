@@ -1,0 +1,59 @@
+# Автодеплой правил Firestore, правил Storage и функций в проект mirflowersbase.
+# Сайт (index.html) этим НЕ выкладывается: его публикует GitHub Pages.
+# Нужен секрет репозитория FIREBASE_SERVICE_ACCOUNT (весь JSON ключа сервисного аккаунта).
+name: Deploy Firebase
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "functions/**"
+      - "firestore.rules"
+      - "storage.rules"
+      - "firebase.json"
+      - ".firebaserc"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: firebase-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Код
+        uses: actions/checkout@v4
+
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Ключ доступа
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SA" ]; then
+            echo "::error::Failed to authenticate: нет секрета FIREBASE_SERVICE_ACCOUNT (шаг 2.3 инструкции)"
+            exit 1
+          fi
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          if ! node -e 'const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));if(!j.client_email||!j.private_key)process.exit(1)' "$RUNNER_TEMP/sa.json"; then
+            echo "::error::Failed to authenticate: в FIREBASE_SERVICE_ACCOUNT вставлен не весь JSON (нужно всё от { до })"
+            exit 1
+          fi
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/sa.json" >> "$GITHUB_ENV"
+
+      - name: Зависимости функций
+        working-directory: functions
+        run: npm install --no-audit --no-fund
+
+      - name: Деплой
+        run: npx --yes firebase-tools@13 deploy --only functions,firestore:rules,storage --project mirflowersbase --force --non-interactive
+
+      - name: Удалить ключ
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sa.json"
