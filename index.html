@@ -387,14 +387,14 @@ function login(msg){subs.forEach(u=>u());subs=[];$("nav").hidden=true;$("v").inn
  $("rs").onclick=()=>run(async()=>{const m=$("em").value.trim();if(!m)return toast("Введите email");await auth.sendPasswordResetEmail(m);toast("Письмо для сброса отправлено")})}
 
 let __authDone=0;setTimeout(()=>{if(!__authDone&&typeof login==="function"){try{login("Нет ответа от входа. Проверьте интернет и Authorized domains в Firebase.")}catch(e){}}},10000);
-auth.onAuthStateChanged(async u=>{__authDone=1;U=u;S=null;O=[];ON=0;OX=new Map();OXR={date:[],ts:[]};SF={};PRS=[];INV=[];INV0=[];CST={};DL=[];BQ=[];LG=[];VS=[];CU={};SC=[];LD=[];EX=[];SHL=[];SR=[];RP=[];BL=[];CHS=[];CHERR="";chStop();ORD0=false;TCM=[];TCERR="";tcLast=0;NP=null;subs.forEach(f=>f());subs=[];if(!u)return login();
+auth.onAuthStateChanged(async u=>{__authDone=1;U=u;S=null;O=[];ON=0;OX=new Map();OXR={date:[],ts:[]};UPON=0;SF={};PRS=[];INV=[];INV0=[];CST={};DL=[];BQ=[];LG=[];VS=[];CU={};SC=[];LD=[];EX=[];SHL=[];SR=[];RP=[];BL=[];CHS=[];CHERR="";chStop();ORD0=false;TCM=[];TCERR="";tcLast=0;NP=null;subs.forEach(f=>f());subs=[];if(!u)return login();
  try{const d=await db.collection("staff").doc(u.uid).get();const s=d.exists?d.data():null;if(s&&s.active===true&&(s.role==="owner"||isOwnEm(u.email))){s.own=true;s.head=String(u.email||"").toLowerCase()===HEAD_EM;s.role="admin"}
   if(!s||s.active!==true||!RL[s.role]){await auth.signOut();return login(!s?"Профиль сотрудника не создан. Обратитесь к администратору.":"Аккаунт отключён или роль не задана.")}
   S=s;if(s.role!=="admin"&&s.role!=="courier"&&s.loc)LOC=s.loc;try{if(!sessionStorage.getItem("lg")){sessionStorage.setItem("lg","1");log("Вход в систему",{bn:""})}}catch(x){}
  }catch(e){await auth.signOut();return login("Не удалось проверить доступ: "+er(e))}
  subs.push(db.collection("staff").onSnapshot(s=>{SF={};s.forEach(d=>SF[d.id]=d.data());dq()},e=>toast(er(e))));
  const q=db.collection("orders").orderBy("ts","desc").limit(300);
- subs.push(q.onSnapshot(s=>{const nw=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.ts||0)-(a.ts||0));ordDiff(nw);O=nw;ON=nw.length;pubAuto(nw);dq()},e=>toast("Заказы: "+er(e))));
+ subs.push(q.onSnapshot(s=>{const nw=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.ts||0)-(a.ts||0));ordDiff(nw);O=nw;ON=nw.length;upSub();pubAuto(nw);dq()},e=>toast("Заказы: "+er(e))));
  if(["admin","operator","florist","assistant"].includes(S.role)){subs.push(db.collection("inventory").onSnapshot(s=>{INV0=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.cat||"").localeCompare(b.cat||"")||a.name.localeCompare(b.name));INV=invM();dq()},e=>toast("Склад: "+er(e))));subs.push(db.collection("bouquets").onSnapshot(s=>{BQ=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>toast("Букеты: "+er(e))))}
  if(mgr())subs.push(db.collection("customers").onSnapshot(s=>{CU={};s.forEach(d=>CU[d.id]=d.data());dqT("crm")},e=>toast("Клиенты: "+er(e))));
  if(["admin","operator","florist","assistant"].includes(S.role))subs.push(db.collection("showcase").onSnapshot(s=>{SC=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>toast("Витрина: "+er(e))));
@@ -455,7 +455,7 @@ function hpRange(p){const t=today();if(p==="d")return[t,t,addD(t,-1),addD(t,-1)]
 function dashHero(){const[a,b,pa,pb]=hpRange(HP);histNeed("date",pa,b);const live=oH().filter(o=>+o.st!==5),inR=(o,x,y)=>(o.date||"")>=x&&(o.date||"")<=y,cur=live.filter(o=>inR(o,a,b)),prv=live.filter(o=>inR(o,pa,pb)),
  sc=SC.filter(x=>x.st==="sold"),scIn=(x,y)=>sc.filter(v=>{const d=new Date(v.at||0).toLocaleDateString("sv-SE");return d>=x&&d<=y}),
  rev=cur.reduce((s,o)=>s+tot(o),0)+scIn(a,b).reduce((s,x)=>s+(+x.price||0),0),prev=prv.reduce((s,o)=>s+tot(o),0)+scIn(pa,pb).reduce((s,x)=>s+(+x.price||0),0),
- n=cur.length,pn=prv.length,avg=n?cur.reduce((s,o)=>s+tot(o),0)/n:0,pavg=pn?prv.reduce((s,o)=>s+tot(o),0)/pn:0,unp=O.filter(o=>+o.st<5&&!o.paid).reduce((s,o)=>s+rest(o),0),
+ n=cur.length,pn=prv.length,avg=n?cur.reduce((s,o)=>s+tot(o),0)/n:0,pavg=pn?prv.reduce((s,o)=>s+tot(o),0)/pn:0,unp=oH().filter(o=>+o.st<5&&!o.paid).reduce((s,o)=>s+rest(o),0),
  tr=(c,p)=>{if(!p)return"";const v=Math.round((c-p)/p*100);return `<span class="trd ${v>=0?"up":"dn"}">${v>=0?"↑":"↓"} ${Math.abs(v)}%</span>`},
  kp=(k,ic,l,v,t)=>`<div class="kpi">${tic(ic,k)}<span class="kl">${l}</span><b>${v}</b>${t||'<span class="trd nb0">—</span>'}</div>`;
  /* график: по часам за сегодня или по дням */
@@ -483,7 +483,7 @@ function homeOp(){const vsold=SC.filter(x=>x.st==="sold"&&new Date(x.at||0).toLo
  <div class="dg" style="margin-top:6px">${todayStaff()}${widgets()}</div>
  ${rvSec()}<h2>Ближайшие заказы</h2><div class="og">${up.map(card).join("")||`<div class="card mut" style="text-align:center">${flr("tulip")}<br>Активных заказов нет.</div>`}</div>${act.length>6?`<div class="acts"><button class="btn g" data-a="tf" data-id="">Все заказы (${act.length})</button></div>`:""}`}
 
-function orders(){const q=fq.toLowerCase(),dd=fdt==="t"?today():fdt==="n"?addD(today(),1):"",l=O.filter(o=>{
+function orders(){const q=fq.toLowerCase(),dd=fdt==="t"?today():fdt==="n"?addD(today(),1):"",l=(fz2&&fz2!=="late"?oH():O).filter(o=>{
   if(S.role==="courier"){if(!o.dv||+o.st>=4)return false;if(o.courier&&o.courier!==U.uid)return false;if(!o.courier&&!(+o.st>=1&&+o.st<=3))return false}
   return (fs===""||(fs==="fresh"?+o.st<4:String(o.st)===fs))&&(!fz2||(fz2==="late"?(o.dv&&+o.st<4&&o.date&&new Date(o.date+"T"+(o.time||"23:59")).getTime()<Date.now()):(+o.st>=2&&+o.st<5&&!o.paid)))&&(!dd||o.date===dd)&&(`${o.client} ${o.phone} ${o.bn}`).toLowerCase().includes(q)})
  return `<h1>Заказы</h1>${ordCnt()}<div class="pt">${[[0,"Новые"],[1,"В сборке"],[2,"Готовы"],[3,"В пути"]].map(x=>`<button type="button" class="k-${x[0]} ${fs===String(x[0])?"on":""}" data-a="f" data-id="${fs===String(x[0])?"fresh":x[0]}"><b>${O.filter(o=>+o.st===x[0]&&(S.role!=="courier"||o.dv)).length}</b><span>${x[1]}</span></button>`).join("")}</div><input id="q" placeholder="Поиск: имя, телефон, букет" value="${esc(fq)}"><div class="chips">${[["","Все даты"],["t","Сегодня"],["n","Завтра"]].map(c=>`<button class="chip ${fdt===c[0]?"on":""}" data-a="fdt" data-id="${c[0]}">${c[1]}</button>`).join("")}</div><div class="chips">${[["fresh","Свежие"],["","Все статусы"],...ST.map((s,i)=>[String(i),s])].map(c=>`<button class="chip ${fs===c[0]?"on":""}" data-a="f" data-id="${c[0]}">${c[1]}</button>`).join("")}</div><p class="mut">Найдено: ${l.length}${fz2?` · фильтр: ${fz2==="late"?"просроченные доставки":"готовы, но не оплачены"} <a href="#" data-a="f2" data-id="">показать все</a>`:""}</p><div class="og">${l.slice(0,ordLim()).map(card).join("")||'<div class="card mut">Ничего не найдено.</div>'}</div>${l.length>ordLim()?`<div class="acts"><button class="btn g" data-a="o_more">Показать ещё (${l.length-ordLim()})</button></div>`:""}`}
@@ -623,7 +623,7 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-a^="s_"]')
 /* ===== Витрина и клиенты ===== */
 let CU={},SC=[];
 const dg=p=>String(p||"").replace(/\D/g,""),vleft=x=>(+x.shelf||3)-Math.floor((Date.now()-new Date(x.made+"T00:00:00"))/864e5);
-function clients(){const m={};O.forEach(o=>{const k=dg(o.phone);if(!k)return;const c=m[k]=m[k]||{k,name:o.client,phone:o.phone,n:0,sum:0,last:"",os:[]};c.os.push(o);if(+o.st!==5){c.n++;c.sum+=(+o.p||0)+(+o.fee||0);if((o.date||"")>c.last)c.last=o.date}});
+function clients(){histNeed("date","0000-00-00","9999-99-99");const m={};oH().forEach(o=>{const k=dg(o.phone);if(!k)return;const c=m[k]=m[k]||{k,name:o.client,phone:o.phone,n:0,sum:0,last:"",os:[]};c.os.push(o);if(+o.st!==5){c.n++;c.sum+=(+o.p||0)+(+o.fee||0);if((o.date||"")>c.last)c.last=o.date}});
  Object.keys(CU).forEach(k=>{const c=m[k]=m[k]||{k,name:CU[k].name,phone:CU[k].phone,n:0,sum:0,last:"",os:[]};c.x=CU[k];if(CU[k].name)c.name=CU[k].name});return Object.values(m).sort((a,b)=>b.sum-a.sum)}
 function crm(){const q=fq.toLowerCase(),l=clients().filter(c=>`${c.name} ${c.phone}`.toLowerCase().includes(q));
  const all=clients(),d30=addD(today(),-30),av=n=>esc(String(n||"?").trim().charAt(0).toUpperCase()||"?");
@@ -654,7 +654,7 @@ function range(){const d=new Date(),f=x=>x.toLocaleDateString("sv-SE");let a=f(d
 function fin(){const[a,b]=range();histNeed("date",a,b);const In=x=>x>=a&&x<=b,tot=o=>(+o.p||0)+(+o.fee||0),os=oH().filter(o=>+o.st!==5&&In(o.date||"")),sold=SC.filter(x=>x.st==="sold"&&In(new Date(x.at).toLocaleDateString("sv-SE")));
  const rev=os.reduce((s,o)=>s+(o.paid?tot(o):+o.pre||0),0)+sold.reduce((s,x)=>s+(+x.price||0),0),cost=os.filter(o=>o.paid).reduce((s,o)=>{const q=BQ.find(z=>z.name===o.bn);return s+(q?bcost(q):0)},0)+sold.reduce((s,x)=>s+(+x.cost||0),0);
  const ex=EX.filter(x=>In(x.date)),pur=ex.filter(x=>["Закупка цветов","Упаковка"].includes(x.cat)).reduce((s,x)=>s+x.sum,0),opx=ex.reduce((s,x)=>s+x.sum,0)-pur,cur=os.filter(o=>+o.st===4&&o.dv).reduce((s,o)=>s+(+o.cpay||0),0);
- const wo=SC.filter(x=>x.st==="wo"&&In(new Date(x.at).toLocaleDateString("sv-SE"))),vz=VS.filter(x=>In(x.date)&&(!LOC||(x.loc||"main")===LOC)),vi=vz.reduce((q,x)=>q+(+x.in||0),0),vb=vz.reduce((q,x)=>q+(+x.buy||0),0),gross=rev-cost,net=gross-opx-cur,un=O.filter(o=>+o.st!==5&&!o.paid),n=os.length+sold.length,avg=n?(os.reduce((s,o)=>s+tot(o),0)+sold.reduce((s,x)=>s+(+x.price||0),0))/n:0,L=(x,y)=>`<div class="ln"><span>${x}</span><b>${y}</b></div>`;
+ const wo=SC.filter(x=>x.st==="wo"&&In(new Date(x.at).toLocaleDateString("sv-SE"))),vz=VS.filter(x=>In(x.date)&&(!LOC||(x.loc||"main")===LOC)),vi=vz.reduce((q,x)=>q+(+x.in||0),0),vb=vz.reduce((q,x)=>q+(+x.buy||0),0),gross=rev-cost,net=gross-opx-cur,un=oH().filter(o=>+o.st!==5&&!o.paid),n=os.length+sold.length,avg=n?(os.reduce((s,o)=>s+tot(o),0)+sold.reduce((s,x)=>s+(+x.price||0),0))/n:0,L=(x,y)=>`<div class="ln"><span>${x}</span><b>${y}</b></div>`;
  return `<h1>Финансы</h1>${finNote()}<div class="chips">${[["d","День"],["w","7 дней"],["q","30 дней"],["m","Месяц"],["y","Год"],["a","Всё время"],["c","Период"]].map(c=>`<button class="chip ${fp===c[0]?"on":""}" data-a="f_p" data-id="${c[0]}">${c[1]}</button>`).join("")}</div>${fp==="c"?`<div class="g2"><input type="date" data-a="f_d" id="fa" value="${fa}"><input type="date" data-a="f_d" id="fb" value="${fb}"></div>`:""}
  <div class="card">${L("Выручка (полученные деньги)",M(rev))}${L("Себестоимость оплаченных",M(cost))}${L("Валовая прибыль",M(gross))}${L("Расходы",M(opx))}${L("Оплата курьерам",M(cur))}${L("Чистая прибыль",M(net))}${L("Маржинальность",rev?Math.round(gross/rev*100)+"%":"—")}${L("Средний чек",M(avg))}${L("Зашло / купило в магазин",vi+" / "+vb+" · "+(vi?Math.round(vb/vi*100):0)+"%")}${L("Списания с витрины (себестоимость)",M(wo.reduce((q,x)=>q+ccost(x),0)))}${L("Заказов и продаж",n)}</div>
  <div class="dg">${finCharts(a,b,os,sold,ex)}${staffRep(os)}</div>
@@ -723,7 +723,7 @@ function saveSet(e){e.preventDefault();const f=new FormData($("sf")),g=k=>(f.get
 function alerts(){if(alerts.d++)return"";const now=Date.now(),a=[],c=(n,t,k,tb,f)=>{if(n)a.push([n,t,k||"",tb||"orders",f||""])};
  if(S.role==="courier"){c(O.filter(o=>o.dv&&+o.st<3).length,"доставок готовится: будьте готовы","warn","orders","");c(O.filter(o=>+o.st===3).length,"доставок в пути у вас","","orders","3")}
  else{c(O.filter(o=>+o.st===0).length,"новых заказов","","orders","0");c(O.filter(o=>+o.st===2).length,"заказов готово: выдать или передать курьеру","","orders","2");c(O.filter(o=>o.dv&&+o.st<4&&o.date&&new Date(o.date+"T"+(o.time||"23:59")).getTime()<now).length,"доставок просрочено","bad","orders","late")}
- if(mgr())c(O.filter(o=>+o.st>=2&&+o.st<5&&!o.paid).length,"заказов готово, но не оплачено","warn","orders","unpaid");
+ if(mgr())c(oH().filter(o=>+o.st>=2&&+o.st<5&&!o.paid).length,"заказов готово, но не оплачено","warn","orders","unpaid");
  if(["admin","operator","florist","assistant"].includes(S.role))c(INV.filter(i=>i.qty<=(+i.min||0)).length,"позиций на складе заканчивается","warn","stock","low");
  return a.length?`<h2>Сейчас нужно</h2><div class="todo">${a.map(x=>`<div class="tr lnk" data-a="al" data-id="${x[3]}|${x[4]}">${tic(x[3]==="stock"?"stock":x[2]==="bad"?"warn":x[4]==="unpaid"?"card":x[4]==="2"||x[4]==="3"?"truck":"clock",x[2]==="bad"?"#EF4444":x[2]==="warn"?"#F59E0B":"#3B82F6")}<span>${x[1]}</span><b>${x[0]}</b><span class="mut" style="flex:none">›</span></div>`).join("")}</div>`:""}
 /* ===== График, статистика, быстрые заказы ===== */
@@ -738,7 +738,13 @@ const lq=(d,L)=>SH.split?(d.qs?(d.qs[L]||0):(L==="main"?d.qty||0:0)):(d.qty||0),
  locOpts=(sel,all)=>(all?`<option value="">Все точки</option>`:"")+locs().map(x=>`<option value="${x.id}" ${sel===x.id?"selected":""}>${esc(x.name)}</option>`).join("");
 // История заказов: подписка держит последние 300. Если их не хватает на выбранный период (финансы, аналитика, статистика, главная),
 // заказы за период один раз догружаются запросом (по date или ts) и складываются в OX. Свежие данные всегда берутся из O.
-let ON=0,OX=new Map(),OXR={date:[],ts:[]};
+let ON=0,OX=new Map(),OXR={date:[],ts:[]},UPON=0;
+/* Неоплаченные заказы старше 300 последних: живая подписка where(paid==false), документы кладутся в OX.
+   Заказ оплатили (ушёл из выборки) — перечитываем его, чтобы в истории осталась свежая версия. */
+function upSub(){if(UPON||ON<300||!S||!mgr())return;UPON=1;
+ subs.push(db.collection("orders").where("paid","==",false).onSnapshot(s=>{let ch=0;s.docChanges().forEach(c=>{const d=c.doc;ch=1;
+  if(c.type==="removed")d.ref.get().then(x=>{if(x.exists)OX.set(x.id,{id:x.id,...x.data()});else OX.delete(x.id);dq()}).catch(()=>{});
+  else OX.set(d.id,{id:d.id,...d.data()})});if(ch)dq()},e=>toast("Неоплаченные заказы: "+er(e))))}
 function histNeed(f,a,b){if(ON<300||a==null||b==null||!U)return;if(OXR[f].some(([x,y])=>x<=a&&y>=b))return;OXR[f].push([a,b]);
  db.collection("orders").where(f,">=",a).where(f,"<=",b).get().then(s=>{let n=0;s.forEach(d=>{if(!OX.has(d.id))n++;OX.set(d.id,{id:d.id,...d.data()})});if(n)dq()}).catch(e=>toast("История заказов: "+er(e)))}
 const oXtra=()=>{const ids=new Set(RAW[0].map(x=>x.id));return[...OX.values()].filter(x=>!ids.has(x.id))},oH=()=>OX.size?O.concat(oXtra().filter(inL)):O,oHr=()=>OX.size?RAW[0].concat(oXtra()):RAW[0];
