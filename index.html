@@ -64,14 +64,19 @@ main{max-width:1180px;padding:26px 36px}h1{font-size:34px}.tiles{grid-template-c
 </style></head><body>
 <main id="v"><p class="mut">Подключение…</p></main>
 <script>
+window.__mfErr="";
+window.addEventListener("error",function(e){window.__mfErr=(e&&e.message)||"error";});
+window.addEventListener("unhandledrejection",function(e){window.__mfErr=(e&&e.reason&&(e.reason.message||e.reason))||"promise";});
 setTimeout(function(){
   try{
     var v=document.getElementById("v");
-    if(v && /Подключение/.test(v.textContent||"") && v.querySelectorAll("form,h1,.card").length===0){
-      v.innerHTML='<div class="card" style="margin-top:12vh"><h1>Mirflowers</h1><p class="mut">Долгое подключение. Обновите страницу (потяните вниз) или очистите данные сайта. Если только что задеплоили — подождите 1–2 минуты и сделайте жёсткое обновление.</p><button class="btn" onclick="location.reload()">Обновить</button></div>';
-    }
+    if(!v)return;
+    if(v.querySelector("form,#em,.btn"))return;
+    if(!/Подключение|Долгое/.test(v.textContent||""))return;
+    var err=window.__mfErr||(!window.firebase?"Firebase SDK не загрузился (проверьте интернет / блокировщик)":"Firebase не ответил. В Firebase Console → Authentication → Settings → Authorized domains добавьте: "+location.hostname);
+    v.innerHTML='<div class="card" style="margin-top:12vh"><h1>Mirflowers</h1><p class="mut">'+String(err).replace(/</g,"&lt;")+'</p><p class="mut">Домен: '+location.hostname+'</p><button class="btn" onclick="location.reload()">Обновить</button></div>';
   }catch(e){}
-}, 12000);
+}, 8000);
 </script><nav id="nav" hidden></nav><div id="m"></div><div id="toast" hidden></div>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -83,7 +88,9 @@ setTimeout(function(){
 "use strict";
 const cfg={apiKey:"AIzaSyCDxDJvmIOw8R0kP7bNbiBHYDAOqY_9cSQ",authDomain:"mirflowersbase.firebaseapp.com",projectId:"mirflowersbase",storageBucket:"mirflowersbase.firebasestorage.app",messagingSenderId:"142575786641",appId:"1:142575786641:web:de2d1b79b076894c29fd30"};
 const NOCFG=cfg.apiKey.startsWith("ВСТАВЬТЕ");
+if(typeof firebase==="undefined"){throw new Error("Firebase SDK не загрузился. Откройте сайт по Wi‑Fi или отключите блокировщик рекламы.")}
 firebase.initializeApp(cfg);const auth=firebase.auth(),db=firebase.firestore(),TS=()=>firebase.firestore.FieldValue.serverTimestamp();try{db.settings({experimentalAutoDetectLongPolling:true,merge:true})}catch(e){}
+try{auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){}
 const $=i=>document.getElementById(i),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),M=n=>Math.round(+n||0).toLocaleString("ru-RU")+" ₸";
 const ST=["Новый","Собирается","Готов","В пути","Выдан","Отменён"],RL={owner:"Владелец",admin:"Администратор",operator:"Оператор",florist:"Флорист",assistant:"Помощник флориста",courier:"Курьер"},SRC=["Instagram","WhatsApp","2ГИС","Телефон","Сайт","Другое"],PAY=["Kaspi","Наличные","Перевод"];
 let U=null,S=null,O=[],SF={},tab="home",fs="",fz2="",fq="",subs=[],lock=false;
@@ -123,7 +130,8 @@ function login(msg){subs.forEach(u=>u());subs=[];$("nav").hidden=true;$("v").inn
  $("lf").onsubmit=e=>{e.preventDefault();run(()=>auth.signInWithEmailAndPassword($("em").value.trim(),$("pw").value))};
  $("rs").onclick=()=>run(async()=>{const m=$("em").value.trim();if(!m)return toast("Введите email");await auth.sendPasswordResetEmail(m);toast("Письмо для сброса отправлено")})}
 
-auth.onAuthStateChanged(async u=>{U=u;S=null;O=[];SF={};PRS=[];INV=[];INV0=[];CST={};DL=[];BQ=[];LG=[];VS=[];CU={};SC=[];LD=[];EX=[];SHL=[];SR=[];RP=[];BL=[];CHS=[];CHERR="";chStop();ORD0=false;TCM=[];TCERR="";tcLast=0;NP=null;subs.forEach(f=>f());subs=[];if(!u)return login();
+let __authDone=0;setTimeout(()=>{if(!__authDone&&typeof login==="function"){try{login("Нет ответа от входа. Проверьте интернет и Authorized domains в Firebase.")}catch(e){}}},10000);
+auth.onAuthStateChanged(async u=>{__authDone=1;U=u;S=null;O=[];SF={};PRS=[];INV=[];INV0=[];CST={};DL=[];BQ=[];LG=[];VS=[];CU={};SC=[];LD=[];EX=[];SHL=[];SR=[];RP=[];BL=[];CHS=[];CHERR="";chStop();ORD0=false;TCM=[];TCERR="";tcLast=0;NP=null;subs.forEach(f=>f());subs=[];if(!u)return login();
  try{const d=await db.collection("staff").doc(u.uid).get();const s=d.exists?d.data():null;if(s&&s.active===true&&(s.role==="owner"||isOwnEm(u.email))){s.own=true;s.head=String(u.email||"").toLowerCase()===HEAD_EM;s.role="admin"}
   if(!s||s.active!==true||!RL[s.role]){await auth.signOut();return login(!s?"Профиль сотрудника не создан. Обратитесь к администратору.":"Аккаунт отключён или роль не задана.")}
   S=s;if(s.role!=="admin"&&s.role!=="courier"&&s.loc)LOC=s.loc;try{if(!sessionStorage.getItem("lg")){sessionStorage.setItem("lg","1");log("Вход в систему",{bn:""})}}catch(x){}
