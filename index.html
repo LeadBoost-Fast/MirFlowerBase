@@ -388,7 +388,7 @@ function alerts(){if(alerts.d++)return"";const now=Date.now(),a=[],c=(n,t,k,tb,f
  if(["admin","operator","florist","assistant"].includes(S.role))c(INV.filter(i=>i.qty<=(+i.min||0)).length,"позиций на складе заканчивается","warn","stock","low");
  return a.length?`<h2>Уведомления</h2><div class="card"><div class="mut" style="margin-bottom:4px">Нажмите на строку, чтобы открыть эти заказы или позиции.</div>${a.map(x=>`<div class="ln lnk" data-a="al" data-id="${x[3]}|${x[4]}"><span class="pill ${x[2]}">${x[0]}</span><span style="flex:1;padding:0 8px">${x[1]}</span><span class="mut">›</span></div>`).join("")}</div>`:""}
 /* ===== График, статистика, быстрые заказы ===== */
-let SHL=[],wk=0,fdt="",vv="s",LC=[],LOC="";
+let SHL=[],SR=[],wk=0,fdt="",vv="s",LC=[],LOC="";
 const lq=(d,L)=>SH.split?(d.qs?(d.qs[L]||0):(L==="main"?d.qty||0:0)):(d.qty||0),
  lset=(d,L,n)=>{if(!SH.split)return{qty:n};const q={...(d.qs||{main:d.qty||0}),[L]:n};return{qs:q,qty:Object.values(q).reduce((a,x)=>a+x,0)}},
  locs=()=>[{id:"main",name:SH.mainLoc||"19А мкр, 107/1"},...LC.filter(l=>l.active!==false)],
