@@ -4,6 +4,6 @@ firebase.initializeApp({apiKey:"AIzaSyCDxDJvmIOw8R0kP7bNbiBHYDAOqY_9cSQ",authDom
 const m=firebase.messaging();
 // Сервер шлёт только data-сообщения, показываем уведомление сами
 m.onBackgroundMessage(p=>{const d=p.data||{};
-  return self.registration.showNotification(d.title||"Mirflowers",{body:d.body||"",tag:d.tag||undefined,icon:"/icon-192.png",badge:"/icon-192.png",data:{url:d.url||"/"}})});
-self.addEventListener("notificationclick",e=>{e.notification.close();const url=(e.notification.data&&e.notification.data.url)||"/";
+  return self.registration.showNotification(d.title||"Mirflowers",{body:d.body||"",tag:d.tag||undefined,icon:"icon-192.png",badge:"icon-192.png",data:{url:d.url||"/"}})});
+self.addEventListener("notificationclick",e=>{e.notification.close();let url=(e.notification.data&&e.notification.data.url)||"/";if(url.charAt(0)==="/")url=self.registration.scope+url.slice(1);
   e.waitUntil(clients.matchAll({type:"window",includeUncontrolled:true}).then(l=>{for(const c of l){if("focus" in c){c.postMessage({go:url});return c.focus()}}return clients.openWindow(url)}))});
