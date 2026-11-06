@@ -147,7 +147,7 @@ exports.pushReportReminder=onSchedule({...OPT,schedule:"0 20 * * *",timeZone:TZ}
 });
 
 // Проверка: прислать push самому себе
-exports.pushTest=onCall(OPT,async req=>{
+exports.pushTest=onCall({...OPT,invoker:"public"},async req=>{
   if(!req.auth)throw new HttpsError("unauthenticated","Войдите в систему");
   let n;
   try{n=await push("test",u=>u.uid===req.auth.uid,{title:"🔔 Проверка уведомлений",body:"Всё работает: push приходят на это устройство",tag:"test"})}
