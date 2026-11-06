@@ -92,10 +92,16 @@ if(typeof firebase==="undefined"){throw new Error("Firebase SDK не загру�
 firebase.initializeApp(cfg);const auth=firebase.auth(),db=firebase.firestore(),TS=()=>firebase.firestore.FieldValue.serverTimestamp();try{db.settings({experimentalAutoDetectLongPolling:true,merge:true})}catch(e){}
 try{auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){}
 const $=i=>document.getElementById(i),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),M=n=>Math.round(+n||0).toLocaleString("ru-RU")+" ₸";
-const ST=["Новый","Собирается","Готов","В пути","Выдан","Отменён"],RL={owner:"Владелец",admin:"Администратор",operator:"Оператор",florist:"Флорист",assistant:"Помощник флориста",courier:"Курьер"},SRC=["Instagram","WhatsApp","2ГИС","Телефон","Сайт","Другое"],PAY=["Kaspi","Наличные","Перевод"];
-let U=null,S=null,O=[],SF={},tab="home",fs="",fz2="",fq="",subs=[],lock=false;
+const ST=["Новый","Собирается","Готов","В пути","Выдан","Отменён"],stL=o=>+o.st===4&&o.dv?"Доставлен":(ST[+o.st]||"?"),RL={owner:"Владелец",admin:"Администратор",operator:"Оператор",florist:"Флорист",assistant:"Помощник флориста",courier:"Курьер"},SRC=["Instagram","WhatsApp","2ГИС","Телефон","Сайт","Другое"],PAY=["Kaspi","Наличные","Перевод"];
+let U=null,S=null,O=[],SF={},tab="home",fs="",fz2="",fq="",subs=[],lock=0;
 const today=()=>new Date().toLocaleDateString("sv-SE"),nm=id=>(SF[id]&&SF[id].name)||"Не назначен",mgr=()=>S&&["admin","operator","florist","assistant"].includes(S.role),adm=()=>S&&S.role==="admin",own=()=>S&&S.own===true,OWN_EM="tilegen615@gmail.com",HEAD_EM="nash0082008@icloud.com",isOwnEm=m=>{m=String(m||"").toLowerCase();return m===OWN_EM||m===HEAD_EM},myRL=()=>own()?(S.head?"Главный администратор":RL.owner):RL[S.role],isOwnId=id=>{const e=SF[id];return !!e&&(e.role==="owner"||isOwnEm(e.email))},canMng=id=>!!SF[id]&&!isOwnId(id)&&(own()||SF[id].role!=="admin"),rl=id=>isOwnId(id)?(String((SF[id]||{}).email||"").toLowerCase()===HEAD_EM?"Главный администратор":RL.owner):(RL[(SF[id]||{}).role]||""),shipT=o=>+o.shipAt||(o.updatedAt&&o.updatedAt.toMillis?o.updatedAt.toMillis():0),wait=o=>o.dv&&+o.st===3?Math.max(0,shipT(o)+180000-Date.now()):0,mmss=ms=>{const s=Math.ceil(ms/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
-const dq=()=>{clearTimeout(dq.t);dq.t=setTimeout(draw,30)};
+let pdn=0,dqPend=0,pdnT=0;
+const dq=()=>{clearTimeout(dq.t);dq.t=setTimeout(()=>{if(document.hidden||pdn){dqPend=1;return}dqPend=0;draw()},60)};
+/* не перерисовываем страницу, пока палец на экране: иначе кнопка исчезает между нажатием и отпусканием и «не срабатывает» */
+const pdnEnd=d=>{clearTimeout(pdnT);pdnT=setTimeout(()=>{pdn=0;if(dqPend)dq()},d)};
+addEventListener("pointerdown",()=>{pdn=1;pdnEnd(4000)},true);
+["pointerup","pointercancel","touchend","touchcancel"].forEach(k=>addEventListener(k,()=>pdnEnd(450),true));
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&dqPend)dq()});
 const STO={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}},sysDark=matchMedia("(prefers-color-scheme:dark)");
 const PALS={"Классика":{l:["#e9e3d8","#f7f4ee","#ddd3c4","#1d1a17","#3a2e25","#f3ece1"],d:["#0f0e0d","#1b1917","#2a2622","#f1eadf","#cdb89b","#1a140e"]},
 "Роза":{l:["#f3e4e8","#fbf3f5","#ead0d7","#2a1519","#a35a6b","#ffffff"],d:["#1a1013","#26181c","#37232a","#f6e6ea","#e39bb0","#2a1519"]},
@@ -115,16 +121,62 @@ const themeChips=()=>`<div class="chips" style="margin:10px 0 0;justify-content:
 themeCard=()=>{const t=thGet(),cur=t.p||"Классика",dk=document.documentElement.dataset.t==="dark"?"d":"l",P=PALS[cur][dk],sw=Object.keys(PALS).map(n=>`<button type="button" class="chip ${cur===n?"on":""}" onclick="thSet('p','${n}',1)"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${PALS[n][dk][4]};vertical-align:-2px;margin-right:6px"></span>${n}</button>`).join(""),rg=(l,k,mn,mx,d)=>`<label>${l}</label><input type="range" min="${mn}" max="${mx}" value="${t[k]==null?d:t[k]}" oninput="thSet('${k}',+this.value)">`;
 return `<h2>Оформление</h2><div class="card"><div class="mut">Внешний вид сайта: светлая или тёмная тема, цвета, размер текста. Цвета акцента и текста запоминаются отдельно для светлой и тёмной темы. Видно только вам и только на этом устройстве, у других сотрудников ничего не изменится. Изменения применяются сразу.</div>${themeChips()}<label>Палитра</label><div class="chips" style="flex-wrap:wrap">${sw}</div>${rg("Контраст текста: мягче ↔ чётче","ct",0,100,50)}${rg("Размер текста","fz",13,21,16)}${rg("Скругление карточек","rd",6,30,20)}<div class="g2"><div><label>Цвет акцента (кнопки)</label><input type="color" value="${t["ac"+dk]||P[4]}" oninput="thSet('ac',this.value)"></div><div><label>Цвет текста</label><input type="color" value="${t["ink"+dk]||P[3]}" oninput="thSet('ink',this.value)"></div></div><div class="acts"><button class="btn g" type="button" onclick="thSet('reset');toast('Оформление возвращено к стандартному')">Сбросить оформление</button></div></div>`}
 applyTheme();if(sysDark.addEventListener)sysDark.addEventListener("change",()=>{if((STO.get("t")||"auto")==="auto")applyTheme()});
-function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,3500)}
+function toast(m){const e=$("toast");e.textContent=(typeof tr==="function"?tr(m):m);e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,3500)}
 function modal(h){$("m").innerHTML=h?`<div class="ov" id="ov"><div class="sh"><i class="gr"></i><button class="sx" type="button" data-a="x" aria-label="Закрыть">✕</button>${h}</div></div>`:"";if(h){$("ov").onclick=e=>{if(e.target.id==="ov")modal("")};swipeClose($("ov").firstChild)}}
 function swipeClose(sh){let y0=0,dy=0,on=false;sh.addEventListener("touchstart",e=>{if(matchMedia("(min-width:900px)").matches)return;on=sh.scrollTop<=0&&e.touches.length===1;y0=e.touches[0].clientY;dy=0},{passive:true});
 sh.addEventListener("touchmove",e=>{if(!on)return;dy=e.touches[0].clientY-y0;if(dy>0){if(sh.scrollTop>0){on=false;return}sh.style.transition="none";sh.style.transform="translateY("+dy+"px)"}else dy=0},{passive:true});
 sh.addEventListener("touchend",()=>{if(!on)return;sh.style.transition="transform .2s";if(dy>110){sh.style.transform="translateY(100%)";setTimeout(()=>modal(""),160)}else sh.style.transform="";on=false})}
 document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;const w=document.getElementById("wb");if(w)return w.remove();if(document.getElementById("ov"))modal("")});
-const ERR={"auth/invalid-credential":"Неверный email или пароль","auth/too-many-requests":"Слишком много попыток, подождите","auth/network-request-failed":"Нет интернета","auth/invalid-email":"Некорректный email","auth/user-disabled":"Учётная запись отключена","auth/email-already-in-use":"Этот email уже занят. Удалённого сотрудника нужно убрать и в Firebase → Authentication, либо взять другой email","auth/weak-password":"Пароль короче 6 символов","permission-denied":"Недостаточно прав"};
+/* ---------- Язык: Русский / Қазақша ---------- */
+var tr=s=>t(s);
+const LANG=(()=>{try{return localStorage.getItem("lang")==="kk"?"kk":"ru"}catch(e){return"ru"}})();
+const KZ={
+"Главная":"Басты бет","Заказы":"Заказдар","Склад":"Склад","Витрина":"Витрина","График":"График","Отчёты":"Есептер","Статистика":"Статистика","Клиенты":"Клиенттер","Чаты":"Чаттар","Шаблоны":"Шаблондар","Сделки":"Мәмілелер","Заявки":"Заявкалар","Финансы":"Қаржы","Аналитика":"Аналитика","Курьер":"Курьер","Сборка":"Сборка","Команда":"Команда","Журнал":"Журнал","Профиль":"Профиль","Ещё":"Тағы",
+"Новый":"Жаңа","Собирается":"Сборкада","Готов":"Дайын","В пути":"Жолда","Выдан":"Берілді","Доставлен":"Доставлен","Отменён":"Бас тартылды",
+"Владелец":"Иесі","Администратор":"Админ","Оператор":"Оператор","Флорист":"Флорист","Помощник флориста":"Флорист көмекшісі",
+"Принять в работу":"Работаға алу","Взять доставку":"Доставканы алу","Отказаться":"Бас тарту","Доставлено":"Доставка жасалды","✓ Доставлено":"✓ Доставка жасалды","Принято":"Қабылданды",
+"Начать сборку":"Сборканы бастау","Передать заказ":"Басқа флористке беру","Передать курьеру":"Курьерге беру","Выдать":"Беру","Свободный заказ":"Бос заказ",
+"Точно берешь этот заказ?":"Бұл заказды шынымен аласың ба?","Да":"Иә","Отмена":"Бас тарту","Закрыть":"Жабу","Назад":"Артқа","Сохранить":"Сақтау","Изменить":"Өзгерту","Удалить":"Өшіру","Подробнее":"Толығырақ","Комментарий":"Комментарий","Принять":"Қабылдау","На переделку":"Қайта жасауға","Принять оплату":"Төлемді қабылдау","Снять оплату":"Төлемді алып тастау","✓ Оплачено":"✓ Төленді","Оплачен":"Төленді","Копировать":"Көшіру","Повторить":"Қайталау","Отменить заказ":"Заказды бас тарту","Выйти":"Шығу","Сменить пароль по письму":"Парольді поштамен ауыстыру",
+"Передача заказа":"Заказды беру","Кому передать заказ?":"Заказды кімге береміз?","Ожидает подтверждения передачи":"Беру растауын күтіп тұр","Нет других флористов для передачи":"Беретін басқа флорист жоқ",
+"Подождите, предыдущее действие ещё выполняется…":"Күте тұр...","Подождите...":"Күте тұр...","Нет интернета. Подождите 20 сек.":"Инет жоқ. 20 сек күте тұр.","Нет интернета":"Инет жоқ","Недостаточно прав":"Рұқсат жоқ","Неверный email или пароль":"Email немесе пароль қате","Слишком много попыток, подождите":"Тым көп әрекет, күте тұр",
+"Заказ взят в работу":"Заказ жұмысқа алынды","Заказ уже в работе":"Заказ әлдеқашан жұмыста","Заказ удалён":"Заказ өшірілген","Заказ не найден":"Заказ табылмады","Это не ваша доставка":"Бұл сенің доставкаң емес","Уже занято или изменено":"Бос емес немесе өзгерген","Вы уже приняли этот заказ":"Бұл заказды сен қазір алғансың","Вы отказались от доставки":"Доставкадан бас тарттың","Заказ уже изменился":"Заказ өзгеріп кеткен",
+"Заказы к сборке":"Жинауға заказдар","Новые":"Жаңалар","В сборке":"Сборкада","Переделать":"Қайта жасау","Очередь пуста":"Кезек бос","Собираются сейчас":"Қазір жиналып жатыр","Новые: принять на себя":"Жаңалар: өзіңе ал","⚠ Нужно переделать":"⚠ Қайта жасау керек","Заказы":"Заказдар","Доставок нет":"Доставка жоқ","Свободные":"Бос заказдар",
+"Клиент":"Клиент","Телефон":"Телефон","Состав":"Құрамы","Готовность":"Дайын болу уақыты","Получение":"Алу тәсілі","Самовывоз":"Өзі алып кетеді","Цена":"Бағасы","Доставка":"Доставка","Предоплата":"Алдын ала төлем","К оплате":"Төлеуге","Оплата":"Төлем","Источник":"Қайдан","Открытка":"Открытка","Создал":"Құрған","История":"Тарих","Комментарии":"Комментарийлер",
+"Язык":"Тіл","Тема":"Тақырып","Здравствуйте,":"Сәлем,",
+"Email":"Email","Пароль":"Пароль","Войти":"Кіру","Все точки":"Барлық нүкте"
+};
+const KZR=[
+[/^Доставлено · (\d+:\d{2})$/,m=>"Доставка жасалды · "+m[1]],
+[/^Здравствуйте, (.+)$/,m=>"Сәлем, "+m[1]],
+[/^Принято (.+)$/,m=>"Қабылданды "+m[1]],
+[/^Принял\(а\) в работу$/,()=>"Жұмысқа алды"],
+[/^Этот заказ уже взял\(а\) (.+)$/,m=>"Бул заказды "+m[1]+" алып қойды"],
+[/^Ожидает подтверждения передачи(.*)$/,m=>"Беру растауын күтіп тұр"+m[1]],
+[/^К оплате (.+)$/,m=>"Төлеуге "+m[1]],
+[/^Заказы к сборке · (\d+)$/,m=>"Жинауға заказдар · "+m[1]],
+[/^«Доставлено» станет доступно через (.+)$/,m=>"«Доставка жасалды» "+m[1]+" кейін қосылады"],
+[/^Принято\. Кнопка «Доставлено» станет активной через 3 минуты$/,()=>"Қабылданды. «Доставка жасалды» 3 минуттан кейін қосылады"],
+[/^Заказ №(\S+) теперь твой$/,m=>"№"+m[1]+" заказ енді сенде"],
+[/^Ждём подтверждения: (.+)$/,m=>"Растауды күтеміз: "+m[1]],
+[/^Время вышло, заказ вернулся к (.+)$/,m=>"Уақыт бітті, заказ "+m[1]+" қайтты"],
+[/^(.+) передает тебе заказ №(\S+)\. Примешь\?$/,m=>m[1]+" саған №"+m[2]+" заказды беріп жатыр. Аласың ба?"]
+];
+const t=s=>{if(LANG!=="kk"||typeof s!=="string"||!s)return s;const k=s.trim();if(!k)return s;let r=KZ[k];if(r===undefined)for(const[x,f]of KZR){const m=k.match(x);if(m){r=f(m);break}}return r===undefined?s:s.replace(k,r)};
+function setLang(l){try{localStorage.setItem("lang",l)}catch(e){}location.reload()}
+if(LANG==="kk"){document.documentElement.lang="kk";
+ const trN=n=>{if(n.nodeType===3){const v=t(n.nodeValue);if(v!==n.nodeValue)n.nodeValue=v;return}
+  if(n.nodeType!==1||/^(SCRIPT|STYLE|TEXTAREA|INPUT)$/.test(n.tagName)&&n.tagName!=="INPUT")return;
+  ["placeholder","aria-label","title"].forEach(a=>{const v=n.getAttribute&&n.getAttribute(a);if(v){const w=t(v);if(w!==v)n.setAttribute(a,w)}});
+  n.childNodes.forEach(trN)};
+ const go=()=>{trN(document.body);new MutationObserver(ms=>ms.forEach(m=>{if(m.type==="characterData")trN(m.target);else m.addedNodes.forEach(trN)})).observe(document.body,{childList:true,subtree:true,characterData:true})};
+ document.readyState==="loading"?document.addEventListener("DOMContentLoaded",go):go();
+ const _cf=window.confirm.bind(window),_al=window.alert.bind(window);window.confirm=x=>_cf(t(x));window.alert=x=>_al(t(x))}
+const langCard=()=>`<h2>Язык</h2><div class="card"><div class="row" style="gap:8px"><button class="btn ${LANG==="ru"?"":"g"}" data-a="lang_ru" style="flex:1">Русский</button><button class="btn ${LANG==="kk"?"":"g"}" data-a="lang_kk" style="flex:1">Қазақша</button></div></div>`;
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="lang_ru"],[data-a="lang_kk"]');if(!b)return;e.stopImmediatePropagation();const l=b.dataset.a==="lang_kk"?"kk":"ru";if(l!==LANG)setLang(l)},true);
+const ERR={"auth/invalid-credential":"Неверный email или пароль","auth/too-many-requests":"Слишком много попыток, подождите","auth/network-request-failed":"Нет интернета","auth/invalid-email":"Некорректный email","auth/user-disabled":"Учётная запись отключена","auth/email-already-in-use":"Этот email уже занят. Удалённого сотрудника нужно убрать и в Firebase → Authentication, либо взять другой email","auth/weak-password":"Пароль короче 6 символов","permission-denied":"Недостаточно прав","unavailable":"Нет интернета. Подождите 20 сек.","deadline-exceeded":"Нет интернета. Подождите 20 сек."};
 const er=e=>ERR[e.code]||("Ошибка: "+(e.code||e.message));
 async function log(act,o,x){try{await db.collection("activityLogs").add({act,oid:o.id||"",name:o.bn||"",by:U.uid,byName:S.name||"",x:x||(o.client?o.client+(o.p!=null?" · "+M((+o.p||0)+(+o.fee||0)):""):""),loc:LOC||(S&&S.loc)||"main",ts:TS()})}catch(e){}}
-async function run(fn){if(lock)return;lock=true;try{await fn()}catch(e){toast(er(e))}finally{lock=false}}
+async function run(fn){if(lock&&Date.now()-lock<20000){toast("Подождите, предыдущее действие ещё выполняется…");return}if(navigator.onLine===false){toast("Нет интернета. Подождите 20 сек.");return}lock=Date.now();try{await fn()}catch(e){toast(er(e))}finally{lock=0}}
 
 function login(msg){subs.forEach(u=>u());subs=[];$("nav").hidden=true;$("v").innerHTML=`<div class="card" style="margin-top:12vh"><div style="text-align:center">${flr("tulip")}</div><h1>Mirflowers</h1><p class="mut">Войдите рабочим аккаунтом. Аккаунты создаёт администратор.</p><form id="lf"><label>Email</label><input id="em" type="email" autocomplete="username" required><label>Пароль</label><input id="pw" type="password" autocomplete="current-password" required><div class="acts"><button class="btn">Войти</button></div></form><div class="acts"><button class="btn g s" id="rs">Забыли пароль?</button></div>${themeChips()}${msg?`<p style="color:var(--bad)">${esc(msg)}</p>`:""}${NOCFG?`<p style="color:var(--warn)">Не заполнены настройки Firebase в начале скрипта (const cfg).</p>`:""}</div>`;
  $("lf").onsubmit=e=>{e.preventDefault();run(()=>auth.signInWithEmailAndPassword($("em").value.trim(),$("pw").value))};
@@ -181,7 +233,7 @@ const addrNote=o=>[o.apt&&("кв. "+o.apt),o.entr&&("подъезд "+o.entr),o.
 const addrFull=o=>[o.addr,addrNote(o)].filter(Boolean).join(", ");
 const go=(tb,x)=>own()?` data-go="${tb}|${x}"`:"";
 function card(o){const n=next(o),c=+o.st===5?"bad":+o.st===4?"ok":"";
- return `<div class="card" data-a="det" data-id="${o.id}" style="cursor:pointer"><div class="row">${th(o.img)}<b style="flex:1">${esc(o.bn||"Заказ")}</b><span>${late(o)}${S&&S.role==="courier"&&locs().length>1?`<span class="pill">📍 ${esc(lname(o.loc))}</span> `:""}<span class="pill ${c}">${ST[+o.st]||"?"}${o.proof?" 📷":""}</span></span></div>
+ return `<div class="card" data-a="det" data-id="${o.id}" style="cursor:pointer"><div class="row">${th(o.img)}<b style="flex:1">${esc(o.bn||"Заказ")}</b><span>${late(o)}${S&&S.role==="courier"&&locs().length>1?`<span class="pill">📍 ${esc(lname(o.loc))}</span> `:""}<span class="pill ${c}">${stL(o)}${o.proof?" 📷":""}</span></span></div>
  <div class="mut">${esc(o.client)} · ${esc(o.phone)}${locTag(o)}<br>Клиенту: ${esc(o.date||"")} ${esc(o.time||"")} · ${o.dv?"Доставка: "+esc(o.addr)+(o.courier?" · "+esc(nm(o.courier)):""):"Самовывоз"}</div>${mkLine(o)}${whoLine(o)}${noteLine(o)}
  <div class="row" style="margin-top:8px"><b>${M(+o.p+(+o.fee||0))}</b>${o.paid?'<span class="pill ok">Оплачен</span>':`<span class="row" style="gap:6px;justify-content:flex-end"><span class="pill warn">К оплате ${M(rest(o))}</span>${isOp()?`<button class="btn s" data-a="o_pay" data-id="${o.id}">✓ Оплачено</button>`:""}</span>`}</div>
  <div class="acts"><button class="btn g s" data-a="det" data-id="${o.id}">Подробнее</button>${o.dv?gisBtn(o.addr,addrNote(o)):""}${rvBtns(o)}${n?`<button class="btn ${mgr()&&wait(o)>0?"g ":""}s" data-a="adv" data-id="${o.id}"${mgr()&&wait(o)>0?` data-w="${shipT(o)+180000}"`:""}>${n[1]}</button>`:""}</div></div>`}
@@ -206,7 +258,7 @@ function team(){return `<h1>Команда</h1><p class="mut">Здесь вы с
  <div class="card"><b>Новый сотрудник</b><form id="tf"><label>Имя</label><input name="name" required><label>Email</label><input name="email" type="email" required><label>Временный пароль (от 6 символов)</label><input name="pass" type="text" minlength="6" required><label>Роль</label><select name="role">${Object.keys(RL).filter(r=>r!=="owner"&&(own()||r!=="admin")).map(r=>`<option value="${r}">${RL[r]}</option>`).join("")}</select><label>Точка</label><select name="loc">${locOpts("",true)}</select><div class="acts"><button class="btn">Создать сотрудника</button></div></form></div>
  <h2>Сотрудники</h2>${Object.keys(SF).map(id=>{const s=SF[id],me=id===U.uid,ow=isOwnId(id);return `<div class="card"><div class="row"><b>${esc(s.name)}</b><span class="pill ${s.active?"ok":"bad"}">${s.active?"Активен":"Отключён"}</span></div><div class="mut">${esc(s.email||"")}</div>${me||!canMng(id)?`<div class="mut">${me?"Это вы":rl(id)}</div>`:`<div class="acts"><select data-a="role" data-id="${id}">${Object.keys(RL).filter(r=>r!=="owner"&&(own()||r!=="admin")).map(r=>`<option value="${r}" ${s.role===r?"selected":""}>${RL[r]}</option>`).join("")}</select><select data-a="sloc" data-id="${id}" title="Точка">${locOpts(s.loc||"",true)}</select><button class="btn s ${s.active?"r":""}" data-a="act" data-id="${id}">${s.active?"Отключить":"Включить"}</button><button class="btn g s" data-a="tpw" data-id="${id}">Пароль</button><button class="btn r s" data-a="tdel" data-id="${id}">Удалить</button></div>`}</div>`}).join("")}`}
 
-function me(){return `<h1>Профиль</h1><div class="card"><div class="row"><b>${esc(S.name)}</b><span class="pill">${myRL()}</span></div><div class="mut">${esc(U.email)}</div></div>${locMe()}${themeCard()}${nfCard()}${pushCard()}${own()?setCard()+fxCard()+locCard():""}${adm()?wipeCard():""}${shopInfo()}${links()}
+function me(){return `<h1>Профиль</h1><div class="card"><div class="row"><b>${esc(S.name)}</b><span class="pill">${myRL()}</span></div><div class="mut">${esc(U.email)}</div></div>${locMe()}${langCard()}${themeCard()}${nfCard()}${pushCard()}${own()?setCard()+fxCard()+locCard():""}${adm()?wipeCard():""}${shopInfo()}${links()}
  <div class="acts"><button class="btn g" data-a="pw">Сменить пароль по письму</button><button class="btn r" data-a="out">Выйти</button></div>`}
 
 function form(o,lnk){const e=o&&o.id,v=o||{},qpo=!e?quickOpts():"",cs=Object.keys(SF).filter(i=>SF[i].role==="courier"&&SF[i].active);
@@ -239,7 +291,7 @@ function form(o,lnk){const e=o&&o.id,v=o||{},qpo=!e?quickOpts():"",cs=Object.key
 async function detail(id){const o=O.find(x=>x.id===id);if(!o)return;let h="";
  if(mgr()){try{const s=await db.collection("activityLogs").where("oid","==",id).get();h=s.docs.map(d=>d.data()).sort((a,b)=>(b.ts?b.ts.seconds:9e9)-(a.ts?a.ts.seconds:9e9)).map(x=>`<div class="ln"><span>${esc(x.byName)}</span><span>${esc(x.act)}${x.x?": "+esc(x.x):""}</span></div>`).join("")}catch(e){}}
  const L=(a,b)=>b||b===0?`<div class="ln"><span>${a}</span><span style="text-align:right">${b}</span></div>`:"";
- modal(`<div class="row"><h1 style="font-size:24px">${esc(o.bn)}</h1><span class="pill">${ST[+o.st]}</span></div><div class="card">${L("Клиент",esc(o.client))}${L("Телефон",esc(o.phone))}${L("Состав",esc(o.comp))}${L("Готовность",esc(o.date+" "+(o.time||"")))}${L("Получение",o.dv?esc(addrFull(o)||o.addr)+" "+gisBtn(o.addr,addrNote(o)):"Самовывоз")}${o.dv&&addrNote(o)?L("Для курьера",esc(addrNote(o))):""}${L("Курьер",o.courier?esc(nm(o.courier)):"Свободный — любой может взять")}${L("Создал",esc(nm(o.by)))}${L("Принял(а) в работу",o.takenBy?esc(nm(o.takenBy)):"")}${L("Собрал(а)",o.asm&&+o.st>=2?esc(nm(o.asm)):"")}${L("Приёмка",o.accBy?esc(nm(o.accBy)):"")}${L("Фото клиенту",o.needPhoto?(o.photoSent?"отправлено":"нужно отправить"):"не нужно")}${L("Цена",M(o.p))}${L("Доставка",o.fee?M(o.fee):"")}${L("Предоплата",o.pre?M(o.pre):"")}${L("К оплате",M(rest(o)))}${L("Оплата",esc(o.pay))}${L("Источник",esc(o.src))}${L("Открытка",esc(o.card))}${L("Комментарий",esc(o.note))}</div>
+ modal(`<div class="row"><h1 style="font-size:24px">${esc(o.bn)}</h1><span class="pill">${stL(o)}</span></div><div class="card">${L("Клиент",esc(o.client))}${L("Телефон",esc(o.phone))}${L("Состав",esc(o.comp))}${L("Готовность",esc(o.date+" "+(o.time||"")))}${L("Получение",o.dv?esc(addrFull(o)||o.addr)+" "+gisBtn(o.addr,addrNote(o)):"Самовывоз")}${o.dv&&addrNote(o)?L("Для курьера",esc(addrNote(o))):""}${L("Курьер",o.courier?esc(nm(o.courier)):"Свободный — любой может взять")}${L("Создал",esc(nm(o.by)))}${L("Принял(а) в работу",o.takenBy?esc(nm(o.takenBy)):"")}${L("Собрал(а)",o.asm&&+o.st>=2?esc(nm(o.asm)):"")}${L("Приёмка",o.accBy?esc(nm(o.accBy)):"")}${L("Фото клиенту",o.needPhoto?(o.photoSent?"отправлено":"нужно отправить"):"не нужно")}${L("Цена",M(o.p))}${L("Доставка",o.fee?M(o.fee):"")}${L("Предоплата",o.pre?M(o.pre):"")}${L("К оплате",M(rest(o)))}${L("Оплата",esc(o.pay))}${L("Источник",esc(o.src))}${L("Открытка",esc(o.card))}${L("Комментарий",esc(o.note))}</div>
  ${o.img?`<img src="${o.img}" alt="Фото букета" style="width:100%;border-radius:16px;margin-top:10px">`:""}${o.rimg?`<h2>Фото готового букета</h2><img src="${o.rimg}" alt="Готовый букет" style="width:100%;border-radius:16px">`:""}${o.proof?`<h2>Фото вручения</h2><img src="${o.proof}" alt="Фото вручения" style="width:100%;border-radius:16px">`:""}${+o.st===4&&o.dv&&!o.proof?`<p class="mut">Доставлено без фото получателя${o.statusBy?" · отметил(а): "+esc(nm(o.statusBy)):""}</p>`:""}${chkView(o)}${cmList(o)}${h?`<h2>История</h2><div class="card">${h}</div>`:""}
  <div class="acts">${detRv(o)}${mgr()?`${adm()||+o.st<4?`<button class="btn g" data-a="edit" data-id="${id}">Изменить</button>`:""}<button class="btn g" data-a="rep" data-id="${id}">Повторить</button><button class="btn g" data-a="o_print" data-id="${id}">Накладная</button><button class="btn g" data-a="o_link" data-id="${id}">Ссылка клиенту</button>${isOp()&&!o.paid&&+o.st<5?`<button class="btn g" data-a="paid" data-id="${id}">Принять оплату</button>`:""}${isOp()&&o.paid&&+o.st<5?`<button class="btn g" data-a="unpay" data-id="${id}">Снять оплату</button>`:""}`:""}<button class="btn g" data-a="cp" data-id="${id}">Копировать</button><a class="btn g" style="text-decoration:none;text-align:center" target="_blank" rel="noopener" href="https://wa.me/${esc(String(o.phone).replace(/\D/g,""))}">WhatsApp</a>${mgr()&&+o.st<4?`<button class="btn r" data-a="cx" data-id="${id}">Отменить заказ</button>`:""}${adm()?`<button class="btn g" data-a="o_st" data-id="${id}">Исправить статус</button><button class="btn r" data-a="o_del" data-id="${id}">Удалить</button>`:""}${S.role==="courier"&&o.dv&&!o.courier&&+o.st>=1&&+o.st<=3?`<button class="btn" data-a="cur_take" data-id="${id}">Взять доставку</button>`:""}${S.role==="courier"&&o.courier===U.uid&&+o.st===3?`<button class="btn" data-a="adv" data-id="${id}">✓ Доставлено</button>`:""}<button class="btn g" data-a="x">Закрыть</button></div>`)}
 
@@ -252,7 +304,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b
  if(a==="new")form();else if(a==="x")modal("");else if(a==="det")detail(id);else if(a==="edit"&&(adm()||+o.st<4))form(o);else if(a==="rep"){const c={...o};delete c.id;delete c.pub;delete c.pubKey;delete c.mk;c.st=0;c.paid=false;c.pre=0;form(c)}
  else if(a==="f"){fs=id;fz2="";draw()}else if(a==="f2"){e.preventDefault();fz2="";draw()}else if(a==="th"){setTh(id)}
  else if(a==="out"){try{sessionStorage.removeItem("lg")}catch(x){}auth.signOut()}else if(a==="pw")run(async()=>{await auth.sendPasswordResetEmail(U.email);toast("Письмо отправлено")})
- else if(a==="adv"&&o){const n=next(o),md=n&&mgr()&&n[0]===4&&o.dv;if(n&&S.role==="courier"&&n[0]===4)proof(id);else if(md&&wait(o)>0)toast("Отметить доставленным можно через "+mmss(wait(o))+" после передачи курьеру");else if(md&&!confirm("Фото от курьера нет. Отметить заказ доставленным без фото?")){}else if(n)run(async()=>{await db.collection("orders").doc(id).update({st:n[0],updatedAt:TS(),statusBy:U.uid,...(n[0]===2?{asm:U.uid}:{}),...(n[0]===3?{shipAt:Date.now()}:{}),...(md?{doneAt:Date.now(),doneByMgr:true}:{})});log(md?"Доставлено без фото":"Статус → "+ST[n[0]],o)})}
+ else if(a==="adv"&&o){const n=next(o),md=n&&mgr()&&n[0]===4&&o.dv;if(n&&S.role==="courier"&&n[0]===4){if(o.courier!==U.uid)toast("Это не ваша доставка");else if(!o.cAcc)toast("Сначала нажмите «Принять в работу»");else if(cwait(o)>0)toast("«Доставлено» станет доступно через "+mmss(cwait(o)));else proof(id)}else if(n&&mgr()&&n[0]===3&&o.dv&&o.courier&&!o.cAcc&&!confirm("Курьер "+nm(o.courier)+" ещё не принял заказ в работу. Передать всё равно?")){}else if(md&&wait(o)>0)toast("Отметить доставленным можно через "+mmss(wait(o))+" после передачи курьеру");else if(md&&!confirm("Фото от курьера нет. Отметить заказ доставленным без фото?")){}else if(n)run(async()=>{await db.collection("orders").doc(id).update({st:n[0],updatedAt:TS(),statusBy:U.uid,...(n[0]===2?{asm:U.uid}:{}),...(n[0]===3?{shipAt:Date.now()}:{}),...(md?{doneAt:Date.now(),doneByMgr:true}:{})});log(md?"Доставлено без фото":"Статус → "+ST[n[0]],o)})}
  else if(a==="paid")run(async()=>{await db.collection("orders").doc(id).update({paid:true,updatedAt:TS()});log("Принята оплата",o,M(rest(o)));modal("")})
  else if(a==="cx"&&confirm("Отменить заказ? Он останется в истории."))run(async()=>{await db.collection("orders").doc(id).update({st:5,updatedAt:TS(),statusBy:U.uid});log("Заказ отменён",o);modal("")})
  else if(a==="cp"){const t=`${o.bn}\n${o.client} ${o.phone}\n${o.date} ${o.time||""}\n${o.dv?o.addr:"Самовывоз"}\nК оплате: ${M(rest(o))}`;navigator.clipboard.writeText(t).then(()=>toast("Скопировано"),()=>toast("Не удалось скопировать"))}
@@ -342,13 +394,20 @@ function vcard(){const t=today(),td=VS.filter(x=>x.date===t&&vloc(x)),i=vsum(td,
 function moreV(){return `<h1>Ещё</h1>`+MORE.map(t=>`<div class="card" data-a="goto" data-id="${t[0]}" style="cursor:pointer"><div class="row"><b>${t[1]} ${t[2]}</b><span class="mut">›</span></div></div>`).join("")}
 function homeF(){const q=O.filter(o=>+o.st<2).sort(byDt),c=i=>O.filter(o=>+o.st===i).length;
  return `<div style="position:relative">${flr("branch","deco")}<h1>Очередь сборки</h1><p class="mut">${esc(S.name||"")} · ${myRL()}</p></div><div class="rgs">${[["Новые",0],["В сборке",1],["Готовы",2]].map(a=>`<div class="tile"><b>${c(a[1])}</b><span>${a[0]}</span></div>`).join("")}</div><div class="dg">${alerts()}${todayStaff()}</div><h2>Собрать</h2><div class="og">${q.map(card).join("")||`<div class="card mut" style="text-align:center">${flr("tulip")}<br>Очередь пуста</div>`}</div>`}
+function curActs(o,freeO){if(freeO)return `<button class="btn s" data-a="cur_take" data-id="${o.id}">Взять доставку</button>`;
+ if(o.courier!==U.uid||+o.st>=4)return"";
+ if(!o.cAcc)return `<button class="btn s" data-a="cur_acc" data-id="${o.id}">Принять в работу</button><button class="btn r s" data-a="cur_rel" data-id="${o.id}">Отказаться</button>`;
+ const rel=`<button class="btn r s" data-a="cur_rel" data-id="${o.id}">Отказаться</button>`;
+ if(+o.st<3)return `<span class="pill ok">Принято ${chTs(o.cAcc)}</span><span class="pill">Ждём передачи от флориста</span>${rel}`;
+ const w=cwait(o);
+ return `<span class="pill ok">Принято ${chTs(o.cAcc)}</span><button class="btn ${w>0?"g ":""}s" data-a="adv" data-id="${o.id}" data-cw="${+o.cAcc+180000}"${w>0?" disabled":""}>${w>0?"Доставлено · "+mmss(w):"Доставлено"}</button>${rel}`}
 function homeC(){const mine=O.filter(o=>o.dv&&+o.st<4&&o.courier===U.uid).sort(byDt);
  const free=O.filter(o=>o.dv&&+o.st>=1&&+o.st<=3&&!o.courier).sort(byDt);
  const prep=O.filter(o=>o.dv&&+o.st>=1&&+o.st<3).sort(byDt);
- const cardC=o=>{const freeO=!o.courier&&+o.st<=3;return `<div class="card"><div class="row">${th(o.img)}<b style="flex:1">${esc(o.bn||"Заказ")}</b><span class="pill">${ST[+o.st]}</span></div>
+ const cardC=o=>{const freeO=!o.courier&&+o.st<=3;return `<div class="card"><div class="row">${th(o.img)}<b style="flex:1">${esc(o.bn||"Заказ")}</b><span class="pill">${stL(o)}</span></div>
  <div class="mut">${esc(o.client)} · ${esc(o.phone)}<br>${esc(o.date||"")} ${esc(o.time||"")}<br>${esc(addrFull(o)||o.addr||"")}</div>
  ${addrNote(o)?`<div class="cmt">📝 ${esc(addrNote(o))}</div>`:""}
- <div class="acts">${gisBtn(o.addr,addrNote(o))}${freeO?`<button class="btn s" data-a="cur_take" data-id="${o.id}">Взять доставку</button>`:""}${o.courier===U.uid&&+o.st===3?`<button class="btn s" data-a="adv" data-id="${o.id}">✓ Доставлено</button>`:""}<button class="btn g s" data-a="det" data-id="${o.id}">Подробнее</button></div></div>`};
+ <div class="acts">${gisBtn(o.addr,addrNote(o))}${curActs(o,freeO)}<button class="btn g s" data-a="det" data-id="${o.id}">Подробнее</button></div></div>`};
  return `<div style="position:relative">${flr("branch","deco")}<h1>Доставки</h1><p class="mut">${esc(S.name||"")} · ${myRL()}</p></div><div class="dg">${alerts()}${widgets()}</div>
  <h2>Мои</h2><div class="og">${mine.map(cardC).join("")||`<div class="card mut" style="text-align:center">Пока нет назначенных</div>`}</div>
  <h2>Свободные — можно взять</h2><div class="og">${free.map(cardC).join("")||`<div class="card mut" style="text-align:center">Свободных нет</div>`}</div>
@@ -431,13 +490,20 @@ function donut(p,f){const sum=p.reduce((a,x)=>a+x.v,0);if(!sum)return '<span cla
 function ring(p,l,c){p=Math.max(0,Math.min(100,Math.round(p)));const C=2*Math.PI*34;return `<div class="tile"><svg viewBox="0 0 84 84" role="img" aria-label="${esc(l)} ${p}%"><circle cx="42" cy="42" r="34" fill="none" style="stroke:var(--c2)" stroke-width="9"/><circle cx="42" cy="42" r="34" fill="none" style="stroke:${c||"var(--ac)"}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C*p/100} ${C}" transform="rotate(-90 42 42)"/><text x="42" y="47" text-anchor="middle" style="fill:var(--ink);font-size:16px;font-weight:700">${p}%</text></svg><span>${esc(l)}</span></div>`}
 function line(d,f){f=f||kf;const W=320,H=130,t=16,b=20,h=H-t-b,mx=Math.max(1,...d.map(x=>x.v)),st=W/(d.length-1||1),P=d.map((x,i)=>[i*st,t+h-x.v/mx*h]),pa=P.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
  return `<svg class="ch" viewBox="0 0 ${W} ${H}" role="img" aria-label="График"><path d="${pa} L${W} ${t+h} L0 ${t+h}Z" style="fill:var(--ac)" opacity=".16"/><path d="${pa}" fill="none" style="stroke:var(--ac)" stroke-width="2.5" stroke-linejoin="round"/>${d.map((x,i)=>i%2||!x.l?"":`<text x="${Math.min(W-10,Math.max(10,P[i][0]))}" y="${H-5}" text-anchor="middle">${esc(x.l)}</text>`).join("")}<circle cx="${P[P.length-1][0]}" cy="${P[P.length-1][1]}" r="4" style="fill:var(--ac)"/><text class="v" x="${W-4}" y="${Math.max(12,P[P.length-1][1]-8)}" text-anchor="end">${f(d[d.length-1].v)}</text></svg>`}
-function proof(id){let u="";modal(hd("Доставлено")+`<p class="mut">Сфотографируйте букет у получателя. Фото сразу уйдёт оператору, а заказ станет «Выдан».</p><input id="pf" type="file" accept="image/*" capture="environment"><img id="pp" alt="Фото" style="display:none;width:100%;border-radius:14px;margin-top:10px"><p id="ps" class="mut" style="text-align:center"></p><div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button><button class="btn" id="pk" style="display:none">Отправить ещё раз</button></div>`);
- const send=async()=>{await run(async()=>{$("ps").textContent="Отправляю…";await db.collection("orders").doc(id).update({st:4,proof:u,doneAt:Date.now(),updatedAt:TS(),statusBy:U.uid});log("Доставлено с фото",O.find(x=>x.id===id)||{});modal("");toast("Доставлено, фото отправлено оператору")});if($("pk")){$("ps").textContent="Не отправилось. Проверьте интернет и нажмите «Отправить ещё раз».";$("pk").style.display=""}};
- $("pf").onchange=e=>{const f=e.target.files[0];if(!f)return;$("ps").textContent="Обрабатываю фото…";const im=new Image();im.onload=()=>{const k=Math.min(1,640/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);u=c.toDataURL("image/jpeg",.6);$("pp").src=u;$("pp").style.display="block";send()};im.onerror=()=>{$("ps").textContent="Не удалось открыть фото, попробуйте ещё раз"};im.src=URL.createObjectURL(f)};
- $("pk").onclick=send}
+function proof(id){let u="",busy=0;
+ modal(hd("Доставлено")+`<p class="mut">Прикрепите фото у получателя или нажмите «Закрыть». В обоих случаях заказ получит статус «Доставлен».</p><input id="pf" type="file" accept="image/*" capture="environment"><img id="pp" alt="Фото" style="display:none;width:100%;border-radius:14px;margin-top:10px"><p id="ps" class="mut" style="text-align:center"></p><div class="acts"><button class="btn" type="button" id="pc">Закрыть</button><button class="btn g" id="pk" type="button" style="display:none">Отправить фото ещё раз</button></div>`);
+ const fin=async img=>{if(busy)return;busy=1;await run(async()=>{$("ps").textContent="Сохраняю…";const ref=db.collection("orders").doc(id),o0=O.find(x=>x.id===id)||{id};
+   const r=await db.runTransaction(async t=>{const s=await t.get(ref);if(!s.exists)return"gone";const d=s.data();if(+d.st===4)return"done";if(+d.st!==3)return"bad";
+    t.update(ref,{st:4,proof:img||"",doneAt:Date.now(),updatedAt:TS(),statusBy:U.uid});return"ok"});
+   if(r==="ok"){log(img?"Доставлено с фото":"Доставлено без фото",o0);modal("");toast(img?"Доставлено, фото отправлено оператору":"Заказ отмечен доставленным")}
+   else{modal("");toast(r==="done"?"Заказ уже отмечен доставленным":r==="gone"?"Заказ удалён":"Заказ ещё не в пути")}});
+  busy=0;if($("pk")&&img){$("ps").textContent="Не отправилось. Проверьте интернет: нажмите «Отправить фото ещё раз» или «Закрыть».";$("pk").style.display=""}else if($("ps")&&!img)$("ps").textContent="Не отправилось. Проверьте интернет и нажмите «Закрыть» ещё раз."};
+ $("pc").onclick=()=>fin("");
+ $("pf").onchange=e=>{const f=e.target.files[0];if(!f)return;$("ps").textContent="Обрабатываю фото…";const im=new Image();im.onload=()=>{const k=Math.min(1,640/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);u=c.toDataURL("image/jpeg",.6);$("pp").src=u;$("pp").style.display="block";fin(u)};im.onerror=()=>{$("ps").textContent="Не удалось открыть фото. Выберите другое или нажмите «Закрыть»."};im.src=URL.createObjectURL(f)};
+ $("pk").onclick=()=>fin(u)}
 function flr(n,c){const P={tulip:'<path d="M50 96V52M50 82C32 80 24 68 26 56C40 58 50 68 50 82M34 20C34 40 40 52 50 52C60 52 66 40 66 20L58 28L50 14L42 28Z"/>',branch:'<path d="M12 92C38 74 66 50 90 10M34 76C24 64 28 52 40 48C44 60 42 70 34 76M54 58C50 44 58 34 72 32C74 46 66 54 54 58M70 34C70 22 78 14 90 14C90 26 82 32 70 34M40 72C52 72 62 78 66 88C54 90 44 84 40 72"/>',bloom:[0,72,144,216,288].map(a=>`<ellipse cx="50" cy="30" rx="9" ry="18" transform="rotate(${a} 50 50)"/>`).join("")+'<circle cx="50" cy="50" r="4"/>'};
  return `<svg class="${c||"fl"}" viewBox="0 0 100 100" fill="none" stroke="var(--ac)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`}
-let PH=null;const th=s=>s?`<img class="th" src="${s}" alt="">`:"",
+let PH=null;const th=s=>s?`<img class="th" src="${s}" alt="" loading="lazy" decoding="async">`:"",
  imgz=f=>new Promise(r=>{const im=new Image();im.onload=()=>{const k=Math.min(1,480/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);r(c.toDataURL("image/jpeg",.7))};im.src=URL.createObjectURL(f)}),
  phF=v=>`<label>Фото</label>${v&&v.img?th(v.img):""}<input id="ph" type="file" accept="image/*">`,
  phB=()=>{PH=null;const p=$("ph");if(p)p.onchange=async e=>{const f=e.target.files[0];if(f)PH=await imgz(f)}};
@@ -603,6 +669,7 @@ pbHtml=()=>`<div class="chips" id="pb" style="margin:2px 0 0;align-items:center"
 pbU=()=>{tcPres()},
 beat=()=>{if(!U||!S||document.hidden)return;db.collection("presence").doc(U.uid).set({uid:U.uid,name:S.name||"",role:own()?"owner":S.role,loc:LOC||S.loc||"",ts:Date.now()}).catch(()=>{})};
 setInterval(beat,60000);setInterval(pbU,30000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)beat()});addEventListener("pagehide",()=>{if(U&&S)db.collection("presence").doc(U.uid).set({ts:0},{merge:true}).catch(()=>{})});
+setInterval(()=>document.querySelectorAll("button[data-cw]").forEach(b=>{const r=+b.dataset.cw-Date.now();if(r>0){b.textContent="Доставлено · "+mmss(r);b.disabled=true}else{b.textContent="Доставлено";b.disabled=false;b.classList.remove("g");b.removeAttribute("data-cw")}}),1000);
 setInterval(()=>document.querySelectorAll("button[data-w]").forEach(b=>{const r=+b.dataset.w-Date.now();if(r>0)b.textContent="Доставлено · "+mmss(r);else{b.textContent="Доставлено";b.classList.remove("g");b.removeAttribute("data-w")}}),1000);
 matchMedia("(min-width:900px)").addEventListener("change",()=>{if(S)draw()});
 document.addEventListener("focusin",e=>{const i=e.target;if(i.matches&&i.matches("input[type=number]")&&i.value==="0"){i.value="";i.dataset.z="1"}});
@@ -775,19 +842,19 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-a^="np_"]'
 
 /* ---------- Заказы: счётчик, кто принял, приёмка, переделка, фото клиенту ---------- */
 const ordCnt=()=>{const t=today(),m=t.slice(0,7),b=x=>`<b style="color:var(--ink)">${x}</b>`;return `<p class="mut" style="margin:6px 0">Всего заказов: ${b(O.length+(O.length>=300?"+":""))} · сегодня: ${b(O.filter(o=>o.date===t).length)} · в этом месяце: ${b(O.filter(o=>(o.date||"").startsWith(m)).length)}</p>`},
-whoLine=o=>{if(S.role==="courier")return"";const a=[];if(o.by)a.push("создал(а): "+nm(o.by));if(o.takenBy)a.push("принял(а): "+nm(o.takenBy));if(o.asm&&+o.st>=2)a.push("собрал(а): "+nm(o.asm));if(o.accBy)a.push("приёмка: "+nm(o.accBy));return a.length?`<div class="mut" style="font-size:13px;margin-top:4px">${a.map(esc).join(" · ")}</div>`:""},
+whoLine=o=>{if(S.role==="courier")return"";const a=[];if(o.by)a.push("создал(а): "+nm(o.by));if(o.takenBy)a.push("принял(а): "+nm(o.takenBy));if(o.asm&&+o.st>=2)a.push("собрал(а): "+nm(o.asm));if(o.accBy)a.push("приёмка: "+nm(o.accBy));if(o.dv&&o.courier&&+o.st<4)a.push("курьер: "+nm(o.courier)+(o.cAcc?", принял(а) в "+chTs(o.cAcc):", ещё не подтвердил(а)"));if(o.dv&&!o.courier&&o.cRelAt&&+o.st<4)a.push("курьер "+nm(o.cRelBy)+" отказался"+(o.cRelNote?": "+o.cRelNote:""));return a.length?`<div class="mut" style="font-size:13px;margin-top:4px">${a.map(esc).join(" · ")}</div>`:""},
 noteLine=o=>{if(S.role==="courier")return"";let h="";
  if(o.rv==="redo"&&+o.st===1)h+=`<div class="rdo">⚠ Нужно переделать${o.redoNote?": "+esc(o.redoNote):""}<br><small>${esc(nm(o.redoBy))} · ${chTs(o.redoAt)}</small></div>`;
  if(isAsmr()&&+o.st<3){if(o.comp)h+=`<div style="margin-top:6px;font-size:14px"><span class="mut">Состав:</span> ${esc(o.comp)}</div>`;if(o.note)h+=`<div style="font-size:14px"><span class="mut">Комментарий клиента:</span> ${esc(o.note)}</div>`}
  (o.cm||[]).filter(c=>c.k!=="redo").slice(-2).forEach(c=>{h+=`<div class="cmt"><b>${esc(c.byName||"")}:</b> ${esc(c.t)}</div>`});
- const t=[];if(o.needPhoto&&+o.st<2)t.push('<span class="pill">📷 нужно фото клиенту</span>');if(o.photoSent&&+o.st===2)t.push('<span class="pill ok">Фото отправлено клиенту</span>');if(+o.st===2&&o.rv==="wait")t.push('<span class="pill warn">Ждёт приёмки</span>');
+ const t=[];if(o.needPhoto&&+o.st<2)t.push('<span class="pill">📷 нужно фото клиенту</span>');if(o.photoSent&&+o.st===2)t.push('<span class="pill ok">Фото отправлено клиенту</span>');if(+o.st===2&&o.rv==="wait")t.push('<span class="pill warn">Ждёт приёмки</span>');if(+o.st===1&&xfPend(o))t.push(`<span class="pill warn">Ожидает подтверждения передачи · ${esc(nm(o.xfFrom))} → ${esc(nm(o.xfTo))}</span>`);
  return h+(t.length?`<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${t.join("")}</div>`:"")},
 waLink=o=>"https://wa.me/"+dg(o.phone)+"?text="+encodeURIComponent(photoText(o)),
 photoBase=()=>{const m=SH.photoMsg;return m&&!/^Здравствуйте/.test(m)?m:PHOTO_MSG},photoText=o=>photoBase().replace(/\{имя\}/g,o.client||"").replace(/\{букет\}/g,o.bn||"букет"),
 rvBtns=o=>{let h="";if(isOp()&&+o.st===2&&o.rv==="wait")h+=`<button class="btn s" data-a="rv_ok" data-id="${o.id}">Принять</button><button class="btn r s" data-a="rv_redo" data-id="${o.id}">На переделку</button>`;
- if(mgr()&&+o.st<4)h+=`<button class="btn g s" data-a="cm_add" data-id="${o.id}">Комментарий</button>`;return h},
+ if(mgr()&&+o.st<4)h+=`<button class="btn g s" data-a="cm_add" data-id="${o.id}">Комментарий</button>`;return h+xfBtn(o)},
 cmList=o=>(o.cm&&o.cm.length)?`<h2>Комментарии</h2><div class="card">${o.cm.slice().reverse().map((c,ri)=>`<div class="ln"><span>${esc(c.byName||"")}<br><span class="mut">${chTs(c.ts)}${c.k==="redo"?" · переделка":""}</span></span><span style="text-align:right">${esc(c.t)}${own()?`<br><a href="#" data-a="x_cmdel" data-id="${o.id}" data-i="${o.cm.length-1-ri}" style="color:var(--bad)">удалить</a>`:""}</span></div>`).join("")}</div>`:"",
-detRv=o=>chkBtn(o)+(isOp()&&+o.st===2&&o.rv==="wait"?`<button class="btn" data-a="rv_ok" data-id="${o.id}">Принять заказ</button><button class="btn r" data-a="rv_redo" data-id="${o.id}">Вернуть на переделку</button>`:"")+(mgr()&&+o.st<4?`<button class="btn g" data-a="cm_add" data-id="${o.id}">Комментарий</button>`:""),
+detRv=o=>chkBtn(o)+(isOp()&&+o.st===2&&o.rv==="wait"?`<button class="btn" data-a="rv_ok" data-id="${o.id}">Принять заказ</button><button class="btn r" data-a="rv_redo" data-id="${o.id}">Вернуть на переделку</button>`:"")+(mgr()&&+o.st<4?`<button class="btn g" data-a="cm_add" data-id="${o.id}">Комментарий</button>`:"")+xfBtn(o).replace("btn g s","btn g"),
 rvSec=()=>{if(!isOp())return"";const w=O.filter(o=>+o.st===2&&o.rv==="wait").sort(byDt),r=O.filter(o=>+o.st===1&&o.rv==="redo").sort(byDt);return(w.length?`<h2>На приёмке: ${w.length}</h2><div class="og">${w.map(card).join("")}</div>`:"")+(r.length?`<h2>На переделке у флориста: ${r.length}</h2><div class="og">${r.map(card).join("")}</div>`:"")};
 
 function homeFl(){const mine=O.filter(o=>+o.st===1),redo=mine.filter(o=>o.rv==="redo").sort(byMk),inw=mine.filter(o=>o.rv!=="redo").sort((a,b)=>(b.takenBy===U.uid)-(a.takenBy===U.uid)||byMk(a,b)),nw=O.filter(o=>+o.st===0).sort(byMk),wt=O.filter(o=>+o.st===2&&o.rv==="wait").length,
@@ -797,7 +864,12 @@ function homeFl(){const mine=O.filter(o=>+o.st===1),redo=mine.filter(o=>o.rv==="
  <div class="dg">${alerts()}${todayStaff()}</div>${sec("⚠ Нужно переделать",redo)}${sec("Собираются сейчас",inw)}${sec("Новые: принять на себя",nw)}
  ${redo.length||inw.length||nw.length?"":`<div class="card mut" style="text-align:center">${flr("tulip")}<br>Очередь пуста</div>`}${wt?`<p class="mut">На приёмке у оператора: ${wt}</p>`:""}`}
 
-async function takeOrder(o){await db.collection("orders").doc(o.id).update({st:1,updatedAt:TS(),statusBy:U.uid,takenBy:U.uid,takenAt:Date.now()});log("Принял(а) в работу",o)}
+async function takeOrder(o){const ref=db.collection("orders").doc(o.id);
+ const r=await db.runTransaction(async t=>{const s=await t.get(ref);if(!s.exists)return{k:"gone"};const d=s.data();
+  if(+d.st!==0)return{k:d.takenBy&&d.takenBy!==U.uid?"other":"moved",by:d.takenBy};
+  t.update(ref,{st:1,updatedAt:TS(),statusBy:U.uid,takenBy:U.uid,takenAt:Date.now()});return{k:"ok"}});
+ if(r.k==="ok"){log("Принял(а) в работу",o);toast("Заказ взят в работу");return}
+ toast(r.k==="gone"?"Заказ удалён":r.k==="other"?"Этот заказ уже взял(а) "+nm(r.by):"Заказ уже в работе")}
 const imgBig=f=>new Promise(r=>{const im=new Image();im.onload=()=>{const k=Math.min(1,720/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);r(c.toDataURL("image/jpeg",.72))};im.src=URL.createObjectURL(f)});
 async function finishReady(o,img){const op=isDirect(),rv=FX("rvOn")&&!op?"wait":"ok";
  await db.collection("orders").doc(o.id).update({st:2,updatedAt:TS(),statusBy:U.uid,asm:U.uid,readyAt:Date.now(),rv,...(op?{accBy:U.uid,accAt:Date.now()}:{}),...(img?{rimg:img}:{})});
@@ -827,12 +899,85 @@ function cmForm(o){modal(hd("Комментарий к заказу")+`<p class=
  $("cmf").onsubmit=e=>{e.preventDefault();const t=new FormData($("cmf")).get("t").toString().trim();if(!t)return;
   run(async()=>{const ts=Date.now();await db.collection("orders").doc(o.id).update({cm:fvUn({k:"note",t,by:U.uid,byName:S.name||"",ts}),cmAt:ts,cmBy:U.uid,updatedAt:TS()});log("Комментарий к заказу",o,t);modal("");toast("Комментарий добавлен")})}}
 
+/* ---------- Флорист: подтверждение «Начать сборку» и передача заказа с двойным подтверждением ---------- */
+const XF_MS=60000,
+xfNum=o=>String(o.id).slice(-5).toUpperCase(),
+xfPend=o=>!!o&&o.xfSt==="wait"&&!!o.xfTo&&Date.now()-(+o.xfAt||0)<XF_MS,
+xfLeft=o=>Math.max(0,(+o.xfAt||0)+XF_MS-Date.now()),
+xfMine=o=>!!U&&!!o&&+o.st===1&&o.takenBy===U.uid&&isFl(),
+xfBtn=o=>xfMine(o)&&!xfPend(o)?`<button class="btn g s" data-a="xf_start" data-id="${o.id}">Передать заказ</button>`:"",
+xfWho=()=>Object.keys(SF).filter(id=>id!==U.uid&&SF[id]&&SF[id].active===true&&["florist","assistant"].includes(SF[id].role)&&!isOwnId(id)).sort((a,b)=>nm(a).localeCompare(nm(b)));
+function takeConfirm(o){
+ modal(hd(esc(o.bn||"Заказ"))+`<p style="font-size:17px">Точно берешь этот заказ?</p><div class="acts"><button class="btn g" type="button" id="tcn">Отмена</button><button class="btn" type="button" id="tcy">Да</button></div>`);
+ $("tcn").onclick=()=>modal("");
+ $("tcy").onclick=()=>{$("tcy").disabled=true;modal("");run(()=>takeOrder(o))}}
+async function xfSend(o,to){const ref=db.collection("orders").doc(o.id);
+ const r=await db.runTransaction(async t=>{const sn=await t.get(ref);if(!sn.exists)return"gone";const d=sn.data();
+  if(+d.st!==1||d.takenBy!==U.uid)return"moved";if(xfPend(d))return"busy";
+  t.update(ref,{xfSt:"wait",xfTo:to,xfFrom:U.uid,xfAt:Date.now(),updatedAt:TS(),statusBy:U.uid});return"ok"});
+ modal("");
+ if(r==="ok"){log("Передача заказа флористу",o,"→ "+nm(to));toast("Ждём подтверждения: "+nm(to))}
+ else toast(r==="gone"?"Заказ удалён":r==="busy"?"Ожидает подтверждения передачи":"Заказ уже изменился")}
+async function xfAnswer(o,yes){const ref=db.collection("orders").doc(o.id);
+ const r=await db.runTransaction(async t=>{const sn=await t.get(ref);if(!sn.exists)return{k:"gone"};const d=sn.data(),now=Date.now();
+  if(d.xfSt!=="wait"||d.xfTo!==U.uid||+d.st!==1)return{k:"moved",by:d.takenBy};
+  const base={xfSt:"",xfTo:"",xfFrom:"",xfAt:0,xfResAt:now,xfResFrom:d.xfFrom,xfResTo:U.uid,updatedAt:TS(),statusBy:U.uid};
+  if(now-(+d.xfAt||0)>=XF_MS+5000){t.update(ref,{...base,xfRes:"to"});return{k:"late",from:d.xfFrom}}
+  if(!yes){t.update(ref,{...base,xfRes:"no"});return{k:"no"}}
+  t.update(ref,{...base,xfRes:"ok",takenBy:U.uid,takenAt:now});return{k:"ok",from:d.xfFrom}});
+ modal("");
+ if(r.k==="ok"){log("Принял(а) заказ от флориста",o,"от "+nm(r.from));toast("Заказ №"+xfNum(o)+" теперь твой")}
+ else if(r.k==="no"){log("Отказался(ась) от передачи",o);toast("Передача отменена")}
+ else if(r.k==="late")toast("Время вышло, заказ вернулся к "+nm(r.from));
+ else toast(r.k==="gone"?"Заказ удалён":"Заказ уже изменился")}
+const xfBusy=new Set();
+async function xfExpire(o){if(xfBusy.has(o.id+o.xfAt))return;xfBusy.add(o.id+o.xfAt);try{await db.runTransaction(async t=>{const ref=db.collection("orders").doc(o.id),sn=await t.get(ref);if(!sn.exists)return;const d=sn.data();
+  if(d.xfSt!=="wait"||Date.now()-(+d.xfAt||0)<XF_MS)return;
+  t.update(ref,{xfSt:"",xfTo:"",xfFrom:"",xfAt:0,xfRes:"to",xfResAt:Date.now(),xfResFrom:d.xfFrom,xfResTo:d.xfTo,updatedAt:TS(),statusBy:U.uid})})}catch(e){}}
+function xfPrompt(o){
+ modal(hd("Передача заказа")+`<div id="xfq"><p style="font-size:17px">${esc(nm(o.xfFrom))} передает тебе заказ №${esc(xfNum(o))}. Примешь?</p><p class="mut">«${esc(o.bn||"Заказ")}» · <b id="xfc"></b></p></div><div class="acts"><button class="btn g" type="button" id="xfn">Отмена</button><button class="btn" type="button" id="xfy">Да</button></div>`);
+ const go=y=>{$("xfy").disabled=$("xfn").disabled=true;run(()=>xfAnswer(o,y))};
+ $("xfy").onclick=()=>go(true);$("xfn").onclick=()=>go(false);xfTick()}
+let xfKey="";
+function xfTick(){if(!U||!S)return;
+ const c=$("xfc");if(c){const o=O.find(x=>x.id===xfKeyId());c.textContent=o?mmss(xfLeft(o)):""}
+ if(!isFl())return;
+ const o=O.find(x=>xfPend(x)&&x.xfTo===U.uid&&+x.st===1);
+ if(!o){if(xfKey){xfKey="";if($("xfq"))modal("")}}
+ else if(xfKey!==o.id+"|"+o.xfAt&&!$("m").innerHTML){xfKey=o.id+"|"+o.xfAt;xfPrompt(o)}
+ const old=O.filter(x=>x.xfSt==="wait"&&!xfPend(x)&&(x.xfFrom===U.uid||x.xfTo===U.uid||adm()));
+ if(old.length){old.forEach(xfExpire);dq()}}
+const xfKeyId=()=>xfKey.split("|")[0];
+setInterval(xfTick,1000);
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="xf_start"],[data-a="xf_to"]');if(!b||!S)return;e.stopImmediatePropagation();
+ const o=O.find(x=>x.id===b.dataset.id);if(!o)return toast("Заказ не найден");
+ if(b.dataset.a==="xf_start"){if(!xfMine(o))return toast("Заказ уже изменился");if(xfPend(o))return toast("Ожидает подтверждения передачи");
+  const l=xfWho();
+  modal(hd("Кому передать заказ?")+`<p class="mut">«${esc(o.bn||"Заказ")}»</p>${l.length?`<div class="acts" style="flex-direction:column">${l.map(id=>`<button class="btn g" type="button" data-a="xf_to" data-id="${o.id}" data-u="${id}">${esc(nm(id))}</button>`).join("")}</div>`:'<div class="card mut">Нет других флористов для передачи</div>'}<div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button></div>`);return}
+ const to=b.dataset.u;if(!to||!xfWho().includes(to))return toast("Заказ уже изменился");run(()=>xfSend(o,to))},true);
+
 /* перехватываем «Начать сборку» и «Готов» раньше основного обработчика */
-document.addEventListener("click",e=>{const b=e.target.closest('[data-a="cur_take"]');if(!b||!S||S.role!=="courier")return;
- const o=O.find(x=>x.id===b.dataset.id);if(!o||o.courier)return toast("Уже занято");
- run(async()=>{const st=+o.st>=3?3:Math.max(+o.st,2);await db.collection("orders").doc(o.id).update({courier:U.uid,st,updatedAt:TS(),statusBy:U.uid,...(st===3&&!o.shipAt?{shipAt:Date.now()}:{})});log("Курьер взял доставку",o);toast("Доставка ваша")})},true);
+/* курьер: взять свободную доставку, подтвердить назначенную, отказаться */
+const cwait=o=>o.cAcc?Math.max(0,+o.cAcc+180000-Date.now()):0;
+function curRelForm(o){modal(hd("Отказаться от доставки")+`<p class="mut">«${esc(o.bn||"")}». Заказ вернётся в список свободных, оператор получит уведомление.${+o.st===3?" Букет уже передан вам: верните его флористу.":""}</p><form id="crf"><label>Причина (по желанию)</label><textarea name="t" placeholder="Например: не успею к сроку"></textarea><div class="acts"><button class="btn g" type="button" data-a="x">Назад</button><button class="btn r">Отказаться от доставки</button></div></form>`);
+ $("crf").onsubmit=e=>{e.preventDefault();const tx=new FormData($("crf")).get("t").toString().trim();
+  run(async()=>{const ref=db.collection("orders").doc(o.id);
+   const r=await db.runTransaction(async t=>{const s=await t.get(ref);if(!s.exists)return"gone";const d=s.data();if(d.courier!==U.uid||+d.st>3)return"moved";
+    t.update(ref,{courier:"",cAcc:0,cBy:"",cRelAt:Date.now(),cRelBy:U.uid,cRelNote:tx,updatedAt:TS(),statusBy:U.uid});return"ok"});
+   modal("");if(r==="ok"){log("Курьер отказался от доставки",o,tx);toast("Вы отказались от доставки")}else toast("Заказ уже изменился")})}}
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="cur_take"],[data-a="cur_acc"],[data-a="cur_rel"]');if(!b||!S||S.role!=="courier")return;
+ e.stopImmediatePropagation();const a=b.dataset.a,o=O.find(x=>x.id===b.dataset.id);if(!o)return toast("Заказ не найден");
+ if(a==="cur_rel"){if(o.courier!==U.uid)return toast("Это не ваша доставка");return curRelForm(o)}
+ if(a==="cur_take"&&!confirm("Взять эту доставку в работу?"))return;
+ run(async()=>{const ref=db.collection("orders").doc(o.id);
+  const r=await db.runTransaction(async t=>{const s=await t.get(ref);if(!s.exists)return"gone";const d=s.data();
+   if(a==="cur_take"){if(d.courier||+d.st>3)return"busy";t.update(ref,{courier:U.uid,cAcc:Date.now(),cBy:U.uid,updatedAt:TS(),statusBy:U.uid,...(+d.st===3&&!d.shipAt?{shipAt:Date.now()}:{})});return"ok"}
+   if(d.courier!==U.uid||+d.st>3)return"busy";if(d.cAcc)return"already";
+   t.update(ref,{cAcc:Date.now(),cBy:U.uid,updatedAt:TS(),statusBy:U.uid});return"ok"});
+  if(r==="ok"){log(a==="cur_take"?"Курьер взял доставку":"Курьер принял доставку в работу",o);toast("Принято. Кнопка «Доставлено» станет активной через 3 минуты")}
+  else toast(r==="busy"?"Уже занято или изменено":r==="already"?"Вы уже приняли этот заказ":"Заказ удалён")})},true);
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="adv"]');if(!b||!S||S.role==="courier")return;const o=O.find(x=>x.id===b.dataset.id);if(!o)return;const n=next(o);if(!n||(n[0]!==1&&n[0]!==2))return;
- e.stopImmediatePropagation();if(n[0]===1)run(()=>takeOrder(o));else readyFlow(o)},true);
+ e.stopImmediatePropagation();if(n[0]===1)takeConfirm(o);else if(xfPend(o))toast("Ожидает подтверждения передачи");else readyFlow(o)},true);
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a^="rv_"],[data-a^="cm_"],[data-a="unpay"]');if(!b||!S)return;const a=b.dataset.a,o=O.find(x=>x.id===b.dataset.id);if(!o)return;
  if(a==="rv_ok"&&isOp()&&!isDirect()&&o.asm===U.uid)toast("Свой заказ принимает другой сотрудник");else if(a==="rv_ok"&&isOp())run(async()=>{await db.collection("orders").doc(o.id).update({rv:"ok",accBy:U.uid,accAt:Date.now(),updatedAt:TS()});log("Заказ принят (приёмка)",o);modal("");toast("Заказ принят")});
  else if(a==="rv_redo"&&isOp())redoForm(o);else if(a==="cm_add"&&mgr())cmForm(o);
@@ -846,7 +991,10 @@ function ordDiff(nw){const first=!ORD0;ORD0=true;if(first)return;const mp={};O.f
   if(n.redoAt&&n.redoAt!==p.redoAt&&n.redoBy!==me&&((isAsmr()&&(!n.takenBy||n.takenBy===me))||adm()))nf({type:"redo",title:"Нужно переделать",body:bn+(n.redoNote?": "+n.redoNote:""),tag:"r"+n.id,go});
   if(n.cmAt&&n.cmAt!==p.cmAt&&n.cmBy!==me&&mgr()){const l=(n.cm||[]).slice(-1)[0]||{};nf({type:"cm",title:"Комментарий · "+(l.byName||""),body:bn+": "+(l.t||""),tag:"c"+n.id,go})}
   if(p.rv!=="wait"&&n.rv==="wait"&&isOp()&&n.asm!==me)nf({type:"rv",title:"Готово к приёмке",body:bn+" · собрал(а) "+nm(n.asm),tag:"v"+n.id,go});
-  if(!p.paid&&n.paid&&n.paidBy!==me&&(own()||adm()))nf({type:"pay",title:"Оплата получена",body:bn+" · "+M((+n.p||0)+(+n.fee||0)),tag:"p"+n.id,go});
+  if(p.courier&&!n.courier&&n.cRelAt&&n.cRelAt!==p.cRelAt&&n.cRelBy!==me&&mgr())nf({type:"ord",title:"Курьер отказался от доставки",body:bn+(n.cRelNote?": "+n.cRelNote:""),tag:"cr"+n.id,go});
+   if(n.xfSt==="wait"&&p.xfSt!=="wait"&&n.xfTo===me)nf({type:"ord",title:"Передача заказа",body:nm(n.xfFrom)+" передает тебе: "+bn,tag:"xf"+n.id,go});
+   if(n.xfResAt&&n.xfResAt!==p.xfResAt&&n.xfResFrom===me&&n.xfResTo!==me)nf({type:"ord",title:n.xfRes==="ok"?"Передача принята":n.xfRes==="no"?"Передача отклонена":"Время вышло",body:bn+(n.xfRes==="ok"?" · теперь у "+nm(n.xfResTo):" · заказ снова у тебя"),tag:"xr"+n.id,go});
+   if(!p.paid&&n.paid&&n.paidBy!==me&&(own()||adm()))nf({type:"pay",title:"Оплата получена",body:bn+" · "+M((+n.p||0)+(+n.fee||0)),tag:"p"+n.id,go});
   if(+p.st!==4&&+n.st===4&&n.proof&&n.statusBy!==me&&mgr())nf({type:"ord",title:"Заказ доставлен",body:bn+" · фото получено",tag:"d"+n.id,go})})}
 
 /* ---------- Командный чат и кто на сайте ---------- */
@@ -879,7 +1027,7 @@ function fxCard(){return `<h2>Возможности</h2><form id="fxf" class="c
 document.addEventListener("submit",e=>{if(e.target.id!=="fxf"||!S||!own())return;e.preventDefault();const f=new FormData(e.target),fx={};Object.keys(FXD).forEach(k=>fx[k]=f.get(k)==="on");
  run(async()=>{await db.collection("settings").doc("main").set({fx,photoMsg:(f.get("photoMsg")||"").toString().trim()||PHOTO_MSG,updatedAt:TS()},{merge:true});const was=Object.assign({},FXD,SH.fx||{}),on=[],off=[];Object.keys(FXD).forEach(k=>{if(!!was[k]!==fx[k])(fx[k]?on:off).push(FXL[k].split(":")[0].split(" (")[0])});log("Изменены возможности",{bn:"",x:(on.length?"включено: "+on.join(", "):"")+(off.length?(on.length?"; ":"")+"выключено: "+off.join(", "):"")});toast(on.length||off.length?"Сохранено."+(on.length?" Включено: "+on.join(", ")+".":"")+(off.length?" Выключено: "+off.join(", ")+".":""):"Сохранено, переключатели не менялись (изменён только текст сообщения)")})});
 
-function curV(){const q=O.filter(o=>o.dv&&+o.st>=1&&+o.st<4).sort(byDt);return `<h1>Курьер</h1><p class="mut">Окно доставщика для администратора</p><div class="og">${q.map(o=>`<div class="card"><div class="row">${th(o.img)}<b style="flex:1">${esc(o.bn||"Заказ")}</b><span class="pill">${ST[+o.st]}</span></div><div class="mut">${esc(o.client)} · ${esc(o.phone)}<br>${esc(o.date||"")} ${esc(o.time||"")} · ${esc(addrFull(o)||o.addr)} · ${o.courier?esc(nm(o.courier)):"свободен"}</div><div class="acts">${gisBtn(o.addr,addrNote(o))}${+o.st===2?`<button class="btn s" data-a="adv" data-id="${o.id}">Передать курьеру</button>`:""}${+o.st===3?`<button class="btn s" data-a="cur_done" data-id="${o.id}">✓ Доставлено (фото)</button>`:""}<button class="btn g s" data-a="det" data-id="${o.id}">Подробнее</button></div></div>`).join("")||'<div class="card mut" style="text-align:center">Доставок нет</div>'}</div>`}
+function curV(){const q=O.filter(o=>o.dv&&+o.st>=1&&+o.st<4).sort(byDt);return `<h1>Курьер</h1><p class="mut">Окно доставщика для администратора</p><div class="og">${q.map(o=>`<div class="card"><div class="row">${th(o.img)}<b style="flex:1">${esc(o.bn||"Заказ")}</b><span class="pill">${stL(o)}</span></div><div class="mut">${esc(o.client)} · ${esc(o.phone)}<br>${esc(o.date||"")} ${esc(o.time||"")} · ${esc(addrFull(o)||o.addr)} · ${o.courier?esc(nm(o.courier)):"свободен"}</div><div class="acts">${gisBtn(o.addr,addrNote(o))}${+o.st===2?`<button class="btn s" data-a="adv" data-id="${o.id}">Передать курьеру</button>`:""}${+o.st===3?`<button class="btn s" data-a="cur_done" data-id="${o.id}">Доставлено</button>`:""}<button class="btn g s" data-a="det" data-id="${o.id}">Подробнее</button></div></div>`).join("")||'<div class="card mut" style="text-align:center">Доставок нет</div>'}</div>`}
 function tplV(){const a=TPL(),ed=canTpl();return `<h1>Шаблоны</h1><p class="mut">Быстрые ответы для чатов: коротко и со смайликами.${ed?"":" Редактируют все, кроме флориста и помощника флориста."}</p>${ed?'<div class="acts"><button class="btn" data-a="tp_add">Шаблон</button><button class="btn g" data-a="tp_def">Стандартные</button></div>':""}<div class="og">${a.map((t,i)=>`<div class="card"><b>${esc(t.n)}</b><div style="margin:6px 0;white-space:pre-wrap">${esc(t.t)}</div>${ed?`<div class="acts"><button class="btn g s" data-a="tp_ed" data-id="${i}">Изменить</button><button class="btn r s" data-a="tp_del" data-id="${i}">Удалить</button></div>`:""}</div>`).join("")}</div>`}
 const tpSave=a=>run(async()=>{await db.collection("settings").doc("main").set({tpls:a,updatedAt:TS()},{merge:true});toast("Сохранено")});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b||!S)return;const a=b.dataset.a,id=b.dataset.id;
