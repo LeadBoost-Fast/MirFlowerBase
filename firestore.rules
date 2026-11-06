@@ -48,11 +48,39 @@ service cloud.firestore {
       allow write: if isActive() && request.auth.uid == uid;
     }
 
+    // Заказы: кто что отметил. Записывать можно только себя: оплату (paidBy), приёмку (accBy), сборку (asm),
+    // взятие в работу (takenBy). «Готов» на заказе, который взял другой флорист, и приёмку своего же заказа
+    // отмечают только админ и владельцы (то же проверяет сайт). Пустая строка — сброс при переделке.
+    function setsSelfOrEmpty(d, k, f) {
+      return !k.hasAny([f]) || d.get(f, '') == '' || d.get(f, '') == request.auth.uid;
+    }
+    function orderMarksOk() {
+      let d = request.resource.data;
+      let r = resource.data;
+      let k = d.diff(r).affectedKeys();
+      let boss = isAdmin() || isOwner();
+      return setsSelfOrEmpty(d, k, 'paidBy')
+        && setsSelfOrEmpty(d, k, 'accBy')
+        && setsSelfOrEmpty(d, k, 'asm')
+        // взять в работу: свободный/новый заказ или передача, адресованная мне
+        && (!k.hasAny(['takenBy']) || boss
+            || (d.takenBy == request.auth.uid
+                && (r.get('st', 0) == 0 || r.get('takenBy', '') == '' || r.get('xfTo', '') == request.auth.uid)))
+        // «Готов» (asm = я) на заказе другого флориста
+        && (!k.hasAny(['asm']) || d.get('asm', '') == '' || boss
+            || r.get('takenBy', '') == '' || r.get('takenBy', '') == request.auth.uid)
+        // приёмка своего заказа (rv: wait → ok)
+        && (!(k.hasAny(['rv']) && d.get('rv', '') == 'ok' && r.get('rv', '') == 'wait') || boss
+            || r.get('asm', '') != request.auth.uid);
+    }
+
     match /orders/{id} {
       // Курьер читает заказы (в интерфейсе показываем только доставки: свои и свободные)
       allow read: if isWork() || isCourier();
-      allow create: if isMgr() && (request.resource.data.get('paid', false) != true || isOpRole());
-      allow update: if (isWork()
+      allow create: if isMgr() && (request.resource.data.get('paid', false) != true || isOpRole())
+        && request.resource.data.get('by', request.auth.uid) == request.auth.uid
+        && request.resource.data.get('paidBy', request.auth.uid) == request.auth.uid;
+      allow update: if (isWork() && orderMarksOk()
           && (isOpRole() || !request.resource.data.diff(resource.data).affectedKeys()
                .hasAny(['paid','paidAt','paidBy','accBy','accAt','redoN','redoAt','redoBy','redoNote']))) ||
         // Курьер отмечает доставку с фото
