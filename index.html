@@ -173,8 +173,8 @@ if(LANG==="kk"){document.documentElement.lang="kk";
  const _cf=window.confirm.bind(window),_al=window.alert.bind(window);window.confirm=x=>_cf(t(x));window.alert=x=>_al(t(x))}
 const langCard=()=>`<h2>Язык</h2><div class="card"><div class="row" style="gap:8px"><button class="btn ${LANG==="ru"?"":"g"}" data-a="lang_ru" style="flex:1">Русский</button><button class="btn ${LANG==="kk"?"":"g"}" data-a="lang_kk" style="flex:1">Қазақша</button></div></div>`;
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="lang_ru"],[data-a="lang_kk"]');if(!b)return;e.stopImmediatePropagation();const l=b.dataset.a==="lang_kk"?"kk":"ru";if(l!==LANG)setLang(l)},true);
-const ERR={"auth/invalid-credential":"Неверный email или пароль","auth/too-many-requests":"Слишком много попыток, подождите","auth/network-request-failed":"Нет интернета","auth/invalid-email":"Некорректный email","auth/user-disabled":"Учётная запись отключена","auth/email-already-in-use":"Этот email уже занят. Удалённого сотрудника нужно убрать и в Firebase → Authentication, либо взять другой email","auth/weak-password":"Пароль короче 6 символов","permission-denied":"Недостаточно прав","unavailable":"Нет интернета. Подождите 20 сек.","deadline-exceeded":"Нет интернета. Подождите 20 сек."};
-const er=e=>ERR[e.code]||("Ошибка: "+(e.code||e.message));
+const ERR={"auth/invalid-credential":"Неверный email или пароль","auth/too-many-requests":"Слишком много попыток, подождите","auth/network-request-failed":"Нет интернета","auth/invalid-email":"Некорректный email","auth/user-disabled":"Учётная запись отключена","auth/email-already-in-use":"Этот email уже занят. Удалённого сотрудника нужно убрать и в Firebase → Authentication, либо взять другой email","auth/weak-password":"Пароль короче 6 символов","permission-denied":"Недостаточно прав","messaging/failed-service-worker-registration":"Не удалось подключить уведомления. Обновите страницу и повторите","messaging/permission-blocked":"Уведомления заблокированы в браузере","unavailable":"Нет интернета. Подождите 20 сек.","deadline-exceeded":"Нет интернета. Подождите 20 сек."};
+const er=e=>ERR[e.code]||(/INTERNAL ASSERTION/i.test(String(e.message||""))?"Сбой связи с базой. Нажмите ещё раз":"Ошибка: "+(e.code||e.message));
 async function log(act,o,x){try{await db.collection("activityLogs").add({act,oid:o.id||"",name:o.bn||"",by:U.uid,byName:S.name||"",x:x||(o.client?o.client+(o.p!=null?" · "+M((+o.p||0)+(+o.fee||0)):""):""),loc:LOC||(S&&S.loc)||"main",ts:TS()})}catch(e){}}
 async function run(fn){if(lock&&Date.now()-lock<20000){toast("Подождите, предыдущее действие ещё выполняется…");return}if(navigator.onLine===false){toast("Нет интернета. Подождите 20 сек.");return}lock=Date.now();try{await fn()}catch(e){toast(er(e))}finally{lock=0}}
 
@@ -297,8 +297,16 @@ async function detail(id){const o=O.find(x=>x.id===id);if(!o)return;let h="";
 
 function bind(){const sf=$("sf");if(sf)sf.onsubmit=saveSet;const q=$("q");if(q)q.oninput=()=>{fq=q.value;const p=q.selectionStart;draw();const n=$("q");n.focus();n.setSelectionRange(p,p)};
  const t=$("tf");if(t)t.onsubmit=e=>{e.preventDefault();const f=new FormData(t),g=k=>f.get(k).toString().trim();
-  run(async()=>{const sec=firebase.initializeApp(cfg,"sec"+Date.now());try{const c=await sec.auth().createUserWithEmailAndPassword(g("email"),g("pass"));
-   await db.collection("staff").doc(c.user.uid).set({name:g("name"),email:g("email"),role:g("role"),loc:g("loc"),active:true,createdAt:TS()});await sec.auth().signOut();t.reset();log("Сотрудник создан",{bn:g("name")},RL[g("role")]);toast("Сотрудник создан")}finally{await sec.delete()}})}}
+  run(async()=>{const em=g("email"),pw=g("pass"),sec=firebase.initializeApp(cfg,"sec"+Date.now());try{let c;
+   try{c=await sec.auth().createUserWithEmailAndPassword(em,pw)}
+   catch(e){if(e.code!=="auth/email-already-in-use")throw e;
+    /* аккаунт мог создаться при прошлой неудачной попытке (без профиля): входим тем же паролем и достраиваем профиль */
+    try{c=await sec.auth().signInWithEmailAndPassword(em,pw)}catch(x){throw e}
+    const ex=await db.collection("staff").doc(c.user.uid).get();if(ex.exists){toast("Этот сотрудник уже создан, он есть в списке");return}}
+   const prof={name:g("name"),email:em,role:g("role"),loc:g("loc"),active:true,createdAt:TS()};let last=null;
+   for(let i=0;i<3;i++){try{await db.collection("staff").doc(c.user.uid).set(prof);last=null;break}catch(e){last=e;await new Promise(r=>setTimeout(r,700*(i+1)))}}
+   if(last)throw last;
+   try{await sec.auth().signOut()}catch(e){}t.reset();log("Сотрудник создан",{bn:g("name")},RL[g("role")]);toast("Сотрудник создан")}finally{try{await sec.delete()}catch(e){}}})}}
 
 document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b||!S)return;const a=b.dataset.a,id=b.dataset.id,o=O.find(x=>x.id===id);
  if(a==="new")form();else if(a==="x")modal("");else if(a==="det")detail(id);else if(a==="edit"&&(adm()||+o.st<4))form(o);else if(a==="rep"){const c={...o};delete c.id;delete c.pub;delete c.pubKey;delete c.mk;c.st=0;c.paid=false;c.pre=0;form(c)}
@@ -1046,7 +1054,12 @@ function chkForm(o){modal(hd("Чек")+`<p class="mut">Оплата наличн
   run(async()=>{await db.collection("orders").doc(o.id).update({chk:u,chkBy:U.uid,chkAt:Date.now(),updatedAt:TS()});log("Добавлен чек",o);modal("");toast("Чек сохранён")})}}
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="chk_add"]');if(!b||!S)return;const o=O.find(x=>x.id===b.dataset.id);if(o&&chkOk(o))chkForm(o)});
 
-const FNC=n=>firebase.functions().httpsCallable(n);
+/* Cloud Functions SDK сам просит у messaging токен и регистрирует /firebase-messaging-sw.js в КОРНЕ домена; на GitHub Pages (папка репозитория) это падает.
+   Подсказываем messaging правильный (относительный) сервис-воркер и повторяем вызов. */
+let swOk=null;
+function swFix(){if(!swOk)swOk=(async()=>{try{if(!("serviceWorker"in navigator))return;const reg=await navigator.serviceWorker.register("firebase-messaging-sw.js");await navigator.serviceWorker.ready;try{firebase.messaging().useServiceWorker(reg)}catch(e){}}catch(e){}})();return swOk}
+const FNC=n=>async d=>{const call=()=>firebase.functions().httpsCallable(n)(d);try{return await call()}catch(e){if(!/^messaging\//.test(String(e&&e.code||"")))throw e;await swFix();return await call()}};
+try{if(Notification.permission==="granted")swFix()}catch(e){}
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="tpw"]');if(!b||!S||!adm())return;const id=b.dataset.id;if(!canMng(id)||!SF[id])return toast("Этому сотруднику пароль менять нельзя");
  modal(hd("Пароль: "+esc(SF[id].name||""))+`<p class="mut">${esc(SF[id].email||"")}. Новый пароль сразу заменит старый в Firebase Authentication (минимум 6 символов). В базе пароли не хранятся.</p><label>Новый пароль</label><input id="npw" type="text" autocomplete="off" minlength="6"><div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button><button class="btn g" type="button" id="npm">Письмо для сброса</button><button class="btn" type="button" id="npk">Сменить</button></div>`);
  $("npk").onclick=()=>{const p=$("npw").value;if(p.length<6)return toast("Пароль короче 6 символов");run(async()=>{await FNC("setStaffPassword")({uid:id,password:p});log("Пароль сотрудника изменён",{bn:SF[id].name});modal("");toast("Пароль изменён")})};
