@@ -203,7 +203,11 @@ const FNR="asia-southeast1";
   if(!x.dateStyle&&!x.timeStyle){const hd=D.some(n=>x[n]!==undefined),ht=T.some(n=>x[n]!==undefined);let need=true;if(req!=="time"&&hd)need=false;if(req!=="date"&&ht)need=false;
    if(need){if(def==="date"||def==="all"){x.year="numeric";x.month="numeric";x.day="numeric"}if(def==="time"||def==="all"){x.hour="numeric";x.minute="numeric";x.second="numeric"}}}
   f=new Intl.DateTimeFormat(loc,x);if(C.size<200)C.set(k,f);return f};
- const wrap=(name,req,def)=>{const o0=P[name];P[name]=function(loc,o){try{if(isNaN(this.getTime()))return o0.call(this,loc,o);return fmt(loc,o,req,def).format(this)}catch(e){return o0.call(this,loc,o)}}};
+ const p2=n=>n<10?"0"+n:""+n;
+ const wrap=(name,req,def)=>{const o0=P[name];P[name]=function(loc,o){try{if(isNaN(this.getTime()))return o0.call(this,loc,o);
+  /* «2026-11-07» (sv-SE без параметров) — так сайт хранит даты; собираем по цифрам, без Intl: на «Главной» таких вызовов тысячи */
+  if(loc==="sv-SE"&&o===undefined&&req==="date"){const y=this.getFullYear();if(y>=1000&&y<=9999)return y+"-"+p2(this.getMonth()+1)+"-"+p2(this.getDate())}
+  return fmt(loc,o,req,def).format(this)}catch(e){return o0.call(this,loc,o)}}};
  try{wrap("toLocaleDateString","date","date");wrap("toLocaleTimeString","time","time");wrap("toLocaleString","any","all")}catch(e){}})();
 /* Скорость: вместо полной замены innerHTML сравниваем новую разметку с текущей и меняем только отличия.
    Обработчики кликов висят на document (data-a), поэтому узлы можно переиспользовать. Фокус, прокрутка и набранный текст сохраняются. */
