@@ -51,6 +51,7 @@ main{max-width:1180px;padding:26px 36px}h1{font-size:34px}.tiles{grid-template-c
 .nb{position:absolute;top:2px;right:8px;min-width:17px;padding:2px 5px;border-radius:99px;background:var(--bad);color:#fff;font-size:10px;font-weight:700}nav button{position:relative}
 @media(max-width:899px){.chw.open .chl{display:none}.chw:not(.open) .chc{display:none}}
 @media(min-width:900px){.chw{display:grid;grid-template-columns:350px 1fr;gap:18px;align-items:start}.chl{max-height:calc(100vh - 60px);overflow-y:auto}.chc{position:sticky;top:20px;height:calc(100vh - 60px)}}
+#wb{position:fixed;inset:0;z-index:300;background:var(--bg);display:flex;flex-direction:column;gap:8px;padding:calc(10px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom))}#wb .wbt{display:flex;justify-content:space-between;gap:8px}#wb .chips{margin:0}#wb iframe{flex:1;width:100%;min-height:0;border:0;border-radius:12px;background:#fff}
 #locgate{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}#locgate .bx{width:min(420px,100%);display:flex;flex-direction:column;gap:10px}.lnk{cursor:pointer}.lnk:active{opacity:.6}a.gis{text-decoration:none;display:inline-block}
 #nfs{position:fixed;top:calc(8px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:min(420px,calc(100vw - 16px));z-index:60;display:flex;flex-direction:column;gap:8px;pointer-events:none}
 .nfb{pointer-events:auto;display:flex;gap:11px;align-items:flex-start;padding:11px 14px;border-radius:22px;background:var(--glass);backdrop-filter:blur(26px) saturate(1.8);-webkit-backdrop-filter:blur(26px) saturate(1.8);border:1px solid var(--line);box-shadow:0 12px 32px rgba(0,0,0,.24);animation:nfin .5s cubic-bezier(.2,.9,.3,1.12);touch-action:none;cursor:pointer;transition:transform .28s,opacity .28s}
@@ -83,6 +84,7 @@ setTimeout(function(){
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 "use strict";
@@ -93,10 +95,10 @@ firebase.initializeApp(cfg);const auth=firebase.auth(),db=firebase.firestore(),T
 try{auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){}
 const $=i=>document.getElementById(i),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),M=n=>Math.round(+n||0).toLocaleString("ru-RU")+" ₸";
 const ST=["Новый","Собирается","Готов","В пути","Выдан","Отменён"],stL=o=>+o.st===4&&o.dv?"Доставлен":(ST[+o.st]||"?"),RL={owner:"Владелец",admin:"Администратор",operator:"Оператор",florist:"Флорист",assistant:"Помощник флориста",courier:"Курьер"},SRC=["Instagram","WhatsApp","2ГИС","Телефон","Сайт","Другое"],PAY=["Kaspi","Наличные","Перевод"];
-let U=null,S=null,O=[],SF={},tab="home",fs="",fz2="",fq="",subs=[],lock=0;
+let U=null,S=null,O=[],SF={},tab="home",fs="fresh",fz2="",fq="",subs=[],lock=0;
 const today=()=>new Date().toLocaleDateString("sv-SE"),nm=id=>(SF[id]&&SF[id].name)||"Не назначен",mgr=()=>S&&["admin","operator","florist","assistant"].includes(S.role),adm=()=>S&&S.role==="admin",own=()=>S&&S.own===true,OWN_EM="tilegen615@gmail.com",HEAD_EM="nash0082008@icloud.com",isOwnEm=m=>{m=String(m||"").toLowerCase();return m===OWN_EM||m===HEAD_EM},myRL=()=>own()?(S.head?"Главный администратор":RL.owner):RL[S.role],isOwnId=id=>{const e=SF[id];return !!e&&(e.role==="owner"||isOwnEm(e.email))},canMng=id=>!!SF[id]&&!isOwnId(id)&&(own()||SF[id].role!=="admin"),rl=id=>isOwnId(id)?(String((SF[id]||{}).email||"").toLowerCase()===HEAD_EM?"Главный администратор":RL.owner):(RL[(SF[id]||{}).role]||""),shipT=o=>+o.shipAt||(o.updatedAt&&o.updatedAt.toMillis?o.updatedAt.toMillis():0),wait=o=>o.dv&&+o.st===3?Math.max(0,shipT(o)+180000-Date.now()):0,mmss=ms=>{const s=Math.ceil(ms/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
 let pdn=0,dqPend=0,pdnT=0;
-const dq=()=>{clearTimeout(dq.t);dq.t=setTimeout(()=>{if(document.hidden||pdn){dqPend=1;return}dqPend=0;draw()},60)};
+const dqT=(...t)=>{if(t.includes(tab)||tab==="home")dq()};const dq=()=>{clearTimeout(dq.t);dq.t=setTimeout(()=>{if(document.hidden||pdn){dqPend=1;return}dqPend=0;draw()},150)};
 /* не перерисовываем страницу, пока палец на экране: иначе кнопка исчезает между нажатием и отпусканием и «не срабатывает» */
 const pdnEnd=d=>{clearTimeout(pdnT);pdnT=setTimeout(()=>{pdn=0;if(dqPend)dq()},d)};
 addEventListener("pointerdown",()=>{pdn=1;pdnEnd(4000)},true);
@@ -192,22 +194,25 @@ auth.onAuthStateChanged(async u=>{__authDone=1;U=u;S=null;O=[];SF={};PRS=[];INV=
  const q=db.collection("orders").orderBy("ts","desc").limit(300);
  subs.push(q.onSnapshot(s=>{const nw=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.ts||0)-(a.ts||0));ordDiff(nw);O=nw;pubAuto(nw);dq()},e=>toast("Заказы: "+er(e))));
  if(["admin","operator","florist","assistant"].includes(S.role)){subs.push(db.collection("inventory").onSnapshot(s=>{INV0=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.cat||"").localeCompare(b.cat||"")||a.name.localeCompare(b.name));INV=invM();dq()},e=>toast("Склад: "+er(e))));subs.push(db.collection("bouquets").onSnapshot(s=>{BQ=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>toast("Букеты: "+er(e))))}
- if(mgr())subs.push(db.collection("customers").onSnapshot(s=>{CU={};s.forEach(d=>CU[d.id]=d.data());dq()},e=>toast("Клиенты: "+er(e))));
+ if(mgr())subs.push(db.collection("customers").onSnapshot(s=>{CU={};s.forEach(d=>CU[d.id]=d.data());dqT("crm")},e=>toast("Клиенты: "+er(e))));
  if(["admin","operator","florist","assistant"].includes(S.role))subs.push(db.collection("showcase").onSnapshot(s=>{SC=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>toast("Витрина: "+er(e))));
  if(["admin","operator","florist","assistant"].includes(S.role))subs.push(db.collection("visits").where("date",">=",addD(today(),-365)).onSnapshot(s=>{VS=s.docs.map(d=>({id:d.id,...d.data()}));if(tab==="show")dq()},e=>toast("Посетители: "+er(e))));
- if(own())subs.push(db.collection("invcost").onSnapshot(s=>{CST={};s.forEach(d=>CST[d.id]=d.data());INV=invM();dq()},e=>toast("Цены: "+er(e))));
+ if(own())subs.push(db.collection("invcost").onSnapshot(s=>{CST={};s.forEach(d=>CST[d.id]=d.data());INV=invM();dqT("stock","fin","an")},e=>toast("Цены: "+er(e))));
  chSubs();tcSubs();subs.push(db.collection("presence").onSnapshot(s=>{PRS=s.docs.map(d=>d.data());pbU()},e=>{}));beat();
- if(mgr())subs.push(db.collection("deals").onSnapshot(s=>{DL=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>toast("Сделки: "+er(e))));
+ if(mgr())subs.push(db.collection("deals").onSnapshot(s=>{DL=s.docs.map(d=>({id:d.id,...d.data()}));dqT("deals")},e=>toast("Сделки: "+er(e))));
  if(mgr())subs.push(db.collection("leads").onSnapshot(s=>{LD=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>toast("Заявки: "+er(e))));
  if(adm())subs.push(db.collection("activityLogs").orderBy("ts","desc").limit(500).onSnapshot(s=>{LG=s.docs.map(d=>({...d.data(),_id:d.id}));if(tab==="jr")dq()},e=>toast("Журнал: "+er(e))));
- if(own())subs.push(db.collection("expenses").onSnapshot(s=>{EX=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>toast("Расходы: "+er(e))));
+ if(own())subs.push(db.collection("expenses").onSnapshot(s=>{EX=s.docs.map(d=>({id:d.id,...d.data()}));dqT("fin","an")},e=>toast("Расходы: "+er(e))));
  subs.push(db.collection("locations").onSnapshot(s=>{LC=s.docs.map(d=>({id:d.id,...d.data()}));if(adm()&&s.empty&&!seeded){seeded=1;db.collection("locations").add({name:"10 мкр, 10/2",addr:"10-й микрорайон, 10/2, Актау",active:true,createdAt:TS()}).catch(()=>{});db.collection("settings").doc("main").set({name:"Mirflowers",addr:"Микрорайон 19А, 107/1, 1 этаж, Актау",accent:"#a35a6b",cur:"KZT",split:true,phone:"+7 777 102 7292 · +7 706 707 3622",hours:"Ежедневно 10:00–02:00 (19А мкр) · 10:00–01:00 (10 мкр)"},{merge:true}).catch(()=>{})}dq()},e=>toast("Точки: "+er(e))));
  subs.push(db.collection("shifts").where("date",">=",addD(today(),-60)).onSnapshot(s=>{SHL=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>toast("График: "+er(e))));
  subs.push(db.collection("shiftRequests").onSnapshot(s=>{SR=s.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.st==="wait");dq()},e=>{SR=[];}));
  subs.push(db.collection("settings").doc("main").onSnapshot(d=>{SH=d.exists?d.data():{};applySet();dq()},e=>toast("Настройки: "+er(e))));rpSubs();
- tab="home";draw()});
+ uiLoad();draw()});
 
-function draw(){if(!S)return;alerts.d=0;locGate();const T=[["home","⌂","Главная"],["orders","☰","Заказы"]];if(["admin","operator","florist","assistant"].includes(S.role))T.push(["stock","▦","Склад"]);if(["admin","operator","florist","assistant"].includes(S.role))T.push(["show","▤","Витрина"]);T.push(["sched","◷","График"]);if(mgr())T.push(["rep","📋","Отчёты"],["st","📊","Статистика"]);if(mgr())T.push(["crm","♥","Клиенты"],...(isOp()&&FX("clientChat")?[["chats","✆","Чаты"]]:[]),...(canTpl()?[["tpl","💬","Шаблоны"]]:[]),...(FX("deals")?[["deals","◫","Сделки"]]:[]),["leads","✉","Заявки"]);if(!mgr()&&canTpl())T.push(["tpl","💬","Шаблоны"]);if(own())T.push(["fin","₸","Финансы"],["an","◔","Аналитика"]);if(adm())T.push(["cur","🚚","Курьер"],["fl","✿","Сборка"],["team","☺","Команда"],["jr","✎","Журнал"]);if(tab==="deals"&&!FX("deals"))tab="home";if(FX("teamChat"))T.push(["tc","☷","Чат"]);T.push(["me","⚙","Профиль"]);
+function uiKey(){return"ui_"+(U?U.uid:"x")}
+function uiLoad(){tab="home";fs="fresh";fdt="";try{const v=JSON.parse(STO.get(uiKey())||"{}");if(typeof v.tab==="string")tab=v.tab;if(typeof v.fs==="string")fs=v.fs;if(typeof v.fdt==="string")fdt=v.fdt}catch(e){}}
+function uiSave(){if(U&&S)STO.set(uiKey(),JSON.stringify({tab,fs,fdt}))}
+function draw(){if(!S)return;if(!bu.c)bu.c=new Map();alerts.d=0;locGate();const T=[["home","⌂","Главная"],["orders","☰","Заказы"]];if(["admin","operator","florist","assistant"].includes(S.role))T.push(["stock","▦","Склад"]);if(["admin","operator","florist","assistant"].includes(S.role))T.push(["show","▤","Витрина"]);T.push(["sched","◷","График"]);if(mgr())T.push(["rep","📋","Отчёты"],["st","📊","Статистика"]);if(mgr())T.push(["crm","♥","Клиенты"],...(isOp()&&FX("clientChat")?[["chats","✆","Чаты"]]:[]),...(canTpl()?[["tpl","💬","Шаблоны"]]:[]),...(FX("deals")?[["deals","◫","Сделки"]]:[]),["leads","✉","Заявки"]);if(!mgr()&&canTpl())T.push(["tpl","💬","Шаблоны"]);if(own())T.push(["fin","₸","Финансы"],["an","◔","Аналитика"]);if(adm())T.push(["cur","🚚","Курьер"],["fl","✿","Сборка"],["team","☺","Команда"],["jr","✎","Журнал"]);if(tab==="deals"&&!FX("deals"))tab="home";if(!T.some(x=>x[0]===tab)&&tab!=="more")tab="home";uiSave();if(FX("teamChat"))T.push(["tc","☷","Чат"]);T.push(["me","⚙","Профиль"]);
  const n=$("nav");n.hidden=false;n.dataset.brand=SH.name||"Mirflowers";const wide=matchMedia("(min-width:900px)").matches,pf=({admin:own()?["home","orders","chats","tc","stock","fin"]:["home","orders","chats","tc","stock","team"],operator:["home","orders","chats","tpl","tc","stock","rep"],florist:["home","orders","tc","stock","show","rep"],assistant:["home","orders","tc","stock","show","rep"],courier:["home","orders","tc","sched","me"]})[S.role]||[],PR=wide?T:pf.map(k=>T.find(t=>t[0]===k)).filter(Boolean);MORE=wide?[]:T.filter(t=>!pf.includes(t[0]));
  const NV=MORE.length?[...PR,["more","⋯","Ещё"]]:PR,inMore=tab==="more"||MORE.some(t=>t[0]===tab);n.innerHTML=NV.map(t=>`<button class="${t[0]===tab||(t[0]==="more"&&inMore)?"on":""}" data-t="${t[0]}"><i>${t[1]}</i>${t[2]}${nbN(t[0])?`<b class="nb">${nbN(t[0])}</b>`:""}</button>`).join("");
  n.onclick=e=>{const b=e.target.closest("button");if(b){tab=b.dataset.t;draw();scrollTo(0,0)}};
@@ -226,7 +231,7 @@ function calcMk(date,time,dv){if(!date)return"";const t=(time&&time.length>=4)?t
   const p=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"T"+p(d.getHours())+":"+p(d.getMinutes())}
 function syncMk(){const f=$("of");if(!f)return;const el=f.elements;if(!el.mk||el.mk.dataset.touch==="1")return;
   el.mk.value=calcMk(el.date&&el.date.value,el.time&&el.time.value,el.dv&&el.dv.value==="1")}
-function mkLine(o){if(!o.mk||+o.st>=2)return"";const d=new Date(o.mk),ms=d.getTime();if(isNaN(ms))return"";const l=d.toLocaleString("ru-RU",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});return `<div style="margin-top:6px"><span class="pill ${ms<Date.now()?"bad":"warn"}">Сделать до ${esc(l)}${ms<Date.now()?" · просрочено":""}</span></div>`}
+function mkLine(o){if(!o.mk||+o.st>=2)return"";const d=new Date(o.mk),ms=d.getTime();if(isNaN(ms))return"";if(ms-Date.now()>72e5)return"";const l=d.toLocaleString("ru-RU",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});return `<div style="margin-top:6px"><span class="pill ${ms<Date.now()?"bad":"warn"}">Сделать до ${esc(l)}${ms<Date.now()?" · просрочено":""}</span></div>`}
 const gis=(a,note)=>{const q="Актау, "+String(a||"").trim()+(note?", "+String(note).trim():"");return"https://2gis.kz/aktau/search/"+encodeURIComponent(q)};
 const gisBtn=(a,note)=>a&&String(a).trim()?`<a class="btn s gis" href="${gis(a,note)}" target="_blank" rel="noopener" data-a="gis">2ГИС</a>`:"";
 const addrNote=o=>[o.apt&&("кв. "+o.apt),o.entr&&("подъезд "+o.entr),o.code&&("код "+o.code),o.addrNote].filter(Boolean).join(", ");
@@ -238,7 +243,7 @@ function card(o){const n=next(o),c=+o.st===5?"bad":+o.st===4?"ok":"";
  <div class="row" style="margin-top:8px"><b>${M(+o.p+(+o.fee||0))}</b>${o.paid?'<span class="pill ok">Оплачен</span>':`<span class="row" style="gap:6px;justify-content:flex-end"><span class="pill warn">К оплате ${M(rest(o))}</span>${isOp()?`<button class="btn s" data-a="o_pay" data-id="${o.id}">✓ Оплачено</button>`:""}</span>`}</div>
  <div class="acts"><button class="btn g s" data-a="det" data-id="${o.id}">Подробнее</button>${o.dv?gisBtn(o.addr,addrNote(o)):""}${rvBtns(o)}${n?`<button class="btn ${mgr()&&wait(o)>0?"g ":""}s" data-a="adv" data-id="${o.id}"${mgr()&&wait(o)>0?` data-w="${shipT(o)+180000}"`:""}>${n[1]}</button>`:""}</div></div>`}
 
-function home(){return home0()+(mgr()?repHome():"")}function home0(){if(S.role==="courier")return homeC();if(S.role==="assistant")return homeFl();if(S.role==="florist"){return homeFl()+homeOp()}if(S.role==="operator"){const f=homeFl();return homeOp()+f}return homeOp()}
+function home(){return home0()+(mgr()?repHome():"")}function home0(){if(S.role==="courier")return homeC();if(S.role==="assistant"||S.role==="florist"){return homeFl()+homeOp()}if(S.role==="operator"){const f=homeFl();return homeOp()+f}return homeOp()}
 function homeOp(){const vsold=SC.filter(x=>x.st==="sold"&&new Date(x.at||0).toLocaleDateString("sv-SE")===today()),act=O.filter(o=>+o.st<4),c=i=>O.filter(o=>+o.st===i).length,t=today(),yd=addD(t,-1),live=O.filter(o=>+o.st!==5),td=live.filter(o=>o.date===t),yo=live.filter(o=>o.date===yd);
  const money=td.reduce((a,o)=>a+tot(o),0),ym=yo.reduce((a,o)=>a+tot(o),0),up=act.slice().sort((a,b)=>((a.date||"")+(a.time||"")).localeCompare((b.date||"")+(b.time||""))).slice(0,6),
  w7=live.filter(o=>o.date>=addD(t,-6)&&o.date<=t),avg=w7.length?w7.reduce((a,o)=>a+tot(o),0)/w7.length:0,
@@ -251,8 +256,8 @@ function homeOp(){const vsold=SC.filter(x=>x.st==="sold"&&new Date(x.at||0).toLo
 
 function orders(){const q=fq.toLowerCase(),dd=fdt==="t"?today():fdt==="n"?addD(today(),1):"",l=O.filter(o=>{
   if(S.role==="courier"){if(!o.dv||+o.st>=4)return false;if(o.courier&&o.courier!==U.uid)return false;if(!o.courier&&!(+o.st>=1&&+o.st<=3))return false}
-  return (fs===""||String(o.st)===fs)&&(!fz2||(fz2==="late"?(o.dv&&+o.st<4&&o.date&&new Date(o.date+"T"+(o.time||"23:59")).getTime()<Date.now()):(+o.st>=2&&+o.st<5&&!o.paid)))&&(!dd||o.date===dd)&&(`${o.client} ${o.phone} ${o.bn}`).toLowerCase().includes(q)})
- return `<h1>Заказы</h1>${ordCnt()}<input id="q" placeholder="Поиск: имя, телефон, букет" value="${esc(fq)}"><div class="chips">${[["","Все даты"],["t","Сегодня"],["n","Завтра"]].map(c=>`<button class="chip ${fdt===c[0]?"on":""}" data-a="fdt" data-id="${c[0]}">${c[1]}</button>`).join("")}</div><div class="chips">${[["","Все статусы"],...ST.map((s,i)=>[String(i),s])].map(c=>`<button class="chip ${fs===c[0]?"on":""}" data-a="f" data-id="${c[0]}">${c[1]}</button>`).join("")}</div><p class="mut">Найдено: ${l.length}${fz2?` · фильтр: ${fz2==="late"?"просроченные доставки":"готовы, но не оплачены"} <a href="#" data-a="f2" data-id="">показать все</a>`:""}</p><div class="og">${l.map(card).join("")||'<div class="card mut">Ничего не найдено.</div>'}</div>`}
+  return (fs===""||(fs==="fresh"?+o.st<4:String(o.st)===fs))&&(!fz2||(fz2==="late"?(o.dv&&+o.st<4&&o.date&&new Date(o.date+"T"+(o.time||"23:59")).getTime()<Date.now()):(+o.st>=2&&+o.st<5&&!o.paid)))&&(!dd||o.date===dd)&&(`${o.client} ${o.phone} ${o.bn}`).toLowerCase().includes(q)})
+ return `<h1>Заказы</h1>${ordCnt()}<input id="q" placeholder="Поиск: имя, телефон, букет" value="${esc(fq)}"><div class="chips">${[["","Все даты"],["t","Сегодня"],["n","Завтра"]].map(c=>`<button class="chip ${fdt===c[0]?"on":""}" data-a="fdt" data-id="${c[0]}">${c[1]}</button>`).join("")}</div><div class="chips">${[["fresh","Свежие"],["","Все статусы"],...ST.map((s,i)=>[String(i),s])].map(c=>`<button class="chip ${fs===c[0]?"on":""}" data-a="f" data-id="${c[0]}">${c[1]}</button>`).join("")}</div><p class="mut">Найдено: ${l.length}${fz2?` · фильтр: ${fz2==="late"?"просроченные доставки":"готовы, но не оплачены"} <a href="#" data-a="f2" data-id="">показать все</a>`:""}</p><div class="og">${l.map(card).join("")||'<div class="card mut">Ничего не найдено.</div>'}</div>`}
 
 function team(){return `<h1>Команда</h1><p class="mut">Здесь вы создаёте сотрудников, меняете роли и отключаете доступ.</p>
  <div class="card"><b>Новый сотрудник</b><form id="tf"><label>Имя</label><input name="name" required><label>Email</label><input name="email" type="email" required><label>Временный пароль (от 6 символов)</label><input name="pass" type="text" minlength="6" required><label>Роль</label><select name="role">${Object.keys(RL).filter(r=>r!=="owner"&&(own()||r!=="admin")).map(r=>`<option value="${r}">${RL[r]}</option>`).join("")}</select><label>Точка</label><select name="loc">${locOpts("",true)}</select><div class="acts"><button class="btn">Создать сотрудника</button></div></form></div>
@@ -284,7 +289,7 @@ function form(o,lnk){const e=o&&o.id,v=o||{},qpo=!e?quickOpts():"",cs=Object.key
   if(!/^\+?\d[\d\s()-]{9,}$/.test(g("phone")))return toast("Проверьте номер телефона");if(dv&&!g("addr"))return toast("Укажите адрес доставки");
   let mk=g("mk");if(!mk&&g("date"))mk=calcMk(g("date"),g("time"),dv);
   const d={client:g("client"),phone:g("phone"),bn:g("bn"),comp:g("comp"),loc:g("loc")||v.loc||myLoc(),p:+g("p"),pre:+g("pre")||0,date:g("date"),time:g("time"),mk,dv,addr:dv?g("addr"):"",apt:dv?g("apt"):"",entr:dv?g("entr"):"",code:dv?g("code"):"",addrNote:dv?g("addrNote"):"",fee:dv?+g("fee")||0:0,cpay:dv?+g("cpay")||0:0,courier:dv?g("courier"):"",src:g("src"),pay:g("pay"),paid:f.get("paid")==="on",needPhoto:f.get("needPhoto")==="on",card:g("card"),note:g("note"),...(PH?{img:PH}:{}),updatedAt:TS()};
-  run(async()=>{if(e){await db.collection("orders").doc(o.id).update(d);const LB={bn:"букет",p:"цена",pre:"предоплата",paid:"оплачен",date:"дата",time:"время",fee:"доставка",cpay:"гонорар курьера",client:"клиент",phone:"телефон",addr:"адрес"};log("Изменён заказ",o,Object.keys(LB).filter(k=>String(d[k]??"")!==String(o[k]??"")).map(k=>LB[k]+": "+(o[k]??"—")+" → "+d[k]).join("; "))}else{const r=await db.collection("orders").add({...d,st:0,by:U.uid,ts:Date.now(),createdAt:TS()});log("Создан заказ",{id:r.id,bn:d.bn},d.client+" · "+M(d.p+d.fee));if(PL&&dg(PL.phone)===dg(d.phone)){await db.collection("leads").doc(PL.id).update({st:"done",oid:r.id});PL=null}
+  run(async()=>{if(d.img)d.img=await upImg(d.img,"orders");if(e){await db.collection("orders").doc(o.id).update(d);const LB={bn:"букет",p:"цена",pre:"предоплата",paid:"оплачен",date:"дата",time:"время",fee:"доставка",cpay:"гонорар курьера",client:"клиент",phone:"телефон",addr:"адрес"};log("Изменён заказ",o,Object.keys(LB).filter(k=>String(d[k]??"")!==String(o[k]??"")).map(k=>LB[k]+": "+(o[k]??"—")+" → "+d[k]).join("; "))}else{const r=await db.collection("orders").add({...d,st:0,by:U.uid,ts:Date.now(),createdAt:TS()});log("Создан заказ",{id:r.id,bn:d.bn},d.client+" · "+M(d.p+d.fee));if(PL&&dg(PL.phone)===dg(d.phone)){await db.collection("leads").doc(PL.id).update({st:"done",oid:r.id});PL=null}
    if(FX("linkAuto")&&dg(d.phone)){try{const o2={...d,id:r.id,st:0},u=pubUrl(await pubTok(o2));await sendStatusLink(o2,u);slOpen={o:o2,u}}catch(x){toast("Заказ создан, но ссылка не отправлена: "+er(x))}}
    if(lnk){const sid=lnk;try{await db.runTransaction(async t=>{const sr=db.collection("showcase").doc(sid),sn=await t.get(sr);if(!sn.exists||sn.data().st!=="in")throw{message:"букет уже убран с витрины"};t.update(sr,{st:"order",oid:r.id,at:Date.now(),opBy:U.uid,opName:S.name});t.update(db.collection("orders").doc(r.id),{sc:sid,st:2,updatedAt:TS(),statusBy:U.uid})});log("Букет с витрины в заказ",{id:r.id,bn:d.bn})}catch(x){modal("");return toast("Заказ создан, но без привязки: "+er(x))}}}modal("");toast(e?"Заказ сохранён":"Заказ создан");if(slOpen){const x=slOpen;slOpen=null;statusModal(x.o,x.u)}})}}
 
@@ -292,7 +297,7 @@ async function detail(id){const o=O.find(x=>x.id===id);if(!o)return;let h="";
  if(mgr()){try{const s=await db.collection("activityLogs").where("oid","==",id).get();h=s.docs.map(d=>d.data()).sort((a,b)=>(b.ts?b.ts.seconds:9e9)-(a.ts?a.ts.seconds:9e9)).map(x=>`<div class="ln"><span>${esc(x.byName)}</span><span>${esc(x.act)}${x.x?": "+esc(x.x):""}</span></div>`).join("")}catch(e){}}
  const L=(a,b)=>b||b===0?`<div class="ln"><span>${a}</span><span style="text-align:right">${b}</span></div>`:"";
  modal(`<div class="row"><h1 style="font-size:24px">${esc(o.bn)}</h1><span class="pill">${stL(o)}</span></div><div class="card">${L("Клиент",esc(o.client))}${L("Телефон",esc(o.phone))}${L("Состав",esc(o.comp))}${L("Готовность",esc(o.date+" "+(o.time||"")))}${L("Получение",o.dv?esc(addrFull(o)||o.addr)+" "+gisBtn(o.addr,addrNote(o)):"Самовывоз")}${o.dv&&addrNote(o)?L("Для курьера",esc(addrNote(o))):""}${L("Курьер",o.courier?esc(nm(o.courier)):"Свободный — любой может взять")}${L("Создал",esc(nm(o.by)))}${L("Принял(а) в работу",o.takenBy?esc(nm(o.takenBy)):"")}${L("Собрал(а)",o.asm&&+o.st>=2?esc(nm(o.asm)):"")}${L("Приёмка",o.accBy?esc(nm(o.accBy)):"")}${L("Фото клиенту",o.needPhoto?(o.photoSent?"отправлено":"нужно отправить"):"не нужно")}${L("Цена",M(o.p))}${L("Доставка",o.fee?M(o.fee):"")}${L("Предоплата",o.pre?M(o.pre):"")}${L("К оплате",M(rest(o)))}${L("Оплата",esc(o.pay))}${L("Источник",esc(o.src))}${L("Открытка",esc(o.card))}${L("Комментарий",esc(o.note))}</div>
- ${o.img?`<img src="${o.img}" alt="Фото букета" style="width:100%;border-radius:16px;margin-top:10px">`:""}${o.rimg?`<h2>Фото готового букета</h2><img src="${o.rimg}" alt="Готовый букет" style="width:100%;border-radius:16px">`:""}${o.proof?`<h2>Фото вручения</h2><img src="${o.proof}" alt="Фото вручения" style="width:100%;border-radius:16px">`:""}${+o.st===4&&o.dv&&!o.proof?`<p class="mut">Доставлено без фото получателя${o.statusBy?" · отметил(а): "+esc(nm(o.statusBy)):""}</p>`:""}${chkView(o)}${cmList(o)}${h?`<h2>История</h2><div class="card">${h}</div>`:""}
+ ${o.img?`<img src="${bu(o.img)}" alt="Фото букета" style="width:100%;border-radius:16px;margin-top:10px">`:""}${o.rimg?`<h2>Фото готового букета</h2><img src="${bu(o.rimg)}" alt="Готовый букет" style="width:100%;border-radius:16px">`:""}${o.proof?`<h2>Фото вручения</h2><img src="${bu(o.proof)}" alt="Фото вручения" style="width:100%;border-radius:16px">`:""}${+o.st===4&&o.dv&&!o.proof?`<p class="mut">Доставлено без фото получателя${o.statusBy?" · отметил(а): "+esc(nm(o.statusBy)):""}</p>`:""}${chkView(o)}${cmList(o)}${h?`<h2>История</h2><div class="card">${h}</div>`:""}
  <div class="acts">${detRv(o)}${mgr()?`${adm()||+o.st<4?`<button class="btn g" data-a="edit" data-id="${id}">Изменить</button>`:""}<button class="btn g" data-a="rep" data-id="${id}">Повторить</button><button class="btn g" data-a="o_print" data-id="${id}">Накладная</button><button class="btn g" data-a="o_link" data-id="${id}">Ссылка клиенту</button>${isOp()&&!o.paid&&+o.st<5?`<button class="btn g" data-a="paid" data-id="${id}">Принять оплату</button>`:""}${isOp()&&o.paid&&+o.st<5?`<button class="btn g" data-a="unpay" data-id="${id}">Снять оплату</button>`:""}`:""}<button class="btn g" data-a="cp" data-id="${id}">Копировать</button><a class="btn g" style="text-decoration:none;text-align:center" target="_blank" rel="noopener" href="https://wa.me/${esc(String(o.phone).replace(/\D/g,""))}">WhatsApp</a>${mgr()&&+o.st<4?`<button class="btn r" data-a="cx" data-id="${id}">Отменить заказ</button>`:""}${adm()?`<button class="btn g" data-a="o_st" data-id="${id}">Исправить статус</button><button class="btn r" data-a="o_del" data-id="${id}">Удалить</button>`:""}${S.role==="courier"&&o.dv&&!o.courier&&+o.st>=1&&+o.st<=3?`<button class="btn" data-a="cur_take" data-id="${id}">Взять доставку</button>`:""}${S.role==="courier"&&o.courier===U.uid&&+o.st===3?`<button class="btn" data-a="adv" data-id="${id}">✓ Доставлено</button>`:""}<button class="btn g" data-a="x">Закрыть</button></div>`)}
 
 function bind(){const sf=$("sf");if(sf)sf.onsubmit=saveSet;const q=$("q");if(q)q.oninput=()=>{fq=q.value;const p=q.selectionStart;draw();const n=$("q");n.focus();n.setSelectionRange(p,p)};
@@ -451,8 +456,8 @@ function shopInfo(){return !adm()&&(SH.phone||SH.addr||SH.hours)?`<div class="ca
 function saveSet(e){e.preventDefault();const f=new FormData($("sf")),g=k=>(f.get(k)||"").toString().trim();run(async()=>{await db.collection("settings").doc("main").set({name:g("name")||"Mirflowers",phone:g("phone"),addr:g("addr"),hours:g("hours"),cur:"KZT",split:f.get("split")==="on",updatedAt:TS()},{merge:true});log("Изменены настройки",{bn:""});toast("Настройки сохранены")})}
 function alerts(){if(alerts.d++)return"";const now=Date.now(),a=[],c=(n,t,k,tb,f)=>{if(n)a.push([n,t,k||"",tb||"orders",f||""])};
  if(S.role==="courier"){c(O.filter(o=>o.dv&&+o.st<3).length,"доставок готовится: будьте готовы","warn","orders","");c(O.filter(o=>+o.st===3).length,"доставок в пути у вас","","orders","3")}
- else{c(O.filter(o=>+o.st===0).length,"новых заказов","","orders","0");c(S.role==="assistant"?0:O.filter(o=>+o.st===2).length,"заказов готово: выдать или передать курьеру","","orders","2");c(O.filter(o=>o.dv&&+o.st<4&&o.date&&new Date(o.date+"T"+(o.time||"23:59")).getTime()<now).length,"доставок просрочено","bad","orders","late")}
- if(mgr()&&S.role!=="assistant")c(O.filter(o=>+o.st>=2&&+o.st<5&&!o.paid).length,"заказов готово, но не оплачено","warn","orders","unpaid");
+ else{c(O.filter(o=>+o.st===0).length,"новых заказов","","orders","0");c(O.filter(o=>+o.st===2).length,"заказов готово: выдать или передать курьеру","","orders","2");c(O.filter(o=>o.dv&&+o.st<4&&o.date&&new Date(o.date+"T"+(o.time||"23:59")).getTime()<now).length,"доставок просрочено","bad","orders","late")}
+ if(mgr())c(O.filter(o=>+o.st>=2&&+o.st<5&&!o.paid).length,"заказов готово, но не оплачено","warn","orders","unpaid");
  if(["admin","operator","florist","assistant"].includes(S.role))c(INV.filter(i=>i.qty<=(+i.min||0)).length,"позиций на складе заканчивается","warn","stock","low");
  return a.length?`<h2>Уведомления</h2><div class="card"><div class="mut" style="margin-bottom:4px">Нажмите на строку, чтобы открыть эти заказы или позиции.</div>${a.map(x=>`<div class="ln lnk" data-a="al" data-id="${x[3]}|${x[4]}"><span class="pill ${x[2]}">${x[0]}</span><span style="flex:1;padding:0 8px">${x[1]}</span><span class="mut">›</span></div>`).join("")}</div>`:""}
 /* ===== График, статистика, быстрые заказы ===== */
@@ -501,8 +506,8 @@ function line(d,f){f=f||kf;const W=320,H=130,t=16,b=20,h=H-t-b,mx=Math.max(1,...
 function proof(id){let u="",busy=0;
  modal(hd("Доставлено")+`<p class="mut">Прикрепите фото у получателя или нажмите «Закрыть». В обоих случаях заказ получит статус «Доставлен».</p><input id="pf" type="file" accept="image/*" capture="environment"><img id="pp" alt="Фото" style="display:none;width:100%;border-radius:14px;margin-top:10px"><p id="ps" class="mut" style="text-align:center"></p><div class="acts"><button class="btn" type="button" id="pc">Закрыть</button><button class="btn g" id="pk" type="button" style="display:none">Отправить фото ещё раз</button></div>`);
  const fin=async img=>{if(busy)return;busy=1;await run(async()=>{$("ps").textContent="Сохраняю…";const ref=db.collection("orders").doc(id),o0=O.find(x=>x.id===id)||{id};
-   const r=await db.runTransaction(async t=>{const s=await t.get(ref);if(!s.exists)return"gone";const d=s.data();if(+d.st===4)return"done";if(+d.st!==3)return"bad";
-    t.update(ref,{st:4,proof:img||"",doneAt:Date.now(),updatedAt:TS(),statusBy:U.uid});return"ok"});
+   const pimg=await upImg(img,"orders");const r=await db.runTransaction(async t=>{const s=await t.get(ref);if(!s.exists)return"gone";const d=s.data();if(+d.st===4)return"done";if(+d.st!==3)return"bad";
+    t.update(ref,{st:4,proof:pimg||"",doneAt:Date.now(),updatedAt:TS(),statusBy:U.uid});return"ok"});
    if(r==="ok"){log(img?"Доставлено с фото":"Доставлено без фото",o0);modal("");toast(img?"Доставлено, фото отправлено оператору":"Заказ отмечен доставленным")}
    else{modal("");toast(r==="done"?"Заказ уже отмечен доставленным":r==="gone"?"Заказ удалён":"Заказ ещё не в пути")}});
   busy=0;if($("pk")&&img){$("ps").textContent="Не отправилось. Проверьте интернет: нажмите «Отправить фото ещё раз» или «Закрыть».";$("pk").style.display=""}else if($("ps")&&!img)$("ps").textContent="Не отправилось. Проверьте интернет и нажмите «Закрыть» ещё раз."};
@@ -511,7 +516,8 @@ function proof(id){let u="",busy=0;
  $("pk").onclick=()=>fin(u)}
 function flr(n,c){const P={tulip:'<path d="M50 96V52M50 82C32 80 24 68 26 56C40 58 50 68 50 82M34 20C34 40 40 52 50 52C60 52 66 40 66 20L58 28L50 14L42 28Z"/>',branch:'<path d="M12 92C38 74 66 50 90 10M34 76C24 64 28 52 40 48C44 60 42 70 34 76M54 58C50 44 58 34 72 32C74 46 66 54 54 58M70 34C70 22 78 14 90 14C90 26 82 32 70 34M40 72C52 72 62 78 66 88C54 90 44 84 40 72"/>',bloom:[0,72,144,216,288].map(a=>`<ellipse cx="50" cy="30" rx="9" ry="18" transform="rotate(${a} 50 50)"/>`).join("")+'<circle cx="50" cy="50" r="4"/>'};
  return `<svg class="${c||"fl"}" viewBox="0 0 100 100" fill="none" stroke="var(--ac)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`}
-let PH=null;const th=s=>s?`<img class="th" src="${s}" alt="" loading="lazy" decoding="async">`:"",
+let PH=null;const bu=u=>{if(!u||u.slice(0,5)!=="data:")return u;let r=bu.c.get(u);if(r)return r;try{const i=u.indexOf(","),m=/data:([^;,]+)/.exec(u.slice(0,i)),bin=atob(u.slice(i+1)),a=new Uint8Array(bin.length);for(let k=0;k<bin.length;k++)a[k]=bin.charCodeAt(k);r=URL.createObjectURL(new Blob([a],{type:m?m[1]:"image/jpeg"}));bu.c.set(u,r);return r}catch(e){return u}},
+th=s=>s?`<img class="th" src="${bu(s)}" alt="" loading="lazy" decoding="async">`:"",
  imgz=f=>new Promise(r=>{const im=new Image();im.onload=()=>{const k=Math.min(1,480/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);r(c.toDataURL("image/jpeg",.7))};im.src=URL.createObjectURL(f)}),
  phF=v=>`<label>Фото</label>${v&&v.img?th(v.img):""}<input id="ph" type="file" accept="image/*">`,
  phB=()=>{PH=null;const p=$("ph");if(p)p.onchange=async e=>{const f=e.target.files[0];if(f)PH=await imgz(f)}};
@@ -607,7 +613,7 @@ function vit(){const a=SC.filter(x=>x.st==="in"),h=SC.filter(x=>x.st!=="in").sor
 
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a^="lc_"],[data-a^="w_"],[data-a="tf"],[data-a="fdt"],[data-a="q_bo"],[data-a="v_on"],[data-a="v_sv"]');if(!b||!S)return;const a=b.dataset.a,id=b.dataset.id;
  if(a==="lc_s"){locSave(id);draw()}else if(a==="lc_n"&&own())locForm();else if(a==="lc_e"&&own())locForm(id);
- else if(a==="tf"){fs=id;fz2="";fdt="";tab="orders";draw();scrollTo(0,0)}else if(a==="fdt"){fdt=id;draw()}
+ else if(a==="tf"){fs=id||"fresh";fz2="";fdt="";tab="orders";draw();scrollTo(0,0)}else if(a==="fdt"){fdt=id;draw()}
  else if(a==="w_p"){wk=Math.max(-8,wk-1);draw()}else if(a==="w_n"){wk=Math.min(26,wk+1);draw()}else if(a==="w_t"){wk=0;draw()}
  else if(a==="w_e"&&adm())shiftForm(id,b.dataset.d);
  else if(a==="w_req"&&id===U.uid)shiftReq(b.dataset.d);
@@ -806,8 +812,8 @@ FXL={rvOn:"Приёмка оператором: готовый заказ сна
 FXH={rvOn:"Включено: флорист не закрывает заказ сам. Готовый заказ уходит оператору на проверку, и только после неё считается готовым. Выключено: «Готов» ставится сразу, без проверки.",photoDef:"Включено: в новом заказе галочка «отправить клиенту фото» уже стоит. Выключено: её нужно ставить вручную каждый раз.",photoAuto:"Включено: когда букет готов, клиенту уходит фото с текстом из поля ниже. Выключено: фото отправляют вручную.",linkAuto:"Включено: сразу после создания заказа клиенту уходит ссылка на страницу статуса, и сайт предлагает отправить её в WhatsApp. Выключено: ссылку берут вручную кнопкой «Ссылка клиенту».",payOne:"Включено: кнопка «Оплачен» сразу отмечает оплату. Выключено: перед отметкой оплаты сайт переспросит.",teamChat:"Включено: у всех сотрудников есть вкладка «Чат» для переписки внутри команды. Выключено: вкладка скрыта, сообщения не пропадают.",clientChat:"Включено: показывается вкладка «Чаты» с перепиской клиентов. Выключено: вкладка скрыта. Сами каналы WhatsApp и Instagram пока не подключены.",deals:"Включено: в меню есть «Сделки»: воронка для крупных и корпоративных заказов, пока они не стали обычным заказом. Если так не работаете, выключите: раздел исчезнет, а данные останутся."},
 PHOTO_MSG="Ваш заказ «{букет}» готов 🌸",
 FX=k=>{const f=SH.fx||{};return f[k]===undefined?FXD[k]:!!f[k]},
-isFl=()=>!!S&&["florist","assistant"].includes(S.role),
-isOp=()=>!!S&&(["admin","operator","florist"].includes(S.role)||own()),canTpl=()=>!!S&&!["florist","assistant"].includes(S.role),isDirect=()=>!!S&&(["admin","operator"].includes(S.role)||own()),isAsmr=()=>isFl()||!!S&&S.role==="operator",
+isFl=()=>!!S&&["florist","assistant","operator"].includes(S.role),
+isOp=()=>!!S&&(["admin","operator","florist","assistant"].includes(S.role)||own()),canTpl=()=>!!S&&S.role!=="courier",isDirect=()=>!!S&&(["admin","operator","florist","assistant"].includes(S.role)||own()),isAsmr=()=>isFl()||!!S&&S.role==="operator",
 fvInc=n=>firebase.firestore.FieldValue.increment(n),
 fvUn=x=>firebase.firestore.FieldValue.arrayUnion(x);
 
@@ -879,8 +885,8 @@ async function takeOrder(o){const ref=db.collection("orders").doc(o.id);
  if(r.k==="ok"){log("Принял(а) в работу",o);toast("Заказ взят в работу");return}
  toast(r.k==="gone"?"Заказ удалён":r.k==="other"?"Этот заказ уже взял(а) "+nm(r.by):"Заказ уже в работе")}
 const imgBig=f=>new Promise(r=>{const im=new Image();im.onload=()=>{const k=Math.min(1,720/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);r(c.toDataURL("image/jpeg",.72))};im.src=URL.createObjectURL(f)});
-async function finishReady(o,img){const op=isDirect(),rv=FX("rvOn")&&!op?"wait":"ok";
- await db.collection("orders").doc(o.id).update({st:2,updatedAt:TS(),statusBy:U.uid,asm:U.uid,readyAt:Date.now(),rv,...(op?{accBy:U.uid,accAt:Date.now()}:{}),...(img?{rimg:img}:{})});
+async function finishReady(o,img){const ri=img?await upImg(img,"orders"):"";const op=isDirect(),rv=FX("rvOn")&&!op?"wait":"ok";
+ await db.collection("orders").doc(o.id).update({st:2,updatedAt:TS(),statusBy:U.uid,asm:U.uid,readyAt:Date.now(),rv,...(op?{accBy:U.uid,accAt:Date.now()}:{}),...(ri?{rimg:ri}:{})});
  log("Статус → Готов",o,rv==="wait"?"передан на приёмку":"");
  if(img&&FX("photoAuto"))await sendClientPhoto(o,img)}
 function readyFlow(o){if(!(o.needPhoto&&FX("photoAuto")))return run(()=>finishReady(o,""));let u="";
@@ -908,13 +914,14 @@ function cmForm(o){modal(hd("Комментарий к заказу")+`<p class=
   run(async()=>{const ts=Date.now();await db.collection("orders").doc(o.id).update({cm:fvUn({k:"note",t,by:U.uid,byName:S.name||"",ts}),cmAt:ts,cmBy:U.uid,updatedAt:TS()});log("Комментарий к заказу",o,t);modal("");toast("Комментарий добавлен")})}}
 
 /* ---------- Флорист: подтверждение «Начать сборку» и передача заказа с двойным подтверждением ---------- */
+let SKEW=0;async function skewSync(){try{const t0=Date.now(),r=await fetch(location.href.split("#")[0].split("?")[0],{method:"HEAD",cache:"no-store"}),t1=Date.now(),d=Date.parse(r.headers.get("Date")||"");if(d)SKEW=d-(t0+t1)/2}catch(e){}}skewSync();setInterval(skewSync,300000);const NOW=()=>Date.now()+SKEW;
 const XF_MS=60000,
 xfNum=o=>String(o.id).slice(-5).toUpperCase(),
-xfPend=o=>!!o&&o.xfSt==="wait"&&!!o.xfTo&&Date.now()-(+o.xfAt||0)<XF_MS,
-xfLeft=o=>Math.max(0,(+o.xfAt||0)+XF_MS-Date.now()),
+xfPend=o=>!!o&&o.xfSt==="wait"&&!!o.xfTo&&NOW()-(+o.xfAt||0)<XF_MS,
+xfLeft=o=>Math.max(0,(+o.xfAt||0)+XF_MS-NOW()),
 xfMine=o=>!!U&&!!o&&+o.st===1&&o.takenBy===U.uid&&isFl(),
 xfBtn=o=>xfMine(o)&&!xfPend(o)?`<button class="btn g s" data-a="xf_start" data-id="${o.id}">Передать заказ</button>`:"",
-xfWho=()=>Object.keys(SF).filter(id=>id!==U.uid&&SF[id]&&SF[id].active===true&&["florist","assistant"].includes(SF[id].role)&&!isOwnId(id)).sort((a,b)=>nm(a).localeCompare(nm(b)));
+xfWho=()=>Object.keys(SF).filter(id=>id!==U.uid&&SF[id]&&SF[id].active===true&&["florist","assistant","operator"].includes(SF[id].role)&&!isOwnId(id)).sort((a,b)=>nm(a).localeCompare(nm(b)));
 function takeConfirm(o){
  modal(hd(esc(o.bn||"Заказ"))+`<p style="font-size:17px">Точно берешь этот заказ?</p><div class="acts"><button class="btn g" type="button" id="tcn">Отмена</button><button class="btn" type="button" id="tcy">Да</button></div>`);
  $("tcn").onclick=()=>modal("");
@@ -922,12 +929,12 @@ function takeConfirm(o){
 async function xfSend(o,to){const ref=db.collection("orders").doc(o.id);
  const r=await db.runTransaction(async t=>{const sn=await t.get(ref);if(!sn.exists)return"gone";const d=sn.data();
   if(+d.st!==1||d.takenBy!==U.uid)return"moved";if(xfPend(d))return"busy";
-  t.update(ref,{xfSt:"wait",xfTo:to,xfFrom:U.uid,xfAt:Date.now(),updatedAt:TS(),statusBy:U.uid});return"ok"});
+  t.update(ref,{xfSt:"wait",xfTo:to,xfFrom:U.uid,xfAt:NOW(),updatedAt:TS(),statusBy:U.uid});return"ok"});
  modal("");
  if(r==="ok"){log("Передача заказа флористу",o,"→ "+nm(to));toast("Ждём подтверждения: "+nm(to))}
  else toast(r==="gone"?"Заказ удалён":r==="busy"?"Ожидает подтверждения передачи":"Заказ уже изменился")}
 async function xfAnswer(o,yes){const ref=db.collection("orders").doc(o.id);
- const r=await db.runTransaction(async t=>{const sn=await t.get(ref);if(!sn.exists)return{k:"gone"};const d=sn.data(),now=Date.now();
+ const r=await db.runTransaction(async t=>{const sn=await t.get(ref);if(!sn.exists)return{k:"gone"};const d=sn.data(),now=NOW();
   if(d.xfSt!=="wait"||d.xfTo!==U.uid||+d.st!==1)return{k:"moved",by:d.takenBy};
   const base={xfSt:"",xfTo:"",xfFrom:"",xfAt:0,xfResAt:now,xfResFrom:d.xfFrom,xfResTo:U.uid,updatedAt:TS(),statusBy:U.uid};
   if(now-(+d.xfAt||0)>=XF_MS+5000){t.update(ref,{...base,xfRes:"to"});return{k:"late",from:d.xfFrom}}
@@ -940,8 +947,8 @@ async function xfAnswer(o,yes){const ref=db.collection("orders").doc(o.id);
  else toast(r.k==="gone"?"Заказ удалён":"Заказ уже изменился")}
 const xfBusy=new Set();
 async function xfExpire(o){if(xfBusy.has(o.id+o.xfAt))return;xfBusy.add(o.id+o.xfAt);try{await db.runTransaction(async t=>{const ref=db.collection("orders").doc(o.id),sn=await t.get(ref);if(!sn.exists)return;const d=sn.data();
-  if(d.xfSt!=="wait"||Date.now()-(+d.xfAt||0)<XF_MS)return;
-  t.update(ref,{xfSt:"",xfTo:"",xfFrom:"",xfAt:0,xfRes:"to",xfResAt:Date.now(),xfResFrom:d.xfFrom,xfResTo:d.xfTo,updatedAt:TS(),statusBy:U.uid})})}catch(e){}}
+  if(d.xfSt!=="wait"||NOW()-(+d.xfAt||0)<XF_MS)return;
+  t.update(ref,{xfSt:"",xfTo:"",xfFrom:"",xfAt:0,xfRes:"to",xfResAt:NOW(),xfResFrom:d.xfFrom,xfResTo:d.xfTo,updatedAt:TS(),statusBy:U.uid})})}catch(e){}}
 function xfPrompt(o){
  modal(hd("Передача заказа")+`<div id="xfq"><p style="font-size:17px">${esc(nm(o.xfFrom))} передает тебе заказ №${esc(xfNum(o))}. Примешь?</p><p class="mut">«${esc(o.bn||"Заказ")}» · <b id="xfc"></b></p></div><div class="acts"><button class="btn g" type="button" id="xfn">Отмена</button><button class="btn" type="button" id="xfy">Да</button></div>`);
  const go=y=>{$("xfy").disabled=$("xfn").disabled=true;run(()=>xfAnswer(o,y))};
@@ -952,11 +959,11 @@ function xfTick(){if(!U||!S)return;
  if(!isFl())return;
  const o=O.find(x=>xfPend(x)&&x.xfTo===U.uid&&+x.st===1);
  if(!o){if(xfKey){xfKey="";if($("xfq"))modal("")}}
- else if(xfKey!==o.id+"|"+o.xfAt&&!$("m").innerHTML){xfKey=o.id+"|"+o.xfAt;xfPrompt(o)}
+ else if(xfKey!==o.id+"|"+o.xfAt&&(!$("m").innerHTML||!$("m").querySelector("form,input,textarea"))){xfKey=o.id+"|"+o.xfAt;xfPrompt(o)}
  const old=O.filter(x=>x.xfSt==="wait"&&!xfPend(x)&&(x.xfFrom===U.uid||x.xfTo===U.uid||adm()));
  if(old.length){old.forEach(xfExpire);dq()}}
 const xfKeyId=()=>xfKey.split("|")[0];
-setInterval(xfTick,1000);
+setInterval(xfTick,1000);setInterval(()=>{if(S&&(tab==="home"||tab==="orders"))dq()},60000);
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="xf_start"],[data-a="xf_to"]');if(!b||!S)return;e.stopImmediatePropagation();
  const o=O.find(x=>x.id===b.dataset.id);if(!o)return toast("Заказ не найден");
  if(b.dataset.a==="xf_start"){if(!xfMine(o))return toast("Заказ уже изменился");if(xfPend(o))return toast("Ожидает подтверждения передачи");
@@ -1051,18 +1058,25 @@ chkBtn=o=>chkOk(o)?`<button class="btn g" data-a="chk_add" data-id="${o.id}">�
 chkView=o=>o.chk?`<h2>Чек${o.chkBy?" · "+esc(nm(o.chkBy)):""}</h2>${o.chk.startsWith("data:application/pdf")?`<a class="btn g" href="${o.chk}" download="check.pdf" style="text-decoration:none">Открыть чек (PDF)</a>`:`<img src="${o.chk}" alt="Чек" style="width:100%;border-radius:16px">`}`:"";
 function chkForm(o){modal(hd("Чек")+`<p class="mut">Оплата наличными или при получении: добавьте фото или файл чека (фото, PDF).</p><input id="ckf" type="file" accept="image/*,application/pdf"><p class="mut" id="cks"></p><div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button></div>`);
  $("ckf").onchange=async e=>{const f=e.target.files[0];if(!f)return;$("cks").textContent="Обрабатываю…";let u="";try{if(f.type==="application/pdf"){if(f.size>600000){$("cks").textContent="PDF больше 600 КБ, сожмите или сфотографируйте чек";return}u=await new Promise((r,j)=>{const x=new FileReader();x.onload=()=>r(x.result);x.onerror=j;x.readAsDataURL(f)})}else u=await imgBig(f)}catch(x){$("cks").textContent="Не удалось открыть файл";return}
-  run(async()=>{await db.collection("orders").doc(o.id).update({chk:u,chkBy:U.uid,chkAt:Date.now(),updatedAt:TS()});log("Добавлен чек",o);modal("");toast("Чек сохранён")})}}
+  run(async()=>{u=await upImg(u,"orders");await db.collection("orders").doc(o.id).update({chk:u,chkBy:U.uid,chkAt:Date.now(),updatedAt:TS()});log("Добавлен чек",o);modal("");toast("Чек сохранён")})}}
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="chk_add"]');if(!b||!S)return;const o=O.find(x=>x.id===b.dataset.id);if(o&&chkOk(o))chkForm(o)});
 
 /* Cloud Functions SDK сам просит у messaging токен и регистрирует /firebase-messaging-sw.js в КОРНЕ домена; на GitHub Pages (папка репозитория) это падает.
    Подсказываем messaging правильный (относительный) сервис-воркер и повторяем вызов. */
 let swOk=null;
 function swFix(){if(!swOk)swOk=(async()=>{try{if(!("serviceWorker"in navigator))return;const reg=await navigator.serviceWorker.register("firebase-messaging-sw.js");await navigator.serviceWorker.ready;try{firebase.messaging().useServiceWorker(reg)}catch(e){}}catch(e){}})();return swOk}
-const FNC=n=>async d=>{const call=()=>firebase.functions().httpsCallable(n)(d);try{return await call()}catch(e){if(!/^messaging\//.test(String(e&&e.code||"")))throw e;await swFix();return await call()}};
+async function upImg(u,dir){if(!u||u.slice(0,5)!=="data:")return u||"";try{const r=firebase.storage().ref(dir+"/"+Date.now()+"_"+Math.random().toString(36).slice(2,8)+".jpg");await r.putString(u,"data_url");return await r.getDownloadURL()}catch(e){return u}}
+const FNC=n=>async d=>{const u=auth.currentUser;if(!u)throw{code:"unauthenticated",message:"Войдите в систему"};
+ let r;try{const tok=await u.getIdToken();r=await fetch("https://us-central1-"+cfg.projectId+".cloudfunctions.net/"+n,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok},body:JSON.stringify({data:d})})}
+ catch(e){const call=()=>firebase.functions().httpsCallable(n)(d);try{return await call()}catch(e2){if(!/^messaging\//.test(String(e2&&e2.code||"")))throw e2;await swFix();return await call()}}
+ const j=await r.json().catch(()=>({}));
+ if(!r.ok||j.error){const e=j.error||{};throw{code:String(e.status||"internal").toLowerCase().replace(/_/g,"-"),message:e.message||"Ошибка функции"}}
+ return{data:j.result}};
 try{if(Notification.permission==="granted")swFix()}catch(e){}
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="tpw"]');if(!b||!S||!adm())return;const id=b.dataset.id;if(!canMng(id)||!SF[id])return toast("Этому сотруднику пароль менять нельзя");
- modal(hd("Пароль: "+esc(SF[id].name||""))+`<p class="mut">${esc(SF[id].email||"")}. Новый пароль сразу заменит старый в Firebase Authentication (минимум 6 символов). В базе пароли не хранятся.</p><label>Новый пароль</label><input id="npw" type="text" autocomplete="off" minlength="6"><div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button><button class="btn g" type="button" id="npm">Письмо для сброса</button><button class="btn" type="button" id="npk">Сменить</button></div>`);
- $("npk").onclick=()=>{const p=$("npw").value;if(p.length<6)return toast("Пароль короче 6 символов");run(async()=>{await FNC("setStaffPassword")({uid:id,password:p});log("Пароль сотрудника изменён",{bn:SF[id].name});modal("");toast("Пароль изменён")})};
+ modal(hd("Пароль: "+esc(SF[id].name||""))+`<p class="mut">${esc(SF[id].email||"")}. Новый пароль сразу заменит старый в Firebase Authentication (минимум 6 символов). В базе пароли не хранятся.</p><label>Новый пароль</label><input id="npw" type="text" autocomplete="off" minlength="6"><div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button><button class="btn g" type="button" id="npg">Сгенерировать</button><button class="btn g" type="button" id="npm">Письмо для сброса</button><button class="btn" type="button" id="npk">Сменить</button></div>`);
+ $("npg").onclick=()=>{const c="abcdefghjkmnpqrstuvwxyz23456789",a=new Uint8Array(8);crypto.getRandomValues(a);$("npw").value=[...a].map(x=>c[x%c.length]).join("")};
+ $("npk").onclick=()=>{const p=$("npw").value;if(p.length<6)return toast("Пароль короче 6 символов");run(async()=>{await FNC("setStaffPassword")({uid:id,password:p});log("Пароль сотрудника изменён",{bn:SF[id].name});modal("");toast("Пароль изменён: "+p+" (покажется один раз)");})};
  $("npm").onclick=()=>run(async()=>{await auth.sendPasswordResetEmail(SF[id].email);modal("");toast("Письмо для сброса отправлено")})});
 
 function lbOpen(src){let b=$("lb");if(b)b.remove();b=document.createElement("div");b.id="lb";b.innerHTML=`<img alt="" src="${src}"><div class="acts" style="width:100%;max-width:420px"><button class="btn g" type="button" id="lbx">Закрыть</button><button class="btn" type="button" id="lbd">⬇ Скачать</button></div>`;document.body.appendChild(b);
@@ -1070,7 +1084,7 @@ function lbOpen(src){let b=$("lb");if(b)b.remove();b=document.createElement("div
  $("lbd").onclick=async()=>{try{const bl=await (await fetch(src)).blob(),u=URL.createObjectURL(bl),a=document.createElement("a");a.href=u;a.download="foto-"+Date.now()+(bl.type==="image/png"?".png":bl.type==="application/pdf"?".pdf":".jpg");document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}catch(x){toast("Не удалось скачать. Удерживайте фото и выберите «Сохранить»")}}}
 document.addEventListener("click",e=>{const i=e.target.closest("img");if(!i||i.closest("#lb")||i.classList.contains("nolb"))return;const src=i.currentSrc||i.src;if(!src||src.indexOf("image/svg")>-1)return;e.stopPropagation();e.preventDefault();lbOpen(src)},true);
 const WIPE=[["inventory","Склад (товары)"],["stockMovements","История склада"],["showcase","Витрина"],["bouquets","Букеты"],["orders","Заказы"],["customers","Клиенты"],["leads","Заявки"],["deals","Сделки"],["chats","Чаты с клиентами"],["team","Чат команды"],["activityLogs","Журнал действий"],["expenses","Расходы",1],["invcost","Закупочные цены",1]];
-const wipeCard=()=>expCard()+`<h2>Очистка данных</h2><div class="card"><div class="mut">Безвозвратно стирает выбранные данные из базы (например, тестовые заказы перед запуском). Это не то же самое, что «Сбросить статистику» (она только скрывает старое). Сначала сделайте резервную копию выше. Перед удалением сайт покажет список и попросит ввести слово УДАЛИТЬ.</div><div class="acts"><button class="btn r" data-a="wipe">Очистить данные…</button></div></div>`;
+const wipeCard=()=>chnCard()+expCard()+`<h2>Очистка данных</h2><div class="card"><div class="mut">Безвозвратно стирает выбранные данные из базы (например, тестовые заказы перед запуском). Это не то же самое, что «Сбросить статистику» (она только скрывает старое). Сначала сделайте резервную копию выше. Перед удалением сайт покажет список и попросит ввести слово УДАЛИТЬ.</div><div class="acts"><button class="btn r" data-a="wipe">Очистить данные…</button></div></div>`;
 async function wipeCol(c){let n=0;for(;;){const q=await db.collection(c).limit(300).get();if(q.empty)break;if(c==="chats")for(const d of q.docs){for(;;){const m=await d.ref.collection("msgs").limit(300).get();if(m.empty)break;const b=db.batch();m.docs.forEach(x=>b.delete(x.ref));await b.commit()}}const b=db.batch();q.docs.forEach(d=>b.delete(d.ref));await b.commit();n+=q.size}return n}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b||!S)return;const a=b.dataset.a;
  if(a==="wipe"&&adm()){const L=WIPE.filter(x=>!x[2]||own());modal(hd("Очистка данных")+`<p class="mut">Отметьте, что удалить навсегда. Сначала скачайте копию (Профиль, «Резервная копия и экспорт»). Заказы, склад и остальное исчезнут без сохранения.</p>${L.map(x=>`<label class="row" style="color:var(--ink);margin:0 0 10px">${x[1]}<input type="checkbox" class="wp" value="${x[0]}" style="width:26px;min-height:26px"></label>`).join("")}<label>Для подтверждения введите УДАЛИТЬ</label><input id="wpc" autocomplete="off"><div class="acts"><button class="btn g" type="button" data-a="x">Отмена</button><button class="btn r" type="button" id="wpk">Удалить навсегда</button></div>`);
@@ -1131,7 +1145,7 @@ function stCalc(id,a,b){
  return{made,asm,taken,acc,paid,dlv,redo,built,rep,fl:asm.length+built,sum:made.reduce((s,o)=>s+tot(o),0),clean:rep.filter(r=>r.type==="desk"&&r.cl==="clean").length,dirty:rep.filter(r=>r.type==="desk"&&r.cl==="dirty").length,bad:rep.filter(r=>rpFlag(r)[0]==="bad").length}}
 const stRole=id=>{const r=(SF[id]||{}).role;return r==="florist"||r==="operator"?"Флорист и оператор":rl(id)};
 function stCard(id,a,b){const p=SF[id],k=stCalc(id,a,b),r=p.role,
- base=r==="florist"||r==="operator"?["fl","made","paid","acc"]:r==="assistant"?["fl"]:r==="courier"?["dlv"]:[],
+ base=r==="florist"||r==="operator"||r==="assistant"?["fl","made","paid","acc"]:r==="courier"?["dlv"]:[],
  T=[["fl","Собрано букетов",k.fl],["made","Принято заказов",k.made.length],["paid","Принято оплат",k.paid.length],["acc","Приёмка чужих",k.acc.length],["taken","Взял в работу",k.taken.length],["redo","Возвращено на переделку",k.redo],["dlv","Доставок",k.dlv],["rep","Отчётов сдано",k.rep.length]].map(x=>x[0]==="dlv"?[x[0],x[1],k.dlv.length]:x).filter(x=>x[2]>0||base.includes(x[0])||x[0]==="rep"&&["florist","operator","assistant"].includes(r));
  return `<div class="card stc"><div class="row"><b>${esc(p.name)}</b><span class="pill">${stRole(id)}</span></div><div class="tiles">${T.map(x=>`<div class="tile"><b>${x[2]}</b><span>${x[1]}</span></div>`).join("")||'<span class="mut">За период действий нет</span>'}</div>${k.asm.length||k.built?`<div class="mut">Собрано: заказов ${k.asm.length}${k.built?" · для витрины и склада "+k.built:""}</div>`:""}${k.made.length?`<div class="mut">Принятые заказы на сумму ${M(k.sum)}</div>`:""}${k.rep.length?`<div class="mut">Отчёты: чисто ${k.clean} · не чисто ${k.dirty}${k.bad?" · проблем "+k.bad:""}</div>`:""}</div>`}
 function stV(){const[a,b]=stRange(),all=Object.keys(SF).filter(i=>SF[i].active!==false&&["courier","operator","florist","assistant","admin"].includes(SF[i].role)),ids=adm()?all:[U.uid],
@@ -1209,7 +1223,28 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b
 
 /* ---------- Резервная копия и экспорт ---------- */
 const EXPC=[["orders","Заказы"],["customers","Клиенты"],["inventory","Склад"],["stockMovements","История склада"],["showcase","Витрина"],["bouquets","Букеты"],["leads","Заявки"],["deals","Сделки"],["reports","Отчёты"],["builds","Сборки"],["shifts","График"],["staff","Сотрудники"],["activityLogs","Журнал"],["chats","Чаты с сообщениями"],["expenses","Расходы",1],["invcost","Закупочные цены",1]];
-function expCard(){return `<h2>Резервная копия и экспорт</h2><div class="card"><div class="mut">Файл скачается на это устройство, в базе ничего не меняется.</div><div class="mut" style="margin-top:8px"><b>Резервная копия (JSON)</b>: полная копия выбранных данных, чтобы сохранить на случай потери. Открывать её не нужно, она для восстановления.<br><b>CSV</b>: таблицы для Excel и Google Таблиц (заказы, клиенты, расходы): чтобы смотреть и считать самим.</div><div class="mut" style="margin-top:8px">${bkInfo()}</div><div class="acts"><button class="btn" data-a="exp_bk">Резервная копия (JSON)</button><button class="btn g" data-a="exp_o">📊 Заказы (CSV)</button><button class="btn g" data-a="exp_c">📊 Клиенты (CSV)</button>${own()?'<button class="btn g" data-a="exp_e">📊 Расходы (CSV)</button>':""}</div></div>`}
+
+/* ===== Каналы связи: WhatsApp, Instagram, Telegram (только владелец и главный админ) ===== */
+const CHF={wa:[["token","Постоянный токен доступа (Meta)"],["phoneId","Phone number ID"],["verify","Токен проверки webhook (придумайте любой)"],["secret","App Secret (по желанию, для проверки подписи)"]],ig:[["token","Токен доступа Instagram (Page/IG)"],["verify","Токен проверки webhook (придумайте любой)"],["secret","App Secret (по желанию)"]],tg:[["token","Токен бота от @BotFather"],["secret","Секрет webhook (любые латинские буквы и цифры)"]]},
+CHH={wa:"waHook",ig:"igHook",tg:"tgHook"},
+hookUrl=k=>"https://us-central1-"+cfg.projectId+".cloudfunctions.net/"+CHH[k];
+function chnCard(){if(!own())return"";const ch=SH.channels||{};
+ return `<h2>Каналы связи</h2><div class="card"><div class="mut">Входящие сообщения клиентов появятся во вкладке «Чаты», ответы уходят из CRM. Ключи сохраняются на сервере, после сохранения их нельзя прочитать из сайта. 2ГИС не имеет API для ответов: сообщения из 2ГИС записываются вручную.</div>
+ ${Object.keys(CHF).map(k=>`<div style="margin-top:14px"><b>${CHN[k].n}</b> <span class="pill ${(ch[k]||{}).on?"ok":""}">${(ch[k]||{}).on?"включён":(ch[k]||{}).set?"ключи сохранены":"не подключён"}</span>
+ <div class="mut" style="margin-top:4px">Адрес webhook: <span style="user-select:all;word-break:break-all">${esc(hookUrl(k))}</span></div>
+ ${CHF[k].map(f=>`<label>${f[1]}</label><input id="chn_${k}_${f[0]}" type="password" autocomplete="off" placeholder="${(ch[k]||{}).set?"сохранено, введите чтобы заменить":""}">`).join("")}
+ <label class="row" style="color:var(--ink);margin:10px 0 0">Включить канал<input type="checkbox" id="chn_${k}_on" ${(ch[k]||{}).on?"checked":""}></label>
+ <div class="acts"><button class="btn" data-a="chn_save" data-k="${k}">Сохранить${k==="tg"?" и подключить":""}</button></div></div>`).join("")}</div>`}
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="chn_save"]');if(!b||!S||!own())return;const k=b.dataset.k;if(!CHF[k])return;
+ run(async()=>{const v={};CHF[k].forEach(f=>{const x=($("chn_"+k+"_"+f[0]).value||"").trim();if(x)v[f[0]]=x});
+  const on=$("chn_"+k+"_on").checked,had=(SH.channels||{})[k]||{};
+  if(!Object.keys(v).length&&!had.set&&on)return toast("Сначала введите ключи");
+  if(Object.keys(v).length)await db.collection("secrets").doc("channels").set({[k]:v},{merge:true});
+  await db.collection("settings").doc("main").set({channels:{[k]:{on,set:true}}},{merge:true});
+  if(k==="tg"&&on){await FNC("tgSetup")({url:hookUrl("tg")})}
+  log("Канал связи: "+CHN[k].n,{bn:""},on?"включён":"выключен");toast(CHN[k].n+(on?" подключён":" сохранён"))})});
+
+function expCard(){return `<h2>Резервная копия и экспорт</h2><div class="card"><div class="mut">Файл скачается на это устройство, в базе ничего не меняется. Кроме того, сервер каждый день в 03:00 сам сохраняет копию в Storage.</div><div class="mut" style="margin-top:8px"><b>Резервная копия (JSON)</b>: полная копия выбранных данных, чтобы сохранить на случай потери. Открывать её не нужно, она для восстановления.<br><b>CSV</b>: таблицы для Excel и Google Таблиц (заказы, клиенты, расходы): чтобы смотреть и считать самим.</div><div class="mut" style="margin-top:8px">${bkInfo()}</div><div class="acts"><button class="btn" data-a="exp_bk">Резервная копия (JSON)</button>${own()?'<button class="btn g" data-a="bk_now">Копия на сервер сейчас</button>':""}<button class="btn g" data-a="exp_o">📊 Заказы (CSV)</button><button class="btn g" data-a="exp_c">📊 Клиенты (CSV)</button>${own()?'<button class="btn g" data-a="exp_e">📊 Расходы (CSV)</button>':""}</div></div>`}
 function dlFile(name,text,mime){const u=URL.createObjectURL(new Blob([text],{type:mime})),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000)}
 const csvTxt=rows=>"\ufeff"+rows.map(r=>r.map(c=>{c=c==null?"":String(c);return /[";\r\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(";")).join("\r\n");
 async function getAll(c){const q=await db.collection(c).get();return q.docs.map(d=>({id:d.id,...d.data()}))}
@@ -1277,9 +1312,9 @@ const WBS={a5:["A5","@page{size:A5;margin:10mm}body{font-size:14px}.q,.q svg{wid
 function wbDoc(o,u,qr,sz){const row=(a,v)=>v||v===0?`<tr><td>${a}</td><td>${v}</td></tr>`:"";
  return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><style>${WBS[sz][1]}body{font-family:-apple-system,Arial,sans-serif;color:#000;margin:0;line-height:1.35}h1{font-size:20px;margin:0}h2{font-size:15px;margin:2px 0 8px;font-weight:400}table{width:100%;border-collapse:collapse}td{padding:4px 0;border-bottom:1px solid #bbb;vertical-align:top}td:first-child{width:34%;color:#444}.t{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}.q{text-align:center;font-size:9px}.s{font-size:20px;font-weight:700;margin-top:8px}.b{margin-top:10px;display:flex;justify-content:space-between;font-size:11px;color:#444}</style></head><body><div class="t"><div><h1>${esc(SH.name||"Mirflowers")}</h1><h2>Накладная · заказ №${esc(String(o.id).slice(-5).toUpperCase())}</h2></div><div class="q">${qr||""}<div>Статус заказа</div></div></div><table>${row("Букет",esc(o.bn))}${row("Состав",esc(o.comp))}${row("Клиент",esc(o.client))}${row("Телефон",esc(o.phone))}${row("Получение",esc(((o.date||"")+" "+(o.time||"")).trim()))}${row("Способ",o.dv?"Доставка: "+esc(o.addr):"Самовывоз")}${row("Открытка",esc(o.card))}${row("Комментарий",esc(o.note))}${row("Цена",M(o.p))}${row("Доставка",o.fee?M(o.fee):"")}${row("Предоплата",o.pre?M(o.pre):"")}</table><div class="s">${o.paid?"Оплачено":"К оплате: "+M(rest(o))}</div><div class="b"><span>${esc(SH.phone||"")}</span></div></body></html>`}
 function wbOpen(o,u){const qr=qrSvg(u);let sz=STO.get("wbsz");if(!WBS[sz])sz="a5";const el=document.createElement("div");el.id="wb";
- el.innerHTML=`<div class="wbt"><button class="btn g s" data-w="x">✕ Закрыть</button><button class="btn s" data-w="p">Печать</button></div><div class="chips">${Object.keys(WBS).map(k=>`<button class="chip" data-sz="${k}">${WBS[k][0]}</button>`).join("")}</div><iframe title="Накладная"></iframe>`;
+ el.innerHTML=`<div class="wbt"><button class="btn g s" data-wb="x">✕ Закрыть</button><button class="btn s" data-wb="p">Печать</button></div><div class="chips">${Object.keys(WBS).map(k=>`<button class="chip" data-sz="${k}">${WBS[k][0]}</button>`).join("")}</div><iframe title="Накладная"></iframe>`;
  const sh=()=>{el.querySelector("iframe").srcdoc=wbDoc(o,u,qr,sz);el.querySelectorAll("[data-sz]").forEach(b=>b.classList.toggle("on",b.dataset.sz===sz))};
- el.onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.w==="x")el.remove();else if(b.dataset.w==="p"){const w=el.querySelector("iframe").contentWindow;w.focus();w.print()}else if(b.dataset.sz){sz=b.dataset.sz;STO.set("wbsz",sz);sh()}};
+ el.onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.wb==="x")el.remove();else if(b.dataset.wb==="p"){const w=el.querySelector("iframe").contentWindow;w.focus();w.print()}else if(b.dataset.sz){sz=b.dataset.sz;STO.set("wbsz",sz);sh()}};
  document.body.appendChild(el);sh()}
 document.addEventListener("click",async e=>{const b=e.target.closest('[data-a="o_print"],[data-a="o_link"]');if(!b||!S||!mgr())return;const o=O.find(x=>x.id===b.dataset.id);if(!o)return;
  try{const u=pubUrl(await pubTok(o));if(b.dataset.a==="o_print"){modal("");wbOpen(o,u);return}try{await navigator.clipboard.writeText(u);toast("Ссылка скопирована. Отправьте её клиенту")}catch(x){prompt("Скопируйте ссылку для клиента:",u)}}catch(x){toast(er(x))}});
