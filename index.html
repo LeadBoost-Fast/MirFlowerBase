@@ -62,7 +62,17 @@ main{max-width:1180px;padding:26px 36px}h1{font-size:34px}.tiles{grid-template-c
 .tcc{height:calc(100dvh - 400px);min-height:340px}@media(min-width:900px){.tcc{height:calc(100vh - 380px)}}
 #v img[style*="width:100%"],.sh img[style*="width:100%"]{width:110px!important;height:110px;object-fit:cover;border-radius:14px!important;cursor:zoom-in}#cht img{max-width:130px!important;max-height:130px;object-fit:cover;cursor:zoom-in}#lb{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px}#lb img{max-width:100%;max-height:76vh;border-radius:12px;object-fit:contain;cursor:default}
 </style></head><body>
-<main id="v"><p class="mut">Подключение…</p></main><nav id="nav" hidden></nav><div id="m"></div><div id="toast" hidden></div>
+<main id="v"><p class="mut">Подключение…</p></main>
+<script>
+setTimeout(function(){
+  try{
+    var v=document.getElementById("v");
+    if(v && /Подключение/.test(v.textContent||"") && v.querySelectorAll("form,h1,.card").length===0){
+      v.innerHTML='<div class="card" style="margin-top:12vh"><h1>Mirflowers</h1><p class="mut">Долгое подключение. Обновите страницу (потяните вниз) или очистите данные сайта. Если только что задеплоили — подождите 1–2 минуты и сделайте жёсткое обновление.</p><button class="btn" onclick="location.reload()">Обновить</button></div>';
+    }
+  }catch(e){}
+}, 12000);
+</script><nav id="nav" hidden></nav><div id="m"></div><div id="toast" hidden></div>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -133,7 +143,7 @@ auth.onAuthStateChanged(async u=>{U=u;S=null;O=[];SF={};PRS=[];INV=[];INV0=[];CS
  if(own())subs.push(db.collection("expenses").onSnapshot(s=>{EX=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>toast("Расходы: "+er(e))));
  subs.push(db.collection("locations").onSnapshot(s=>{LC=s.docs.map(d=>({id:d.id,...d.data()}));if(adm()&&s.empty&&!seeded){seeded=1;db.collection("locations").add({name:"10 мкр, 10/2",addr:"10-й микрорайон, 10/2, Актау",active:true,createdAt:TS()}).catch(()=>{});db.collection("settings").doc("main").set({name:"Mirflowers",addr:"Микрорайон 19А, 107/1, 1 этаж, Актау",accent:"#a35a6b",cur:"KZT",split:true,phone:"+7 777 102 7292 · +7 706 707 3622",hours:"Ежедневно 10:00–02:00 (19А мкр) · 10:00–01:00 (10 мкр)"},{merge:true}).catch(()=>{})}dq()},e=>toast("Точки: "+er(e))));
  subs.push(db.collection("shifts").where("date",">=",addD(today(),-60)).onSnapshot(s=>{SHL=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>toast("График: "+er(e))));
- subs.push(db.collection("shiftRequests").where("st","==","wait").onSnapshot(s=>{SR=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>{}));
+ subs.push(db.collection("shiftRequests").onSnapshot(s=>{SR=s.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.st==="wait");dq()},e=>{SR=[];}));
  subs.push(db.collection("settings").doc("main").onSnapshot(d=>{SH=d.exists?d.data():{};applySet();dq()},e=>toast("Настройки: "+er(e))));rpSubs();
  tab="home";draw()});
 
