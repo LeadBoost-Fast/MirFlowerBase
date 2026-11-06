@@ -1,3 +1,7 @@
+// Регион всех функций — там же, где база Firestore (asia-southeast1, Сингапур). Раньше функции стояли
+// в us-central1 (США), и каждый вызов ходил США ↔ Сингапур. Менять вместе с FNR в index.html.
+const {setGlobalOptions}=require("firebase-functions/v2");
+setGlobalOptions({region:"asia-southeast1"});
 const {onCall,onRequest,HttpsError}=require("firebase-functions/v2/https");
 const {defineSecret}=require("firebase-functions/params");
 const {onDocumentCreated,onDocumentUpdated}=require("firebase-functions/v2/firestore");
@@ -62,7 +66,7 @@ exports.aiReply=onCall({secrets:[KEY]},async req=>{
 });
 
 // ================= PUSH-УВЕДОМЛЕНИЯ =================
-// Если при деплое ошибка региона, укажите регион базы Firestore, например OPT={region:"europe-west1"}
+// Регион задан выше через setGlobalOptions; OPT оставлен для частных настроек функций
 const OPT={};
 const TZ="Asia/Aqtau",OPS=["admin","operator","florist","assistant"],ALLW=["admin","operator","florist","assistant"];
 

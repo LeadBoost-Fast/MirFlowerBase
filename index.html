@@ -194,6 +194,8 @@ setTimeout(function(){
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 "use strict";
+/* Регион Cloud Functions: там же, где база Firestore (Сингапур). Менять вместе с setGlobalOptions в functions/index.js */
+const FNR="asia-southeast1";
 /* Скорость: toLocaleDateString/TimeString/String с параметрами каждый раз создают новый Intl.DateTimeFormat (дорого:
    120 сообщений чата команды = ~240 мс на телефоне). Кэшируем форматировщики; результат тот же, что у браузера. */
 (()=>{const C=new Map(),D=["weekday","year","month","day"],T=["dayPeriod","hour","minute","second","fractionalSecondDigits"],P=Date.prototype;
@@ -1372,8 +1374,8 @@ let swOk=null;
 function swFix(){if(!swOk)swOk=(async()=>{try{if(!("serviceWorker"in navigator))return;const reg=await navigator.serviceWorker.register("firebase-messaging-sw.js");await navigator.serviceWorker.ready;try{firebase.messaging().useServiceWorker(reg)}catch(e){}}catch(e){}})();return swOk}
 async function upImg(u,dir){if(!u||u.slice(0,5)!=="data:")return u||"";try{const r=firebase.storage().ref(dir+"/"+Date.now()+"_"+Math.random().toString(36).slice(2,8)+".jpg");await r.putString(u,"data_url");return await r.getDownloadURL()}catch(e){return u}}
 const FNC=n=>async d=>{const u=auth.currentUser;if(!u)throw{code:"unauthenticated",message:"Войдите в систему"};
- let r;try{const tok=await u.getIdToken();r=await fetch("https://us-central1-"+cfg.projectId+".cloudfunctions.net/"+n,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok},body:JSON.stringify({data:d})})}
- catch(e){const call=()=>firebase.functions().httpsCallable(n)(d);try{return await call()}catch(e2){if(!/^messaging\//.test(String(e2&&e2.code||"")))throw e2;await swFix();return await call()}}
+ let r;try{const tok=await u.getIdToken();r=await fetch("https://"+FNR+"-"+cfg.projectId+".cloudfunctions.net/"+n,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok},body:JSON.stringify({data:d})})}
+ catch(e){const call=()=>firebase.app().functions(FNR).httpsCallable(n)(d);try{return await call()}catch(e2){if(!/^messaging\//.test(String(e2&&e2.code||"")))throw e2;await swFix();return await call()}}
  const j=await r.json().catch(()=>({}));
  if(!r.ok||j.error){const e=j.error||{};throw{code:String(e.status||"internal").toLowerCase().replace(/_/g,"-"),message:e.message||"Ошибка функции"}}
  return{data:j.result}};
@@ -1534,7 +1536,7 @@ const EXPC=[["orders","Заказы"],["customers","Клиенты"],["inventory
 /* ===== Каналы связи: WhatsApp, Instagram, Telegram (только владелец и главный админ) ===== */
 const CHF={wa:[["token","Постоянный токен доступа (Meta)"],["phoneId","Phone number ID"],["verify","Токен проверки webhook (придумайте любой)"],["secret","App Secret (по желанию, для проверки подписи)"]],ig:[["token","Токен доступа Instagram (Page/IG)"],["verify","Токен проверки webhook (придумайте любой)"],["secret","App Secret (по желанию)"]],tg:[["token","Токен бота от @BotFather"],["secret","Секрет webhook (любые латинские буквы и цифры)"]]},
 CHH={wa:"waHook",ig:"igHook",tg:"tgHook"},
-hookUrl=k=>"https://us-central1-"+cfg.projectId+".cloudfunctions.net/"+CHH[k];
+hookUrl=k=>"https://"+FNR+"-"+cfg.projectId+".cloudfunctions.net/"+CHH[k];
 function chnCard(){if(!own())return"";const ch=SH.channels||{};
  return `<h2>Каналы связи</h2><div class="card"><div class="mut">Входящие сообщения клиентов появятся во вкладке «Чаты», ответы уходят из CRM. Ключи сохраняются на сервере, после сохранения их нельзя прочитать из сайта. 2ГИС не имеет API для ответов: сообщения из 2ГИС записываются вручную.</div>
  ${Object.keys(CHF).map(k=>`<div style="margin-top:14px"><b>${CHN[k].n}</b> <span class="pill ${(ch[k]||{}).on?"ok":""}">${(ch[k]||{}).on?"включён":(ch[k]||{}).set?"ключи сохранены":"не подключён"}</span>
