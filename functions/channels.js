@@ -132,7 +132,7 @@ exports.igHook=onRequest({...OPT,maxInstances:10},async(req,res)=>{
 });
 
 // ================= Telegram =================
-exports.tgHook=onRequest({...OPT,maxInstances:10},async(req,res)=>{
+exports.tgHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(req,res)=>{
   if(req.method!=="POST")return res.sendStatus(405);
   const c=await secretsOf("tg");
   if(!c.secret||req.get("x-telegram-bot-api-secret-token")!==c.secret)return res.sendStatus(403);
