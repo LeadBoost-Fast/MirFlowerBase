@@ -1,7 +1,10 @@
 // Регион всех функций — там же, где база Firestore (asia-southeast1, Сингапур). Раньше функции стояли
 // в us-central1 (США), и каждый вызов ходил США ↔ Сингапур. Менять вместе с FNR в index.html.
 const {setGlobalOptions}=require("firebase-functions/v2");
-setGlobalOptions({region:"asia-southeast1"});
+// maxInstances и cpu: по умолчанию каждая функция резервирует до 100 копий по 1 vCPU, и в новом регионе
+// деплой упирался в квоту «total allowable CPU per project per region». Для push, копий и коротких запросов
+// 10 копий и облегчённого процессора (gcf_gen1, как у функций 1-го поколения) хватает с запасом.
+setGlobalOptions({region:"asia-southeast1",maxInstances:10,cpu:"gcf_gen1"});
 const {onCall,onRequest,HttpsError}=require("firebase-functions/v2/https");
 const {defineSecret}=require("firebase-functions/params");
 const {onDocumentCreated,onDocumentUpdated}=require("firebase-functions/v2/firestore");
