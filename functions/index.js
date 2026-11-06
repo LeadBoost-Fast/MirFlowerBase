@@ -3,6 +3,7 @@ const {defineSecret}=require("firebase-functions/params");
 const {onDocumentCreated,onDocumentUpdated}=require("firebase-functions/v2/firestore");
 const {onSchedule}=require("firebase-functions/v2/scheduler");
 const admin=require("firebase-admin");
+const {FieldPath}=require("firebase-admin/firestore");
 const KEY=defineSecret("ANTHROPIC_API_KEY");
 admin.initializeApp();
 const TOP=["tilegen615@gmail.com","nash0082008@icloud.com"];
@@ -191,7 +192,7 @@ async function runBackup(){
     for(const col of BK_COLS){
       let last=null,part=0;
       for(;;){
-        let q=db.collection(col).orderBy(admin.firestore.FieldPath.documentId()).limit(200);
+        let q=db.collection(col).orderBy(FieldPath.documentId()).limit(200);
         if(last)q=q.startAfter(last);
         const s=await q.get();
         if(s.empty)break;
