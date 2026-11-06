@@ -23,8 +23,8 @@ service cloud.firestore {
     function isAdmin()   { return isActive() && role() == 'admin'; }
     function isMgr()     { return isActive() && role() in ['admin','operator','florist','assistant']; }
     function isWork()    { return isActive() && role() in ['admin','operator','florist','assistant']; }
-    // Оператор, флорист, админ: оплата, приёмка, переделка, чаты, шаблоны. Помощник флориста только собирает
-    function isOpRole()  { return isActive() && role() in ['admin','operator','florist']; }
+    // Оператор, флорист, помощник флориста, админ: оплата, приёмка, переделка, чаты, шаблоны (равные права)
+    function isOpRole()  { return isActive() && role() in ['admin','operator','florist','assistant']; }
     function isCourier() { return isActive() && role() == 'courier'; }
 
     // Сотрудники. Обычный админ управляет только не-админами, владельца и главного админа тронуть нельзя
@@ -149,13 +149,15 @@ service cloud.firestore {
       allow read: if isActive();
       allow create: if isActive() && request.resource.data.uid == request.auth.uid
         && request.resource.data.keys().hasAll(['uid','date','t','by','byName','ts','st']);
-      allow update, delete: if isAdmin() || isOwner();
+      allow update: if isAdmin() || isOwner();
+      // свою ожидающую заявку сотрудник может заменить новой
+      allow delete: if isAdmin() || isOwner() || (isActive() && resource.data.uid == request.auth.uid && resource.data.st == 'wait');
     }
     match /locations/{id}       { allow read: if isActive(); allow write: if isOwner(); }
-    // Настройки магазина: владелец/главный админ; шаблоны чата (tpls) могут менять все, кроме флориста и помощника
+    // Настройки магазина: владелец/главный админ; шаблоны чата (tpls) могут менять все, кроме курьера
     match /settings/{id} {
       allow read: if isActive();
-      allow write: if isOwner() || (isActive() && role() in ['admin','operator','courier']
+      allow write: if isOwner() || (isActive() && role() in ['admin','operator','florist','assistant']
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tpls','updatedAt']))
         || (isAdmin()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statsFrom','statsFromBy','statsFromByName','updatedAt']));
