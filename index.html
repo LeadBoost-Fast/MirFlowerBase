@@ -301,7 +301,7 @@ function bind(){const sf=$("sf");if(sf)sf.onsubmit=saveSet;const q=$("q");if(q)q
    try{c=await sec.auth().createUserWithEmailAndPassword(em,pw)}
    catch(e){if(e.code!=="auth/email-already-in-use")throw e;
     /* аккаунт мог создаться при прошлой неудачной попытке (без профиля): входим тем же паролем и достраиваем профиль */
-    try{c=await sec.auth().signInWithEmailAndPassword(em,pw)}catch(x){throw e}
+    try{c=await sec.auth().signInWithEmailAndPassword(em,pw)}catch(x){toast("Этот email уже есть в Firebase → Authentication, но введённый пароль не подошёл. Введите пароль, с которым аккаунт создавали, или удалите этот email в Authentication и создайте заново");return}
     const ex=await db.collection("staff").doc(c.user.uid).get();if(ex.exists){toast("Этот сотрудник уже создан, он есть в списке");return}}
    const prof={name:g("name"),email:em,role:g("role"),loc:g("loc"),active:true,createdAt:TS()};let last=null;
    for(let i=0;i<3;i++){try{await db.collection("staff").doc(c.user.uid).set(prof);last=null;break}catch(e){last=e;await new Promise(r=>setTimeout(r,700*(i+1)))}}
