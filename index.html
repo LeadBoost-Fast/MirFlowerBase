@@ -165,6 +165,9 @@ html.lite .th,html.lite .deco,html.lite .flr{display:none!important}
 
 
 #m input.bad,#m select.bad,#m textarea.bad,input.bad,select.bad,textarea.bad{outline:2px solid #e5484d!important;outline-offset:0;border-color:#e5484d!important}
+
+/* скорость: карточки за пределами экрана не раскладываются и не рисуются */
+#v .oc{content-visibility:auto;contain-intrinsic-size:auto 170px}#v .todo>*{content-visibility:auto;contain-intrinsic-size:auto 64px}
 </style></head><body>
 <main id="v"><p class="mut">Подключение…</p></main>
 <script>
@@ -191,13 +194,36 @@ setTimeout(function(){
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 "use strict";
+/* Скорость: toLocaleDateString/TimeString/String с параметрами каждый раз создают новый Intl.DateTimeFormat (дорого:
+   120 сообщений чата команды = ~240 мс на телефоне). Кэшируем форматировщики; результат тот же, что у браузера. */
+(()=>{const C=new Map(),D=["weekday","year","month","day"],T=["dayPeriod","hour","minute","second","fractionalSecondDigits"],P=Date.prototype;
+ const fmt=(loc,o,req,def)=>{const k=req+"|"+String(loc)+"|"+(o?JSON.stringify(o):"");let f=C.get(k);if(f)return f;let x=o?{...o}:{};
+  if(!x.dateStyle&&!x.timeStyle){const hd=D.some(n=>x[n]!==undefined),ht=T.some(n=>x[n]!==undefined);let need=true;if(req!=="time"&&hd)need=false;if(req!=="date"&&ht)need=false;
+   if(need){if(def==="date"||def==="all"){x.year="numeric";x.month="numeric";x.day="numeric"}if(def==="time"||def==="all"){x.hour="numeric";x.minute="numeric";x.second="numeric"}}}
+  f=new Intl.DateTimeFormat(loc,x);if(C.size<200)C.set(k,f);return f};
+ const wrap=(name,req,def)=>{const o0=P[name];P[name]=function(loc,o){try{if(isNaN(this.getTime()))return o0.call(this,loc,o);return fmt(loc,o,req,def).format(this)}catch(e){return o0.call(this,loc,o)}}};
+ try{wrap("toLocaleDateString","date","date");wrap("toLocaleTimeString","time","time");wrap("toLocaleString","any","all")}catch(e){}})();
+/* Скорость: вместо полной замены innerHTML сравниваем новую разметку с текущей и меняем только отличия.
+   Обработчики кликов висят на document (data-a), поэтому узлы можно переиспользовать. Фокус, прокрутка и набранный текст сохраняются. */
+function morph(el,html){if(el.__h===html&&el.childNodes.length)return;el.__h=html;const t=document.createElement("template");t.innerHTML=html;
+ if(typeof LANG!=="undefined"&&LANG==="kk"&&window.trN)[...t.content.childNodes].forEach(window.trN);mKids(el,t.content);if(window.trObs)window.trObs.takeRecords()}
+function mKids(a,b){let x=a.firstChild,y=b.firstChild;while(y){const ny=y.nextSibling;if(!x){a.appendChild(y)}else if(x.nodeType===y.nodeType&&x.nodeName===y.nodeName&&!(x.nodeType===1&&x.dataset&&x.dataset.nomorph!==undefined)){mNode(x,y);x=x.nextSibling}else{a.replaceChild(y,x);x=y.nextSibling}y=ny}
+ while(x){const nx=x.nextSibling;a.removeChild(x);x=nx}}
+function mNode(x,y){if(x.nodeType!==1){if(x.nodeValue!==y.nodeValue)x.nodeValue=y.nodeValue;return}
+ const tg=x.nodeName,act=x===document.activeElement,va0=x.getAttribute("value"),ck0=x.hasAttribute("checked");
+ for(const at of [...x.attributes])if(!y.hasAttribute(at.name))x.removeAttribute(at.name);
+ for(const at of y.attributes)if(x.getAttribute(at.name)!==at.value)x.setAttribute(at.name,at.value);
+ if(tg==="INPUT"){if(!act&&x.type!=="file"&&va0!==y.getAttribute("value"))x.value=y.getAttribute("value")||"";if(ck0!==y.hasAttribute("checked"))x.checked=y.hasAttribute("checked");return}
+ if(tg==="TEXTAREA"){const v=y.textContent;if(x.defaultValue!==v){x.defaultValue=v;if(!act)x.value=v}return}
+ mKids(x,y);
+ if(tg==="SELECT"&&!act){let i=[...y.options].findIndex(o=>o.hasAttribute("selected"));if(i<0)i=0;if(x.selectedIndex!==i)x.selectedIndex=i}}
 const cfg={apiKey:"AIzaSyCDxDJvmIOw8R0kP7bNbiBHYDAOqY_9cSQ",authDomain:"mirflowersbase.firebaseapp.com",projectId:"mirflowersbase",storageBucket:"mirflowersbase.firebasestorage.app",messagingSenderId:"142575786641",appId:"1:142575786641:web:de2d1b79b076894c29fd30"};
 const NOCFG=cfg.apiKey.startsWith("ВСТАВЬТЕ");
 if(typeof firebase==="undefined"){throw new Error("Firebase SDK не загрузился. Откройте сайт по Wi‑Fi или отключите блокировщик рекламы.")}
 firebase.initializeApp(cfg);const auth=firebase.auth(),db=firebase.firestore(),TS=()=>firebase.firestore.FieldValue.serverTimestamp();try{db.settings({experimentalAutoDetectLongPolling:true,merge:true})}catch(e){}
 /* кэш на устройстве: сайт открывается сразу с сохранёнными данными, из сети приходят только изменения */try{db.enablePersistence({synchronizeTabs:true}).catch(()=>{})}catch(e){}
 try{auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){}
-const $=i=>document.getElementById(i),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),M=n=>Math.round(+n||0).toLocaleString("ru-RU")+" ₸";
+const $=i=>document.getElementById(i),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),NFR=new Intl.NumberFormat("ru-RU"),M=n=>NFR.format(Math.round(+n||0))+" ₸";
 const ST=["Новый","Собирается","Готов","В пути","Выдан","Отменён"],stL=o=>+o.st===4&&o.dv?"Доставлен":(ST[+o.st]||"?"),RL={owner:"Владелец",admin:"Администратор",operator:"Оператор",florist:"Флорист",assistant:"Помощник флориста",courier:"Курьер"},SRC=["Instagram","WhatsApp","2ГИС","Телефон","Сайт","Другое"],PAY=["Kaspi","Наличные","Перевод"];
 let U=null,S=null,O=[],SF={},tab="home",fs="fresh",fz2="",fq="",subs=[],lock=0;
 const today=()=>new Date().toLocaleDateString("sv-SE"),nm=id=>(SF[id]&&SF[id].name)||"Не назначен",mgr=()=>S&&["admin","operator","florist","assistant"].includes(S.role),adm=()=>S&&S.role==="admin",own=()=>S&&S.own===true,OWN_EM="tilegen615@gmail.com",HEAD_EM="nash0082008@icloud.com",isOwnEm=m=>{m=String(m||"").toLowerCase();return m===OWN_EM||m===HEAD_EM},myRL=()=>own()?(S.head?"Главный администратор":RL.owner):RL[S.role],isOwnId=id=>{const e=SF[id];return !!e&&(e.role==="owner"||isOwnEm(e.email))},canMng=id=>!!SF[id]&&!isOwnId(id)&&(own()||SF[id].role!=="admin"),rl=id=>isOwnId(id)?(String((SF[id]||{}).email||"").toLowerCase()===HEAD_EM?"Главный администратор":RL.owner):(RL[(SF[id]||{}).role]||""),shipT=o=>+o.shipAt||(o.updatedAt&&o.updatedAt.toMillis?o.updatedAt.toMillis():0),wait=o=>o.dv&&+o.st===3?Math.max(0,shipT(o)+180000-Date.now()):0,mmss=ms=>{const s=Math.ceil(ms/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
@@ -312,7 +338,9 @@ const tseg=(k,d)=>{let r=tx(k);if(r!==undefined||(d=(d||0)+1)>4)return r;
  m=k.match(/^([\d\s.,]+(?:₸)?)\s+(.+)$/);if(m){const v=tseg(m[2],d);if(v!==undefined)return m[1]+" "+v}
  m=k.match(/^(.+?)\s+([\d\s.,:/-]+(?:\s?₸|\s?шт\.?|%)?)$/);if(m){const v=tx(m[1]);if(v!==undefined)return v+" "+m[2]}
  return undefined};
-const t=s=>{if(LANG!=="kk"||typeof s!=="string"||!s)return s;const k=s.trim();if(!k)return s;const r=tseg(k);return r===undefined?s:s.replace(k,r)};
+/* перевод запоминается: одна и та же строка (в том числе уже казахская, которую не найти) разбирается один раз */
+const TC=new Map();
+const t=s=>{if(LANG!=="kk"||typeof s!=="string"||!s)return s;const k=s.trim();if(!k)return s;let r;if(TC.has(k))r=TC.get(k);else{r=tseg(k);if(TC.size>5000)TC.clear();TC.set(k,r);if(r!==undefined&&r!==k)TC.set(r,undefined)}return r===undefined?s:s.replace(k,r)};
 /* ===== Қазақша: заманауи, жастардың тілі (сен, қысқа, күнделікті сөздер) ===== */
 Object.assign(KZ,{
 /* исправления старых */
@@ -366,11 +394,12 @@ KZR.push(
 
 function setLang(l){try{localStorage.setItem("lang",l)}catch(e){}location.reload()}
 if(LANG==="kk"){document.documentElement.lang="kk";
+window.trN=null;
  const trN=n=>{if(n.nodeType===3){const v=t(n.nodeValue);if(v!==n.nodeValue)n.nodeValue=v;return}
   if(n.nodeType!==1||/^(SCRIPT|STYLE|TEXTAREA|INPUT)$/.test(n.tagName)&&n.tagName!=="INPUT")return;
   ["placeholder","aria-label","title"].forEach(a=>{const v=n.getAttribute&&n.getAttribute(a);if(v){const w=t(v);if(w!==v)n.setAttribute(a,w)}});
   n.childNodes.forEach(trN)};
- const go=()=>{trN(document.body);new MutationObserver(ms=>ms.forEach(m=>{if(m.type==="characterData")trN(m.target);else m.addedNodes.forEach(trN)})).observe(document.body,{childList:true,subtree:true,characterData:true})};
+ window.trN=trN;const go=()=>{trN(document.body);window.trObs=new MutationObserver(ms=>ms.forEach(m=>{if(m.type==="characterData")trN(m.target);else m.addedNodes.forEach(trN)}));window.trObs.observe(document.body,{childList:true,subtree:true,characterData:true})};
  document.readyState==="loading"?document.addEventListener("DOMContentLoaded",go):go();
  const _cf=window.confirm.bind(window),_al=window.alert.bind(window),_pr=window.prompt.bind(window);window.confirm=x=>_cf(t(x));window.alert=x=>_al(t(x));window.prompt=(x,v)=>_pr(t(x),v)}
 const langCard=()=>`<h2>Язык</h2><div class="card"><div class="row" style="gap:8px"><button class="btn ${LANG==="ru"?"":"g"}" data-a="lang_ru" style="flex:1">Русский</button><button class="btn ${LANG==="kk"?"":"g"}" data-a="lang_kk" style="flex:1">Қазақша</button></div></div>`;
@@ -394,7 +423,7 @@ auth.onAuthStateChanged(async u=>{__authDone=1;U=u;S=null;O=[];ON=0;OX=new Map()
  }catch(e){await auth.signOut();return login("Не удалось проверить доступ: "+er(e))}
  subs.push(db.collection("staff").onSnapshot(s=>{SF={};s.forEach(d=>SF[d.id]=d.data());dq()},e=>toast(er(e))));
  const q=db.collection("orders").orderBy("ts","desc").limit(300);
- subs.push(q.onSnapshot(s=>{const nw=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.ts||0)-(a.ts||0));ordDiff(nw);O=nw;ON=nw.length;upSub();pubAuto(nw);dq()},e=>toast("Заказы: "+er(e))));
+ subs.push(q.onSnapshot(s=>{const nw=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.ts||0)-(a.ts||0));ordDiff(nw);O=nw;ON=nw.length;ORV++;upSub();pubAuto(nw);dq()},e=>toast("Заказы: "+er(e))));
  if(["admin","operator","florist","assistant"].includes(S.role)){subs.push(db.collection("inventory").onSnapshot(s=>{INV0=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.cat||"").localeCompare(b.cat||"")||a.name.localeCompare(b.name));INV=invM();dq()},e=>toast("Склад: "+er(e))));subs.push(db.collection("bouquets").onSnapshot(s=>{BQ=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>toast("Букеты: "+er(e))))}
  if(mgr())subs.push(db.collection("customers").onSnapshot(s=>{CU={};s.forEach(d=>CU[d.id]=d.data());dqT("crm")},e=>toast("Клиенты: "+er(e))));
  if(["admin","operator","florist","assistant"].includes(S.role))subs.push(db.collection("showcase").onSnapshot(s=>{SC=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>toast("Витрина: "+er(e))));
@@ -416,9 +445,9 @@ function uiLoad(){tab="home";fs="fresh";fdt="";try{const v=JSON.parse(STO.get(ui
 function uiSave(){if(U&&S)STO.set(uiKey(),JSON.stringify({tab,fs,fdt}))}
 function draw(){if(!S)return;if(!bu.c)bu.c=new Map();alerts.d=0;locGate();const T=[["home","⌂","Главная"],["orders","☰","Заказы"]];if(mgr()||S.role==="courier")T.push(["map","◎","Карта"]);if(["admin","operator","florist","assistant"].includes(S.role))T.push(["stock","▦","Склад"]);if(["admin","operator","florist","assistant"].includes(S.role))T.push(["show","▤","Витрина"]);T.push(["sched","◷","График"]);if(mgr())T.push(["rep","📋","Отчёты"],["st","📊","Статистика"]);if(mgr())T.push(["crm","♥","Клиенты"],...(isOp()&&FX("clientChat")?[["chats","✆","Чаты"]]:[]),...(canTpl()?[["tpl","💬","Шаблоны"]]:[]),...(FX("deals")?[["deals","◫","Сделки"]]:[]),["leads","✉","Заявки"]);if(!mgr()&&canTpl())T.push(["tpl","💬","Шаблоны"]);if(own())T.push(["fin","₸","Финансы"],["an","◔","Аналитика"]);if(adm())T.push(["cur","🚚","Курьер"],["fl","✿","Сборка"],["team","☺","Команда"],["jr","✎","Журнал"]);if(tab==="deals"&&!FX("deals"))tab="home";if(FX("teamChat"))T.push(["tc","☷","Чат"]);T.push(["me","⚙","Профиль"]);if(!T.some(x=>x[0]===tab)&&tab!=="more")tab="home";uiSave();
  const n=$("nav");n.hidden=false;n.dataset.brand=SH.name||"Mirflowers";const wide=matchMedia("(min-width:900px)").matches,pf0=({admin:["home","orders","chats","stock"],operator:["home","orders","chats","stock"],florist:["home","orders","stock","show"],assistant:["home","orders","stock","show"],courier:["home","orders","map","sched"]})[S.role]||["home","orders"],pf=pf0.filter(k=>T.some(t=>t[0]===k)),PR=wide?T:pf.map(k=>T.find(t=>t[0]===k)).filter(Boolean);MORE=wide?[]:T.filter(t=>!pf.includes(t[0]));
- const NV=MORE.length?[...PR,["more","⋯","Ещё"]]:PR,inMore=tab==="more"||MORE.some(t=>t[0]===tab),moreN=MORE.reduce((a,t)=>a+(+nbN(t[0])||0),0),plus=!wide&&mgr();document.body.classList.toggle("hasplus",plus);const nbt=NV.map(t=>`<button class="${t[0]===tab||(t[0]==="more"&&inMore)?"on":""}" data-t="${t[0]}"><i>${ic(t[0])}</i>${t[2]}${(t[0]==="more"?moreN:nbN(t[0]))?`<b class="nb">${t[0]==="more"?moreN:nbN(t[0])}</b>`:""}</button>`);if(plus)nbt.splice(Math.min(2,nbt.length),0,`<button class="plus" type="button" data-a="new" aria-label="Новый заказ"><i>${ic("plus")}</i></button>`);n.innerHTML=nbt.join("");
+ const NV=MORE.length?[...PR,["more","⋯","Ещё"]]:PR,inMore=tab==="more"||MORE.some(t=>t[0]===tab),moreN=MORE.reduce((a,t)=>a+(+nbN(t[0])||0),0),plus=!wide&&mgr();document.body.classList.toggle("hasplus",plus);const nbt=NV.map(t=>`<button class="${t[0]===tab||(t[0]==="more"&&inMore)?"on":""}" data-t="${t[0]}"><i>${ic(t[0])}</i>${t[2]}${(t[0]==="more"?moreN:nbN(t[0]))?`<b class="nb">${t[0]==="more"?moreN:nbN(t[0])}</b>`:""}</button>`);if(plus)nbt.splice(Math.min(2,nbt.length),0,`<button class="plus" type="button" data-a="new" aria-label="Новый заказ"><i>${ic("plus")}</i></button>`);morph(n,nbt.join(""));
  n.onclick=e=>{const b=e.target.closest("button");if(b&&b.dataset.t){tab=b.dataset.t;draw();scrollTo(0,0)}};
- const cf=chFocus();if(LOC&&!locs().some(x=>x.id===LOC))LOC="";$("v").innerHTML=locBar()+scoped(()=>({home,orders,team,me,rep:repV,st:stV,cur:curV,fl:homeFl,tpl:tplV,stock,show:vit,crm,chats,tc,leads,fin:own()?fin:home,sched,jr:logv,more:moreV,map:mapV,deals:dealsV,an:own()?anV:home})[tab]())+(mgr()&&(tab==="home"||tab==="orders")?`<button class="btn fab" data-a="new">＋ Заказ</button>`:"");chFit();bind();if(tab==="map")mapAfter();if(tab==="chats")chBind();if(tab==="tc")tcBind();chAfter(cf)}
+ const cf=chFocus();if(LOC&&!locs().some(x=>x.id===LOC))LOC="";const vh=locBar()+scoped(()=>({home,orders,team,me,rep:repV,st:stV,cur:curV,fl:homeFl,tpl:tplV,stock,show:vit,crm,chats,tc,leads,fin:own()?fin:home,sched,jr:logv,more:moreV,map:mapV,deals:dealsV,an:own()?anV:home})[tab]())+(mgr()&&(tab==="home"||tab==="orders")?`<button class="btn fab" data-a="new">＋ Заказ</button>`:"");const ve=$("v");if(tab==="map"||draw.tab!==tab){ve.innerHTML=vh;ve.__h=vh}else morph(ve,vh);draw.tab=tab;chFit();bind();if(tab==="map")mapAfter();if(tab==="chats")chBind();if(tab==="tc")tcBind();chAfter(cf)}
 
 function next(o){const s=+o.st;if(s===2&&o.rv==="wait"&&mgr())return null;if(mgr())return s<4?[s===2&&!o.dv?4:s+1,(s===3&&o.dv?"Доставлено"+(wait(o)>0?" · "+mmss(wait(o)):""):["Начать сборку","Готов","Передать курьеру","Выдать","—"][s===2&&!o.dv?3:s])]:null;
  if(["florist","assistant"].includes(S.role)&&s<2)return[s+1,s?"Готов":"Начать сборку"];if(S.role==="courier"&&s===3)return[4,"✓ Доставлено"];return null}
@@ -623,7 +652,8 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-a^="s_"]')
 /* ===== Витрина и клиенты ===== */
 let CU={},SC=[];
 const dg=p=>String(p||"").replace(/\D/g,""),vleft=x=>(+x.shelf||3)-Math.floor((Date.now()-new Date(x.made+"T00:00:00"))/864e5);
-function clients(){histNeed("date","0000-00-00","9999-99-99");const m={};oH().forEach(o=>{const k=dg(o.phone);if(!k)return;const c=m[k]=m[k]||{k,name:o.client,phone:o.phone,n:0,sum:0,last:"",os:[]};c.os.push(o);if(+o.st!==5){c.n++;c.sum+=(+o.p||0)+(+o.fee||0);if((o.date||"")>c.last)c.last=o.date}});
+function clients(){histNeed("date","0000-00-00","9999-99-99");const ck=ORV+"|"+OXV+"|"+LOC+"|"+(O===RAW[0]?"r":"s");if(clients.k===ck&&clients.cu===CU)return clients.v.slice();clients.k=ck;clients.cu=CU;clients.v=clients0();return clients.v.slice()}
+function clients0(){const m={};oH().forEach(o=>{const k=dg(o.phone);if(!k)return;const c=m[k]=m[k]||{k,name:o.client,phone:o.phone,n:0,sum:0,last:"",os:[]};c.os.push(o);if(+o.st!==5){c.n++;c.sum+=(+o.p||0)+(+o.fee||0);if((o.date||"")>c.last)c.last=o.date}});
  Object.keys(CU).forEach(k=>{const c=m[k]=m[k]||{k,name:CU[k].name,phone:CU[k].phone,n:0,sum:0,last:"",os:[]};c.x=CU[k];if(CU[k].name)c.name=CU[k].name});return Object.values(m).sort((a,b)=>b.sum-a.sum)}
 function crm(){const q=fq.toLowerCase(),l=clients().filter(c=>`${c.name} ${c.phone}`.toLowerCase().includes(q));
  const all=clients(),d30=addD(today(),-30),av=n=>esc(String(n||"?").trim().charAt(0).toUpperCase()||"?");
@@ -738,15 +768,15 @@ const lq=(d,L)=>SH.split?(d.qs?(d.qs[L]||0):(L==="main"?d.qty||0:0)):(d.qty||0),
  locOpts=(sel,all)=>(all?`<option value="">Все точки</option>`:"")+locs().map(x=>`<option value="${x.id}" ${sel===x.id?"selected":""}>${esc(x.name)}</option>`).join("");
 // История заказов: подписка держит последние 300. Если их не хватает на выбранный период (финансы, аналитика, статистика, главная),
 // заказы за период один раз догружаются запросом (по date или ts) и складываются в OX. Свежие данные всегда берутся из O.
-let ON=0,OX=new Map(),OXR={date:[],ts:[]},UPON=0;
+let ON=0,ORV=0,OXV=0,OX=new Map(),OXR={date:[],ts:[]},UPON=0;
 /* Неоплаченные заказы старше 300 последних: живая подписка where(paid==false), документы кладутся в OX.
    Заказ оплатили (ушёл из выборки) — перечитываем его, чтобы в истории осталась свежая версия. */
 function upSub(){if(UPON||ON<300||!S||!mgr())return;UPON=1;
  subs.push(db.collection("orders").where("paid","==",false).onSnapshot(s=>{let ch=0;s.docChanges().forEach(c=>{const d=c.doc;ch=1;
-  if(c.type==="removed")d.ref.get().then(x=>{if(x.exists)OX.set(x.id,{id:x.id,...x.data()});else OX.delete(x.id);dq()}).catch(()=>{});
-  else OX.set(d.id,{id:d.id,...d.data()})});if(ch)dq()},e=>toast("Неоплаченные заказы: "+er(e))))}
+  if(c.type==="removed")d.ref.get().then(x=>{if(x.exists)OX.set(x.id,{id:x.id,...x.data()});else OX.delete(x.id);OXV++;dq()}).catch(()=>{});
+  else OX.set(d.id,{id:d.id,...d.data()})});if(ch){OXV++;dq()}},e=>toast("Неоплаченные заказы: "+er(e))))}
 function histNeed(f,a,b){if(ON<300||a==null||b==null||!U)return;if(OXR[f].some(([x,y])=>x<=a&&y>=b))return;OXR[f].push([a,b]);
- db.collection("orders").where(f,">=",a).where(f,"<=",b).get().then(s=>{let n=0;s.forEach(d=>{if(!OX.has(d.id))n++;OX.set(d.id,{id:d.id,...d.data()})});if(n)dq()}).catch(e=>toast("История заказов: "+er(e)))}
+ db.collection("orders").where(f,">=",a).where(f,"<=",b).get().then(s=>{let n=0;s.forEach(d=>{if(!OX.has(d.id))n++;OX.set(d.id,{id:d.id,...d.data()})});OXV++;if(n)dq()}).catch(e=>toast("История заказов: "+er(e)))}
 const oXtra=()=>{const ids=new Set(RAW[0].map(x=>x.id));return[...OX.values()].filter(x=>!ids.has(x.id))},oH=()=>OX.size?O.concat(oXtra().filter(inL)):O,oHr=()=>OX.size?RAW[0].concat(oXtra()):RAW[0];
 let RAW=[[],[],[],[],[]],DL=[],INV0=[],CST={};const invM=()=>INV0.map(i=>{const x={...i};if(own())x.buy=(CST[i.id]||{}).buy??i.buy??0;else delete x.buy;return x});function scoped(f){const b=[O,SC,LD,EX,INV];RAW=b;O=O.filter(inL);SC=SC.filter(inL);LD=LD.filter(inL);EX=EX.filter(inL);if(SH.split&&LOC)INV=INV.map(i=>({...i,qty:lq(i,LOC)}));try{return f()}finally{[O,SC,LD,EX,INV]=b}}
 function locMe(){if(!S||own()||fixed()||S.role==="courier"||locs().length<2)return"";return `<h2>Где я работаю сегодня</h2><div class="card"><div class="mut">Точка, на которой вы сейчас находитесь: от неё зависят заказы, склад и отчёты, которые вы видите. Ошиблись или перешли на другую точку — нажмите «Изменить».</div><div class="row" style="margin-top:8px"><b>${LOC?esc(lname(LOC)):"Все точки"}</b><button class="btn g s" data-a="lc_re">Изменить</button></div></div>`}
@@ -764,7 +794,7 @@ const WD=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"],ds=d=>d.toLocaleDate
  wdn=s=>WD[(new Date(s+"T12:00:00").getDay()+6)%7],
  dm=s=>new Date(s+"T12:00:00").toLocaleDateString("ru-RU",{day:"numeric",month:"short"}),
  pl=(n,a,b,c)=>{const k=n%100,j=n%10;return k>10&&k<15?c:j===1?a:j>1&&j<5?b:c},
- kf=v=>Math.round(v).toLocaleString("ru-RU"),
+ kf=v=>NFR.format(Math.round(v)),
  tot=o=>(+o.p||0)+(+o.fee||0),
  late=o=>+o.st<4&&o.date&&new Date(o.date+"T"+(o.time||"23:59")).getTime()<Date.now()?'<span class="pill bad">Просрочен</span> ':"",
  bcomp=b=>(b.items||[]).map(i=>((inv(i.iid)||{name:"?"}).name)+" ×"+i.q).join(", "),
@@ -1295,7 +1325,7 @@ nbN=k=>k==="chats"?chUn():k==="tc"?tcUn():0;
 function tcSubs(){if(!FX("teamChat"))return;
  subs.push(db.collection("team").orderBy("ts").limitToLast(200).onSnapshot(s=>{const nw=s.docs.map(d=>({id:d.id,...d.data()}));
   if(tcLast)nw.filter(m=>m.ts>tcLast&&m.by!==U.uid).forEach(m=>{if(!(tab==="tc"&&!document.hidden))nf({type:"team",title:(m.byName||"Чат команды"),body:m.t,tag:"team",go:()=>{tab="tc";draw()}})});
-  if(!STO.get("tcr_"+U.uid))tcSeen();tcLast=nw.length?nw[nw.length-1].ts:1;TCM=nw;TCERR="";draw()},e=>{TCERR=e.code||e.message;draw()}))}
+  if(!STO.get("tcr_"+U.uid))tcSeen();tcLast=nw.length?nw[nw.length-1].ts:1;TCM=nw;TCERR="";dq()},e=>{TCERR=e.code||e.message;dq()}))}
 function tcPresHtml(){const now=Date.now(),pm={};PRS.forEach(p=>{if(p.uid)pm[p.uid]=p});
  const l=Object.keys(SF).filter(i=>SF[i].active!==false).map(i=>({i,n:SF[i].name||"—",r:SF[i].role,ts:(pm[i]||{}).ts||0})).map(x=>({...x,on:now-x.ts<150000})).sort((a,b)=>b.on-a.on||b.ts-a.ts),on=l.filter(x=>x.on).length;
  return `<div class="row"><b>Сейчас на сайте: ${on}</b><span class="mut">${l.length} в команде</span></div>`+l.map(x=>`<div class="ln"><span style="display:flex;align-items:center;gap:8px"><i style="width:9px;height:9px;border-radius:50%;background:${x.on?"var(--ok)":"var(--line)"};display:inline-block"></i>${esc(x.n)} <small class="mut">${esc(RL[x.r]||"")}${x.i===U.uid?" · это вы":""}</small></span><span class="mut">${x.on?"онлайн":x.ts?"был(а) "+chTs(x.ts):"не заходил(а)"}</span></div>`).join("")}
