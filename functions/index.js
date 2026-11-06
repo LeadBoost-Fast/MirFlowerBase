@@ -149,7 +149,10 @@ exports.pushReportReminder=onSchedule({...OPT,schedule:"0 20 * * *",timeZone:TZ}
 // Проверка: прислать push самому себе
 exports.pushTest=onCall(OPT,async req=>{
   if(!req.auth)throw new HttpsError("unauthenticated","Войдите в систему");
-  const n=await push("test",u=>u.uid===req.auth.uid,{title:"🔔 Проверка уведомлений",body:"Всё работает: push приходят на это устройство",tag:"test"});
+  let n;
+  try{n=await push("test",u=>u.uid===req.auth.uid,{title:"🔔 Проверка уведомлений",body:"Всё работает: push приходят на это устройство",tag:"test"})}
+  catch(err){console.error("pushTest",err);const m=String(err&&(err.code||"")+" "+(err.message||err));
+    throw new HttpsError("internal",/SERVICE_DISABLED|has not been used|is disabled/i.test(m)?"Не включён сервис Firebase Cloud Messaging API в Google Cloud":"Push не отправлен: "+m.slice(0,250))}
   if(!n)throw new HttpsError("failed-precondition","Нет активных устройств. Включите push в Профиле");
   return{ok:true,sent:n};
 });
