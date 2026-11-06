@@ -1081,7 +1081,8 @@ let RP=[],BL=[],stp="t",rpt="",rpb=false,RPH=[];
 (function(){const s=document.createElement("style");s.textContent=".rpp{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.rpi{position:relative;display:inline-block}.rpi a{position:absolute;top:-6px;right:-6px;background:var(--bad);color:#fff;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;font-size:12px;text-decoration:none}.stc .tiles{margin:8px 0}";document.head.appendChild(s)})();
 
 /* ---------- 1. Удаление: только владелец и главный администратор ---------- */
-const delBtn=(col,id,t,lb)=>own()?`<button class="btn r s" data-a="x_del" data-col="${col}" data-id="${esc(id)}" data-t="${esc(t||"")}">${lb||"🗑 Удалить"}</button>`:"";
+const bqDel=col=>col==="bouquets"&&!!S&&(isFl()||adm()),
+delBtn=(col,id,t,lb)=>own()||bqDel(col)?`<button class="btn r s" data-a="x_del" data-col="${col}" data-id="${esc(id)}" data-t="${esc(t||"")}">${lb||"🗑 Удалить"}</button>`:"";
 const DELN={showcase:"букет с витрины",inventory:"позицию склада",bouquets:"букет из каталога",leads:"заявку",deals:"сделку",customers:"карточку клиента",visits:"счётчик посетителей за сегодня",reports:"отчёт",team:"сообщение из чата команды",chmsg:"сообщение из чата",stockMovements:"запись истории склада",activityLogs:"запись журнала",locations:"точку",chats:"диалог"};
 async function delDoc(col,id,t){
  if(col==="chats"){const r=db.collection("chats").doc(id);for(;;){const m=await r.collection("msgs").limit(300).get();if(m.empty)break;const b=db.batch();m.docs.forEach(x=>b.delete(x.ref));await b.commit()}await r.delete();if(chOpen===id)chStop();return}
@@ -1092,8 +1093,8 @@ async function delDoc(col,id,t){
  await db.collection(col).doc(id).delete();
 }
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="x_del"],[data-a="x_clr"],[data-a="x_cmdel"]');if(!b||!S)return;e.preventDefault();
- if(!own())return toast("Удалять может только владелец и главный администратор");
  const a=b.dataset.a,id=b.dataset.id,col=b.dataset.col,t=b.dataset.t||"";
+ if(!own()&&!(a==="x_del"&&bqDel(col)))return toast("Удалять может только владелец и главный администратор");
  if(a==="x_clr"){const f=b.dataset.f,o=O.find(x=>x.id===id);if(!o||!["img","rimg","proof","chk"].includes(f))return;if(!confirm("Удалить это фото из заказа?"))return;
   run(async()=>{await db.collection("orders").doc(id).update({[f]:"",...(f==="chk"?{chkBy:"",chkAt:0}:{}),updatedAt:TS()});log("Удалено фото/чек заказа",o,f);modal("");toast("Удалено")});return}
  if(a==="x_cmdel"){const i=+b.dataset.i;if(!confirm("Удалить комментарий?"))return;
