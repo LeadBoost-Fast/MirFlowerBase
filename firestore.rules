@@ -1,0 +1,190 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Владелец (tilegen615@gmail.com) и главный админ (nash0082008@icloud.com)
+    function ownerMail() { return 'tilegen615@gmail.com'; }
+    function headMail()  { return 'nash0082008@icloud.com'; }
+    function isTopMail(m) { return m.lower() == headMail() || m.lower() == ownerMail(); }
+
+    function staffDoc() {
+      return get(/databases/$(database)/documents/staff/$(request.auth.uid)).data;
+    }
+    function isActive() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/staff/$(request.auth.uid))
+        && staffDoc().active == true;
+    }
+    function role()      { return staffDoc().role; }
+    // Владелец и главный админ: финансы, настройки, точки, всё
+    function isOwner()   { return isActive() && (request.auth.token.email != null
+                           && isTopMail(request.auth.token.email)); }
+    // Обычный админ: работники, график, контроль качества, работа как оператор/флорист
+    function isAdmin()   { return isActive() && role() == 'admin'; }
+    function isMgr()     { return isActive() && role() in ['admin','operator','florist','assistant']; }
+    function isWork()    { return isActive() && role() in ['admin','operator','florist','assistant']; }
+    // Оператор, флорист, админ: оплата, приёмка, переделка, чаты, шаблоны. Помощник флориста только собирает
+    function isOpRole()  { return isActive() && role() in ['admin','operator','florist']; }
+    function isCourier() { return isActive() && role() == 'courier'; }
+
+    // Сотрудники. Обычный админ управляет только не-админами, владельца и главного админа тронуть нельзя
+    match /staff/{uid} {
+      allow get: if request.auth != null && (request.auth.uid == uid || isActive());
+      allow list: if isActive();
+      allow create: if isOwner() || (isAdmin()
+        && !isTopMail(request.resource.data.get('email',''))
+        && request.resource.data.role != 'admin');
+      allow update: if isOwner() || (isAdmin()
+        && !isTopMail(resource.data.get('email',''))
+        && resource.data.role != 'admin'
+        && request.resource.data.role != 'admin');
+      allow delete: if isOwner() || (isAdmin()
+        && !isTopMail(resource.data.get('email',''))
+        && resource.data.role != 'admin');
+    }
+
+    match /presence/{uid} {
+      allow read: if isActive();
+      allow write: if isActive() && request.auth.uid == uid;
+    }
+
+    match /orders/{id} {
+      // Курьер читает заказы (в интерфейсе показываем только доставки: свои и свободные)
+      allow read: if isWork() || isCourier();
+      allow create: if isMgr() && (request.resource.data.get('paid', false) != true || isOpRole());
+      allow update: if (isWork()
+          && (isOpRole() || !request.resource.data.diff(resource.data).affectedKeys()
+               .hasAny(['paid','paidAt','paidBy','accBy','accAt','redoN','redoAt','redoBy','redoNote']))) ||
+        // Курьер отмечает доставку с фото
+        (isCourier() && resource.data.courier == request.auth.uid
+          && resource.data.st == 3
+          && resource.data.get('cAcc', 0) > 0
+          && request.resource.data.st == 4
+          && request.resource.data.proof is string
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['st','updatedAt','statusBy','proof','doneAt','chk','chkBy','chkAt']))
+        // Курьер правит только чек
+        || (isCourier() && resource.data.courier == request.auth.uid
+          && resource.data.st in [3,4]
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['chk','chkBy','chkAt','updatedAt']))
+        // Любой курьер берёт свободный заказ на доставку (статус не меняется)
+        || (isCourier()
+          && resource.data.dv == true
+          && (!('courier' in resource.data) || resource.data.courier == null || resource.data.courier == '')
+          && resource.data.st in [1, 2, 3]
+          && request.resource.data.courier == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['courier','cAcc','cBy','updatedAt','statusBy','shipAt']))
+        // Курьер подтверждает назначенную ему доставку
+        || (isCourier() && resource.data.courier == request.auth.uid
+          && resource.data.st in [1, 2, 3]
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['cAcc','cBy','updatedAt','statusBy']))
+        // Курьер отказывается от своей доставки (заказ становится свободным)
+        || (isCourier() && resource.data.courier == request.auth.uid
+          && resource.data.st in [1, 2, 3]
+          && request.resource.data.courier == ''
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['courier','cAcc','cBy','cRelAt','cRelBy','cRelNote','updatedAt','statusBy']));
+      allow delete: if isAdmin() || isOwner();
+    }
+
+    match /inventory/{id}       { allow read, create, update: if isWork(); allow delete: if isAdmin() || isOwner(); }
+    match /invcost/{id}         { allow read, write: if isOwner(); }
+    match /stockMovements/{id} {
+      allow read, create: if isWork();
+      allow update: if false;
+      allow delete: if isAdmin() || isOwner();
+    }
+    // Каталог букетов: удалять могут админы, владельцы, флористы и помощники флориста
+    match /bouquets/{id}        { allow read, create, update: if isMgr(); allow delete: if isAdmin() || isOwner() || (isActive() && role() in ['florist','assistant']); }
+    match /showcase/{id}        { allow read, create, update: if isWork(); allow delete: if isAdmin() || isOwner(); }
+    match /visits/{id}          { allow read, create, update: if isWork(); allow delete: if isAdmin() || isOwner(); }
+
+    // Сборки букетов (для статистики сотрудников)
+    match /builds/{id} {
+      allow read: if isAdmin() || isOwner() || (isWork() && resource.data.by == request.auth.uid);
+      allow create: if isWork() && request.resource.data.by == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin() || isOwner();
+    }
+
+    // Отчёты сотрудников (фото витрины, рабочего места, смена оператора)
+    match /reports/{id} {
+      allow read: if isAdmin() || isOwner() || (isWork() && resource.data.by == request.auth.uid);
+      allow create: if isWork() && request.resource.data.by == request.auth.uid;
+      allow update: if isAdmin() || isOwner();
+      allow delete: if isAdmin() || isOwner();
+    }
+
+    match /customers/{id}       { allow read, create, update: if isMgr(); allow delete: if isAdmin() || isOwner(); }
+    match /leads/{id}           { allow read, create, update: if isMgr(); allow delete: if isAdmin() || isOwner(); }
+    match /deals/{id} {
+      allow read, create, update: if isMgr();
+      allow delete: if isAdmin() || isOwner();
+    }
+
+    match /chats/{id} {
+      allow read, create, update: if isMgr();
+      allow delete: if isAdmin() || isOwner();
+      match /msgs/{mid} {
+        allow read, create, update: if isMgr();
+        allow delete: if isAdmin() || isOwner();
+      }
+    }
+
+    match /team/{id} {
+      allow read: if isActive();
+      allow create: if isActive() && request.resource.data.by == request.auth.uid;
+      allow update, delete: if isAdmin() || isOwner();
+    }
+
+    // Финансы: только владелец и главный админ
+    match /expenses/{id}        { allow read, write: if isOwner(); }
+
+    match /shifts/{id}          { allow read: if isActive(); allow write: if isAdmin() || isOwner(); }
+    // Заявки на смену: сотрудник создаёт свою, админ принимает/отклоняет
+    match /shiftRequests/{id} {
+      allow read: if isActive();
+      allow create: if isActive() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasAll(['uid','date','t','by','byName','ts','st']);
+      allow update, delete: if isAdmin() || isOwner();
+    }
+    match /locations/{id}       { allow read: if isActive(); allow write: if isOwner(); }
+    // Настройки магазина: владелец/главный админ; шаблоны чата (tpls) могут менять все, кроме флориста и помощника
+    match /settings/{id} {
+      allow read: if isActive();
+      allow write: if isOwner() || (isActive() && role() in ['admin','operator','courier']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tpls','updatedAt']))
+        || (isAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statsFrom','statsFromBy','statsFromByName','updatedAt']));
+    }
+
+    // Push-токены устройств: каждый сотрудник управляет только своими (читает и шлёт сервер)
+    match /pushTokens/{id} {
+      allow read, delete: if isActive() && resource.data.uid == request.auth.uid;
+      allow create, update: if isActive() && request.resource.data.uid == request.auth.uid;
+    }
+
+    // Публичный статус заказа для клиента: читать документ по токену может любой, список нельзя, писать только сотрудники
+    match /pubOrders/{tok} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update, delete: if isWork();
+    }
+
+    // Ключи каналов связи (WhatsApp, Instagram, Telegram): пишет только владелец, с сайта читать нельзя, читает сервер
+    match /secrets/{id} {
+      allow write: if isOwner();
+      allow read: if false;
+    }
+
+    match /activityLogs/{id} {
+      allow create: if isActive() && request.resource.data.by == request.auth.uid;
+      allow read: if isAdmin() || isOwner();
+      allow update: if false;
+      allow delete: if isAdmin() || isOwner();
+    }
+  }
+}

@@ -1,0 +1,17 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Фото заказов, фото вручения, чеки: загружают только вошедшие сотрудники, картинка или PDF до 5 МБ
+    match /orders/{file} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null
+        && request.resource.size < 5 * 1024 * 1024
+        && (request.resource.contentType.matches('image/.*') || request.resource.contentType == 'application/pdf');
+      allow delete: if request.auth != null;
+    }
+    // Файлы переписки с клиентами (chmedia/) и резервные копии (backups/) пишет только сервер, с сайта доступа нет
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
