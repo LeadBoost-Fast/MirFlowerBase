@@ -197,7 +197,9 @@ setTimeout(function(){
 <script>
 "use strict";
 /* Последние предупреждения и ошибки Firebase из консоли браузера (на телефоне консоль не видна) — для диагностики зависаний */
-const FBLOG=[];(()=>{for(const k of ["warn","error"]){const o=console[k];console[k]=function(...a){try{const m=a.map(x=>x&&x.message?x.message:typeof x==="string"?x:"").join(" ");if(/firebase|firestore|grpc|webchannel/i.test(m)&&!/deprecated/i.test(m)){FBLOG.push(new Date().toTimeString().slice(0,8)+" "+m.replace(/\s+/g," ").slice(0,220));if(FBLOG.length>8)FBLOG.shift()}}catch(e){}return o.apply(this,a)}}})();
+const FBLOG=[];let FSDEAD=0;(()=>{for(const k of ["warn","error"]){const o=console[k];console[k]=function(...a){try{const m=a.map(x=>x&&x.message?x.message:typeof x==="string"?x:"").join(" ");if(/firebase|firestore|grpc|webchannel/i.test(m)&&!/deprecated/i.test(m)){FBLOG.push(new Date().toTimeString().slice(0,8)+" "+m.replace(/\s+/g," ").slice(0,220));if(FBLOG.length>8)FBLOG.shift();
+ /* внутренний сбой Firestore: дальше он не работает до перезагрузки — перезагружаем сами (если кэш включён, ничего не теряется) */
+ if(/INTERNAL ASSERTION FAILED|AsyncQueue is already failed/i.test(m)&&!FSDEAD){FSDEAD=Date.now();setTimeout(()=>{if(typeof fsDead==="function")fsDead()},300)}}}catch(e){}return o.apply(this,a)}}})();
 /* Регион Cloud Functions: там же, где база Firestore (Сингапур). Менять вместе с setGlobalOptions в functions/index.js */
 const FNR="asia-southeast1";
 /* Скорость: toLocaleDateString/TimeString/String с параметрами каждый раз создают новый Intl.DateTimeFormat (дорого:
@@ -242,7 +244,10 @@ try{db.settings({experimentalForceLongPolling:true,merge:true})}catch(e){}
  for(const m of ["set","update","delete"]){const o=F.DocumentReference.prototype[m];F.DocumentReference.prototype[m]=function(...a){return quick(o.apply(this,a))}}
  const oc=F.WriteBatch.prototype.commit;F.WriteBatch.prototype.commit=function(){return quick(oc.apply(this,arguments))};
  const oa=F.CollectionReference.prototype.add;F.CollectionReference.prototype.add=function(d){const ref=this.doc();const q=ref.set(d);const r=q.then(()=>ref);r.server=q.server;return r}})();
-/* кэш на устройстве: сайт открывается сразу с сохранёнными данными, из сети приходят только изменения */try{db.enablePersistence({synchronizeTabs:true}).catch(()=>{})}catch(e){}
+/* кэш на устройстве: сайт открывается сразу с сохранёнными данными, из сети приходят только изменения *//* Кэш в режиме одной вкладки: режим нескольких вкладок (synchronizeTabs) в Safari известен внутренним сбоем Firebase
+   «INTERNAL ASSERTION FAILED», после которого Firestore встаёт целиком до перезагрузки (разд. 31). PERSIST_OK — кэш реально
+   включён: только тогда неотправленные изменения переживают перезагрузку. Вторая вкладка работает без кэша. */
+let PERSIST_OK=false;try{db.enablePersistence({synchronizeTabs:false}).then(()=>{PERSIST_OK=true}).catch(e=>{FBLOG.push("persistence: "+(e&&e.code||e))})}catch(e){}
 try{auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){}
 const $=i=>document.getElementById(i),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),NFR=new Intl.NumberFormat("ru-RU"),M=n=>NFR.format(Math.round(+n||0))+" ₸";
 const ST=["Новый","Собирается","Готов","В пути","Выдан","Отменён"],stL=o=>+o.st===4&&o.dv?"Доставлен":(ST[+o.st]||"?"),RL={owner:"Владелец",admin:"Администратор",operator:"Оператор",florist:"Флорист",assistant:"Помощник флориста",courier:"Курьер"},SRC=["Instagram","WhatsApp","2ГИС","Телефон","Сайт","Другое"],PAY=["Kaspi","Наличные","Перевод"];
@@ -433,17 +438,21 @@ async function log(act,o,x){try{await db.collection("activityLogs").add({act,oid
    соединение числится открытым, но ответы не приходят, и действие ждёт бесконечно. enableNetwork() в таком случае ничего
    не делает — соединение нужно закрыть и открыть заново. Изменения при этом не теряются: они уже записаны на телефоне. */
 let netKickAt=0,lastBtn="",lastBtnAt=0,pendOn=0;
+function fsDead(){const d={at:new Date().toISOString(),kind:"firestore-failed",btn:lastBtn,online:navigator.onLine,persist:PERSIST_OK,sdk:firebase.SDK_VERSION,fb:FBLOG.slice(-6),ua:navigator.userAgent.slice(0,90)};
+ try{localStorage.setItem("hangDiag",JSON.stringify(d))}catch(e){}let last=0;try{last=+localStorage.getItem("autoRl")||0}catch(e){}
+ if(PERSIST_OK&&Date.now()-last>60000){try{localStorage.setItem("autoRl",String(Date.now()))}catch(e){}location.reload()}}
 /* Плашка «не отправлено на сервер»: изменения сохранены на телефоне, но сервер их ещё не принял */
 function pendWatch(){if(pendOn)return;pendOn=Date.now();let done=false;
  db.waitForPendingWrites().then(()=>{done=true;pendOn=0;const b=$("pendb");if(b)b.remove()}).catch(()=>{pendOn=0});
  setTimeout(()=>{if(!done)netKick("pend6")},6000);
  /* 15 с: диагностика (после перезагрузки уйдёт в Журнал); 30 с: тихая перезагрузка, если человек ничего не делает (не чаще раза в 3 мин) */
  setTimeout(async()=>{if(done)return;const [idb,srv]=await Promise.all([idbProbe(),srvProbe()]);if(done)return;
-  const d={at:new Date().toISOString(),kind:"pending",btn:lastBtn,online:navigator.onLine,hidden:hidAt?Math.round((Date.now()-hidAt)/1000)+"s":"",idb,srv,sdk:firebase.SDK_VERSION,fb:FBLOG.slice(-6),ua:navigator.userAgent.slice(0,90)};
+  const d={at:new Date().toISOString(),kind:"pending",btn:lastBtn,online:navigator.onLine,hidden:hidAt?Math.round((Date.now()-hidAt)/1000)+"s":"",idb,srv,persist:PERSIST_OK,sdk:firebase.SDK_VERSION,fb:FBLOG.slice(-6),ua:navigator.userAgent.slice(0,90)};
   try{localStorage.setItem("hangDiag",JSON.stringify(d))}catch(e){}},15500);
- setTimeout(()=>{if(done)return;let last=0;try{last=+localStorage.getItem("autoRl")||0}catch(e){}
+ /* с 30-й секунды каждые 5 с: перезагрузка, как только никто ничего не делает (закрыто окно, нет ввода) */
+ setTimeout(()=>{const iv=setInterval(()=>{if(done){clearInterval(iv);return}let last=0;try{last=+localStorage.getItem("autoRl")||0}catch(e){}
   const busy=($("m")&&$("m").innerHTML.trim())||(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName));
-  if(!busy&&Date.now()-last>180000&&navigator.onLine){try{localStorage.setItem("autoRl",String(Date.now()))}catch(e){}location.reload()}},30000);
+  if(PERSIST_OK&&!busy&&Date.now()-last>180000&&navigator.onLine){clearInterval(iv);try{localStorage.setItem("autoRl",String(Date.now()))}catch(e){}location.reload()}},5000)},25000);
  /* плашку «не отправлено на сервер» владелец попросил убрать (7.11.2026): восстановление идёт молча — переподключение, перезагрузка, Журнал */
  setTimeout(()=>{if(done)return;netKickAt=0;netKick("pend")},15000)}
 let lastBtnEl=null;addEventListener("click",e=>{const b=e.target&&e.target.closest&&e.target.closest("button,[data-a]");if(b){lastBtnEl=b;lastBtn=(b.textContent||b.dataset.a||"").replace(/\s+/g," ").trim().slice(0,40);lastBtnAt=Date.now()}},true);
