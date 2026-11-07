@@ -130,8 +130,12 @@ exports.pushNewLead=onDocumentCreated({...OPT,document:"leads/{id}"},async e=>{
 // Новое сообщение клиента в чате
 exports.pushClientMsg=onDocumentCreated({...OPT,document:"chats/{cid}/msgs/{mid}"},async e=>{
   const m=e.data&&e.data.data();if(!m||m.dir!=="in")return;
-  const c=await admin.firestore().doc("chats/"+e.params.cid).get(),name=(c.exists&&(c.data().name||c.data().phone))||"Клиент";
-  await push("chat",isOpsOrTop,{title:"💬 "+name,body:m.t||(m.img?"📷 Фото":"Новое сообщение"),tag:"chat_"+e.params.cid,url:"/?tab=chats"});
+  const c=await admin.firestore().doc("chats/"+e.params.cid).get(),cd=c.exists?c.data():{},name=cd.name||cd.phone||"Клиент",mu=cd.mu||{},now=Date.now();
+  // откуда: точка чата (если указана), иначе канал
+  let from=({wa:"WhatsApp",ig:"Instagram",tg:"Telegram",gis:"2ГИС"})[cd.ch]||"";
+  if(cd.loc){try{const l=await admin.firestore().doc("locations/"+cd.loc).get();if(l.exists&&l.data().name)from=l.data().name+(from?" · "+from:"")}catch(x){}}
+  // кто выключил уведомления этого чата на время — тому не шлём
+  await push("chat",u=>isOpsOrTop(u)&&!((+mu[u.uid]||0)>now),{title:"💬 "+name+(from?" · "+from:""),body:m.t||(m.img?"📷 Фото":"Новое сообщение"),tag:"chat_"+e.params.cid,url:"/?tab=chats"});
 });
 
 // Новый отчёт сотрудника: админам и владельцам
