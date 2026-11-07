@@ -315,6 +315,65 @@ try{db.settings({experimentalForceLongPolling:true,merge:true})}catch(e){}
  const fi=a.findIndex(x=>typeof x==="function"),ei=fi>=0?a.findIndex((x,k)=>k>fi&&typeof x==="function"):-1;const h=e=>{if(e&&BAD.includes(e.code)){FBLOG.push("listener "+e.code+": "+String(e.message||"").slice(0,120));setTimeout(()=>fsReset("listener "+e.code),500)}};
  if(ei>0){const e0=a[ei];a[ei]=e=>{h(e);return e0(e)}}else if(fi>=0&&a[fi+1]===undefined){a[fi+1]=h}else if(a[fi]&&typeof a[fi]==="object"&&a[fi].error){const ob=a[fi],e0=ob.error.bind(ob);ob.error=e=>{h(e);return e0(e)}}
  return o.apply(this,a)}}})();
+/* ===== Записи через REST (разд. 40) =====
+   На телефонах владельца Firestore падал с «INTERNAL ASSERTION FAILED: Unexpected state (ID: da08)» — это канал записи
+   (Write stream): в ответ на «рукопожатие» приходили результаты прошлых записей (ответы старого и нового соединения
+   перемешивались в сети/прокси). После сбоя Firestore не работает до перезагрузки. Поэтому записи идут обычными
+   короткими запросами documents:commit (запрос — ответ), канал записи SDK не открывается вовсе. Чтение и живые
+   обновления — по-прежнему через SDK. Сетевые ошибки и 5xx повторяются; отказ правил — ошибка сразу. */
+const FSB=(window.__FSREST||"https://firestore.googleapis.com")+"/v1/projects/"+cfg.projectId+"/databases/(default)/documents";
+const FSN="projects/"+cfg.projectId+"/databases/(default)/documents/";
+let RQ=0;
+const rqIdle=()=>new Promise(r=>{const f=()=>RQ===0?r():setTimeout(f,250);f()});
+const fsSent=x=>{if(!x||typeof x!=="object")return null;const d=x._delegate||x;return typeof d._methodName==="string"&&d._methodName.indexOf("FieldValue.")===0?d:null};
+function fsVal(v){if(v===null||v===undefined)return{nullValue:null};if(typeof v==="boolean")return{booleanValue:v};
+ if(typeof v==="number")return Number.isInteger(v)&&Math.abs(v)<9e15?{integerValue:String(v)}:{doubleValue:v};if(typeof v==="string")return{stringValue:v};
+ if(v instanceof Date)return{timestampValue:v.toISOString()};if(typeof v.toDate==="function"&&"seconds" in v)return{timestampValue:v.toDate().toISOString()};
+ if(Array.isArray(v))return{arrayValue:{values:v.map(fsVal)}};const f={};for(const k of Object.keys(v))if(v[k]!==undefined)f[k]=fsVal(v[k]);return{mapValue:{fields:f}}}
+const fpq=k=>/^[A-Za-z_][A-Za-z0-9_]*$/.test(k)?k:"`"+String(k).replace(/[`\\]/g,"\\$&")+"`";
+/* разбор данных: обычные поля, преобразования (serverTimestamp/increment/arrayUnion/arrayRemove), удаления, пути листьев */
+function fsSplit(data,isUpdate){const fields={},tr=[],del=[],leaves=[];
+ const put=(obj,parts,val)=>{let o=obj;for(let i=0;i<parts.length-1;i++){o[parts[i]]=o[parts[i]]&&typeof o[parts[i]]==="object"&&!Array.isArray(o[parts[i]])?o[parts[i]]:{};o=o[parts[i]]}o[parts[parts.length-1]]=val};
+ const walk=(val,parts,leafMap)=>{const se=fsSent(val),fp=parts.map(fpq).join(".");
+  if(se){const m=se._methodName;if(m==="FieldValue.delete"){del.push(fp);return}
+   if(m==="FieldValue.serverTimestamp")tr.push({fieldPath:fp,setToServerValue:"REQUEST_TIME"});
+   else if(m==="FieldValue.increment"){const n=Object.values(se).find(x=>typeof x==="number");tr.push({fieldPath:fp,increment:fsVal(n||0)})}
+   else if(m==="FieldValue.arrayUnion"||m==="FieldValue.arrayRemove"){const a=Object.values(se).find(Array.isArray)||[];tr.push({fieldPath:fp,[m==="FieldValue.arrayUnion"?"appendMissingElements":"removeAllFromArray"]:{values:a.map(fsVal)}})}
+   return}
+  if(leafMap&&val&&typeof val==="object"&&!Array.isArray(val)&&!(val instanceof Date)&&!(typeof val.toDate==="function"&&"seconds" in val)&&Object.keys(val).length){for(const k of Object.keys(val))walk(val[k],parts.concat(k),true);return}
+  /* значение без преобразований, но внутри могут быть преобразования (вложенный map при update/set) */
+  if(val&&typeof val==="object"&&!Array.isArray(val)&&!(val instanceof Date)&&!(typeof val.toDate==="function"&&"seconds" in val)){const c={};let has=false;
+   for(const k of Object.keys(val)){if(fsSent(val[k])){has=true;walk(val[k],parts.concat(k),false)}else if(val[k]!==undefined)c[k]=val[k]}
+   if(has&&!Object.keys(c).length)return;put(fields,parts,c);leaves.push(fp);return}
+  if(val===undefined)return;put(fields,parts,val);leaves.push(fp)};
+ for(const k of Object.keys(data)){const parts=isUpdate?String(k).split("."):[k];walk(data[k],parts,!isUpdate&&false)}
+ return{fields,tr,del,leaves}}
+function fsWrite(op,ref,data,opts){const name=FSN+ref.path;if(op==="delete")return{delete:name};
+ const merge=op==="update"||(opts&&opts.merge);const sp=merge&&op!=="update"?fsSplitDeep(data):fsSplit(data,op==="update");
+ const w={update:{name,fields:fsVal(sp.fields).mapValue.fields}};if(merge)w.updateMask={fieldPaths:sp.leaves.concat(sp.del)};if(sp.tr.length)w.updateTransforms=sp.tr;if(op==="update")w.currentDocument={exists:true};return w}
+/* set(..., {merge:true}): маска — все листья (вложенные map сливаются, как в SDK) */
+function fsSplitDeep(data){const out={fields:{},tr:[],del:[],leaves:[]};const rec=(obj,parts)=>{for(const k of Object.keys(obj)){const v=obj[k],p=parts.concat(k),fp=p.map(fpq).join(".");
+  if(v===undefined)continue;const se=fsSent(v);if(se){const r=fsSplit({[fp]:v},true);out.tr.push(...r.tr);out.del.push(...r.del);continue}
+  if(v&&typeof v==="object"&&!Array.isArray(v)&&!(v instanceof Date)&&!(typeof v.toDate==="function"&&"seconds" in v)&&Object.keys(v).length){rec(v,p);continue}
+  let o=out.fields;for(let i=0;i<p.length-1;i++){o[p[i]]=o[p[i]]||{};o=o[p[i]]}o[p[p.length-1]]=v;out.leaves.push(fp)}};rec(data,[]);return out}
+const FSERR={PERMISSION_DENIED:"permission-denied",NOT_FOUND:"not-found",ALREADY_EXISTS:"already-exists",INVALID_ARGUMENT:"invalid-argument",FAILED_PRECONDITION:"failed-precondition",UNAUTHENTICATED:"unauthenticated",RESOURCE_EXHAUSTED:"resource-exhausted",UNAVAILABLE:"unavailable",ABORTED:"aborted",DEADLINE_EXCEEDED:"deadline-exceeded",INTERNAL:"internal"};
+async function fsCommit(writes){RQ++;try{let delay=800;const t0=Date.now();
+ for(let att=0;;att++){let res,body,netErr=null;const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),15000);
+  try{const u=auth.currentUser,tok=u?await u.getIdToken():null;res=await fetch(FSB+":commit",{method:"POST",headers:{"Content-Type":"application/json",...(tok?{Authorization:"Bearer "+tok}:{})},body:JSON.stringify({writes}),signal:ac.signal});body=await res.json().catch(()=>({}))}catch(e){netErr=e}finally{clearTimeout(tm)}
+  if(res&&res.ok){SRVAT=Date.now();return body}
+  const st=body&&body.error&&body.error.status,code=netErr?"unavailable":(FSERR[st]||(res&&res.status>=500?"unavailable":"unknown"));
+  const retry=netErr||code==="unavailable"||code==="aborted"||code==="deadline-exceeded"||code==="resource-exhausted"||code==="internal"||(code==="unauthenticated"&&att<2);
+  if(!retry||Date.now()-t0>10*60000){const e=new Error((body&&body.error&&body.error.message)||String(netErr||code));e.code=code;throw e}
+  if(code==="unauthenticated"&&auth.currentUser){try{await auth.currentUser.getIdToken(true)}catch(_){}}
+  await new Promise(r=>setTimeout(r,delay));delay=Math.min(delay*2,15000)}}finally{RQ--}}
+(()=>{const F=firebase.firestore,D=F.DocumentReference.prototype,B=F.WriteBatch.prototype;
+ D.set=function(data,opts){return fsCommit([fsWrite("set",this,data,opts)]).then(()=>{})};
+ D.update=function(a,...rest){let data=a;if(typeof a==="string"||(a&&a._delegate&&a._delegate.segments)){data={};const args=[a,...rest];for(let i=0;i<args.length;i+=2)data[String(args[i])]=args[i+1]}return fsCommit([fsWrite("update",this,data)]).then(()=>{})};
+ D.delete=function(){return fsCommit([fsWrite("delete",this)]).then(()=>{})};
+ B.set=function(ref,data,opts){(this.__w=this.__w||[]).push(fsWrite("set",ref,data,opts));return this};
+ B.update=function(ref,a,...rest){let data=a;if(typeof a==="string"){data={};const args=[a,...rest];for(let i=0;i<args.length;i+=2)data[String(args[i])]=args[i+1]}(this.__w=this.__w||[]).push(fsWrite("update",ref,data));return this};
+ B.delete=function(ref){(this.__w=this.__w||[]).push(fsWrite("delete",ref));return this};
+ B.commit=function(){const w=this.__w||[];this.__w=[];return w.length?fsCommit(w).then(()=>{}):Promise.resolve()}})();
 (()=>{const F=firebase.firestore,Q=1500;
  const quick=(orig)=>{let late=false;const q=Promise.race([orig,new Promise(r=>setTimeout(()=>{late=true;pendWatch();r()},Q))]);
   orig.catch(e=>{if(late&&!q.own)toast(er(e))});q.server=orig;return q};
@@ -564,7 +623,7 @@ function fsAfterOrders(){let st=null;try{st=JSON.parse(localStorage.getItem("fsS
 async function netDiag(){NETDIAG='<p class="mut">Проверяю… до 15 секунд</p>';dq();const out=[],L=(a,b)=>out.push(`<div class="ln"><span>${esc(a)}</span><span>${esc(String(b))}</span></div>`);
  L("Время",new Date().toLocaleTimeString("ru-RU"));L("Firebase",firebase.SDK_VERSION);L("Интернет",navigator.onLine?"есть":"нет");L("Кэш на телефоне",PERSIST_OK?"включён":"выключен");
  L("Последние данные с сервера",SRVAT?Math.round((Date.now()-SRVAT)/1000)+" с назад":"не было");L("Заказы не на сервере",O.filter(o=>o._pend).length);
- let pend="нет";try{await tmo(db.waitForPendingWrites(),3000)}catch(e){pend=e.message==="timeout"?"есть, не уходят":String(e.code||e.message)}L("Неотправленные изменения",pend);
+ let pend="нет";try{await tmo(rqIdle(),3000)}catch(e){pend=e.message==="timeout"?"есть, не уходят":String(e.code||e.message)}L("Неотправленные изменения",pend);
  const u=auth.currentUser;L("Вход",u?u.email:"нет");
  if(u){try{const r=await tmo(u.getIdTokenResult(false),4000);L("Пропуск входа действует до",new Date(r.expirationTime).toLocaleTimeString("ru-RU"))}catch(e){L("Пропуск входа","ошибка: "+(e.code||e.message))}
   const t=Date.now();try{await tmo(u.getIdToken(true),8000);L("Обновление пропуска",`работает (${Date.now()-t} мс)`)}catch(e){L("Обновление пропуска","НЕ работает: "+(e.code||e.message))}}
@@ -575,7 +634,7 @@ function fsDead(){const d={at:new Date().toISOString(),kind:"firestore-failed",b
  if(Date.now()-last>60000){try{localStorage.setItem("autoRl",String(Date.now()))}catch(e){}fsReset("firestore-failed",true)}}
 /* Плашка «не отправлено на сервер»: изменения сохранены на телефоне, но сервер их ещё не принял */
 function pendWatch(){if(pendOn)return;pendOn=Date.now();let done=false;
- db.waitForPendingWrites().then(()=>{done=true;pendOn=0;const b=$("pendb");if(b)b.remove()}).catch(()=>{pendOn=0});
+ rqIdle().then(()=>{done=true;pendOn=0;const b=$("pendb");if(b)b.remove()}).catch(()=>{pendOn=0});
  setTimeout(()=>{if(!done)netKick("pend6")},6000);
  /* 15 с: диагностика (после перезагрузки уйдёт в Журнал); 30 с: тихая перезагрузка, если человек ничего не делает (не чаще раза в 3 мин) */
  setTimeout(async()=>{if(done)return;const [idb,srv]=await Promise.all([idbProbe(),srvProbe()]);if(done)return;
