@@ -1074,6 +1074,8 @@ let CHS=[],CHERR="",chOpen="",chMsgs=[],chSub=null,chF="all",chC="",chV="list",c
 const chOn=k=>((SH.channels||{})[k]||{}).on===true,
 chW=c=>c.st!=="closed"&&c.lastDir==="in",
 chUn=()=>CHS.filter(chW).length,
+ /* значок «Чаты» в меню: непрочитанные диалоги (открытый сейчас не считается — он прочитан); «ждут ответа» — внутри раздела */
+ chNew=()=>CHS.filter(c=>c.st!=="closed"&&(+c.unread||0)>0&&c.id!==chOpen).length,
 chTs=t=>{const d=new Date(t||0),n=new Date();return d.toDateString()===n.toDateString()?d.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString("ru-RU",{day:"2-digit",month:"2-digit"})},
 chDur=ms=>{if(ms==null||!(ms>=0))return"—";const m=Math.round(ms/6e4);if(m<1)return"<1 мин";if(m<60)return m+" мин";const h=Math.floor(m/60);return h<24?h+" ч "+(m%60)+" м":Math.floor(h/24)+" д"},
 chAv=c=>{const k=CHN[c.ch]||{s:"?",c:"#888"};return `<span class="cha">${esc((c.name||"?").trim().charAt(0).toUpperCase()||"?")}<i class="chb" style="background:${k.c}">${k.s}</i></span>`},
@@ -1390,7 +1392,7 @@ function ordDiff(nw){const first=!ORD0;ORD0=true;if(first)return;const mp={};O.f
 let TCM=[],TCERR="",tcLast=0,tcDraft="";
 const tcRead=()=>+(STO.get("tcr_"+(U?U.uid:""))||0),tcSeen=()=>STO.set("tcr_"+U.uid,String(Date.now())),
 tcUn=()=>FX("teamChat")&&U?TCM.filter(m=>m.by!==U.uid&&m.ts>tcRead()).length:0,
-nbN=k=>k==="chats"?chUn():k==="tc"?tcUn():0;
+nbN=k=>k==="chats"?chNew():k==="tc"?tcUn():0;
 function tcSubs(){if(!FX("teamChat"))return;
  subs.push(db.collection("team").orderBy("ts").limitToLast(200).onSnapshot(s=>{const nw=s.docs.map(d=>({id:d.id,...d.data()}));
   if(tcLast)nw.filter(m=>m.ts>tcLast&&m.by!==U.uid).forEach(m=>{if(!(tab==="tc"&&!document.hidden))nf({type:"team",title:(m.byName||"Чат команды"),body:m.t,tag:"team",go:()=>{tab="tc";draw()}})});
