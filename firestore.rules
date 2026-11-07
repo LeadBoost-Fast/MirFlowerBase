@@ -71,7 +71,11 @@ service cloud.firestore {
             || r.get('takenBy', '') == '' || r.get('takenBy', '') == request.auth.uid)
         // приёмка своего заказа (rv: wait → ok)
         && (!(k.hasAny(['rv']) && d.get('rv', '') == 'ok' && r.get('rv', '') == 'wait') || boss
-            || r.get('asm', '') != request.auth.uid);
+            || r.get('asm', '') != request.auth.uid)
+        // отмена и снижение цены — только админ/владелец; остальные отправляют запрос (rqK)
+        && ((!(k.hasAny(['st']) && d.get('st', 0) == 5 && r.get('st', 0) != 5)
+             && !(k.hasAny(['p']) && d.get('p', 0) < r.get('p', 0))
+             && !(k.hasAny(['rqK']) && d.get('rqBy', '') != request.auth.uid)) || boss);
     }
 
     match /orders/{id} {
