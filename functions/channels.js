@@ -39,6 +39,8 @@ async function getBuf(url,headers){
 }
 
 // Входящее сообщение: создаёт/обновляет диалог так же, как chIn на сайте. Повтор того же mid игнорируется
+// Точка по номеру/аккаунту, на который написал клиент (settings/main.locCh = {точка: {wa, ig}})
+async function bizLoc(ch,biz){if(!biz)return"";try{const s=await db().doc("settings/main").get(),m=((s.exists&&s.data())||{}).locCh||{};for(const k of Object.keys(m))if(m[k]&&String(m[k][ch]||"")===String(biz))return k}catch(e){}return""}
 async function ingest(o){
   const ref=db().collection("chats").doc(o.ch+"_"+o.key),mref=ref.collection("msgs").doc("m_"+safe(o.mid||Date.now()+"_"+Math.random()));
   if((await mref.get()).exists)return;
@@ -46,12 +48,15 @@ async function ingest(o){
   const base={last:o.text||(o.img?"📷 Фото":""),lastDir:"in",lastTs:ts,unread:inc(1),nIn:inc(1),st:"open"};
   if(s.exists){
     const upd={...base},d=s.data();
+    if(o.biz&&!d.biz)upd.biz=String(o.biz);
+    if(!d.loc&&o.biz){const lc=await bizLoc(o.ch,o.biz);if(lc)upd.loc=lc}
     if(o.name&&(!d.name||d.name==="Без имени"))upd.name=o.name;
     await ref.update(upd);
   }else{
     let name=o.name||"",handle=o.handle||"";
     if(o.prof){try{const p=await o.prof();name=name||p.name||p.username||"";handle=handle||p.username||""}catch(e){}}
-    await ref.set({...base,ch:o.ch,name:name||"Без имени",phone:o.phone||"",handle,ext:String(o.ext||o.key),loc:"",resp:"",nOut:0,firstTs:ts,firstReplyTs:0,leadId:"",ts});
+    const lc=await bizLoc(o.ch,o.biz);
+    await ref.set({...base,ch:o.ch,name:name||"Без имени",phone:o.phone||"",handle,ext:String(o.ext||o.key),biz:String(o.biz||""),loc:lc,resp:"",nOut:0,firstTs:ts,firstReplyTs:0,leadId:"",ts});
   }
   await mref.set({dir:"in",t:o.text||"",...(o.img?{img:o.img}:{}),ts});
 }
@@ -96,7 +101,7 @@ exports.waHook=onRequest({...OPT,maxInstances:10},async(req,res)=>{
         else if(m.type==="audio")text="🎤 Голосовое сообщение (откройте в WhatsApp)";
         else if(m.type==="sticker")text="🙂 Стикер";
         else text="["+m.type+"] откройте в WhatsApp";
-        await ingest({ch:"wa",key:from,ext:from,phone:"+"+from,name:names[from]||"",text,img,mid:m.id});
+        await ingest({ch:"wa",key:from,ext:from,phone:"+"+from,name:names[from]||"",text,img,mid:m.id,biz:(v.metadata||{}).phone_number_id||""});
       }
     }
   }catch(e){console.error("waHook",e)}
@@ -124,7 +129,7 @@ exports.igHook=onRequest({...OPT,maxInstances:10},async(req,res)=>{
         else if(a.type==="share"||a.type==="story_mention"||a.type==="ig_reel")text=(text?text+"\n":"")+"🔗 Публикация или история"+(u?": "+u:"");
         else if(a.type!=="image")text=(text?text+"\n":"")+"📎 Вложение (откройте в Instagram)";
       }
-      await ingest({ch:"ig",key:from,ext:from,text,img,mid:m.mid,
+      await ingest({ch:"ig",key:from,ext:from,text,img,mid:m.mid,biz:String((ev.recipient||{}).id||en.id||""),
         prof:async()=>{const r=await jf(`${base}/${from}?fields=name,username&access_token=${encodeURIComponent(c.token)}`);return r.j||{}}});
     }
   }catch(e){console.error("igHook",e)}
@@ -181,11 +186,13 @@ exports.tgSetup=onCall(OPT,async req=>{
 
 // ================= Отправка ответов =================
 const SEND={
-  async wa(c,to,t,img){
-    if(!c.token||!c.phoneId)throw new Error("Не заданы токен или Phone number ID");
+  async wa(c,to,t,img,chat){
+    // отвечаем с того же номера, на который написал клиент (у точки может быть свой номер)
+    const pid=(chat&&chat.biz)||c.phoneId;
+    if(!c.token||!pid)throw new Error("Не заданы токен или Phone number ID");
     const body=img?{messaging_product:"whatsapp",to,type:"image",image:{link:img,...(t?{caption:t.slice(0,1000)}:{})}}
       :{messaging_product:"whatsapp",to,type:"text",text:{body:t.slice(0,4000),preview_url:true}};
-    const r=await jf(`${G}/${c.phoneId}/messages`,{method:"POST",headers:{...CT,Authorization:"Bearer "+c.token},body:JSON.stringify(body)});
+    const r=await jf(`${G}/${pid}/messages`,{method:"POST",headers:{...CT,Authorization:"Bearer "+c.token},body:JSON.stringify(body)});
     if(!r.ok){const code=r.j.error&&r.j.error.code;throw new Error(code===131047?"WhatsApp: прошло больше 24 часов с последнего сообщения клиента, нужен одобренный шаблон":gerr(r))}
   },
   async ig(c,to,t,img){
@@ -222,7 +229,7 @@ exports.sendChannelMsg=onDocumentCreated({...OPT,document:"chats/{cid}/msgs/{mid
     const text=String(got.t||"");
     if(!text&&!img)throw new Error("Пустое сообщение");
     const to=k==="wa"?((c.phone||"").replace(/\D/g,"")||cid.slice(3)):String(c.ext||cid.slice(k.length+1));
-    await SEND[k](await secretsOf(k),to,text,img);
+    await SEND[k](await secretsOf(k),to,text,img,c);
     await ref.update({st:"sent",sentAt:Date.now()});
   }catch(err){
     console.error("sendChannelMsg",k,err);

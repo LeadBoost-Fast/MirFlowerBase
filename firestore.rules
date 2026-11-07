@@ -185,6 +185,14 @@ service cloud.firestore {
       // свою ожидающую заявку сотрудник может заменить новой
       allow delete: if isAdmin() || isOwner() || (isActive() && resource.data.uid == request.auth.uid && resource.data.st == 'wait');
     }
+    // Фактические смены (кнопки «Начать / Закончить смену» на главной)
+    match /shiftLog/{id} {
+      allow read: if isActive();
+      allow create: if isActive() && request.resource.data.uid == request.auth.uid;
+      allow update: if isActive() && (resource.data.uid == request.auth.uid || isAdmin() || isOwner())
+        && request.resource.data.uid == resource.data.uid;
+      allow delete: if isOwner();
+    }
     match /locations/{id}       { allow read: if isActive(); allow write: if isOwner(); }
     // Настройки магазина: владелец/главный админ; шаблоны чата (tpls) могут менять все, кроме курьера
     match /settings/{id} {
