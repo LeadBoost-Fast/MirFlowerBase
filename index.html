@@ -2015,7 +2015,7 @@ function shiftEndCard(){const s=SHF();if(!S||own()||!s)return"";const d=Date.now
 const GEOR=50,geoPts=()=>(typeof SH!=="undefined"&&SH&&SH.locGeo)||{},
  geoDist=(a,b)=>{const R=6371e3,r=x=>x*Math.PI/180,dl=r(b.lat-a.lat),dn=r(b.lng-a.lng),q=Math.sin(dl/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dn/2)**2;return Math.round(2*R*Math.asin(Math.sqrt(q)))},
  geoGet=()=>new Promise((res,rej)=>{if(!navigator.geolocation)return rej({code:"none"});navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy||0)}),e=>rej({code:e.code===1?"denied":e.code===3?"timeout":"unavail"}),{enableHighAccuracy:true,timeout:15000,maximumAge:0})});
-async function geoCheck(id){const P=geoPts(),ids=id?[id]:Object.keys(P);const have=ids.filter(k=>P[k]&&P[k].lat);
+async function geoCheck(id){if(S&&S.role==="courier")return{ok:true,geo:null};/* курьер начинает смену где угодно */const P=geoPts(),ids=id?[id]:Object.keys(P);const have=ids.filter(k=>P[k]&&P[k].lat);
  if(!have.length)return{ok:true,geo:null};/* место точки ещё не задано — пускаем, в журнале будет отмечено */
  let me;try{me=await geoGet()}catch(e){return{ok:false,why:e.code}}
  let best=null;for(const k of have){const d=geoDist(me,P[k]);if(!best||d<best.d)best={k,d}}
