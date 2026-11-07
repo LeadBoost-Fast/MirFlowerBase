@@ -238,6 +238,11 @@ try{db.settings({experimentalForceLongPolling:true,merge:true})}catch(e){}
 /* Действия не ждут сервер: изменение сразу применяется на телефоне (кэш Firestore), на сервер уходит в фоне.
    Если сервер ответил за 1,5 с — всё как раньше (и ошибка правил видна сразу); если нет — действие считается выполненным,
    ошибка сервера позже покажется сообщением (Firestore сам откатит изменение), а долго не отправленное видно на плашке. */
+/* подписка упала с внутренней ошибкой Firebase (already-exists = «Target ID already exists», internal, data-loss) — кэш испорчен */
+(()=>{const F=firebase.firestore,BAD=["already-exists","internal","data-loss"];for(const C of [F.Query,F.DocumentReference]){const o=C.prototype.onSnapshot;C.prototype.onSnapshot=function(...a){
+ const fi=a.findIndex(x=>typeof x==="function"),ei=fi>=0?a.findIndex((x,k)=>k>fi&&typeof x==="function"):-1;const h=e=>{if(e&&BAD.includes(e.code)){FBLOG.push("listener "+e.code+": "+String(e.message||"").slice(0,120));setTimeout(()=>fsReset("listener "+e.code),500)}};
+ if(ei>0){const e0=a[ei];a[ei]=e=>{h(e);return e0(e)}}else if(fi>=0&&a[fi+1]===undefined){a[fi+1]=h}else if(a[fi]&&typeof a[fi]==="object"&&a[fi].error){const ob=a[fi],e0=ob.error.bind(ob);ob.error=e=>{h(e);return e0(e)}}
+ return o.apply(this,a)}}})();
 (()=>{const F=firebase.firestore,Q=1500;
  const quick=(orig)=>{let late=false;const q=Promise.race([orig,new Promise(r=>setTimeout(()=>{late=true;pendWatch();r()},Q))]);
   orig.catch(e=>{if(late&&!q.own)toast(er(e))});q.server=orig;return q};
@@ -247,7 +252,12 @@ try{db.settings({experimentalForceLongPolling:true,merge:true})}catch(e){}
 /* кэш на устройстве: сайт открывается сразу с сохранёнными данными, из сети приходят только изменения *//* Кэш в режиме одной вкладки: режим нескольких вкладок (synchronizeTabs) в Safari известен внутренним сбоем Firebase
    «INTERNAL ASSERTION FAILED», после которого Firestore встаёт целиком до перезагрузки (разд. 31). PERSIST_OK — кэш реально
    включён: только тогда неотправленные изменения переживают перезагрузку. Вторая вкладка работает без кэша. */
-let PERSIST_OK=false;try{db.enablePersistence({synchronizeTabs:false}).then(()=>{PERSIST_OK=true}).catch(e=>{FBLOG.push("persistence: "+(e&&e.code||e))})}catch(e){}
+let PERSIST_OK=false;
+/* Очистка кэша Firebase на телефоне (разд. 33): при ошибке подписки already-exists / internal кэш испорчен — неотправленные
+   заказы откладываются (fsStash), страница перезагружается, кэш очищается до запуска Firestore, заказы отправляются заново. */
+const FSREADY=(()=>{let rs="";try{rs=localStorage.getItem("fsReset")||"";if(rs)localStorage.removeItem("fsReset")}catch(e){}
+ const pre=rs?db.clearPersistence().then(()=>{FBLOG.push("cache cleared: "+rs)}).catch(e=>{FBLOG.push("clearPersistence: "+(e&&e.code||e))}):Promise.resolve();
+ return pre.then(()=>db.enablePersistence({synchronizeTabs:false})).then(()=>{PERSIST_OK=true}).catch(e=>{FBLOG.push("persistence: "+(e&&e.code||e))})})();
 try{auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){}
 const $=i=>document.getElementById(i),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),NFR=new Intl.NumberFormat("ru-RU"),M=n=>NFR.format(Math.round(+n||0))+" ₸";
 const ST=["Новый","Собирается","Готов","В пути","Выдан","Отменён"],stL=o=>+o.st===4&&o.dv?"Доставлен":(ST[+o.st]||"?"),RL={owner:"Владелец",admin:"Администратор",operator:"Оператор",florist:"Флорист",assistant:"Помощник флориста",courier:"Курьер"},SRC=["Instagram","WhatsApp","2ГИС","Телефон","Сайт","Другое"],PAY=["Kaspi","Наличные","Перевод"];
@@ -437,7 +447,19 @@ async function log(act,o,x){try{await db.collection("activityLogs").add({act,oid
 /* Связь с базой на телефоне иногда «зависает» молча (смена Wi-Fi/мобильной сети, телефон в кармане, свёрнутое приложение):
    соединение числится открытым, но ответы не приходят, и действие ждёт бесконечно. enableNetwork() в таком случае ничего
    не делает — соединение нужно закрыть и открыть заново. Изменения при этом не теряются: они уже записаны на телефоне. */
-let netKickAt=0,lastBtn="",lastBtnAt=0,pendOn=0,SRVAT=0,NETDIAG="";
+let netKickAt=0,lastBtn="",lastBtnAt=0,pendOn=0,SRVAT=0,NETDIAG="",FSMIG=0;
+const CACHE_V="2";
+function fsReset(why){let last=0;try{last=+localStorage.getItem("fsResetAt")||0}catch(e){}if(Date.now()-last<600000)return;
+ const strip=o=>{const x={...o};delete x.id;delete x._pend;return x};
+ try{const pend=O.filter(o=>o._pend).map(o=>({id:o.id,d:strip(o)}));if(pend.length)localStorage.setItem("fsStash",JSON.stringify(pend));
+  localStorage.setItem("fsResetAt",String(Date.now()));localStorage.setItem("fsReset",why);
+  localStorage.setItem("hangDiag",JSON.stringify({at:new Date().toISOString(),kind:"cache-reset",why,pend:pend.length,sdk:firebase.SDK_VERSION,fb:FBLOG.slice(-6),ua:navigator.userAgent.slice(0,90)}))}catch(e){}
+ location.reload()}
+/* после первого снимка заказов: вернуть отложенные заказы на сервер; один раз на устройстве очистить старый кэш (режим вкладок сменился) */
+function fsAfterOrders(){let st=null;try{st=JSON.parse(localStorage.getItem("fsStash")||"null")}catch(e){}
+ if(st&&st.length){try{localStorage.removeItem("fsStash")}catch(e){}st.forEach(x=>{const d={...x.d};delete d.createdAt;delete d.updatedAt;db.collection("orders").doc(x.id).set({...d,updatedAt:TS()},{merge:true}).catch(()=>{})});log("Заказы после очистки кэша отправлены",{bn:""},String(st.length))}
+ if(FSMIG)return;FSMIG=1;let v="";try{v=localStorage.getItem("cacheV")||""}catch(e){}
+ if(v!==CACHE_V){try{localStorage.setItem("cacheV",CACHE_V)}catch(e){}if(PERSIST_OK)setTimeout(()=>fsReset("migrate"),1500)}}
 /* Профиль → «Связь с базой»: проверка на экране (диагностика через Журнал не доходит, если записи застряли) */
 async function netDiag(){NETDIAG='<p class="mut">Проверяю… до 15 секунд</p>';dq();const out=[],L=(a,b)=>out.push(`<div class="ln"><span>${esc(a)}</span><span>${esc(String(b))}</span></div>`);
  L("Время",new Date().toLocaleTimeString("ru-RU"));L("Firebase",firebase.SDK_VERSION);L("Интернет",navigator.onLine?"есть":"нет");L("Кэш на телефоне",PERSIST_OK?"включён":"выключен");
@@ -470,7 +492,7 @@ let lastBtnEl=null;addEventListener("click",e=>{const b=e.target&&e.target.close
    на iPhone оно иногда зависает после сворачивания), запоминаем подробности (после перезагрузки уходят в Журнал) и предлагаем перезагрузку */
 const tmo=(p,ms)=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),ms))]);
 async function idbProbe(){try{await tmo(new Promise((ok,no)=>{const r=indexedDB.open("mf_probe",1);r.onsuccess=()=>{try{r.result.close()}catch(e){}ok()};r.onerror=()=>no(r.error||new Error("error"));r.onblocked=()=>no(new Error("blocked"))}),4000);return"ok"}catch(e){return e.message==="timeout"?"hang":String(e.message||e)}}
-async function srvProbe(){const t=Date.now();try{await tmo(db.collection("settings").doc("main").get({source:"server"}),8000);return"ok "+(Date.now()-t)+"ms"}catch(e){return e.message==="timeout"?"hang":String(e.code||e.message)}}
+async function srvProbe(){const t=Date.now();try{await tmo(db.collection("pubOrders").doc("__probe__").get({source:"server"}),8000);return"ok "+(Date.now()-t)+"ms"}catch(e){return e.message==="timeout"?"hang":String(e.code||e.message)}}
 async function hangCheck(started){netKickAt=0;netKick("run2");const [idb,srv]=await Promise.all([idbProbe(),srvProbe()]);
  const d={at:new Date().toISOString(),btn:lastBtnAt&&Math.abs(lastBtnAt-started)<5000?lastBtn:"",online:navigator.onLine,hidden:hidAt?Math.round((Date.now()-hidAt)/1000)+"s":"",idb,srv,fb:FBLOG.slice(-6),ua:navigator.userAgent.slice(0,90)};
  try{localStorage.setItem("hangDiag",JSON.stringify(d))}catch(e){}
@@ -490,14 +512,14 @@ function login(msg){subs.forEach(u=>u());subs=[];$("nav").hidden=true;$("v").inn
  $("rs").onclick=()=>run(async()=>{const m=$("em").value.trim();if(!m)return toast("Введите email");await auth.sendPasswordResetEmail(m);toast("Письмо для сброса отправлено")})}
 
 let __authDone=0;setTimeout(()=>{if(!__authDone&&typeof login==="function"){try{login("Нет ответа от входа. Проверьте интернет и Authorized domains в Firebase.")}catch(e){}}},10000);
-auth.onAuthStateChanged(async u=>{__authDone=1;U=u;S=null;O=[];ON=0;OX=new Map();OXR={date:[],ts:[]};UPON=0;SF={};PRS=[];INV=[];INV0=[];CST={};DL=[];BQ=[];LG=[];VS=[];CU={};SC=[];LD=[];EX=[];SHL=[];SR=[];RP=[];BL=[];CHS=[];CHERR="";chStop();ORD0=false;TCM=[];TCERR="";tcLast=0;NP=null;subs.forEach(f=>f());subs=[];if(!u)return login();
+auth.onAuthStateChanged(async u=>{await FSREADY;__authDone=1;U=u;S=null;O=[];ON=0;OX=new Map();OXR={date:[],ts:[]};UPON=0;SF={};PRS=[];INV=[];INV0=[];CST={};DL=[];BQ=[];LG=[];VS=[];CU={};SC=[];LD=[];EX=[];SHL=[];SR=[];RP=[];BL=[];CHS=[];CHERR="";chStop();ORD0=false;TCM=[];TCERR="";tcLast=0;NP=null;subs.forEach(f=>f());subs=[];if(!u)return login();
  try{const d=await db.collection("staff").doc(u.uid).get();const s=d.exists?d.data():null;if(s&&s.active===true&&(s.role==="owner"||isOwnEm(u.email))){s.own=true;s.head=String(u.email||"").toLowerCase()===HEAD_EM;s.role="admin"}
   if(!s||s.active!==true||!RL[s.role]){await auth.signOut();return login(!s?"Профиль сотрудника не создан. Обратитесь к администратору.":"Аккаунт отключён или роль не задана.")}
   S=s;try{const hd=localStorage.getItem("hangDiag");if(hd){localStorage.removeItem("hangDiag");setTimeout(()=>log("Связь зависла (диагностика)",{bn:""},hd.slice(0,2000)),3000)}}catch(e){}if(s.role!=="admin"&&s.role!=="courier"&&s.loc)LOC=s.loc;try{if(!sessionStorage.getItem("lg")){sessionStorage.setItem("lg","1");log("Вход в систему",{bn:""})}}catch(x){}
  }catch(e){await auth.signOut();return login("Не удалось проверить доступ: "+er(e))}
  subs.push(db.collection("staff").onSnapshot(s=>{SF={};s.forEach(d=>SF[d.id]=d.data());dq()},e=>toast(er(e))));
  const q=db.collection("orders").orderBy("ts","desc").limit(300);
- subs.push(q.onSnapshot({includeMetadataChanges:true},s=>{if(!s.metadata.fromCache)SRVAT=Date.now();const nw=s.docs.map(d=>({id:d.id,...d.data(),...(d.metadata.hasPendingWrites?{_pend:1}:{})})).sort((a,b)=>(b.ts||0)-(a.ts||0));ordDiff(nw);O=nw;ON=nw.length;ORV++;upSub();pubAuto(nw);dq()},e=>toast("Заказы: "+er(e))));
+ subs.push(q.onSnapshot({includeMetadataChanges:true},s=>{if(!s.metadata.fromCache)SRVAT=Date.now();const nw=s.docs.map(d=>({id:d.id,...d.data(),...(d.metadata.hasPendingWrites?{_pend:1}:{})})).sort((a,b)=>(b.ts||0)-(a.ts||0));ordDiff(nw);O=nw;ON=nw.length;ORV++;upSub();fsAfterOrders();pubAuto(nw);dq()},e=>toast("Заказы: "+er(e))));
  if(["admin","operator","florist","assistant"].includes(S.role)){subs.push(db.collection("inventory").onSnapshot(s=>{INV0=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.cat||"").localeCompare(b.cat||"")||a.name.localeCompare(b.name));INV=invM();dq()},e=>toast("Склад: "+er(e))));subs.push(db.collection("bouquets").onSnapshot(s=>{BQ=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>toast("Букеты: "+er(e))))}
  if(mgr())subs.push(db.collection("customers").onSnapshot(s=>{CU={};s.forEach(d=>CU[d.id]=d.data());dqT("crm")},e=>toast("Клиенты: "+er(e))));
  if(["admin","operator","florist","assistant"].includes(S.role))subs.push(db.collection("showcase").onSnapshot(s=>{SC=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>toast("Витрина: "+er(e))));
