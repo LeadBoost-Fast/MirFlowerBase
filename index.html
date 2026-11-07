@@ -781,7 +781,7 @@ function stBlock(c){const y=LY(),act=[0,1,2,3].reduce((a,i)=>a+c(i),0)||1,A=i=>`
  return ""}
 function home(){return home0()+(mgr()?repHome():"")}
 /* Главная по профессиям (разд. 37): флорист и оператор — рабочая очередь без графиков; помощник — витрина и свежесть, затем очередь; админ и владельцы — сводка */
-function home0(){return shiftCard()+home00()}
+function home0(){return shiftCard()+todoTop()+home00()}
 function home00(){if(S.role==="courier")return homeC();if(S.role==="assistant")return homeAs()+homeFl(true)+myEarn();if(S.role==="florist"||S.role==="operator")return homeFl()+myEarn();return homeOp()+(own()?"":myEarn())}
 /* ===== Заработок сотрудников (разд. 46): ставки владельца в settings/main.pay ===== */
 let SLG=[];
@@ -1967,6 +1967,36 @@ async function deductOrder(o){try{const cur=O.find(x=>x.id===o.id)||o;if(cur.sc|
  toast(short.length?"Списано со склада, но не хватило: "+short.join(", "):"Списано со склада по рецепту: "+done.length+" поз.")}catch(e){console.warn("deductOrder",e)}}
 async function returnOrder(o){try{const cur=O.find(x=>x.id===o.id)||o;if(!(cur.dd&&cur.dd.length))return;for(const d of cur.dd){try{await move(d.iid,"in",+d.q||0,"Отмена заказа: "+(cur.bn||""))}catch(e){}}await db.collection("orders").doc(cur.id).update({dd:[],updatedAt:TS()});toast("Цветы возвращены на склад")}catch(e){console.warn("returnOrder",e)}}
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="z_rec"]');if(!b||!S)return;e.preventDefault();const o=O.find(x=>x.id===b.dataset.id);if(!o)return;bqForm();setTimeout(()=>{const f=$("bf");if(f){f.name.value=o.bn||"";f.price.value=+o.p||""}},30)});
+/* ===== «Нужно сделать» наверху главной (разд. 59): у каждой роли свой список, нажатие ведёт к делу ===== */
+function todoTop(){if(!S)return"";const now=Date.now(),t=today(),r=S.role,L=[],add=(n,f,tail,ic,col,act,id)=>{if(n>0)L.push({n,txt:pl(n,f[0],f[1],f[2])+(tail?" — "+tail:""),ic,col,act,id})},
+ lateMk=o=>{const m=mkOf(o);return m&&new Date(m).getTime()<now},mine=o=>o.takenBy===U.uid,opr=r==="operator"||adm();
+ if(r==="courier"){
+  add(O.filter(o=>o.dv&&!o.courier&&+o.st>=1&&+o.st<=3).length,["свободная доставка","свободные доставки","свободных доставок"],"можно взять","truck","#3B82F6","al","orders|");
+  add(O.filter(o=>o.dv&&o.courier===U.uid&&+o.st===2).length,["заказ готов","заказа готово","заказов готово"],"забрать у флориста","truck","#F59E0B","al","orders|2");
+  add(O.filter(o=>o.dv&&o.courier===U.uid&&+o.st===3).length,["доставка в пути","доставки в пути","доставок в пути"],"отметить «Доставлено»","truck","#22C55E","al","orders|3");
+ }else{
+  if(["florist","assistant"].includes(r)||adm()){
+   add(O.filter(o=>+o.st===1&&mine(o)&&o.rv==="redo").length,["заказ на переделку","заказа на переделку","заказов на переделку"],"исправить","warn","#EF4444","al","orders|1");
+   add(O.filter(o=>+o.st===1&&mine(o)&&lateMk(o)).length,["ваш заказ просрочен","ваших заказа просрочено","ваших заказов просрочено"],"доделать","clock","#EF4444","al","orders|1");
+  }
+  if(mgr())add(O.filter(o=>+o.st===0).length,["новый заказ","новых заказа","новых заказов"],"взять в работу","clock","#3B82F6","al","orders|0");
+  if(opr){
+   add(O.filter(o=>+o.st===2&&o.rv==="wait"&&o.asm!==U.uid).length,["букет ждёт приёмки","букета ждут приёмки","букетов ждут приёмки"],"проверить","check","#8B5CF6","al","orders|2");
+   add(O.filter(o=>+o.st===2&&!o.dv&&o.rv!=="wait").length,["заказ готов к выдаче","заказа готовы к выдаче","заказов готовы к выдаче"],"выдать клиенту","orders","#22C55E","al","orders|2");
+   add(O.filter(o=>+o.st===2&&o.dv&&o.rv!=="wait").length,["доставка готова","доставки готовы","доставок готово"],"передать курьеру","truck","#0EA5E9","al","orders|2");
+   add(oH().filter(o=>+o.st>=2&&+o.st<5&&!o.paid).length,["заказ не оплачен","заказа не оплачено","заказов не оплачено"],"получить оплату","card","#F59E0B","al","orders|unpaid");
+   add(O.filter(o=>o.dv&&+o.st<4&&o.date&&new Date(o.date+"T"+(o.time||"23:59")).getTime()<now).length,["доставка просрочена","доставки просрочено","доставок просрочено"],"","warn","#EF4444","al","orders|late");
+   if(typeof FX==="function"&&FX("clientChat"))add(CHS.filter(c=>chW(c)&&(!c.grp||c.grp===c.id)).length,["чат ждёт ответа","чата ждут ответа","чатов ждут ответа"],"","chats","#EC4899","tab","chats");
+  }
+  if(adm())add(O.filter(o=>o.rqK&&+o.st!==5).length,["запрос на отмену или скидку","запроса на отмену или скидку","запросов на отмену или скидку"],"решить","warn","#EF4444","tab","home");
+  if(["admin","operator","florist","assistant"].includes(r))add(INV.filter(i=>i.qty<=(+i.min||0)).length,["позиция на складе заканчивается","позиции на складе заканчиваются","позиций на складе заканчивается"],"заказать","stock","#F59E0B","al","stock|low");
+  if(mgr()&&typeof rpTypes==="function"){const mineR=RP.filter(x=>x.by===U.uid&&x.date===t);add(rpTypes().filter(x=>!mineR.some(y=>y.type===x)).length,["отчёт за сегодня не сдан","отчёта за сегодня не сдано","отчётов за сегодня не сдано"],"сдать","clip","#64748B","tab","rep")}
+ }
+ alerts.d++;/* старый блок «Сейчас нужно» ниже больше не показываем, всё здесь */
+ const n=L.reduce((q,x)=>q+x.n,0);
+ if(!L.length)return `<div class="card tdt ok"><span class="tdk">✓</span><div class="lb"><b>Всё сделано</b><span>Срочных дел нет</span></div></div>`;
+ return `<div class="card tdt"><div class="tdh"><b>Нужно сделать</b><span class="tdn">${n}</span></div>${L.map(x=>`<div class="tdi" data-a="${x.act}" data-id="${x.id}">${tic(x.ic,x.col)}<span class="tdx"><b>${x.n}</b> ${x.txt}</span><span class="chev">›</span></div>`).join("")}</div>`}
+(function(){const s=document.createElement("style");s.textContent=".tdt{padding:14px 16px;margin-top:12px}.tdh{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.tdh b{font-size:17px}.tdn{min-width:26px;height:26px;padding:0 8px;border-radius:99px;background:#EF4444;color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center}.tdi{display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid var(--line);cursor:pointer}.tdi:first-of-type{border-top:0}.tdi .ti{width:34px;height:34px;flex:none}.tdx{flex:1;min-width:0;font-size:15px;line-height:1.3}.tdx b{font-size:16px}.tdi:active{opacity:.7}.tdt.ok{display:flex;align-items:center;gap:12px}.tdk{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--ok,#16a34a) 18%,transparent);color:var(--ok,#16a34a);font-weight:800;flex:none}.tdt.ok .lb{display:flex;flex-direction:column}.tdt.ok .lb span{font-size:13px;color:var(--mut)}";document.head.appendChild(s)})();
 /* ===== Mirflowers: удаление данных, статистика сотрудников, отчёты ===== */
 let RP=[],BL=[],stp="t",rpt="",rpb=false,RPH=[];
 (function(){const s=document.createElement("style");s.textContent=".rpp{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.rpi{position:relative;display:inline-block}.rpi a{position:absolute;top:-6px;right:-6px;background:var(--bad);color:#fff;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;font-size:12px;text-decoration:none}.stc .tiles{margin:8px 0}";document.head.appendChild(s)})();
