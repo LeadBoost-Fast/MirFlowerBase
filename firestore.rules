@@ -143,6 +143,12 @@ service cloud.firestore {
     }
 
     // Отчёты сотрудников (фото витрины, рабочего места, смена оператора)
+    // Отметка «отчёт по точке сдан» (рабочее место, витрина): видят все сотрудники, кто сдал — без фото
+    match /rpDone/{id} {
+      allow read: if isWork();
+      allow create, update: if isWork() && request.resource.data.by == request.auth.uid;
+      allow delete: if isAdmin() || isOwner();
+    }
     match /reports/{id} {
       allow read: if isAdmin() || isOwner() || (isWork() && resource.data.by == request.auth.uid);
       allow create: if isWork() && request.resource.data.by == request.auth.uid;
