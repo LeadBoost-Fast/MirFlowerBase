@@ -779,7 +779,7 @@ function stBlock(c){const y=LY(),act=[0,1,2,3].reduce((a,i)=>a+c(i),0)||1,A=i=>`
  if(y==="n")return `<div class="card"><div class="sgb">${SLB.map((n,i)=>`<button type="button" ${A(i)}><span class="dot" style="--c:var(--s${i})"></span>${n}<b>${c(i)}</b></button>`).join("")}</div><div class="stk">${[0,1,2,3].map(i=>`<i style="flex:${c(i)};background:var(--s${i})"></i>`).join("")}</div></div>`;
  if(y==="b"){const mx=Math.max(1,...[0,1,2,3,4,5].map(c));return `<div class="card hbc"><b class="rgt">Заказы по статусам</b>${SLB.map((n,i)=>`<div class="hbx" ${A(i)}><span>${n}</span><i><b style="width:${Math.max(c(i)?6:0,c(i)/mx*100)}%;background:var(--s${i})"></b></i><em>${c(i)}</em></div>`).join("")}</div>`}
  return ""}
-function home(){return home0()+(mgr()?repHome():"")}
+function home(){return home0()+(mgr()?repHome():"")+shiftEndCard()}
 /* Главная по профессиям (разд. 37): флорист и оператор — рабочая очередь без графиков; помощник — витрина и свежесть, затем очередь; админ и владельцы — сводка */
 function home0(){return shiftCard()+todoTop()+home00()}
 function home00(){if(S.role==="courier")return homeC();if(S.role==="assistant")return homeAs()+homeFl(true)+myEarn();if(S.role==="florist"||S.role==="operator")return homeFl()+myEarn();return homeOp()+(own()?"":myEarn())}
@@ -1998,6 +1998,17 @@ function todoTop(){if(!S)return"";const now=Date.now(),t=today(),r=S.role,L=[],a
  if(!L.length)return `<div class="card tdt ok"><span class="tdk">✓</span><div class="lb"><b>Всё сделано</b><span>Срочных дел нет</span></div></div>`;
  return `<div class="card tdt"><div class="tdh"><b>Нужно сделать</b><span class="tdn">${n}</span></div>${L.map(x=>`<div class="tdi" data-a="${x.act}" data-id="${x.id}">${tic(x.ic,x.col)}<span class="tdx"><b>${x.n}</b> ${x.txt}</span><span class="chev">›</span></div>`).join("")}</div>`}
 (function(){const s=document.createElement("style");s.textContent=".tdt{padding:14px 16px;margin-top:12px}.tdh{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.tdh b{font-size:17px}.tdn{min-width:26px;height:26px;padding:0 8px;border-radius:99px;background:#EF4444;color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center}.tdi{display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid var(--line);cursor:pointer}.tdi:first-of-type{border-top:0}.tdi .ti{width:34px;height:34px;flex:none}.tdx{flex:1;min-width:0;font-size:15px;line-height:1.3}.tdx b{font-size:16px}.tdi:active{opacity:.7}.tdt.ok{display:flex;align-items:center;gap:12px}.tdk{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--ok,#16a34a) 18%,transparent);color:var(--ok,#16a34a);font-weight:800;flex:none}.tdt.ok .lb{display:flex;flex-direction:column}.tdt.ok .lb span{font-size:13px;color:var(--mut)}";document.head.appendChild(s)})();
+/* Закончить смену внизу главной (разд. 63) */
+function shiftEndCard(){const s=SHF();if(!S||own()||!s)return"";const d=Date.now()-s.start,st=s.start,mine=O.filter(o=>+o.ts>=st),
+ asm=O.filter(o=>o.asm===U.uid&&+o.readyAt>=st).length,made=mine.filter(o=>o.by===U.uid).length,dl=O.filter(o=>o.courier===U.uid&&+o.st===4&&+(o.doneAt||0)>=st).length,
+ left=typeof rpTypes==="function"&&rpWin()?rpTypes().filter(k=>!rpDone(k)).map(k=>RPT[k].n):[],
+ my=O.filter(o=>+o.st===1&&o.takenBy===U.uid).length,L=(a,b)=>`<div class="ln"><span>${a}</span><b>${b}</b></div>`;
+ return `<div class="card she"><div class="row"><b>Конец смены</b><span class="mut">с ${new Date(st).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"})} · ${Math.floor(d/36e5)} ч ${Math.floor(d%36e5/6e4)} мин</span></div>
+ ${S.role==="courier"?L("Доставлено за смену",dl):L("Собрано букетов",asm)+(mgr()?L("Оформлено заказов",made):"")}
+ ${my?`<div class="shw">У вас ${my} ${pl(my,"заказ","заказа","заказов")} в сборке — передайте коллеге или доделайте</div>`:""}
+ ${left.length?`<div class="shw">Не сдано: ${esc(left.join(", "))} <a href="#" data-a="goto" data-id="rep">сдать</a></div>`:""}
+ <button class="btn r she-b" data-a="sh_end">Закончить смену</button></div>`}
+(function(){const s=document.createElement("style");s.textContent=".she{margin-top:18px}.she .row{margin-bottom:6px}.shw{margin:10px 0 0;padding:9px 12px;border-radius:12px;background:color-mix(in srgb,#F59E0B 16%,var(--card));font-size:14px}.shw a{color:var(--ac);font-weight:700}.she-b{width:100%;margin-top:12px;min-height:50px;font-size:16px}";document.head.appendChild(s)})();
 /* ===== Mirflowers: удаление данных, статистика сотрудников, отчёты ===== */
 let RP=[],BL=[],stp="t",rpt="",rpb=false,RPH=[];
 (function(){const s=document.createElement("style");s.textContent=".rpp{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.rpi{position:relative;display:inline-block}.rpi a{position:absolute;top:-6px;right:-6px;background:var(--bad);color:#fff;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;font-size:12px;text-decoration:none}.stc .tiles{margin:8px 0}";document.head.appendChild(s)})();
