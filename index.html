@@ -490,20 +490,23 @@ function pendWatch(){if(pendOn)return;pendOn=Date.now();let done=false;
   if(PERSIST_OK&&!busy&&Date.now()-last>180000&&navigator.onLine){clearInterval(iv);try{localStorage.setItem("autoRl",String(Date.now()))}catch(e){}location.reload()}},5000)},25000);
  /* плашку «не отправлено на сервер» владелец попросил убрать (7.11.2026): восстановление идёт молча — переподключение, перезагрузка, Журнал */
  setTimeout(()=>{if(done)return;netKickAt=0;netKick("pend")},15000);
- setTimeout(()=>{if(!done&&!PERSIST_OK)toast("Нет связи с сервером: изменения ещё не сохранены. Не закрывайте сайт — они уйдут, когда связь вернётся.")},20000)}
+ setTimeout(()=>{if(!done&&!PERSIST_OK&&Date.now()-pendOn>=29000)toast("Нет связи с сервером: изменения ещё не сохранены. Не закрывайте сайт — они уйдут, когда связь вернётся.")},30000)}
 addEventListener("beforeunload",e=>{if(pendOn&&!PERSIST_OK){e.preventDefault();e.returnValue=""}});
 let lastBtnEl=null;addEventListener("click",e=>{const b=e.target&&e.target.closest&&e.target.closest("button,[data-a]");if(b){lastBtnEl=b;lastBtn=(b.textContent||b.dataset.a||"").replace(/\s+/g," ").trim().slice(0,40);lastBtnAt=Date.now()}},true);
 /* Действие висит 20 с даже после переподключения: проверяем, что застряло — сеть до сервера или хранилище браузера (IndexedDB,
    на iPhone оно иногда зависает после сворачивания), запоминаем подробности (после перезагрузки уходят в Журнал) и предлагаем перезагрузку */
 const tmo=(p,ms)=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),ms))]);
 async function idbProbe(){try{await tmo(new Promise((ok,no)=>{const r=indexedDB.open("mf_probe",1);r.onsuccess=()=>{try{r.result.close()}catch(e){}ok()};r.onerror=()=>no(r.error||new Error("error"));r.onblocked=()=>no(new Error("blocked"))}),4000);return"ok"}catch(e){return e.message==="timeout"?"hang":String(e.message||e)}}
-async function srvProbe(){const t=Date.now();try{await tmo(db.collection("pubOrders").doc("__probe__").get({source:"server"}),8000);return"ok "+(Date.now()-t)+"ms"}catch(e){return e.message==="timeout"?"hang":String(e.code||e.message)}}
+async function srvProbe(){const t=Date.now();try{await tmo(db.collection("pubOrders").doc("probe0").get({source:"server"}),8000);return"ok "+(Date.now()-t)+"ms"}catch(e){return e.message==="timeout"?"hang":String(e.code||e.message)}}
 async function hangCheck(started){netKickAt=0;netKick("run2");const [idb,srv]=await Promise.all([idbProbe(),srvProbe()]);
  const d={at:new Date().toISOString(),btn:lastBtnAt&&Math.abs(lastBtnAt-started)<5000?lastBtn:"",online:navigator.onLine,hidden:hidAt?Math.round((Date.now()-hidAt)/1000)+"s":"",idb,srv,fb:FBLOG.slice(-6),ua:navigator.userAgent.slice(0,90)};
  try{localStorage.setItem("hangDiag",JSON.stringify(d))}catch(e){}
  modal(`<h1>Связь с базой зависла</h1><p>Действие${d.btn?" «"+esc(d.btn)+"»":""} не подтвердилось за 20 секунд, даже после переподключения.</p><p class="mut">Проверка: интернет — ${d.online?"есть":"нет"}, сервер — ${srv.startsWith("ok")?"отвечает":"не отвечает"}, хранилище браузера — ${idb==="ok"?"в порядке":"зависло"}.</p><p>Перезагрузите сайт и проверьте, применилось ли действие. Если нет — сделайте его ещё раз.</p><div class="acts"><button class="btn g" type="button" data-a="x">Подождать</button><button class="btn" type="button" data-a="reload">Перезагрузить сайт</button></div>`)}
 document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest('[data-a="reload"]'))location.reload();if(e.target.closest&&e.target.closest('[data-a="netdiag"]'))netDiag()});
-async function netKick(why){if(Date.now()-netKickAt<8000)return;netKickAt=Date.now();try{await db.disableNetwork();await db.enableNetwork()}catch(e){}}
+/* Переподключение (disableNetwork + enableNetwork) убрано (разд. 35): без кэша оно сбрасывало все данные (0 заказов, мигание),
+   а если включение не срабатывало — сайт оставался без связи совсем. Firebase сам держит и восстанавливает связь;
+   здесь только убеждаемся, что сеть Firebase включена (повторный вызов безопасен). */
+async function netKick(why){try{await db.enableNetwork()}catch(e){}}
 async function run(fn){if(lock&&Date.now()-lock<1500)return;if(navigator.onLine===false){toast("Нет интернета. Подождите 20 сек.");return}const my=lock=Date.now();
  /* нажатая кнопка заблокирована, пока действие не закончится: при медленной связи второй заказ случайно не создать */
  const bt=lastBtnEl&&Date.now()-lastBtnAt<1500&&lastBtnEl.tagName==="BUTTON"&&!lastBtnEl.disabled?lastBtnEl:null;if(bt)bt.disabled=true;
