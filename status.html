@@ -5,8 +5,8 @@
 main{max-width:460px;margin:0 auto}h1{font-size:22px;margin:0 0 2px}.m{color:var(--mut)}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:16px}
 .big{font-size:24px;font-weight:700;margin:2px 0 14px}ol{list-style:none;margin:0;padding:0}li{display:flex;gap:12px;align-items:center;padding:9px 0;color:var(--mut)}li i{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex:none}li.d{color:var(--ink)}li.d i{background:var(--ac);border-color:var(--ac)}li.c{color:var(--ink);font-weight:700}li.c i{border-color:var(--ac);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 25%,transparent)}
 a{color:var(--ac)}</style></head><body><main><h1 id="shop">Статус заказа</h1><div class="m" id="sub">Загрузка…</div><div class="card" id="box" hidden></div><p class="m" id="ft"></p></main>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
 <script>
 const cfg={apiKey:"AIzaSyCDxDJvmIOw8R0kP7bNbiBHYDAOqY_9cSQ",authDomain:"mirflowersbase.firebaseapp.com",projectId:"mirflowersbase",storageBucket:"mirflowersbase.firebasestorage.app",messagingSenderId:"142575786641",appId:"1:142575786641:web:de2d1b79b076894c29fd30"};firebase.initializeApp(cfg);const fdb=firebase.firestore();
 const $=id=>document.getElementById(id),k=new URLSearchParams(location.search).get("t")||"";

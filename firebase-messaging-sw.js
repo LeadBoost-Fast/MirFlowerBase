@@ -1,5 +1,5 @@
 // Сервис-воркер для push-уведомлений (приходят, даже когда сайт закрыт)
-importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js","https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js","https://www.gstatic.com/firebasejs/12.19.0/firebase-messaging-compat.js");
 firebase.initializeApp({apiKey:"AIzaSyCDxDJvmIOw8R0kP7bNbiBHYDAOqY_9cSQ",authDomain:"mirflowersbase.firebaseapp.com",projectId:"mirflowersbase",storageBucket:"mirflowersbase.firebasestorage.app",messagingSenderId:"142575786641",appId:"1:142575786641:web:de2d1b79b076894c29fd30"});
 const m=firebase.messaging();
 // Сервер шлёт только data-сообщения, показываем уведомление сами
