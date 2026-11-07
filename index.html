@@ -444,8 +444,8 @@ function pendWatch(){if(pendOn)return;pendOn=Date.now();let done=false;
  setTimeout(()=>{if(done)return;let last=0;try{last=+localStorage.getItem("autoRl")||0}catch(e){}
   const busy=($("m")&&$("m").innerHTML.trim())||(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName));
   if(!busy&&Date.now()-last>180000&&navigator.onLine){try{localStorage.setItem("autoRl",String(Date.now()))}catch(e){}location.reload()}},30000);
- setTimeout(()=>{if(done)return;netKickAt=0;netKick("pend");let b=$("pendb");if(!b){b=document.createElement("div");b.id="pendb";document.body.appendChild(b)}
-  b.innerHTML=`<span>${esc(t("Изменения ещё не отправлены на сервер. Они сохранены на телефоне."))}</span><button class="btn s" type="button" data-a="reload">${esc(t("Перезагрузить"))}</button>`},15000)}
+ /* плашку «не отправлено на сервер» владелец попросил убрать (7.11.2026): восстановление идёт молча — переподключение, перезагрузка, Журнал */
+ setTimeout(()=>{if(done)return;netKickAt=0;netKick("pend")},15000)}
 let lastBtnEl=null;addEventListener("click",e=>{const b=e.target&&e.target.closest&&e.target.closest("button,[data-a]");if(b){lastBtnEl=b;lastBtn=(b.textContent||b.dataset.a||"").replace(/\s+/g," ").trim().slice(0,40);lastBtnAt=Date.now()}},true);
 /* Действие висит 20 с даже после переподключения: проверяем, что застряло — сеть до сервера или хранилище браузера (IndexedDB,
    на iPhone оно иногда зависает после сворачивания), запоминаем подробности (после перезагрузки уходят в Журнал) и предлагаем перезагрузку */
