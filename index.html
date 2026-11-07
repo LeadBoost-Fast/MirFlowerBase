@@ -187,17 +187,17 @@ setTimeout(function(){
   }catch(e){}
 }, 8000);
 </script><nav id="nav" hidden></nav><div id="m"></div><div id="toast" hidden></div>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-functions-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-messaging-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 "use strict";
 /* Последние предупреждения и ошибки Firebase из консоли браузера (на телефоне консоль не видна) — для диагностики зависаний */
-const FBLOG=[];(()=>{for(const k of ["warn","error"]){const o=console[k];console[k]=function(...a){try{const m=a.map(x=>x&&x.message?x.message:typeof x==="string"?x:"").join(" ");if(/firebase|firestore|grpc|webchannel/i.test(m)){FBLOG.push(new Date().toTimeString().slice(0,8)+" "+m.replace(/\s+/g," ").slice(0,220));if(FBLOG.length>8)FBLOG.shift()}}catch(e){}return o.apply(this,a)}}})();
+const FBLOG=[];(()=>{for(const k of ["warn","error"]){const o=console[k];console[k]=function(...a){try{const m=a.map(x=>x&&x.message?x.message:typeof x==="string"?x:"").join(" ");if(/firebase|firestore|grpc|webchannel/i.test(m)&&!/deprecated/i.test(m)){FBLOG.push(new Date().toTimeString().slice(0,8)+" "+m.replace(/\s+/g," ").slice(0,220));if(FBLOG.length>8)FBLOG.shift()}}catch(e){}return o.apply(this,a)}}})();
 /* Регион Cloud Functions: там же, где база Firestore (Сингапур). Менять вместе с setGlobalOptions в functions/index.js */
 const FNR="asia-southeast1";
 /* Скорость: toLocaleDateString/TimeString/String с параметрами каждый раз создают новый Intl.DateTimeFormat (дорого:
@@ -437,6 +437,13 @@ let netKickAt=0,lastBtn="",lastBtnAt=0,pendOn=0;
 function pendWatch(){if(pendOn)return;pendOn=Date.now();let done=false;
  db.waitForPendingWrites().then(()=>{done=true;pendOn=0;const b=$("pendb");if(b)b.remove()}).catch(()=>{pendOn=0});
  setTimeout(()=>{if(!done)netKick("pend6")},6000);
+ /* 15 с: диагностика (после перезагрузки уйдёт в Журнал); 30 с: тихая перезагрузка, если человек ничего не делает (не чаще раза в 3 мин) */
+ setTimeout(async()=>{if(done)return;const [idb,srv]=await Promise.all([idbProbe(),srvProbe()]);if(done)return;
+  const d={at:new Date().toISOString(),kind:"pending",btn:lastBtn,online:navigator.onLine,hidden:hidAt?Math.round((Date.now()-hidAt)/1000)+"s":"",idb,srv,sdk:firebase.SDK_VERSION,fb:FBLOG.slice(-6),ua:navigator.userAgent.slice(0,90)};
+  try{localStorage.setItem("hangDiag",JSON.stringify(d))}catch(e){}},15500);
+ setTimeout(()=>{if(done)return;let last=0;try{last=+localStorage.getItem("autoRl")||0}catch(e){}
+  const busy=($("m")&&$("m").innerHTML.trim())||(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName));
+  if(!busy&&Date.now()-last>180000&&navigator.onLine){try{localStorage.setItem("autoRl",String(Date.now()))}catch(e){}location.reload()}},30000);
  setTimeout(()=>{if(done)return;netKickAt=0;netKick("pend");let b=$("pendb");if(!b){b=document.createElement("div");b.id="pendb";document.body.appendChild(b)}
   b.innerHTML=`<span>${esc(t("Изменения ещё не отправлены на сервер. Они сохранены на телефоне."))}</span><button class="btn s" type="button" data-a="reload">${esc(t("Перезагрузить"))}</button>`},15000)}
 addEventListener("click",e=>{const b=e.target&&e.target.closest&&e.target.closest("button,[data-a]");if(b){lastBtn=(b.textContent||b.dataset.a||"").replace(/\s+/g," ").trim().slice(0,40);lastBtnAt=Date.now()}},true);
