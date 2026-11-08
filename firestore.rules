@@ -108,10 +108,16 @@ service cloud.firestore {
         || (isCourier()
           && resource.data.dv == true
           && (!('courier' in resource.data) || resource.data.courier == null || resource.data.courier == '')
-          && resource.data.st in [1, 2, 3]
+          && resource.data.st in [0, 1, 2, 3]
           && request.resource.data.courier == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['courier','cAcc','cBy','updatedAt','statusBy','shipAt']))
+        // Курьер забрал готовый букет: «Готов» → «В пути»
+        || (isCourier() && resource.data.courier == request.auth.uid
+          && resource.data.get('cAcc', 0) > 0
+          && resource.data.st == 2 && request.resource.data.st == 3
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['st','shipAt','updatedAt','statusBy']))
         // Курьер подтверждает назначенную ему доставку
         || (isCourier() && resource.data.courier == request.auth.uid
           && resource.data.st in [1, 2, 3]
@@ -121,8 +127,9 @@ service cloud.firestore {
         || (isCourier() && resource.data.courier == request.auth.uid
           && resource.data.st in [1, 2, 3]
           && request.resource.data.courier == ''
+          && (request.resource.data.st == resource.data.st || (resource.data.st == 3 && request.resource.data.st == 2))
           && request.resource.data.diff(resource.data).affectedKeys()
-               .hasOnly(['courier','cAcc','cBy','cRelAt','cRelBy','cRelNote','updatedAt','statusBy']));
+               .hasOnly(['courier','cAcc','cBy','cRelAt','cRelBy','cRelNote','updatedAt','statusBy','st']));
       allow delete: if isAdmin() || isOwner();
     }
 

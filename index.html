@@ -814,7 +814,12 @@ function draw(){if(!S)return;if(tab==="tc"&&U&&typeof tcSeen==="function")tcSeen
  n.onclick=e=>{const b=e.target.closest("button");if(b&&b.dataset.t){tab=b.dataset.t;draw();scrollTo(0,0)}};
  const cf=chFocus();if(LOC&&!locs().some(x=>x.id===LOC))LOC="";const vh=locBar()+scoped(()=>gtab()+({home,orders,team,me,rep:repV,st:stV,cur:curV,fl:homeFl,tpl:tplV,stock,show:vit,gal:galV,crm,chats,tc,leads,fin:own()?fin:home,sched,jr:logv,more:moreV,map:mapV,deals:dealsV,an:own()?anV:home})[tab]())+(mgr()&&(tab==="home"||tab==="orders")?`<button class="btn fab" data-a="new">＋ Заказ</button>`:"");const ve=$("v");if(tab==="map"||draw.tab!==tab){ve.innerHTML=deco(vh);ve.__h=vh}else morph(ve,vh);draw.tab=tab;chFit();bind();if(tab==="map")mapAfter();if(tab==="chats")chBind();if(tab==="tc")tcBind();chAfter(cf)}
 
-function next(o){const s=+o.st;if(s===2&&o.rv==="wait"&&mgr())return null;if(mgr())return s<4?[s===2&&!o.dv?4:s+1,(s===3&&o.dv?"Доставлено"+(wait(o)>0?" · "+mmss(wait(o)):""):["Начать сборку","Готов","Передать курьеру","Выдать","—"][s===2&&!o.dv?3:s])]:null;
+/* доставка: сотрудник выставляет заказ (dvPost) → любой курьер принимает → забирает («Забрал, еду», st 3) → «Доставлено» */
+const dvFree=o=>o.dv&&!o.courier&&+o.st<=3&&+o.st!==5&&(o.dvPost||+o.st===3),
+ dvBtn=o=>{if(!o.dv||+o.st>=3||+o.st===5||!(mgr()||own())||S.role==="courier")return"";
+  if(!o.courier)return o.dvPost?`<span class="pill warn">🚚 Ждёт курьера</span><button class="btn g s" data-a="dv_unpost" data-id="${o.id}">Снять с доставки</button>`:`<button class="btn s" data-a="dv_post" data-id="${o.id}">🚚 Выставить на доставку</button>`;
+  return o.cAcc?`<span class="pill ok">🚚 ${esc(nm(o.courier))} принял(а)</span>`:`<span class="pill">🚚 ${esc(nm(o.courier))} · ждём подтверждения</span>`};
+function next(o){const s=+o.st;if(s===2&&o.rv==="wait"&&mgr())return null;if(s===2&&o.dv&&mgr()&&!(o.courier&&o.cAcc))return null;/* доставку сначала выставляют, курьер принимает */if(mgr())return s<4?[s===2&&!o.dv?4:s+1,(s===3&&o.dv?"Доставлено"+(wait(o)>0?" · "+mmss(wait(o)):""):["Начать сборку","Готов","Передать курьеру","Выдать","—"][s===2&&!o.dv?3:s])]:null;
  if(["florist","assistant"].includes(S.role)&&s<2)return[s+1,s?"Готов":"Начать сборку"];if(S.role==="courier"&&s===3)return[4,"✓ Доставлено"];return null}
 const rest=o=>o.paid?0:Math.max(0,(+o.p||0)+(+o.fee||0)-(+o.pre||0));
 
@@ -841,14 +846,14 @@ function card(o){const n=next(o),c="st",k=Math.min(5,Math.max(0,+o.st||0));
  return `<div class="card oc k-${k}" data-a="det" data-id="${o.id}" style="cursor:pointer"><div class="row">${th(o.img)}<b class="ocb">${esc(o.bn||"Заказ")}</b><span class="ocp">${late(o)}<span class="pill ${c}">${stL(o)}${o.proof?" 📷":""}</span></span></div>
  <div class="mut">${esc(o.client)} · ${esc(o.phone)}${locTag(o)}<br>Клиенту: ${hdt(o.date)} ${esc(o.time||"")} · ${o.dv?"Доставка: "+esc(o.addr)+(o.courier?" · "+esc(nm(o.courier)):""):"Самовывоз"}</div>${mkLine(o)}${adm()?whoLine(o):""}${noteLine(o)}${k<5?`<div class="prg">${[0,1,2,3].map(i=>`<i class="${i<=Math.min(3,k)?"on":""}"></i>`).join("")}</div>`:""}
  <div class="row" style="margin-top:8px"><b>${M(+o.p+(+o.fee||0))}</b>${o.paid?'<span class="pill ok">Оплачен</span>':`<span class="row" style="gap:6px;justify-content:flex-end"><span class="pill warn">К оплате ${M(rest(o))}</span>${isOp()?`<button class="btn s" data-a="o_pay" data-id="${o.id}">✓ Оплачено</button>`:""}</span>`}</div>
- <div class="acts"><button class="btn g s" data-a="det" data-id="${o.id}">Подробнее</button>${o.dv&&(S.role==="courier"||adm())?gisBtnO(o):""}${isOp()&&+o.st===2&&o.rv==="wait"&&(adm()||own()||o.asm!==U.uid)?`<button class="btn s" data-a="rv_ok" data-id="${o.id}">Принять</button><button class="btn r s" data-a="rv_redo" data-id="${o.id}">На переделку</button>`:""}${n?`<button class="btn ${mgr()&&wait(o)>0?"g ":""}s" data-a="adv" data-id="${o.id}"${mgr()&&wait(o)>0?` data-w="${shipT(o)+180000}"`:""}>${n[1]}</button>`:""}</div></div>`}
+ <div class="acts"><button class="btn g s" data-a="det" data-id="${o.id}">Подробнее</button>${o.dv&&(S.role==="courier"||adm())?gisBtnO(o):""}${isOp()&&+o.st===2&&o.rv==="wait"&&(adm()||own()||o.asm!==U.uid)?`<button class="btn s" data-a="rv_ok" data-id="${o.id}">Принять</button><button class="btn r s" data-a="rv_redo" data-id="${o.id}">На переделку</button>`:""}${n?`<button class="btn ${mgr()&&wait(o)>0?"g ":""}s" data-a="adv" data-id="${o.id}"${mgr()&&wait(o)>0?` data-w="${shipT(o)+180000}"`:""}>${n[1]}</button>`:""}${dvBtn(o)}</div></div>`}
 
 /* ===== Раскладки дизайнов (разд. 45): у каждого дизайна своё устройство главной и списка заказов ===== */
 /* iPhone: щипок и двойное нажатие не увеличивают страницу (кнопки нажимаются быстро) */
 document.addEventListener("gesturestart",e=>e.preventDefault(),{passive:false});
 const LY=()=>document.documentElement.dataset.ly||"a",SLB=["Новые","В сборке","Готовы","В пути","Выданы","Отменены"],
  osum=o=>M(+o.p+(+o.fee||0)),oK=o=>Math.min(5,Math.max(0,+o.st||0)),
- oNx=o=>{const n=next(o);return n?`<button class="btn s" data-a="adv" data-id="${o.id}"${mgr()&&wait(o)>0?` data-w="${shipT(o)+180000}"`:""}>${n[1]}</button>`:""},
+ oNx=o=>{const n=next(o);return (n?`<button class="btn s" data-a="adv" data-id="${o.id}"${mgr()&&wait(o)>0?` data-w="${shipT(o)+180000}"`:""}>${n[1]}</button>`:"")+dvBtn(o)},
  oAv=o=>th(o.img)||`<span class="oav" style="--c:var(--s${oK(o)})">${esc(String(o.bn||"З").trim().charAt(0).toUpperCase())}</span>`;
 function oRender(l){if(!l.length)return"";const y=LY();
  if(y==="i")return `<div class="card lst">${l.map(o=>`<div class="li" data-a="det" data-id="${o.id}">${oAv(o)}<div class="lb"><b>${esc(o.bn||"Заказ")}</b><span>${esc(o.client||"")} · ${hdt(o.date)} ${esc(o.time||"")}</span></div><div class="lr"><b>${osum(o)}</b><span class="dotl" style="--c:var(--s${oK(o)})">${stL(o)}</span></div><span class="chev">›</span></div>`).join("")}</div>`;
@@ -1084,9 +1089,9 @@ async function detail(id){const o=O.find(x=>x.id===id);if(!o)return;let h="";
  ${k<5?`<div class="stp" style="grid-template-columns:repeat(${SS.length},minmax(0,1fr))">${SS.map((x,i)=>`<div class="${i<=si?"on":""}"><i></i><span>${x}</span></div>`).join("")}</div>`:""}
  ${o.rate?`<div class="card" style="margin:10px 0 0;padding:10px 14px;${+o.rate.s<=3?"border:1px solid var(--bad)":""}"><b style="color:#e0a100;font-size:18px;letter-spacing:1px">${"★".repeat(+o.rate.s||0)}${"☆".repeat(5-(+o.rate.s||0))}</b> <span class="mut">оценка клиента</span>${o.rate.c?`<div style="margin-top:4px">«${esc(o.rate.c)}»</div>`:""}</div>`:k===4&&o.rvAsked?`<p class="mut" style="margin:8px 2px 0;font-size:13px">${typeof o.rvAsked==="number"?"⭐ Клиенту отправлена просьба оценить букет":o.rvAsked==="window"?"⭐ Просьба об оценке не отправлена: клиент писал больше суток назад":""}</p>`:""}
  <div class="qa">${ph?`<a class="qb" href="tel:+${ph}">${tic("phone","#22C55E")}Позвонить</a><a class="qb" href="https://wa.me/${ph}" target="_blank" rel="noopener">${tic("chats","#16A34A")}WhatsApp</a>`:""}${o.dv&&String(o.addr||"").trim()?`<a class="qb" href="${gis(o.addr,addrNote(o))}" target="_blank" rel="noopener" data-a="gis">${tic("map","#22C55E")}2ГИС</a>`:""}</div></div>
- ${(()=>{const n=next(o);const pr=n&&S.role!=="courier"&&!xfPend(o)?`<button class="btn big" data-a="adv" data-id="${id}">${n[1]}</button>`:"";
+ ${(()=>{const n=next(o);const pr=(n&&S.role!=="courier"&&!xfPend(o)?`<button class="btn big" data-a="adv" data-id="${id}">${n[1]}</button>`:"")+(dvBtn(o)?`<div class="acts" style="justify-content:center">${dvBtn(o)}</div>`:"");
   const pay=isOp()&&!o.paid&&+o.st<5?`<button class="btn g big" data-a="paid" data-id="${id}">${ix("cash")}Принять оплату ${M(rest(o))}</button>`:"";
-  const cur=(S.role==="courier"&&o.dv&&!o.courier&&+o.st>=1&&+o.st<=3?`<button class="btn big" data-a="cur_take" data-id="${id}">Взять доставку</button>`:"")+(S.role==="courier"&&o.courier===U.uid&&+o.st===3?`<button class="btn big" data-a="adv" data-id="${id}">${ix("check")}Доставлено</button>`:"");
+  const cur=(S.role==="courier"&&dvFree(o)?`<button class="btn big" data-a="cur_take" data-id="${id}">Принять доставку</button>`:"")+(S.role==="courier"&&o.courier===U.uid&&o.cAcc&&+o.st===2?`<button class="btn big" data-a="cur_pick" data-id="${id}">🚚 Забрал, еду</button>`:"")+(S.role==="courier"&&o.courier===U.uid&&+o.st===3?`<button class="btn big" data-a="adv" data-id="${id}">${ix("check")}Доставлено</button>`:"");
   const rv=isOp()&&+o.st===2&&o.rv==="wait"&&(adm()||own()||o.asm!==U.uid)?`<button class="btn big" data-a="rv_ok" data-id="${o.id}">${ix("check")}Принять заказ</button><button class="btn r" data-a="rv_redo" data-id="${o.id}">Вернуть на переделку</button>`:"";return pr||pay||cur||rv?`<div class="dmain">${rv}${pr}${cur}${pay}</div>`:""})()}
  <div class="card dk">${L("Клиент",esc(o.client)+(o.phone?`<br><span class="mut">${esc(o.phone)}</span>`:""))}${L("Когда",esc(((o.date||"")+" "+(o.time||"")).trim()))}${L(o.dv?"Доставка":"Получение",o.dv?esc(addrFull(o)||o.addr):"Самовывоз")}${L("Состав",esc(o.comp))}${L("Сумма",M((+o.p||0)+(+o.fee||0))+(o.paid?` · <span style="color:var(--ok,#22c55e)">оплачено</span>`:` · к оплате ${M(rest(o))}`))}${L("Открытка",esc(o.card))}${L("Комментарий",esc(o.note))}${o.dv&&addrNote(o)?L("Для курьера",esc(addrNote(o))):""}</div>
  ${o.img||o.rimg||o.proof?`<div class="dph">${o.img?`<figure><img src="${bu(o.img)}" alt="Фото букета" data-lb="1"><figcaption>Пример</figcaption></figure>`:""}${o.rimg?`<figure><img src="${bu(o.rimg)}" alt="Готовый букет" data-lb="1"><figcaption>Готовый</figcaption></figure>`:""}${o.proof?`<figure><img src="${bu(o.proof)}" alt="Вручение" data-lb="1"><figcaption>Вручение</figcaption></figure>`:""}</div>`:""}${+o.st===4&&o.dv&&!o.proof?`<p class="mut">Доставлено без фото получателя${o.statusBy?" · отметил(а): "+esc(nm(o.statusBy)):""}</p>`:""}${chkView(o)}${cmList(o)}
@@ -1298,23 +1303,25 @@ const GR=[["orders","fl"],["chats","tpl"],["stock"],["show","gal"],["crm","leads
  gtab=()=>{const p=GP[tab];if(!p||p.length<2||tab==="chats")return"";return `<div class="gtab" role="tablist">${p.map(k=>`<button type="button" role="tab" class="${k===tab?"on":""}" data-a="goto" data-id="${k}">${GLB[k]||k}${nbN(k)?` <b class="nb">${nbN(k)}</b>`:""}</button>`).join("")}</div>`};
 function homeF(){const q=O.filter(o=>+o.st<2).sort(byDt),c=i=>O.filter(o=>+o.st===i).length;
  return `<div style="position:relative">${flr("branch","deco")}<h1>Очередь сборки</h1></div><div class="rgs">${[["Новые",0],["В сборке",1],["Готовы",2]].map(a=>`<div class="tile"><b>${c(a[1])}</b><span>${a[0]}</span></div>`).join("")}</div><div class="dg">${alerts()}${todayStaff()}</div><h2>Собрать</h2><div class="og ly-${LY()}">${oRender(q)||`<div class="card mut" style="text-align:center">${flr("tulip")}<br>Очередь пуста</div>`}</div>`}
-function curActs(o,freeO){if(freeO)return `<button class="btn s" data-a="cur_take" data-id="${o.id}">Взять доставку</button>`;
+function curActs(o,freeO){if(freeO)return `<button class="btn s" data-a="cur_take" data-id="${o.id}">Принять доставку</button>`;
  if(o.courier!==U.uid||+o.st>=4)return"";
  if(!o.cAcc)return `<button class="btn s" data-a="cur_acc" data-id="${o.id}">Принять в работу</button><button class="btn r s" data-a="cur_rel" data-id="${o.id}">Отказаться</button>`;
  const rel=`<button class="btn r s" data-a="cur_rel" data-id="${o.id}">Отказаться</button>`;
- if(+o.st<3)return `<span class="pill ok">Принято ${chTs(o.cAcc)}</span><span class="pill">Ждём передачи от флориста</span>${rel}`;
+ if(+o.st<2)return `<span class="pill ok">Принято ${chTs(o.cAcc)}</span><span class="pill">Букет ещё собирают</span>${rel}`;
+ if(+o.st===2)return `<span class="pill ok">Букет готов</span><button class="btn s" data-a="cur_pick" data-id="${o.id}">🚚 Забрал, еду</button>${rel}`;
  const w=cwait(o);
- return `<span class="pill ok">Принято ${chTs(o.cAcc)}</span><button class="btn ${w>0?"g ":""}s" data-a="adv" data-id="${o.id}" data-cw="${+o.cAcc+180000}"${w>0?" disabled":""}>${w>0?"Доставлено · "+mmss(w):"Доставлено"}</button>${rel}`}
+ return `<span class="pill ok">В пути с ${chTs(+o.shipAt||o.cAcc)}</span><button class="btn ${w>0?"g ":""}s" data-a="adv" data-id="${o.id}" data-cw="${(+o.shipAt||+o.cAcc)+180000}"${w>0?" disabled":""}>${w>0?"Доставлено · "+mmss(w):"Доставлено"}</button>${rel}`}
 function homeC(){const mine=O.filter(o=>o.dv&&+o.st<4&&o.courier===U.uid).sort(byDt);
- const free=O.filter(o=>o.dv&&+o.st>=1&&+o.st<=3&&!o.courier).sort(byDt);
+ const free=O.filter(dvFree).sort(byDt);
  const prep=O.filter(o=>o.dv&&+o.st>=1&&+o.st<3&&o.courier&&o.courier!==U.uid).sort(byDt); /* без повторов: свободные и мои показаны выше */
- const cardC=o=>{const freeO=!o.courier&&+o.st<=3;return `<div class="card"><div class="row">${th(o.img)}<b style="flex:1">${esc(o.bn||"Заказ")}</b><span class="pill">${stL(o)}</span></div>
+ const cardC=o=>{const freeO=dvFree(o);return `<div class="card"><div class="row">${th(o.img)}<b style="flex:1">${esc(o.bn||"Заказ")}</b><span class="pill">${stL(o)}</span></div>
  <div class="mut">${esc(o.client)} · ${esc(o.phone)}<br>${hdt(o.date)} ${esc(o.time||"")}<br>${esc(addrFull(o)||o.addr||"")}</div>
  ${addrNote(o)?`<div class="cmt">📝 ${esc(addrNote(o))}</div>`:""}
  <div class="acts">${gisBtnO(o)}${curActs(o,freeO)}<button class="btn g s" data-a="det" data-id="${o.id}">Подробнее</button></div></div>`};
- return `<div style="position:relative">${flr("branch","deco")}<h1>Доставки</h1></div><div class="dg">${alerts()}${widgets()}</div>
- <h2>Мои</h2><div class="og">${mine.map(cardC).join("")||`<div class="card mut" style="text-align:center">Пока нет назначенных</div>`}</div>
- <h2>Свободные — можно взять</h2><div class="og">${free.map(cardC).join("")||`<div class="card mut" style="text-align:center">Свободных нет</div>`}</div>
+ return `<div style="position:relative">${flr("branch","deco")}<h1>Доставки</h1></div>
+ <h2>Мои доставки · ${mine.length}</h2><div class="og">${mine.map(cardC).join("")||`<div class="card mut" style="text-align:center">Нет принятых доставок. Примите свободную ниже.</div>`}</div>
+ <h2>Свободные доставки · ${free.length}</h2><div class="og">${free.map(cardC).join("")||`<div class="card mut" style="text-align:center">Свободных доставок нет. Когда сотрудник выставит заказ на доставку, он появится здесь, и придёт уведомление.</div>`}</div>
+ <div class="dg">${alerts()}${widgets()}</div>
  ${prep.length?`<h2>На сборке у других курьеров</h2><div class="og">${prep.map(cardC).join("")}</div>`:""}`}
 const LCATS=["Заказы","Витрина","Склад","Финансы","Смены","Чаты","График","Команда","Настройки","Вход"],
  lcat=a=>/Вход/.test(a)?"Вход":/смен[уа]\b|Начал\(а\) смену|Закончил\(а\) смену/i.test(a)?"Смены":/Чат|канал связи/i.test(a)?"Чаты":/ставк|Отчёт в Excel|Экспорт|Резервная/i.test(a)?"Финансы":/График/.test(a)?"График":/Сотрудник|Роль|Точка сотр/.test(a)?"Команда":/настройк/i.test(a)?"Настройки":/расход/i.test(a)?"Финансы":/склад|Приход|Пересчёт|Собран/i.test(a)?"Склад":/витрин|Продан|Списан букет/i.test(a)?"Витрина":/заказ|Статус|оплат|оплач|Принял\(а\) в работу|Отмен|Скидк|приёмк|передел|курьер|достав|сборк/i.test(a)?"Заказы":"Прочее";
@@ -1911,23 +1918,28 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-a="xf_star
 
 /* перехватываем «Начать сборку» и «Готов» раньше основного обработчика */
 /* курьер: взять свободную доставку, подтвердить назначенную, отказаться */
-const cwait=o=>o.cAcc?Math.max(0,+o.cAcc+180000-Date.now()):0;
+const cwait=o=>(o.shipAt||o.cAcc)?Math.max(0,(+o.shipAt||+o.cAcc)+180000-Date.now()):0;
 function curRelForm(o){modal(hd("Отказаться от доставки")+`<p class="mut">«${esc(o.bn||"")}». Заказ вернётся в список свободных, оператор получит уведомление.${+o.st===3?" Букет уже передан вам: верните его флористу.":""}</p><form id="crf"><label>Причина (по желанию)</label><textarea name="t" placeholder="Например: не успею к сроку"></textarea><div class="acts"><button class="btn g" type="button" data-a="x">Назад</button><button class="btn r">Отказаться от доставки</button></div></form>`);
  $("crf").onsubmit=e=>{e.preventDefault();const tx=new FormData($("crf")).get("t").toString().trim();
   run(async()=>{const ref=db.collection("orders").doc(o.id);
    const r=await db.runTransaction(async t=>{const s=await t.get(ref);if(!s.exists)return"gone";const d=s.data();if(d.courier!==U.uid||+d.st>3)return"moved";
-    t.update(ref,{courier:"",cAcc:0,cBy:"",cRelAt:Date.now(),cRelBy:U.uid,cRelNote:tx,updatedAt:TS(),statusBy:U.uid});return"ok"});
+    t.update(ref,{courier:"",cAcc:0,cBy:"",cRelAt:Date.now(),cRelBy:U.uid,cRelNote:tx,updatedAt:TS(),statusBy:U.uid,...(+d.st===3?{st:2}:{})});return"ok"});
    modal("");if(r==="ok"){log("Курьер отказался от доставки",o,tx);toast("Вы отказались от доставки")}else toast("Заказ уже изменился")})}}
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="cur_pick"]');if(!b||!S||S.role!=="courier")return;e.stopImmediatePropagation();const o=O.find(x=>x.id===b.dataset.id);if(!o)return;
+ run(async()=>{const ref=db.collection("orders").doc(o.id);const r=await db.runTransaction(async t=>{const s=await t.get(ref);if(!s.exists)return"gone";const d=s.data();if(d.courier!==U.uid||!d.cAcc||+d.st!==2)return"moved";t.update(ref,{st:3,shipAt:Date.now(),updatedAt:TS(),statusBy:U.uid});return"ok"});
+  modal("");if(r==="ok"){log("Курьер забрал букет, в пути",o);toast("В пути. «Доставлено» станет доступно через 3 минуты")}else toast("Заказ уже изменился")})},true);
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="dv_post"],[data-a="dv_unpost"]');if(!b||!S||!(mgr()||own()))return;e.stopImmediatePropagation();e.preventDefault();const o=O.find(x=>x.id===b.dataset.id);if(!o)return;const on=b.dataset.a==="dv_post";
+ run(async()=>{await db.collection("orders").doc(o.id).update({dvPost:on?Date.now():0,updatedAt:TS()});log(on?"Выставлен на доставку":"Снят с доставки",o);toast(on?"Выставлено: курьеры получили уведомление":"Снято с доставки")})},true);
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="cur_take"],[data-a="cur_acc"],[data-a="cur_rel"]');if(!b||!S||S.role!=="courier")return;
  e.stopImmediatePropagation();const a=b.dataset.a,o=O.find(x=>x.id===b.dataset.id);if(!o)return toast("Заказ не найден");
  if(a==="cur_rel"){if(o.courier!==U.uid)return toast("Это не ваша доставка");return curRelForm(o)}
- if(a==="cur_take"&&!confirm("Взять эту доставку в работу?"))return;
+ if(a==="cur_take"&&!confirm("Принять эту доставку? Она появится у вас в «Мои доставки»."))return;
  run(async()=>{const ref=db.collection("orders").doc(o.id);
   const r=await db.runTransaction(async t=>{const s=await t.get(ref);if(!s.exists)return"gone";const d=s.data();
    if(a==="cur_take"){if(d.courier||+d.st>3)return"busy";t.update(ref,{courier:U.uid,cAcc:Date.now(),cBy:U.uid,updatedAt:TS(),statusBy:U.uid,...(+d.st===3&&!d.shipAt?{shipAt:Date.now()}:{})});return"ok"}
    if(d.courier!==U.uid||+d.st>3)return"busy";if(d.cAcc)return"already";
    t.update(ref,{cAcc:Date.now(),cBy:U.uid,updatedAt:TS(),statusBy:U.uid});return"ok"});
-  if(r==="ok"){log(a==="cur_take"?"Курьер взял доставку":"Курьер принял доставку в работу",o);toast("Принято. Кнопка «Доставлено» станет активной через 3 минуты")}
+  if(r==="ok"){log(a==="cur_take"?"Курьер принял доставку":"Курьер принял доставку в работу",o);toast(+o.st===3?"Принято. «Доставлено» станет доступно через 3 минуты":"Принято. Когда заберёте букет — нажмите «Забрал, еду»")}
   else toast(r==="busy"?"Уже занято или изменено":r==="already"?"Вы уже приняли этот заказ":"Заказ удалён")})},true);
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="adv"]');if(!b||!S||S.role==="courier")return;const o=O.find(x=>x.id===b.dataset.id);if(!o)return;const n=next(o);if(!n||(n[0]!==1&&n[0]!==2))return;
  e.stopImmediatePropagation();if(n[0]===1)takeConfirm(o);else if(xfPend(o))toast("Ожидает подтверждения передачи");else if(n[0]===2&&o.takenBy&&o.takenBy!==U.uid&&!adm())toast("Этот заказ собирает "+nm(o.takenBy)+". «Готов» может отметить только он(а) или администратор");else readyFlow(o)},true);
@@ -1940,6 +1952,7 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-a^="rv_"],
 let ORD0=false;
 function ordDiff(nw){const first=!ORD0;ORD0=true;if(first)return;const mp={};O.forEach(x=>mp[x.id]=x);const me=U.uid;
  nw.forEach(n=>{const p=mp[n.id],bn=n.bn||"Заказ",go=()=>{tab="orders";draw();detail(n.id)};
+  if(p&&S.role==="courier"&&n.dv&&n.dvPost&&!p.dvPost&&!n.courier)nf({imp:1,type:"ord",title:"🚚 Новая доставка",body:bn+(n.time?" · к "+n.time:"")+(n.addr?" · "+n.addr:""),tag:"o"+n.id,go});
   if(!p){if(n.by!==me&&(mgr()))nf({type:"ord",title:"Новый заказ",body:bn+(n.date?" · "+n.date:"")+(n.time?" "+n.time:""),tag:"o"+n.id,go});return}
   if(n.rqK&&n.rqT&&n.rqT!==p.rqT&&n.rqBy!==me&&mgr())nf({type:"ord",title:n.rqK==="cx"?"Запрос на отмену заказа":"Запрос на скидку",body:bn+(n.rqK==="p"&&n.rqP?" · цена до "+M(n.rqP):"")+(n.rqWhy?" · "+n.rqWhy:"")+(n.rqN?" · "+n.rqN:""),tag:"q"+n.id,go});
   if(n.rate&&+n.rate.s<=3&&!(p.rate&&p.rate.s)&&(adm()||own()))nf({imp:1,type:"ord",title:"Плохой отзыв: "+"★".repeat(+n.rate.s)+"☆".repeat(5-n.rate.s),body:bn+(n.rate.c?" · «"+n.rate.c+"»":""),tag:"s"+n.id,go});
@@ -1984,7 +1997,7 @@ function fxCard(){return `<h2>Возможности</h2><form id="fxf" class="c
 document.addEventListener("submit",e=>{if(e.target.id!=="fxf"||!S||!own())return;e.preventDefault();const f=new FormData(e.target),fx={};Object.keys(FXD).forEach(k=>fx[k]=f.get(k)==="on");
  run(async()=>{await db.collection("settings").doc("main").set({fx,photoMsg:(f.get("photoMsg")||"").toString().trim()||PHOTO_MSG,updatedAt:TS()},{merge:true});const was=Object.assign({},FXD,SH.fx||{}),on=[],off=[];Object.keys(FXD).forEach(k=>{if(!!was[k]!==fx[k])(fx[k]?on:off).push(FXL[k].split(":")[0].split(" (")[0])});log("Изменены возможности",{bn:"",x:(on.length?"включено: "+on.join(", "):"")+(off.length?(on.length?"; ":"")+"выключено: "+off.join(", "):"")});toast(on.length||off.length?"Сохранено."+(on.length?" Включено: "+on.join(", ")+".":"")+(off.length?" Выключено: "+off.join(", ")+".":""):"Сохранено, переключатели не менялись (изменён только текст сообщения)")})});
 
-function curV(){const q=O.filter(o=>o.dv&&+o.st>=1&&+o.st<4).sort(byDt);return `<h1>Курьеры</h1><p class="mut">Доставки в пути и ожидающие курьера</p><div class="og">${q.map(o=>`<div class="card"><div class="row">${th(o.img)}<b style="flex:1">${esc(o.bn||"Заказ")}</b><span class="pill">${stL(o)}</span></div><div class="mut">${esc(o.client)} · ${esc(o.phone)}<br>${hdt(o.date)} ${esc(o.time||"")} · ${esc(addrFull(o)||o.addr)} · ${o.courier?esc(nm(o.courier)):"свободен"}</div><div class="acts">${gisBtnO(o)}${+o.st===2?`<button class="btn s" data-a="adv" data-id="${o.id}">Передать курьеру</button>`:""}${+o.st===3?`<button class="btn s" data-a="cur_done" data-id="${o.id}">Доставлено</button>`:""}<button class="btn g s" data-a="det" data-id="${o.id}">Подробнее</button></div></div>`).join("")||'<div class="card mut" style="text-align:center">Доставок нет</div>'}</div>`}
+function curV(){const q=O.filter(o=>o.dv&&+o.st>=1&&+o.st<4).sort(byDt);return `<h1>Курьеры</h1><p class="mut">Доставки в пути и ожидающие курьера</p><div class="og">${q.map(o=>`<div class="card"><div class="row">${th(o.img)}<b style="flex:1">${esc(o.bn||"Заказ")}</b><span class="pill">${stL(o)}</span></div><div class="mut">${esc(o.client)} · ${esc(o.phone)}<br>${hdt(o.date)} ${esc(o.time||"")} · ${esc(addrFull(o)||o.addr)} · ${o.courier?esc(nm(o.courier)):"свободен"}</div><div class="acts">${gisBtnO(o)}${+o.st===2&&o.courier&&o.cAcc?`<button class="btn s" data-a="adv" data-id="${o.id}">Передать курьеру</button>`:""}${dvBtn(o)}${+o.st===3?`<button class="btn s" data-a="cur_done" data-id="${o.id}">Доставлено</button>`:""}<button class="btn g s" data-a="det" data-id="${o.id}">Подробнее</button></div></div>`).join("")||'<div class="card mut" style="text-align:center">Доставок нет</div>'}</div>`}
 function tplV(){const a=TPL(),ed=canTpl();return `<h1>Шаблоны</h1><p class="mut">Быстрые ответы для чатов: коротко и со смайликами.${ed?"":" Редактируют все, кроме флориста и помощника флориста."}</p>${ed?'<div class="acts"><button class="btn" data-a="tp_add">Шаблон</button><button class="btn g" data-a="tp_def">Стандартные</button></div>':""}<div class="og">${a.map((t,i)=>`<div class="card"><b>${esc(t.n)}</b><div style="margin:6px 0;white-space:pre-wrap">${esc(t.t)}</div>${ed?`<div class="acts"><button class="btn g s" data-a="tp_ed" data-id="${i}">Изменить</button><button class="btn r s" data-a="tp_del" data-id="${i}">Удалить</button></div>`:""}</div>`).join("")}</div>`}
 const tpSave=a=>run(async()=>{await db.collection("settings").doc("main").set({tpls:a,updatedAt:TS()},{merge:true});toast("Сохранено")});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b||!S)return;const a=b.dataset.a,id=b.dataset.id;
@@ -2196,8 +2209,8 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-a="z_rec"]
 function todoTop(){if(!S)return"";const now=Date.now(),t=today(),r=S.role,L=[],add=(n,f,tail,ic,col,act,id)=>{if(n>0)L.push({n,txt:pl(n,f[0],f[1],f[2])+(tail?" — "+tail:""),ic,col,act,id})},
  lateMk=o=>{const m=mkOf(o);return m&&new Date(m).getTime()<now},mine=o=>o.takenBy===U.uid,opr=r==="operator"||adm();
  if(r==="courier"){
-  add(O.filter(o=>o.dv&&!o.courier&&+o.st>=1&&+o.st<=3).length,["свободная доставка","свободные доставки","свободных доставок"],"можно взять","truck","#3B82F6","al","orders|");
-  add(O.filter(o=>o.dv&&o.courier===U.uid&&+o.st===2).length,["заказ готов","заказа готово","заказов готово"],"забрать у флориста","truck","#F59E0B","al","orders|2");
+  add(O.filter(dvFree).length,["свободная доставка","свободные доставки","свободных доставок"],"можно принять","truck","#3B82F6","tab","home");
+  add(O.filter(o=>o.dv&&o.courier===U.uid&&o.cAcc&&+o.st===2).length,["букет готов","букета готово","букетов готово"],"забрать и нажать «Забрал, еду»","truck","#F59E0B","tab","home");
   add(O.filter(o=>o.dv&&o.courier===U.uid&&+o.st===3).length,["доставка в пути","доставки в пути","доставок в пути"],"отметить «Доставлено»","truck","#22C55E","al","orders|3");
  }else{
   if(["florist","assistant"].includes(r)||adm()){
@@ -2209,7 +2222,8 @@ function todoTop(){if(!S)return"";const now=Date.now(),t=today(),r=S.role,L=[],a
   if(opr){
    add(O.filter(o=>+o.st===2&&o.rv==="wait"&&o.asm!==U.uid).length,["букет ждёт приёмки","букета ждут приёмки","букетов ждут приёмки"],"проверить","check","#8B5CF6","al","orders|2");
    add(O.filter(o=>+o.st===2&&!o.dv&&o.rv!=="wait").length,["заказ готов к выдаче","заказа готовы к выдаче","заказов готовы к выдаче"],"выдать клиенту","orders","#22C55E","al","orders|2");
-   add(O.filter(o=>+o.st===2&&o.dv&&o.rv!=="wait").length,["доставка готова","доставки готовы","доставок готово"],"передать курьеру","truck","#0EA5E9","al","orders|2");
+   add(O.filter(o=>+o.st<=2&&o.dv&&!o.courier&&!o.dvPost&&+o.st!==5).length,["доставку нужно выставить","доставки нужно выставить","доставок нужно выставить"],"чтобы курьер принял","truck","#0EA5E9","al","orders|");
+   add(O.filter(o=>o.dv&&o.dvPost&&!o.courier&&+o.st<=2).length,["доставка ждёт курьера","доставки ждут курьера","доставок ждут курьера"],"","truck","#94A3B8","al","orders|");
    add(oH().filter(o=>+o.st>=2&&+o.st<5&&!o.paid).length,["заказ не оплачен","заказа не оплачено","заказов не оплачено"],"получить оплату","card","#F59E0B","al","orders|unpaid");
    add(O.filter(o=>o.dv&&+o.st<4&&o.date&&new Date(o.date+"T"+(o.time||"23:59")).getTime()<now).length,["доставка просрочена","доставки просрочено","доставок просрочено"],"","warn","#EF4444","al","orders|late");
    if(typeof FX==="function"&&FX("clientChat"))add(CHS.filter(c=>chW(c)&&(!c.grp||c.grp===c.id)).length,["чат ждёт ответа","чата ждут ответа","чатов ждут ответа"],"","chats","#EC4899","tab","chats");
