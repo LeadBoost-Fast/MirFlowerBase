@@ -92,7 +92,9 @@ async function push(type,who,msg,exclude){
     if((top||p.role==="owner")&&type!=="test"&&!msg.imp)return;
     if(who({uid:t.uid,role:p.role,top}))toks.push(d.id)});
   if(!toks.length)return 0;
-  const data={title:String(msg.title||"Mirflowers"),body:String(msg.body||"").slice(0,200),tag:String(msg.tag||type),url:String(msg.url||"/")};
+  // без смайликов: на заблокированном экране — строгий текст
+  const EMO=/[\u{1F300}-\u{1FAFF}\u{2600}-\u{2604}\u{2607}-\u{27BF}\u{2B50}\u{FE0F}\u{21A9}\u{1F501}]/gu,clean=t=>String(t||"").replace(EMO,"").replace(/\s{2,}/g," ").trim();
+  const data={title:clean(msg.title||"Mirflowers")||"Mirflowers",body:clean(msg.body).slice(0,200),tag:String(msg.tag||type),url:String(msg.url||"/")};
   let sent=0;
   for(let i=0;i<toks.length;i+=500){
     const part=toks.slice(i,i+500);
@@ -292,7 +294,7 @@ exports.reviewAsk=onSchedule({...OPT,schedule:"*/15 * * * *",timeZone:TZ},async(
       if(["wa","ig"].includes(cd.ch)&&cd.lastInTs&&now-cd.lastInTs>23.5*36e5){await d.ref.update({rvAskAt:del,rvAsked:"window"});continue}
       if(cd.ch==="gis"){await d.ref.update({rvAskAt:del,rvAsked:"nochat"});continue}
       const k=await pubDoc(db,d.ref,o,sh),link=String(sh.siteUrl||SITE_DEF).replace(/\/?$/,"/")+"status.html?t="+k;
-      const t=String(sh.revMsg||"Спасибо, что выбрали {shop}! 🌸 Оцените, пожалуйста, букет — это займёт 10 секунд: {link}").replace("{shop}",sh.name||"нас").replace("{link}",link);
+      const t=String(sh.revMsg||"Спасибо, что выбрали {shop}! Оцените, пожалуйста, букет — это займёт 10 секунд: {link}").replace("{shop}",sh.name||"нас").replace("{link}",link);
       const b=db.batch(),ts=Date.now();
       b.set(c.ref.collection("msgs").doc(),{dir:"out",t,ts,by:"",byName:"Авто: отзыв",st:"pending",auto:"review",oid:d.id});
       b.update(c.ref,{last:t,lastDir:"out",lastTs:ts});
