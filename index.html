@@ -312,7 +312,7 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
 <main id="v"><p class="mut">Подключение…</p></main>
 <script>
 /* Тихие ошибки: не теряются, а пишутся в журнал диагностики (Профиль → «Связь с базой») */
-window.ERRL=[];window.eLog=function(e){try{ERRL.push([Date.now(),String(e&&(e.code||e.message)||e).slice(0,180)]);if(ERRL.length>60)ERRL.shift()}catch(_){}};
+window.ERRL=[];window.eLog=function(e){try{const st=String((e&&e.stack)||new Error().stack||"").split("\n").map(x=>x.trim()).find(x=>/at \w/.test(x)&&!/eLog/.test(x))||"",fn=(st.match(/at ([\w.$]+)/)||[])[1]||"";ERRL.push([Date.now(),((e&&e.code?e.code+": ":"")+String(e&&e.message||e)).slice(0,200)+(fn?" ["+fn+"]":"")]);if(ERRL.length>60)ERRL.shift()}catch(_){}};
 /* Свои окна вместо системных confirm()/prompt() iPhone. Код сайта вызывает confirm/prompt как раньше:
    первый вызов показывает окно сайта и возвращает «нет»; после «Да» тот же клик повторяется, и вызов
    с тем же текстом получает «да» (или введённый текст). Без недавнего клика — системное окно, как раньше. */
@@ -2004,7 +2004,7 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-a="chk_add
 /* Cloud Functions SDK сам просит у messaging токен и регистрирует /firebase-messaging-sw.js в КОРНЕ домена; на GitHub Pages (папка репозитория) это падает.
    Подсказываем messaging правильный (относительный) сервис-воркер и повторяем вызов. */
 let swOk=null;
-function swFix(){if(!swOk)swOk=(async()=>{try{if(!("serviceWorker"in navigator))return;const reg=await navigator.serviceWorker.register("firebase-messaging-sw.js");await navigator.serviceWorker.ready;try{firebase.messaging().useServiceWorker(reg)}catch(e){eLog(e)}}catch(e){eLog(e)}})();return swOk}
+function swFix(){if(!swOk)swOk=(async()=>{try{if(!("serviceWorker"in navigator))return;const reg=await navigator.serviceWorker.register("firebase-messaging-sw.js");await navigator.serviceWorker.ready;/* useServiceWorker в Firebase 12 нет: сервис-воркер передаётся в getToken (pushTok) */}catch(e){eLog(e)}})();return swOk}
 async function upImg(u,dir){if(!u||u.slice(0,5)!=="data:")return u||"";try{const r=firebase.storage().ref(dir+"/"+Date.now()+"_"+Math.random().toString(36).slice(2,8)+".jpg");await r.putString(u,"data_url");return await r.getDownloadURL()}catch(e){return u}}
 const FNC=n=>async d=>{const u=auth.currentUser;if(!u)throw{code:"unauthenticated",message:"Войдите в систему"};
  let r;try{const tok=await u.getIdToken();r=await fetch("https://"+FNR+"-"+cfg.projectId+".cloudfunctions.net/"+n,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok},body:JSON.stringify({data:d})})}
