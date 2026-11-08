@@ -307,9 +307,29 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
 /* мини-превью в выборе дизайна */
 .mq-bg{display:grid!important;grid-template-columns:1fr 1fr;gap:3px;padding:4px}.mq-bg i{background:color-mix(in srgb,var(--ac) 45%,transparent);border-radius:2px;min-height:12px}.mq-bg i:first-child{grid-column:1/-1;min-height:20px;background:var(--ac)}
 
+#askov{position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:18px;animation:f .15s}#askov .askb{width:100%;max-width:400px;background:var(--card);color:var(--ink);border-radius:var(--gr,20px);padding:20px 18px 16px;box-shadow:0 20px 60px rgba(0,0,0,.35);border:1px solid var(--line)}#askov .askm{font-size:16px;line-height:1.45;white-space:normal;margin-bottom:14px}#askov .aski{width:100%;margin:0 0 14px}#askov .aska{display:flex;gap:8px}#askov .aska .btn{flex:1}
 </style></head><body>
 <main id="v"><p class="mut">Подключение…</p></main>
 <script>
+/* Тихие ошибки: не теряются, а пишутся в журнал диагностики (Профиль → «Связь с базой») */
+window.ERRL=[];window.eLog=function(e){try{ERRL.push([Date.now(),String(e&&(e.code||e.message)||e).slice(0,180)]);if(ERRL.length>60)ERRL.shift()}catch(_){}};
+/* Свои окна вместо системных confirm()/prompt() iPhone. Код сайта вызывает confirm/prompt как раньше:
+   первый вызов показывает окно сайта и возвращает «нет»; после «Да» тот же клик повторяется, и вызов
+   с тем же текстом получает «да» (или введённый текст). Без недавнего клика — системное окно, как раньше. */
+(function(){const nC=window.confirm.bind(window),nP=window.prompt.bind(window);let last=null,lastT=0,busy=false;const okC=new Map(),okP=new Map();
+ document.addEventListener("click",e=>{if(e.isTrusted||e.__ask){last=e.target;lastT=Date.now()}},true);
+ const esc0=t=>String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+ function box(msg,inp,def,ro,done){busy=true;const o=document.createElement("div");o.id="askov";o.innerHTML=`<div class="askb" role="dialog" aria-modal="true"><div class="askm">${esc0(msg).replace(/\n/g,"<br>")}</div>${inp?`<input class="aski" value="${esc0(def)}" ${ro?"readonly":""}>`:""}<div class="aska">${ro?"":`<button type="button" class="btn g" data-k="0">Отмена</button>`}<button type="button" class="btn" data-k="1">${ro?"Готово":inp?"OK":"Да"}</button></div></div>`;
+  document.body.appendChild(o);const i=o.querySelector(".aski");setTimeout(()=>{try{if(i){i.focus();if(ro)i.select()}else o.querySelector('[data-k="1"]').focus()}catch(_){}},40);
+  const fin=k=>{const v=i?i.value:"";o.remove();busy=false;done(k,v)};o.onclick=e=>{const b=e.target.closest("[data-k]");if(b)fin(b.dataset.k==="1");else if(e.target===o&&!ro)fin(false)};
+  if(i)i.onkeydown=e=>{if(e.key==="Enter")fin(true)}}
+ const again=el=>{setTimeout(()=>{try{const ev=new MouseEvent("click",{bubbles:true,cancelable:true});ev.__ask=1;el.dispatchEvent(ev)}catch(e){eLog(e)}},30)};
+ window.confirm=function(msg){msg=String(msg);if(window.__NATIVEASK)return nC(msg);const t=okC.get(msg);if(t&&t>Date.now())return true;
+  const el=last;if(busy||!el||!el.isConnected||Date.now()-lastT>2500)return nC(msg);
+  box(msg,false,"",false,k=>{if(k){okC.set(msg,Date.now()+30000);again(el)}});return false};
+ window.prompt=function(msg,def){msg=String(msg);if(window.__NATIVEASK)return nP(msg,def);if(okP.has(msg)){const v=okP.get(msg);if(v.t>Date.now()){okP.delete(msg);return v.v}okP.delete(msg)}
+  const ro=/^Скопируйте/.test(msg),el=last;if(busy||((!el||!el.isConnected||Date.now()-lastT>2500)&&!ro))return nP(msg,def);
+  box(msg,true,def==null?"":def,ro,(k,v)=>{if(k&&!ro){okP.set(msg,{v,t:Date.now()+30000});again(el)}});return null}})();
 window.__mfErr="";
 window.addEventListener("error",function(e){window.__mfErr=(e&&e.message)||"error";});
 window.addEventListener("unhandledrejection",function(e){window.__mfErr=(e&&e.reason&&(e.reason.message||e.reason))||"promise";});
@@ -321,7 +341,7 @@ setTimeout(function(){
     if(!/Подключение|Долгое/.test(v.textContent||""))return;
     var err=window.__mfErr||(!window.firebase?"Firebase SDK не загрузился (проверьте интернет / блокировщик)":"Firebase не ответил. В Firebase Console → Authentication → Settings → Authorized domains добавьте: "+location.hostname);
     v.innerHTML='<div class="card" style="margin-top:12vh"><h1>Mirflowers</h1><p class="mut">'+String(err).replace(/</g,"&lt;")+'</p><p class="mut">Домен: '+location.hostname+'</p><button class="btn" onclick="location.reload()">Обновить</button></div>';
-  }catch(e){}
+  }catch(e){eLog(e)}
 }, 8000);
 </script><nav id="nav" hidden></nav><div id="m"></div><div id="toast" hidden></div>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
@@ -336,7 +356,7 @@ setTimeout(function(){
 /* Последние предупреждения и ошибки Firebase из консоли браузера (на телефоне консоль не видна) — для диагностики зависаний */
 const FBLOG=[];let FSDEAD=0;(()=>{for(const k of ["warn","error"]){const o=console[k];console[k]=function(...a){try{const m=a.map(x=>x&&x.message?x.message:typeof x==="string"?x:"").join(" ");if(/firebase|firestore|grpc|webchannel/i.test(m)&&!/deprecated/i.test(m)){FBLOG.push(new Date().toTimeString().slice(0,8)+" "+m.replace(/\s+/g," ").slice(0,220));if(FBLOG.length>8)FBLOG.shift();
  /* внутренний сбой Firestore: дальше он не работает до перезагрузки — перезагружаем сами (если кэш включён, ничего не теряется) */
- if(/INTERNAL ASSERTION FAILED|AsyncQueue is already failed/i.test(m)&&!FSDEAD){FSDEAD=Date.now();setTimeout(()=>{if(typeof fsDead==="function")fsDead()},300)}}}catch(e){}return o.apply(this,a)}}})();
+ if(/INTERNAL ASSERTION FAILED|AsyncQueue is already failed/i.test(m)&&!FSDEAD){FSDEAD=Date.now();setTimeout(()=>{if(typeof fsDead==="function")fsDead()},300)}}}catch(e){eLog(e)}return o.apply(this,a)}}})();
 /* Регион Cloud Functions: там же, где база Firestore (Сингапур). Менять вместе с setGlobalOptions в functions/index.js */
 const FNR="asia-southeast1";
 /* Скорость: toLocaleDateString/TimeString/String с параметрами каждый раз создают новый Intl.DateTimeFormat (дорого:
@@ -351,7 +371,7 @@ const FNR="asia-southeast1";
   /* «2026-11-07» (sv-SE без параметров) — так сайт хранит даты; собираем по цифрам, без Intl: на «Главной» таких вызовов тысячи */
   if(loc==="sv-SE"&&o===undefined&&req==="date"){const y=this.getFullYear();if(y>=1000&&y<=9999)return y+"-"+p2(this.getMonth()+1)+"-"+p2(this.getDate())}
   return fmt(loc,o,req,def).format(this)}catch(e){return o0.call(this,loc,o)}}};
- try{wrap("toLocaleDateString","date","date");wrap("toLocaleTimeString","time","time");wrap("toLocaleString","any","all")}catch(e){}})();
+ try{wrap("toLocaleDateString","date","date");wrap("toLocaleTimeString","time","time");wrap("toLocaleString","any","all")}catch(e){eLog(e)}})();
 /* Скорость: вместо полной замены innerHTML сравниваем новую разметку с текущей и меняем только отличия.
    Обработчики кликов висят на document (data-a), поэтому узлы можно переиспользовать. Фокус, прокрутка и набранный текст сохраняются. */
 function morph(el,html){if(el.__h===html&&el.childNodes.length)return;el.__h=html;const t=document.createElement("template");t.innerHTML=typeof deco==="function"?deco(html):html;
@@ -369,9 +389,9 @@ function mNode(x,y){if(x.nodeType!==1){if(x.nodeValue!==y.nodeValue)x.nodeValue=
 const cfg={apiKey:"AIzaSyCDxDJvmIOw8R0kP7bNbiBHYDAOqY_9cSQ",authDomain:"mirflowersbase.firebaseapp.com",projectId:"mirflowersbase",storageBucket:"mirflowersbase.firebasestorage.app",messagingSenderId:"142575786641",appId:"1:142575786641:web:de2d1b79b076894c29fd30"};
 const NOCFG=cfg.apiKey.startsWith("ВСТАВЬТЕ");
 if(typeof firebase==="undefined"){throw new Error("Firebase SDK не загрузился. Откройте сайт по Wi‑Fi или отключите блокировщик рекламы.")}
-firebase.initializeApp(cfg);try{firebase.firestore.setLogLevel("warn")}catch(e){}const auth=firebase.auth(),db=firebase.firestore(),TS=()=>firebase.firestore.FieldValue.serverTimestamp();/* Связь с базой — long polling (каждый обмен отдельным коротким запросом). Автовыбор включал потоковое соединение,
+firebase.initializeApp(cfg);try{firebase.firestore.setLogLevel("warn")}catch(e){eLog(e)}const auth=firebase.auth(),db=firebase.firestore(),TS=()=>firebase.firestore.FieldValue.serverTimestamp();/* Связь с базой — long polling (каждый обмен отдельным коротким запросом). Автовыбор включал потоковое соединение,
    которое на iPhone/Safari со временем «застревало»: сайт после перезахода работал, потом действия висели (разд. 29) */
-try{db.settings({experimentalForceLongPolling:true,merge:true})}catch(e){}
+try{db.settings({experimentalForceLongPolling:true,merge:true})}catch(e){eLog(e)}
 /* Действия не ждут сервер: изменение сразу применяется на телефоне (кэш Firestore), на сервер уходит в фоне.
    Если сервер ответил за 1,5 с — всё как раньше (и ошибка правил видна сразу); если нет — действие считается выполненным,
    ошибка сервера позже покажется сообщением (Firestore сам откатит изменение), а долго не отправленное видно на плашке. */
@@ -451,13 +471,13 @@ async function fsCommit(writes){RQ++;try{let delay=800;const t0=Date.now();
 let PERSIST_OK=false;
 /* Очистка кэша Firebase на телефоне (разд. 33): при ошибке подписки already-exists / internal кэш испорчен — неотправленные
    заказы откладываются (fsStash), страница перезагружается, кэш очищается до запуска Firestore, заказы отправляются заново. */
-const FSREADY=(()=>{let rs="";try{rs=localStorage.getItem("fsReset")||"";if(rs)localStorage.removeItem("fsReset")}catch(e){}
+const FSREADY=(()=>{let rs="";try{rs=localStorage.getItem("fsReset")||"";if(rs)localStorage.removeItem("fsReset")}catch(e){eLog(e)}
  const pre=rs?db.clearPersistence().then(()=>{FBLOG.push("cache cleared: "+rs)}).catch(e=>{FBLOG.push("clearPersistence: "+(e&&e.code||e))}):Promise.resolve();
  /* Режим «только сервер» (разд. 34): кэша на телефоне нет — каждая вкладка и каждый телефон берут данные прямо с сервера.
     Старый кэш открывается один раз (cacheV ещё не "3"), чтобы забрать из него неотправленные заказы, затем очищается. */
- let useCache=true;try{useCache=localStorage.getItem("cacheV")!=="3"}catch(e){}
+ let useCache=true;try{useCache=localStorage.getItem("cacheV")!=="3"}catch(e){eLog(e)}
  return pre.then(()=>useCache?db.enablePersistence({synchronizeTabs:false}).then(()=>{PERSIST_OK=true}):FBLOG.push("cache: off (server only)")).catch(e=>{FBLOG.push("persistence: "+(e&&e.code||e))})})();
-try{auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){}
+try{auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){eLog(e)}
 const $=i=>document.getElementById(i),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),NFR=new Intl.NumberFormat("ru-RU"),M=n=>NFR.format(Math.round(+n||0))+" ₸";
 const ST=["Новый","Собирается","Готов","В пути","Выдан","Отменён"],stL=o=>+o.st===4&&o.dv?"Доставлен":(ST[+o.st]||"?"),RL={owner:"Владелец",admin:"Администратор",operator:"Оператор",florist:"Флорист",assistant:"Помощник флориста",courier:"Курьер"},SRC=["Instagram","WhatsApp","2ГИС","Телефон","Сайт","Другое"],PAY=["Kaspi","Наличные","Перевод"];
 let U=null,S=null,O=[],SF={},tab="home",fs="fresh",fz2="",fq="",subs=[],lock=0;
@@ -469,7 +489,7 @@ const pdnEnd=d=>{clearTimeout(pdnT);pdnT=setTimeout(()=>{pdn=0;if(dqPend)dq()},d
 addEventListener("pointerdown",()=>{pdn=1;pdnEnd(4000)},true);
 ["pointerup","pointercancel","touchend","touchcancel"].forEach(k=>addEventListener(k,()=>pdnEnd(200),true));
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&dqPend)dq()});
-const STO={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}},sysDark=matchMedia("(prefers-color-scheme:dark)");
+const STO={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){eLog(e)}}},sysDark=matchMedia("(prefers-color-scheme:dark)");
 /* ===== Иконки (tinted) и лёгкий режим ===== */
 /* Значки действий (разд. 36): тонкие линии в стиле меню вместо смайликов */
 const ICA={trash:"M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6",camera:"M4 8h3l2-3h6l2 3h3v11H4zM12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7",note:"M5 4h14v16H5zM8 8h8M8 12h8M8 16h5",
@@ -512,7 +532,7 @@ const PALS={"Тинт":{l:["#f2f2f7","#ffffff","#e9e9ee","#0b0b0f","#6d3fe0","#f
 "Тёплый":{l:["#f1ede8","#ffffff","#e6e0d8","#1d1a18","#7b5bd6","#ffffff"],d:["#1b1a1c","#272529","#343136","#f3eee9","#b79cf0","#1b1230"]},
 "Синий CRM":{l:["#eef2f7","#ffffff","#dde4ee","#0f172a","#2563eb","#ffffff"],d:["#0f172a","#1e293b","#2b3a52","#e6ebf2","#3b82f6","#ffffff"]}};
 const thGet=()=>{try{return JSON.parse(STO.get("th")||"{}")||{}}catch(e){return{}}},lum=h=>{const n=parseInt(h.slice(1),16),f=v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(n>>16&255)+.7152*f(n>>8&255)+.0722*f(n&255)};
-function applyTheme(){try{const t0=thGet();if(!t0.g1){t0.ui="g";t0.g1=1;STO.set("th",JSON.stringify(t0))}}catch(e){}/* один раз: всем новый дизайн Bento (вернуть старый — Профиль → Оформление) */const m=STO.get("t")||"auto",e=m==="auto"?(sysDark.matches?"dark":"light"):m,th=thGet(),pn=PALS[th.p]?th.p:"Тинт",P=PALS[pn][e==="dark"?"d":"l"],k=th.ct==null?50:+th.ct,sx=e==="dark"?"d":"l",ci=th["ink"+sx],ca=th["ac"+sx],ink=ci&&/^#[0-9a-f]{6}$/i.test(ci)&&Math.abs(lum(ci)-lum(P[0]))>.25?ci:P[3],ac=ca&&/^#[0-9a-f]{6}$/i.test(ca)?ca:P[4],on=ac!==P[4]?(lum(ac)>.45?"#1a140e":"#ffffff"):P[5],rd=th.rd==null?20:+th.rd,hi=Math.max(0,k-50)*1.6,tc=document.querySelector('meta[name=theme-color]');document.documentElement.dataset.t=e;document.documentElement.dataset.pal=pn;document.documentElement.dataset.ui="a";document.documentElement.dataset.ly=(UIS.includes(th.ui)?(th.ui==="c"?"i":th.ui):"g");document.documentElement.dataset.acl=Math.abs(lum(ac)-lum(P[0]))<.12?"1":"";document.documentElement.dataset.mc=th.mc?"1":"0";
+function applyTheme(){try{const t0=thGet();if(!t0.g1){t0.ui="g";t0.g1=1;STO.set("th",JSON.stringify(t0))}}catch(e){eLog(e)}/* один раз: всем новый дизайн Bento (вернуть старый — Профиль → Оформление) */const m=STO.get("t")||"auto",e=m==="auto"?(sysDark.matches?"dark":"light"):m,th=thGet(),pn=PALS[th.p]?th.p:"Тинт",P=PALS[pn][e==="dark"?"d":"l"],k=th.ct==null?50:+th.ct,sx=e==="dark"?"d":"l",ci=th["ink"+sx],ca=th["ac"+sx],ink=ci&&/^#[0-9a-f]{6}$/i.test(ci)&&Math.abs(lum(ci)-lum(P[0]))>.25?ci:P[3],ac=ca&&/^#[0-9a-f]{6}$/i.test(ca)?ca:P[4],on=ac!==P[4]?(lum(ac)>.45?"#1a140e":"#ffffff"):P[5],rd=th.rd==null?20:+th.rd,hi=Math.max(0,k-50)*1.6,tc=document.querySelector('meta[name=theme-color]');document.documentElement.dataset.t=e;document.documentElement.dataset.pal=pn;document.documentElement.dataset.ui="a";document.documentElement.dataset.ly=(UIS.includes(th.ui)?(th.ui==="c"?"i":th.ui):"g");document.documentElement.dataset.acl=Math.abs(lum(ac)-lum(P[0]))<.12?"1":"";document.documentElement.dataset.mc=th.mc?"1":"0";
 let st=$("thc");if(!st){st=document.createElement("style");st.id="thc";document.head.appendChild(st)}
 st.textContent=`:root[data-t=${e}]{--bg:${P[0]};--card:${P[1]};--c2:${P[2]};--ink:color-mix(in srgb,${ink} ${100-hi}%,${e==="dark"?"#fff":"#000"});--ac:${ac};--on:${on};--mut:color-mix(in srgb,${ink} ${35+k*.5}%,${P[0]});--line:color-mix(in srgb,${ink} ${10+k*.22}%,${P[0]});--glass:color-mix(in srgb,${P[1]} 86%,transparent)}body{font-size:${+th.fz||16}px}.card{border-radius:${rd}px}.tile{border-radius:${Math.max(8,rd-2)}px}`;
 if(tc)tc.content=P[0]}
@@ -663,7 +683,7 @@ KZR.push(
 [/^(\d+) шт\.?$/,m=>m[1]+" дана"],[/^Собран (.+?) ·$/,m=>"Жиналды "+m[1]+" ·"],[/^Без закупочной цены \(в сумму не входят\): (\d+)\. Укажите цену в «Изменить» у товара\.$/,m=>"Сатып алу бағасы жоқ (сомаға кірмейді): "+m[1]+". Бағаны тауардағы «Өзгерту» арқылы көрсет."],[/^(.+)\. Администратор должен подтвердить\.$/,m=>tt(m[1].replace(/\.$/,""))+". Админ растауы керек."],[/^Сегодня · (.+)$/,m=>"Бүгін · "+tt(m[1])]
 )})();
 
-function setLang(l){try{localStorage.setItem("lang",l)}catch(e){}location.reload()}
+function setLang(l){try{localStorage.setItem("lang",l)}catch(e){eLog(e)}location.reload()}
 if(LANG==="kk"){document.documentElement.lang="kk";
 window.trN=null;
  const trN=n=>{if(n.nodeType===3){const v=t(n.nodeValue);if(v!==n.nodeValue)n.nodeValue=v;return}
@@ -677,24 +697,24 @@ const langCard=()=>`<h2>Язык</h2><div class="card"><div class="row" style="g
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="lang_ru"],[data-a="lang_kk"]');if(!b)return;e.stopImmediatePropagation();const l=b.dataset.a==="lang_kk"?"kk":"ru";if(l!==LANG)setLang(l)},true);
 const ERR={"auth/invalid-credential":"Неверный email или пароль","auth/wrong-password":"Неверный email или пароль","auth/user-not-found":"Неверный email или пароль","auth/invalid-login-credentials":"Неверный email или пароль","auth/missing-password":"Введите пароль","auth/missing-email":"Введите email","auth/too-many-requests":"Слишком много попыток, подождите","auth/network-request-failed":"Нет интернета","auth/invalid-email":"Некорректный email","auth/user-disabled":"Учётная запись отключена","auth/email-already-in-use":"Этот email уже занят. Удалённого сотрудника нужно убрать и в Firebase → Authentication, либо взять другой email","auth/weak-password":"Пароль короче 6 символов","permission-denied":"Недостаточно прав","messaging/failed-service-worker-registration":"Не удалось подключить уведомления. Обновите страницу и повторите","messaging/permission-blocked":"Уведомления заблокированы в браузере","unavailable":"Нет интернета. Подождите 20 сек.","deadline-exceeded":"Нет интернета. Подождите 20 сек."};
 const er=e=>ERR[e.code]||(/(^|\/)(internal|failed-precondition|invalid-argument)$/.test(String(e.code||""))&&e.message&&!/^(INTERNAL|internal)$/.test(e.message)?e.message:null)||(/INTERNAL ASSERTION/i.test(String(e.message||""))?"Сбой связи с базой. Нажмите ещё раз":"Ошибка: "+(e.code||e.message));
-async function log(act,o,x){try{await db.collection("activityLogs").add({act,oid:o.id||"",name:o.bn||"",by:U.uid,byName:S.name||"",x:x||(o.client?o.client+(o.p!=null?" · "+M((+o.p||0)+(+o.fee||0)):""):""),loc:LOC||(S&&S.loc)||"main",ts:TS()})}catch(e){}}
+async function log(act,o,x){try{await db.collection("activityLogs").add({act,oid:o.id||"",name:o.bn||"",by:U.uid,byName:S.name||"",x:x||(o.client?o.client+(o.p!=null?" · "+M((+o.p||0)+(+o.fee||0)):""):""),loc:LOC||(S&&S.loc)||"main",ts:TS()})}catch(e){eLog(e)}}
 /* действие по кнопке: защита от двойного нажатия 1,5 с, дальше кнопки свободны, а результат/ошибка приходят, когда ответит сервер */
 /* Связь с базой на телефоне иногда «зависает» молча (смена Wi-Fi/мобильной сети, телефон в кармане, свёрнутое приложение):
    соединение числится открытым, но ответы не приходят, и действие ждёт бесконечно. enableNetwork() в таком случае ничего
    не делает — соединение нужно закрыть и открыть заново. Изменения при этом не теряются: они уже записаны на телефоне. */
 let netKickAt=0,lastBtn="",lastBtnAt=0,pendOn=0,SRVAT=0,NETDIAG="",FSMIG=0;
 const CACHE_V="3";
-function fsReset(why,force){let last=0;try{last=+localStorage.getItem("fsResetAt")||0}catch(e){}if(!force&&Date.now()-last<600000)return;
+function fsReset(why,force){let last=0;try{last=+localStorage.getItem("fsResetAt")||0}catch(e){eLog(e)}if(!force&&Date.now()-last<600000)return;
  const strip=o=>{const x={...o};delete x.id;delete x._pend;return x};
  try{const pend=O.filter(o=>o._pend).map(o=>({id:o.id,d:strip(o)}));if(pend.length)localStorage.setItem("fsStash",JSON.stringify(pend));
   localStorage.setItem("fsResetAt",String(Date.now()));localStorage.setItem("fsReset",why);
-  localStorage.setItem("hangDiag",JSON.stringify({at:new Date().toISOString(),kind:"cache-reset",why,pend:pend.length,sdk:firebase.SDK_VERSION,fb:FBLOG.slice(-6),ua:navigator.userAgent.slice(0,90)}))}catch(e){}
+  localStorage.setItem("hangDiag",JSON.stringify({at:new Date().toISOString(),kind:"cache-reset",why,pend:pend.length,sdk:firebase.SDK_VERSION,fb:FBLOG.slice(-6),ua:navigator.userAgent.slice(0,90)}))}catch(e){eLog(e)}
  location.reload()}
 /* после первого снимка заказов: вернуть отложенные заказы на сервер; один раз на устройстве очистить старый кэш (режим вкладок сменился) */
-function fsAfterOrders(){let st=null;try{st=JSON.parse(localStorage.getItem("fsStash")||"null")}catch(e){}
- if(st&&st.length){try{localStorage.removeItem("fsStash")}catch(e){}st.forEach(x=>{const d={...x.d};delete d.createdAt;delete d.updatedAt;db.collection("orders").doc(x.id).set({...d,updatedAt:TS()},{merge:true}).catch(()=>{})});log("Заказы после очистки кэша отправлены",{bn:""},String(st.length))}
- if(FSMIG)return;FSMIG=1;let v="";try{v=localStorage.getItem("cacheV")||""}catch(e){}
- if(v!==CACHE_V){try{localStorage.setItem("cacheV",CACHE_V)}catch(e){}if(PERSIST_OK)setTimeout(()=>fsReset("to-server",true),1500)}}
+function fsAfterOrders(){let st=null;try{st=JSON.parse(localStorage.getItem("fsStash")||"null")}catch(e){eLog(e)}
+ if(st&&st.length){try{localStorage.removeItem("fsStash")}catch(e){eLog(e)}st.forEach(x=>{const d={...x.d};delete d.createdAt;delete d.updatedAt;db.collection("orders").doc(x.id).set({...d,updatedAt:TS()},{merge:true}).catch(()=>{})});log("Заказы после очистки кэша отправлены",{bn:""},String(st.length))}
+ if(FSMIG)return;FSMIG=1;let v="";try{v=localStorage.getItem("cacheV")||""}catch(e){eLog(e)}
+ if(v!==CACHE_V){try{localStorage.setItem("cacheV",CACHE_V)}catch(e){eLog(e)}if(PERSIST_OK)setTimeout(()=>fsReset("to-server",true),1500)}}
 /* Профиль → «Связь с базой»: проверка на экране (диагностика через Журнал не доходит, если записи застряли) */
 async function netDiag(){NETDIAG='<p class="mut">Проверяю… до 15 секунд</p>';dq();const out=[],L=(a,b)=>out.push(`<div class="ln"><span>${esc(a)}</span><span>${esc(String(b))}</span></div>`);
  L("Время",new Date().toLocaleTimeString("ru-RU"));L("Firebase",firebase.SDK_VERSION);L("Интернет",navigator.onLine?"есть":"нет");L("Кэш на телефоне",PERSIST_OK?"включён":"выключен");
@@ -704,10 +724,10 @@ async function netDiag(){NETDIAG='<p class="mut">Проверяю… до 15 с�
  if(u){try{const r=await tmo(u.getIdTokenResult(false),4000);L("Пропуск входа действует до",new Date(r.expirationTime).toLocaleTimeString("ru-RU"))}catch(e){L("Пропуск входа","ошибка: "+(e.code||e.message))}
   const t=Date.now();try{await tmo(u.getIdToken(true),8000);L("Обновление пропуска",`работает (${Date.now()-t} мс)`)}catch(e){L("Обновление пропуска","НЕ работает: "+(e.code||e.message))}}
  const [idb,srv]=await Promise.all([idbProbe(),srvProbe()]);L("Хранилище браузера",idb);L("Сервер базы",srv);
- NETDIAG=out.join("")+`<p class="mut" style="margin-top:8px">Сообщения Firebase:</p><div class="mut" style="font-size:12px;word-break:break-word">${FBLOG.length?FBLOG.map(esc).join("<br>"):"нет"}</div>`;dq()}
+ NETDIAG=out.join("")+`<p class="mut" style="margin-top:8px">Сообщения Firebase:</p><div class="mut" style="font-size:12px;word-break:break-word">${FBLOG.length?FBLOG.map(esc).join("<br>"):"нет"}</div><p class="mut" style="margin-top:8px">Тихие ошибки сайта (${(window.ERRL||[]).length}):</p><div class="mut" style="font-size:12px;word-break:break-word">${(window.ERRL||[]).slice(-15).reverse().map(x=>new Date(x[0]).toLocaleTimeString("ru-RU")+" — "+esc(x[1])).join("<br>")||"нет"}</div>`;dq()}
 function fsDead(){const d={at:new Date().toISOString(),kind:"firestore-failed",btn:lastBtn,online:navigator.onLine,persist:PERSIST_OK,sdk:firebase.SDK_VERSION,fb:FBLOG.slice(-6),ua:navigator.userAgent.slice(0,90)};
- try{localStorage.setItem("hangDiag",JSON.stringify(d))}catch(e){}let last=0;try{last=+localStorage.getItem("autoRl")||0}catch(e){}
- if(Date.now()-last>60000){try{localStorage.setItem("autoRl",String(Date.now()))}catch(e){}fsReset("firestore-failed",true)}}
+ try{localStorage.setItem("hangDiag",JSON.stringify(d))}catch(e){eLog(e)}let last=0;try{last=+localStorage.getItem("autoRl")||0}catch(e){eLog(e)}
+ if(Date.now()-last>60000){try{localStorage.setItem("autoRl",String(Date.now()))}catch(e){eLog(e)}fsReset("firestore-failed",true)}}
 /* Плашка «не отправлено на сервер»: изменения сохранены на телефоне, но сервер их ещё не принял */
 function pendWatch(){if(pendOn)return;pendOn=Date.now();let done=false;
  rqIdle().then(()=>{done=true;pendOn=0;const b=$("pendb");if(b)b.remove()}).catch(()=>{pendOn=0});
@@ -715,11 +735,11 @@ function pendWatch(){if(pendOn)return;pendOn=Date.now();let done=false;
  /* 15 с: диагностика (после перезагрузки уйдёт в Журнал); 30 с: тихая перезагрузка, если человек ничего не делает (не чаще раза в 3 мин) */
  setTimeout(async()=>{if(done)return;const [idb,srv]=await Promise.all([idbProbe(),srvProbe()]);if(done)return;
   const d={at:new Date().toISOString(),kind:"pending",btn:lastBtn,online:navigator.onLine,hidden:hidAt?Math.round((Date.now()-hidAt)/1000)+"s":"",idb,srv,persist:PERSIST_OK,sdk:firebase.SDK_VERSION,fb:FBLOG.slice(-6),ua:navigator.userAgent.slice(0,90)};
-  try{localStorage.setItem("hangDiag",JSON.stringify(d))}catch(e){}},15500);
+  try{localStorage.setItem("hangDiag",JSON.stringify(d))}catch(e){eLog(e)}},15500);
  /* с 30-й секунды каждые 5 с: перезагрузка, как только никто ничего не делает (закрыто окно, нет ввода) */
- setTimeout(()=>{const iv=setInterval(()=>{if(done){clearInterval(iv);return}let last=0;try{last=+localStorage.getItem("autoRl")||0}catch(e){}
+ setTimeout(()=>{const iv=setInterval(()=>{if(done){clearInterval(iv);return}let last=0;try{last=+localStorage.getItem("autoRl")||0}catch(e){eLog(e)}
   const busy=($("m")&&$("m").innerHTML.trim())||(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName));
-  if(PERSIST_OK&&!busy&&Date.now()-last>180000&&navigator.onLine){clearInterval(iv);try{localStorage.setItem("autoRl",String(Date.now()))}catch(e){}location.reload()}},5000)},25000);
+  if(PERSIST_OK&&!busy&&Date.now()-last>180000&&navigator.onLine){clearInterval(iv);try{localStorage.setItem("autoRl",String(Date.now()))}catch(e){eLog(e)}location.reload()}},5000)},25000);
  /* плашку «не отправлено на сервер» владелец попросил убрать (7.11.2026): восстановление идёт молча — переподключение, перезагрузка, Журнал */
  setTimeout(()=>{if(done)return;netKickAt=0;netKick("pend")},15000);
  setTimeout(()=>{if(!done&&!PERSIST_OK&&Date.now()-pendOn>=29000)toast("Нет связи с сервером: изменения ещё не сохранены. Не закрывайте сайт — они уйдут, когда связь вернётся.")},30000)}
@@ -728,17 +748,17 @@ let lastBtnEl=null;addEventListener("click",e=>{const b=e.target&&e.target.close
 /* Действие висит 20 с даже после переподключения: проверяем, что застряло — сеть до сервера или хранилище браузера (IndexedDB,
    на iPhone оно иногда зависает после сворачивания), запоминаем подробности (после перезагрузки уходят в Журнал) и предлагаем перезагрузку */
 const tmo=(p,ms)=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),ms))]);
-async function idbProbe(){try{await tmo(new Promise((ok,no)=>{const r=indexedDB.open("mf_probe",1);r.onsuccess=()=>{try{r.result.close()}catch(e){}ok()};r.onerror=()=>no(r.error||new Error("error"));r.onblocked=()=>no(new Error("blocked"))}),4000);return"ok"}catch(e){return e.message==="timeout"?"hang":String(e.message||e)}}
+async function idbProbe(){try{await tmo(new Promise((ok,no)=>{const r=indexedDB.open("mf_probe",1);r.onsuccess=()=>{try{r.result.close()}catch(e){eLog(e)}ok()};r.onerror=()=>no(r.error||new Error("error"));r.onblocked=()=>no(new Error("blocked"))}),4000);return"ok"}catch(e){return e.message==="timeout"?"hang":String(e.message||e)}}
 async function srvProbe(){const t=Date.now();try{await tmo(db.collection("pubOrders").doc("probe0").get({source:"server"}),8000);return"ok "+(Date.now()-t)+"ms"}catch(e){return e.message==="timeout"?"hang":String(e.code||e.message)}}
 async function hangCheck(started){netKickAt=0;netKick("run2");const [idb,srv]=await Promise.all([idbProbe(),srvProbe()]);
  const d={at:new Date().toISOString(),btn:lastBtnAt&&Math.abs(lastBtnAt-started)<5000?lastBtn:"",online:navigator.onLine,hidden:hidAt?Math.round((Date.now()-hidAt)/1000)+"s":"",idb,srv,fb:FBLOG.slice(-6),ua:navigator.userAgent.slice(0,90)};
- try{localStorage.setItem("hangDiag",JSON.stringify(d))}catch(e){}
+ try{localStorage.setItem("hangDiag",JSON.stringify(d))}catch(e){eLog(e)}
  modal(`<h1>Связь с базой зависла</h1><p>Действие${d.btn?" «"+esc(d.btn)+"»":""} не подтвердилось за 20 секунд, даже после переподключения.</p><p class="mut">Проверка: интернет — ${d.online?"есть":"нет"}, сервер — ${srv.startsWith("ok")?"отвечает":"не отвечает"}, хранилище браузера — ${idb==="ok"?"в порядке":"зависло"}.</p><p>Перезагрузите сайт и проверьте, применилось ли действие. Если нет — сделайте его ещё раз.</p><div class="acts"><button class="btn g" type="button" data-a="x">Подождать</button><button class="btn" type="button" data-a="reload">Перезагрузить сайт</button></div>`)}
 document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest('[data-a="reload"]'))location.reload();if(e.target.closest&&e.target.closest('[data-a="netdiag"]'))netDiag()});
 /* Переподключение (disableNetwork + enableNetwork) убрано (разд. 35): без кэша оно сбрасывало все данные (0 заказов, мигание),
    а если включение не срабатывало — сайт оставался без связи совсем. Firebase сам держит и восстанавливает связь;
    здесь только убеждаемся, что сеть Firebase включена (повторный вызов безопасен). */
-async function netKick(why){try{await db.enableNetwork()}catch(e){}}
+async function netKick(why){try{await db.enableNetwork()}catch(e){eLog(e)}}
 async function run(fn){if(lock&&Date.now()-lock<1500)return;if(navigator.onLine===false){toast("Нет интернета. Подождите 20 сек.");return}const my=lock=Date.now();
  /* нажатая кнопка заблокирована, пока действие не закончится: при медленной связи второй заказ случайно не создать */
  const bt=lastBtnEl&&Date.now()-lastBtnAt<1500&&lastBtnEl.tagName==="BUTTON"&&!lastBtnEl.disabled?lastBtnEl:null;if(bt)bt.disabled=true;
@@ -751,11 +771,11 @@ function login(msg){subs.forEach(u=>u());subs=[];$("nav").hidden=true;$("v").inn
  $("lf").onsubmit=e=>{e.preventDefault();run(()=>auth.signInWithEmailAndPassword($("em").value.trim(),$("pw").value))};
  $("rs").onclick=()=>run(async()=>{const m=$("em").value.trim();if(!m)return toast("Введите email");await auth.sendPasswordResetEmail(m);toast("Письмо для сброса отправлено")})}
 
-let __authDone=0;setTimeout(()=>{if(!__authDone&&typeof login==="function"){try{login("Нет ответа от входа. Проверьте интернет и Authorized domains в Firebase.")}catch(e){}}},10000);
+let __authDone=0;setTimeout(()=>{if(!__authDone&&typeof login==="function"){try{login("Нет ответа от входа. Проверьте интернет и Authorized domains в Firebase.")}catch(e){eLog(e)}}},10000);
 auth.onAuthStateChanged(async u=>{await FSREADY;__authDone=1;U=u;S=null;O=[];ON=0;OX=new Map();OXR={date:[],ts:[]};UPON=0;SF={};PRS=[];INV=[];INV0=[];CST={};DL=[];BQ=[];LG=[];VS=[];CU={};SC=[];LD=[];EX=[];SHL=[];SR=[];RP=[];BL=[];CHS=[];CHERR="";chStop();ORD0=false;TCM=[];TCERR="";tcLast=0;NP=null;subs.forEach(f=>f());subs=[];if(!u)return login();
  try{const d=await db.collection("staff").doc(u.uid).get();const s=d.exists?d.data():null;if(s&&s.active===true&&(s.role==="owner"||isOwnEm(u.email))){s.own=true;s.head=String(u.email||"").toLowerCase()===HEAD_EM;s.role="admin"}
   if(!s||s.active!==true||!RL[s.role]){await auth.signOut();return login(!s?"Профиль сотрудника не создан. Обратитесь к администратору.":"Аккаунт отключён или роль не задана.")}
-  S=s;try{const hd=localStorage.getItem("hangDiag");if(hd){localStorage.removeItem("hangDiag");setTimeout(()=>log("Связь зависла (диагностика)",{bn:""},hd.slice(0,2000)),3000)}}catch(e){}if(s.role!=="admin"&&s.role!=="courier"&&s.loc)LOC=s.loc;try{if(!sessionStorage.getItem("lg")){sessionStorage.setItem("lg","1");log("Вход в систему",{bn:""});setTimeout(()=>{try{nfBanner({title:"Здравствуйте, "+(S.name||"")+"! 🌸",body:(RL[S.role]||"")+(SH&&SH.name?" · "+SH.name:"")+" · хорошего дня",tag:"hello"})}catch(e){}},900)}}catch(x){}
+  S=s;try{const hd=localStorage.getItem("hangDiag");if(hd){localStorage.removeItem("hangDiag");setTimeout(()=>log("Связь зависла (диагностика)",{bn:""},hd.slice(0,2000)),3000)}}catch(e){eLog(e)}if(s.role!=="admin"&&s.role!=="courier"&&s.loc)LOC=s.loc;try{if(!sessionStorage.getItem("lg")){sessionStorage.setItem("lg","1");log("Вход в систему",{bn:""});setTimeout(()=>{try{nfBanner({title:"Здравствуйте, "+(S.name||"")+"! 🌸",body:(RL[S.role]||"")+(SH&&SH.name?" · "+SH.name:"")+" · хорошего дня",tag:"hello"})}catch(e){eLog(e)}},900)}}catch(x){eLog(x)}
  }catch(e){await auth.signOut();return login("Не удалось проверить доступ: "+er(e))}
  subs.push(db.collection("staff").onSnapshot(s=>{SF={};s.forEach(d=>SF[d.id]=d.data());dq()},e=>toast(er(e))));
  const q=db.collection("orders").orderBy("ts","desc").limit(300);
@@ -781,7 +801,7 @@ auth.onAuthStateChanged(async u=>{await FSREADY;__authDone=1;U=u;S=null;O=[];ON=
  uiLoad();draw()});
 
 function uiKey(){return"ui_"+(U?U.uid:"x")}
-function uiLoad(){tab="home";fs="fresh";fdt="";try{const v=JSON.parse(STO.get(uiKey())||"{}");if(typeof v.tab==="string")tab=v.tab;if(typeof v.fs==="string")fs=v.fs;if(typeof v.fdt==="string")fdt=v.fdt}catch(e){}}
+function uiLoad(){tab="home";fs="fresh";fdt="";try{const v=JSON.parse(STO.get(uiKey())||"{}");if(typeof v.tab==="string")tab=v.tab;if(typeof v.fs==="string")fs=v.fs;if(typeof v.fdt==="string")fdt=v.fdt}catch(e){eLog(e)}}
 function uiSave(){if(U&&S)STO.set(uiKey(),JSON.stringify({tab,fs,fdt}))}
 function draw(){if(!S)return;if(tab==="tc"&&U&&typeof tcSeen==="function")tcSeen();if(!bu.c)bu.c=new Map();alerts.d=0;locGate();const T=[["home","⌂","Главная"],["orders","☰","Заказы"]];if(mgr()||S.role==="courier")T.push(["map","◎","Карта"]);if(["admin","operator","florist","assistant"].includes(S.role))T.push(["stock","▦","Склад"]);if(["admin","operator","florist","assistant"].includes(S.role))T.push(["show","▤","Витрина"],["gal","🖼","Галерея"]);T.push(["sched","◷","График"]);if(mgr())T.push(["rep","📋","Отчёты"],["st","📊","Статистика"]);if(mgr())T.push(["crm","♥","Клиенты"],...(isOp()&&FX("clientChat")?[["chats","✆","Чаты"]]:[]),...(canTpl()?[["tpl","💬","Шаблоны"]]:[]),...(FX("deals")?[["deals","◫","Сделки"]]:[]),["leads","✉","Заявки"]);if(!mgr()&&canTpl())T.push(["tpl","💬","Шаблоны"]);if(own())T.push(["fin","₸","Финансы"],["an","◔","Аналитика"]);if(adm())T.push(["cur","🚚","Курьер"],["fl","✿","Сборка"],["team","☺","Команда"],["jr","✎","Журнал"]);if(tab==="deals"&&!FX("deals"))tab="home";if(FX("teamChat"))T.push(["tc","☷","Чат"]);T.push(["me","⚙","Профиль"]);{const ci=T.findIndex(t=>t[0]==="chats"),oi=T.findIndex(t=>t[0]==="orders");if(ci>oi+1&&oi>=0){const c=T.splice(ci,1)[0];T.splice(oi+1,0,c)}}if(!T.some(x=>x[0]===tab)&&tab!=="more")tab="home";uiSave();
  /* Похожие разделы собраны в группы: в меню одна кнопка, внутри — переключатель (gtab) */
@@ -908,7 +928,7 @@ function dashHero(){const[a,b,pa,pb]=hpRange(HP);histNeed("date",pa,b);const liv
  <div class="dg2"><div class="card"><div class="row"><b>Выручка</b><span class="lg"><i style="background:var(--ac)"></i>всего <i style="background:var(--s2)"></i>оплачено</span></div>${g}</div>
  <div class="card"><b>Откуда заказы</b><div style="margin-top:8px">${donut(Object.keys(src).map(k=>({l:k,v:src[k]})).sort((x,y)=>y.v-x.v).slice(0,6))}</div></div></div>
  <div class="card rec"><div class="row"><b>Последние заказы</b><a href="#" data-a="goto" data-id="orders">Все ›</a></div>${rec||'<span class="mut">Заказов пока нет</span>'}</div>`}
-document.addEventListener("click",e=>{const b=e.target.closest('[data-a="hp"]');if(!b||!S)return;HP=b.dataset.id;try{localStorage.setItem("hp",HP)}catch(x){}draw()});
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="hp"]');if(!b||!S)return;HP=b.dataset.id;try{localStorage.setItem("hp",HP)}catch(x){eLog(x)}draw()});
 
 /* ===== Контроль для владельца и админа (разд. 41): кто работает и чем занят, что требует внимания, деньги сегодня, качество ===== */
 const rqCan=o=>!!(S&&o&&o.rqK&&(adm()||own()||(mgr()&&o.rqBy!==U.uid)));
@@ -978,7 +998,7 @@ function orders(){const q=fq.toLowerCase(),dd=fdt==="t"?today():fdt==="n"?addD(t
 
 /* ===== Карта 2ГИС: доставки на карте ===== */
 const AKT=[51.1722,43.6481];let GM=null,GMEL=null,GMK=[],GMME=null,GMLOAD=null,GMSIG="",GMSEQ=0,GMXH="";
-const geoC=a=>{try{const v=localStorage.getItem("geo:"+a);return v==null?null:JSON.parse(v)}catch(e){return null}},geoS=(a,v)=>{try{localStorage.setItem("geo:"+a,JSON.stringify(v))}catch(e){}},gq=o=>"Актау, "+String(o.addr||"").trim();
+const geoC=a=>{try{const v=localStorage.getItem("geo:"+a);return v==null?null:JSON.parse(v)}catch(e){return null}},geoS=(a,v)=>{try{localStorage.setItem("geo:"+a,JSON.stringify(v))}catch(e){eLog(e)}},gq=o=>"Актау, "+String(o.addr||"").trim();
 function mapOrders(){return O.filter(o=>o.dv&&+o.st<4&&String(o.addr||"").trim()&&(S.role!=="courier"||o.courier===U.uid||(!o.courier&&+o.st>=1)))}
 function mapLoad(){if(window.mapgl)return Promise.resolve();if(!GMLOAD)GMLOAD=new Promise((r,j)=>{const sc=document.createElement("script");sc.src="https://mapgl.2gis.com/api/js/v1";sc.onload=r;sc.onerror=()=>{GMLOAD=null;sc.remove();j(new Error("Не удалось загрузить карту 2ГИС. Проверьте интернет."))};document.head.appendChild(sc)});return GMLOAD}
 async function geocode(a){const c=geoC(a);if(c!==null)return c;const r=await fetch("https://catalog.api.2gis.com/3.0/items/geocode?q="+encodeURIComponent(a)+"&fields=items.point&key="+encodeURIComponent(SH.gisKey));const j=await r.json().catch(()=>({}));
@@ -989,23 +1009,23 @@ function mapV(){const L=mapOrders(),lg=["Новый","Собирается","Г�
  return `<h1>Карта</h1><p class="mut">Доставок на карте: ${L.length}. Нажмите на метку, чтобы открыть заказ, а «2ГИС» в заказе — чтобы построить маршрут.</p><div class="chips">${lg}</div><div id="gmph" class="gmap"></div><div class="acts"><button class="btn g" data-a="gm_me">${ic("loc")} Где я</button><button class="btn g" data-a="gm_all">Показать все доставки</button></div><div id="gmx"></div>`}
 async function mapAfter(){const ph=$("gmph");if(!ph)return;if(!GMEL){GMEL=document.createElement("div");GMEL.className="gmap"}ph.replaceWith(GMEL);const gx=$("gmx");if(gx)gx.innerHTML=GMXH;
  try{await mapLoad()}catch(e){GMEL.innerHTML=`<div class="card mut" style="margin:12px">${esc(e.message)}</div>`;return}
- if(!GM){try{GM=new mapgl.Map(GMEL,{center:AKT,zoom:12,key:SH.gisKey})}catch(e){GMEL.innerHTML=`<div class="card mut" style="margin:12px">Карта не открылась: ${esc(e.message||e)}</div>`;return}}else{try{GM.invalidateSize()}catch(e){}}
+ if(!GM){try{GM=new mapgl.Map(GMEL,{center:AKT,zoom:12,key:SH.gisKey})}catch(e){GMEL.innerHTML=`<div class="card mut" style="margin:12px">Карта не открылась: ${esc(e.message||e)}</div>`;return}}else{try{GM.invalidateSize()}catch(e){eLog(e)}}
  mapSync()}
 /* метка доставки: крупно время доставки (или дата / «без времени»), ниже букет; «в пути» — с какого времени у курьера */
 function gmkHtml(o,k){const t=String(o.time||"").slice(0,5),td=today(),d=o.date||"",when=t?(d&&d!==td?new Date(d+"T12:00:00").toLocaleDateString("ru-RU",{day:"numeric",month:"short"})+" ":"")+t:(d&&d!==td?new Date(d+"T12:00:00").toLocaleDateString("ru-RU",{day:"numeric",month:"short"}):"без времени"),
  sub=+o.st===3&&o.cAcc?"в пути с "+chTs(o.cAcc):String(o.bn||"").slice(0,18),late=t&&d&&+o.st<4&&new Date(d+"T"+t).getTime()<Date.now();
  return `<button class="gmk${late?" late":""}" style="--mk:${MKC[k]}" data-a="det" data-id="${o.id}"><b>${esc(when)}</b>${sub?`<small>${esc(sub)}</small>`:""}</button>`}
 async function mapSync(fit){const L=mapOrders(),sig=L.map(o=>o.id+":"+o.st+":"+(o.time||"")+":"+(o.date||"")+":"+(o.cAcc||"")+":"+gq(o)).join("|");if(sig===GMSIG&&!fit)return;GMSIG=sig;const seq=++GMSEQ,pts=[],miss=[];
- GMK.forEach(m=>{try{m.destroy()}catch(e){}});GMK=[];
- Object.entries(geoPts()).forEach(([k,v])=>{if(v&&v.lat)try{GMK.push(new mapgl.HtmlMarker(GM,{coordinates:[v.lng,v.lat],html:`<span class="gmshop" title="${esc(lname(k))}">🌸 ${esc(lname(k))}</span>`}))}catch(e){}});
+ GMK.forEach(m=>{try{m.destroy()}catch(e){eLog(e)}});GMK=[];
+ Object.entries(geoPts()).forEach(([k,v])=>{if(v&&v.lat)try{GMK.push(new mapgl.HtmlMarker(GM,{coordinates:[v.lng,v.lat],html:`<span class="gmshop" title="${esc(lname(k))}">🌸 ${esc(lname(k))}</span>`}))}catch(e){eLog(e)}});
  for(const o of L){const a=gq(o);let c=o.geo&&o.geo.lat?[o.geo.lng,o.geo.lat]:geoC(a);if(c===null){try{c=await geocode(a)}catch(e){c=0}}if(seq!==GMSEQ||!GM)return;if(!c){miss.push(o);continue}pts.push(c);
   const k=Math.min(3,+o.st||0);GMK.push(new mapgl.HtmlMarker(GM,{coordinates:c,html:gmkHtml(o,k)}))}
- if(fit&&pts.length){const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);try{GM.fitBounds({southWest:[Math.min(...xs),Math.min(...ys)],northEast:[Math.max(...xs),Math.max(...ys)]},{padding:{top:60,bottom:60,left:40,right:40}})}catch(e){}}
+ if(fit&&pts.length){const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);try{GM.fitBounds({southWest:[Math.min(...xs),Math.min(...ys)],northEast:[Math.max(...xs),Math.max(...ys)]},{padding:{top:60,bottom:60,left:40,right:40}})}catch(e){eLog(e)}}
  GMXH=miss.length?`<h2>Адрес не найден на карте · ${miss.length}</h2><div class="og">${miss.map(card).join("")}</div>`:"";const x=$("gmx");if(x)x.innerHTML=GMXH}
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="gm_me"],[data-a="gm_all"]');if(!b||!S)return;
  if(b.dataset.a==="gm_all"){GMSIG="";mapSync(true);return}
  if(!navigator.geolocation)return toast("Телефон не даёт определить местоположение");toast("Определяю местоположение…");
- navigator.geolocation.getCurrentPosition(p=>{if(!GM)return;const c=[p.coords.longitude,p.coords.latitude];try{if(GMME)GMME.destroy();GMME=new mapgl.HtmlMarker(GM,{coordinates:c,html:'<span class="gmme"></span>'});GM.setCenter(c);GM.setZoom(15)}catch(x){}},()=>toast("Разрешите доступ к местоположению в настройках браузера"),{enableHighAccuracy:true,timeout:15000})});
+ navigator.geolocation.getCurrentPosition(p=>{if(!GM)return;const c=[p.coords.longitude,p.coords.latitude];try{if(GMME)GMME.destroy();GMME=new mapgl.HtmlMarker(GM,{coordinates:c,html:'<span class="gmme"></span>'});GM.setCenter(c);GM.setZoom(15)}catch(x){eLog(x)}},()=>toast("Разрешите доступ к местоположению в настройках браузера"),{enableHighAccuracy:true,timeout:15000})});
 function gisCard(){return `<h2>Карта 2ГИС</h2><div class="card"><div class="mut">Вкладка «Карта» показывает все доставки на карте 2ГИС: цвет метки — статус, нажатие — открыть заказ. Курьер видит свои и свободные доставки и своё местоположение. Нужен ключ 2ГИС (один на весь магазин): получите его в кабинете разработчика 2ГИС (platform.2gis.ru) — нужны «MapGL JS API» и «Геокодер». Адреса превращаются в точки один раз и запоминаются на телефоне.</div><label>Ключ 2ГИС</label><input id="gk" autocomplete="off" value="${esc(SH.gisKey||"")}" placeholder="Вставьте ключ"><div class="acts"><button class="btn g s" data-a="gis_key">Сохранить ключ</button></div></div>`}
 document.addEventListener("click",e=>{if(!e.target.closest('[data-a="gis_key"]')||!S||!own())return;run(async()=>{const v=($("gk").value||"").trim();await db.collection("settings").doc("main").set({gisKey:v,updatedAt:TS()},{merge:true});GM=null;GMEL=null;GMSIG="";toast(v?"Ключ 2ГИС сохранён":"Карта отключена")})});
 
@@ -1055,7 +1075,7 @@ function form(o,lnk){const e=o&&o.id,v=o||{},qpo=!e?quickOpts():"",cs=Object.key
 function detRefresh(prev){const d=document.querySelector("#m [data-det]");if(!d)return;const id=d.dataset.det,a=prev.find(x=>x.id===id),b=O.find(x=>x.id===id);if(!b)return;
  const k=o=>JSON.stringify(o,(n,v)=>n==="_pend"?undefined:v);if(!a||k(a)!==k(b)){const sc=d.closest(".sh");const top=sc?sc.scrollTop:0;Promise.resolve(detail(id)).then(()=>{const n=document.querySelector("#m .sh");if(n)n.scrollTop=top})}}
 async function detail(id){const o=O.find(x=>x.id===id);if(!o)return;let h="";
- if(mgr()){try{const s=await db.collection("activityLogs").where("oid","==",id).get();h=s.docs.map(d=>d.data()).sort((a,b)=>(b.ts?b.ts.seconds:9e9)-(a.ts?a.ts.seconds:9e9)).map(x=>`<div class="ln"><span>${esc(x.byName)}</span><span>${esc(x.act)}${x.x?": "+esc(x.x):""}</span></div>`).join("")}catch(e){}}
+ if(mgr()){try{const s=await db.collection("activityLogs").where("oid","==",id).get();h=s.docs.map(d=>d.data()).sort((a,b)=>(b.ts?b.ts.seconds:9e9)-(a.ts?a.ts.seconds:9e9)).map(x=>`<div class="ln"><span>${esc(x.byName)}</span><span>${esc(x.act)}${x.x?": "+esc(x.x):""}</span></div>`).join("")}catch(e){eLog(e)}}
  const L=(a,b)=>b||b===0?`<div class="ln"><span>${a}</span><span style="text-align:right">${b}</span></div>`:"";
  const k=Math.min(5,+o.st||0),SS=o.dv?["Принят","Сборка","Готов","В пути","Доставлен"]:["Принят","Сборка","Готов","Выдан"],si=k>=4?SS.length-1:Math.min(k,SS.length-2),ph=String(o.phone||"").replace(/\D/g,"");
  modal(`<div class="dh k-${k}" data-det="${esc(id)}"><div class="mut">Заказ №${esc(String(o.id).slice(-5).toUpperCase())} · ${esc(((o.date||"")+" "+(o.time||"")).trim())}</div><h1 style="font-size:26px;margin:2px 0 8px">${esc(o.bn)}</h1><div class="row" style="justify-content:flex-start;gap:6px;flex-wrap:wrap"><span class="pill st">${stL(o)}</span><span class="pill">${o.dv?"Доставка":"Самовывоз"}</span>${o.paid?'<span class="pill ok">Оплачен</span>':`<span class="pill warn">К оплате ${M(rest(o))}</span>`}</div>
@@ -1084,12 +1104,12 @@ function bind(){const sf=$("sf");if(sf)sf.onsubmit=saveSet;const q=$("q");if(q)q
    const prof={name:g("name"),email:em,role:g("role"),loc:g("loc"),active:true,createdAt:TS()};let last=null;
    for(let i=0;i<3;i++){try{await db.collection("staff").doc(c.user.uid).set(prof);last=null;break}catch(e){last=e;await new Promise(r=>setTimeout(r,700*(i+1)))}}
    if(last)throw last;
-   try{await sec.auth().signOut()}catch(e){}t.reset();log("Сотрудник создан",{bn:g("name")},RL[g("role")]);toast("Сотрудник создан")}finally{try{await sec.delete()}catch(e){}}})}}
+   try{await sec.auth().signOut()}catch(e){eLog(e)}t.reset();log("Сотрудник создан",{bn:g("name")},RL[g("role")]);toast("Сотрудник создан")}finally{try{await sec.delete()}catch(e){eLog(e)}}})}}
 
 document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b||!S)return;const a=b.dataset.a,id=b.dataset.id,o=O.find(x=>x.id===id);
  if(a==="new")form();else if(a==="x")modal("");else if(a==="det")detail(id);else if(a==="edit"&&(adm()||+o.st<4))form(o);else if(a==="rep"){const c={...o};delete c.id;delete c.pub;delete c.pubKey;delete c.mk;c.st=0;c.paid=false;c.pre=0;form(c)}
  else if(a==="f"){fs=id;fz2="";draw()}else if(a==="f2"){e.preventDefault();fz2="";draw()}else if(a==="th"){setTh(id)}
- else if(a==="out"){try{sessionStorage.removeItem("lg")}catch(x){}auth.signOut()}else if(a==="pw")run(async()=>{await auth.sendPasswordResetEmail(U.email);toast("Письмо отправлено")})
+ else if(a==="out"){try{sessionStorage.removeItem("lg")}catch(x){eLog(x)}auth.signOut()}else if(a==="pw")run(async()=>{await auth.sendPasswordResetEmail(U.email);toast("Письмо отправлено")})
  else if(a==="adv"&&o){const n=next(o),md=n&&mgr()&&n[0]===4&&o.dv;if(n&&S.role==="courier"&&n[0]===4){if(o.courier!==U.uid)toast("Это не ваша доставка");else if(!o.cAcc)toast("Сначала нажмите «Принять в работу»");else if(cwait(o)>0)toast("«Доставлено» станет доступно через "+mmss(cwait(o)));else proof(id)}else if(n&&mgr()&&n[0]===3&&o.dv&&o.courier&&!o.cAcc&&!confirm("Курьер "+nm(o.courier)+" ещё не принял заказ в работу. Передать всё равно?")){}else if(md&&wait(o)>0)toast("Отметить доставленным можно через "+mmss(wait(o))+" после передачи курьеру");else if(md&&!confirm("Фото от курьера нет. Отметить заказ доставленным без фото?")){}else if(n)run(async()=>{await db.collection("orders").doc(id).update({st:n[0],updatedAt:TS(),statusBy:U.uid,...(n[0]===2?{asm:U.uid}:{}),...(n[0]===3?{shipAt:Date.now()}:{}),...(md?{doneAt:Date.now(),doneByMgr:true}:{})});log(md?"Доставлено без фото":"Статус → "+ST[n[0]],o)})}
  else if(a==="paid")run(async()=>{await db.collection("orders").doc(id).update({paid:true,paidAt:Date.now(),paidBy:U.uid,updatedAt:TS()});log("Принята оплата",o,M(rest(o)));modal("")})
  else if(a==="cx"&&!adm()){const w=prompt("Отмену подтверждает администратор. Почему отменить заказ?");if(w===null)return;run(async()=>{await db.collection("orders").doc(id).update({rqK:"cx",rqWhy:w,rqBy:U.uid,rqN:S.name||"",rqT:Date.now(),updatedAt:TS()});log("Запрос на отмену",o,w);modal("");toast("Запрос отправлен администратору")})}
@@ -1244,7 +1264,7 @@ document.addEventListener("change",e=>{const c=e.target.closest(".gsort");if(!c|
 /* ===== Центр уведомлений (колокольчик) и поиск по всему сайту (лупа) ===== */
 let NFH=null;const nfhKey=()=>"nfh_"+(U?U.uid:""),nfSeenK=()=>"nfs_"+(U?U.uid:"");
 function nfhLoad(){if(NFH)return NFH;try{NFH=JSON.parse(STO.get(nfhKey())||"[]")}catch(e){NFH=[]}return NFH}
-function nfLog(o){nfhLoad();const x={ts:Date.now(),title:String(o.title||""),body:String(o.body||""),type:o.type||"",tag:o.tag||""};if(o.tag)NFH=NFH.filter(y=>y.tag!==o.tag);NFH.unshift(x);NFH=NFH.slice(0,40);x.go=o.go;try{STO.set(nfhKey(),JSON.stringify(NFH.map(({go,...r})=>r)))}catch(e){}nfBadge()}
+function nfLog(o){nfhLoad();const x={ts:Date.now(),title:String(o.title||""),body:String(o.body||""),type:o.type||"",tag:o.tag||""};if(o.tag)NFH=NFH.filter(y=>y.tag!==o.tag);NFH.unshift(x);NFH=NFH.slice(0,40);x.go=o.go;try{STO.set(nfhKey(),JSON.stringify(NFH.map(({go,...r})=>r)))}catch(e){eLog(e)}nfBadge()}
 const nfUnread=()=>{const s=+(STO.get(nfSeenK())||0);return nfhLoad().filter(x=>x.ts>s).length};
 function nfBadge(){const b=document.querySelector("#tb .tbbell");if(!b)return;let e=b.querySelector(".tbn");const n=nfUnread();if(!n){if(e)e.remove();return}if(!e){e=document.createElement("b");e.className="tbn";b.appendChild(e)}e.textContent=n>99?"99+":n}
 function nfGo(x){const m=String(x.tag||"").match(/^(cr|xf|o|r|c|v|p|d|q|s)(.+)$/);if(x.type==="team"){tab="tc";draw();return}
@@ -1262,7 +1282,7 @@ function gsRes(q){q=q.trim().toLowerCase();if(q.length<2)return '<p class="mut">
  if(["admin","operator","florist","assistant"].includes(S.role)||own()){const is=scoped(()=>INVL().filter(i=>hit(i.name)).slice(0,6).map(i=>({id:i.id,name:i.name,qty:i.qty,unit:i.unit,cat:i.cat})));if(is.length)G.push(["Склад",is.map(i=>`<div class="ln" data-a="gs_i" data-id="${i.id}" style="cursor:pointer"><span><b>${esc(i.name)}</b><br><span class="mut">${esc(i.cat||"")}</span></span><span>${i.qty} ${esc(i.unit||"")}</span></div>`).join("")])}
  if(typeof CHS!=="undefined"&&isOp()&&FX("clientChat")){const ch=CHS.filter(c=>hit(c.name)||hit(c.phone)||hit(c.handle)||hit(c.last)).slice(0,6);if(ch.length)G.push(["Чаты",ch.map(c=>`<div class="ln" data-a="gs_ch" data-id="${esc(c.id)}" style="cursor:pointer"><span><b>${esc(c.name||c.phone||"Клиент")}</b><br><span class="mut">${esc(String(c.last||"").slice(0,60))}</span></span><span class="mut">${(CHN[c.ch]||{n:c.ch}).n}</span></div>`).join("")])}
  return G.map(([t,h])=>`<h2>${t}</h2><div class="card">${h}</div>`).join("")||'<p class="mut">Ничего не найдено.</p>'}
-function gsOpen(){modal(hd("Поиск")+`<input id="gsq" type="search" placeholder="Клиент, телефон, букет, товар…" value="${esc(GSQ)}" autocomplete="off" enterkeyhint="search"><div id="gsr">${gsRes(GSQ)}</div>`);const i=$("gsq");i.oninput=()=>{GSQ=i.value;$("gsr").innerHTML=gsRes(GSQ)};setTimeout(()=>{try{i.focus()}catch(e){}},60)}
+function gsOpen(){modal(hd("Поиск")+`<input id="gsq" type="search" placeholder="Клиент, телефон, букет, товар…" value="${esc(GSQ)}" autocomplete="off" enterkeyhint="search"><div id="gsr">${gsRes(GSQ)}</div>`);const i=$("gsq");i.oninput=()=>{GSQ=i.value;$("gsr").innerHTML=gsRes(GSQ)};setTimeout(()=>{try{i.focus()}catch(e){eLog(e)}},60)}
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="nfc"],[data-a="nfo"],[data-a="nfclr"],[data-a="gso"],[data-a^="gs_"]');if(!b||!S)return;const a=b.dataset.a,id=b.dataset.id;
  if(a==="nfc")nfCenter();else if(a==="nfo"){const x=nfhLoad()[+id];modal("");if(x)nfGo(x)}else if(a==="nfclr"){NFH=[];STO.set(nfhKey(),"[]");nfCenter()}
  else if(a==="gso")gsOpen();else if(a==="gs_o"){modal("");detail(id)}else if(a==="gs_c"){modal("");tab="crm";draw();cDetail(id)}else if(a==="gs_i"){modal("");tab="stock";sv="i";draw();const it=inv(id);if(it)itemForm(it)}else if(a==="gs_ch"){modal("");tab="chats";chV="list";draw();chStart(id)}});
@@ -1323,7 +1343,7 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-a^="l_"],[
 document.addEventListener("change",e=>{const i=e.target.closest('[data-a="f_d"]');if(i&&S){if(i.id==="fa")fa=i.value;else fb=i.value;draw()}});
 /* ===== Настройки и уведомления ===== */
 let SH={},seeded=0;
-function applySet(){const r=document.documentElement.style;document.title=SH.name||"Mirflowers";r.removeProperty("--ac");try{const u=new URL(".",location.href).href;if(own()&&/^https:/.test(u)&&!/localhost|127\.0\.0\.1/.test(u)&&SH.siteUrl!==u)db.collection("settings").doc("main").set({siteUrl:u},{merge:true}).catch(()=>{})}catch(e){}}
+function applySet(){const r=document.documentElement.style;document.title=SH.name||"Mirflowers";r.removeProperty("--ac");try{const u=new URL(".",location.href).href;if(own()&&/^https:/.test(u)&&!/localhost|127\.0\.0\.1/.test(u)&&SH.siteUrl!==u)db.collection("settings").doc("main").set({siteUrl:u},{merge:true}).catch(()=>{})}catch(e){eLog(e)}}
 function setCard(){return `<h2>Настройки магазина</h2><form id="sf" class="card"><label>Название</label><input name="name" value="${esc(SH.name||"Mirflowers")}"><label>Телефон</label><input name="phone" type="tel" value="${esc(SH.phone)}"><label>Адрес</label><input name="addr" value="${esc(SH.addr)}"><label>График работы</label><input name="hours" value="${esc(SH.hours)}" placeholder="Ежедневно 09:00–21:00">${locs().length>1?`<label class="row" style="color:var(--ink)">Раздельные склады по точкам<input name="split" type="checkbox" style="width:26px;min-height:26px" ${SH.split?"checked":""}></label><p class="mut">Выключено: один общий склад. Включено: у каждой точки свои остатки, рецепты букетов общие. Текущие остатки останутся на основной точке.</p>`:""}<p class="mut">Название, телефон, адрес и график видят все сотрудники; телефон ещё показывается клиенту на странице статуса заказа и на накладной. Валюта: тенге (₸).</p><div class="acts"><button class="btn">Сохранить настройки</button></div></form>`}
 function shopInfo(){return !adm()&&(SH.phone||SH.addr||SH.hours)?`<div class="card"><b>${esc(SH.name||"")}</b><div class="mut">${esc(SH.phone)}<br>${esc(SH.addr)}<br>${esc(SH.hours)}</div></div>`:""}
 function saveSet(e){e.preventDefault();const f=new FormData($("sf")),g=k=>(f.get(k)||"").toString().trim();run(async()=>{await db.collection("settings").doc("main").set({name:g("name")||"Mirflowers",phone:g("phone"),addr:g("addr"),hours:g("hours"),cur:"KZT",split:f.get("split")==="on",updatedAt:TS()},{merge:true});log("Изменены настройки",{bn:""});toast("Настройки сохранены")})}
@@ -1517,7 +1537,7 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-a^="lc_"],
  else if(a==="v_sv"){vv=id;draw()}});
 document.addEventListener("change",e=>{const x=e.target.closest('[data-a="sloc"]');if(x&&adm())run(async()=>{await db.collection("staff").doc(x.dataset.id).update({loc:x.value});log("Точка сотрудника изменена",{bn:(SF[x.dataset.id]||{}).name},x.value?lname(x.value):"Все точки");toast("Точка сотрудника изменена")})});
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="o_st"],[data-a="o_del"],[data-a="lg_f"],[data-a="lg_c"],[data-a="lg_p"],[data-a="tdel"]');if(!b||!S||!adm())return;const a=b.dataset.a,id=b.dataset.id,o=O.find(x=>x.id===id);if(a==="tdel"&&!canMng(id))return toast("Этого сотрудника удалять нельзя");
- if(a==="lg_f"){lgf=id;draw()}else if(a==="lg_c"){lgc=id;draw()}else if(a==="lg_p"){lgp=id;draw()}else if(a==="tdel"&&SF[id]&&id!==U.uid&&confirm("Удалить сотрудника полностью? Будут удалены аккаунт входа и профиль. Его заказы и записи журнала сохранятся."))run(async()=>{const n0=SF[id].name;try{await FNC("deleteStaff")({uid:id});toast("Сотрудник удалён полностью")}catch(e){if(!/not-found|unavailable|internal|unknown/.test(e.code||""))throw e;await db.collection("staff").doc(id).delete();try{await db.collection("presence").doc(id).delete()}catch(x){}toast("Профиль удалён. Аккаунт входа удалите в Firebase → Authentication (функции не развёрнуты)")}log("Сотрудник удалён",{bn:n0})})
+ if(a==="lg_f"){lgf=id;draw()}else if(a==="lg_c"){lgc=id;draw()}else if(a==="lg_p"){lgp=id;draw()}else if(a==="tdel"&&SF[id]&&id!==U.uid&&confirm("Удалить сотрудника полностью? Будут удалены аккаунт входа и профиль. Его заказы и записи журнала сохранятся."))run(async()=>{const n0=SF[id].name;try{await FNC("deleteStaff")({uid:id});toast("Сотрудник удалён полностью")}catch(e){if(!/not-found|unavailable|internal|unknown/.test(e.code||""))throw e;await db.collection("staff").doc(id).delete();try{await db.collection("presence").doc(id).delete()}catch(x){eLog(x)}toast("Профиль удалён. Аккаунт входа удалите в Firebase → Authentication (функции не развёрнуты)")}log("Сотрудник удалён",{bn:n0})})
  else if(a==="o_st"&&o){modal(hd("Исправить статус")+`<p class="mut">${esc(o.bn)} · сейчас: ${ST[+o.st]}</p><form id="sf2"><select name="s">${ST.map((n,i)=>`<option value="${i}" ${+o.st===i?"selected":""}>${n}</option>`).join("")}</select>${btns("Сохранить")}</form>`);
   $("sf2").onsubmit=ev=>{ev.preventDefault();const n=+new FormData($("sf2")).get("s");run(async()=>{await db.collection("orders").doc(id).update({st:n,updatedAt:TS(),statusBy:U.uid});log("Статус исправлен админом",o,ST[+o.st]+" → "+ST[n]);modal("");toast("Статус исправлен")})}}
  else if(a==="o_del"&&o&&confirm("Удалить заказ полностью? Он исчезнет из статистики. Если нужен только отказ клиента, лучше «Отменить заказ»."))run(async()=>{const bt=db.batch();bt.delete(db.collection("orders").doc(id));if(o.sc)bt.update(db.collection("showcase").doc(o.sc),{st:"in",at:Date.now()});await bt.commit();log("Заказ удалён админом",o,o.client+", "+M(tot(o)));modal("");toast("Заказ удалён")})});
@@ -1641,7 +1661,7 @@ function chSendUi(){const c=CHS.find(x=>x.id===chOpen),i=$("chin"),t=(i?i.value:
 
 function chFocus(){const t=$("cht"),a=document.activeElement;return{f:!!(a&&(a.id==="chin"||a.id==="tcin")),s:a&&(a.id==="chin"||a.id==="tcin")?a.selectionStart:0,top:t?t.scrollTop:0,bot:t?t.scrollHeight-t.scrollTop-t.clientHeight<80:true,id:chOpen}}
 function chAfter(cf){if(tab!=="chats"&&tab!=="tc")return;const t=$("cht");if(t)t.scrollTop=(!cf||cf.bot||cf.id!==chOpen)?t.scrollHeight:cf.top;
- const i=$(tab==="tc"?"tcin":"chin");if(i&&cf&&cf.f){i.focus();try{i.setSelectionRange(cf.s,cf.s)}catch(e){}}}
+ const i=$(tab==="tc"?"tcin":"chin");if(i&&cf&&cf.f){i.focus();try{i.setSelectionRange(cf.s,cf.s)}catch(e){eLog(e)}}}
 function chBind(){const i=$("chin");if(i){i.oninput=()=>{chDraft=i.value;i.style.height="auto";i.style.height=Math.min(i.scrollHeight,120)+"px"};
  i.onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey&&matchMedia("(pointer:fine)").matches){e.preventDefault();chSendUi()}};if(chDraft)i.style.height=Math.min(i.scrollHeight,120)+"px"}}
 
@@ -1734,22 +1754,22 @@ fvUn=x=>firebase.firestore.FieldValue.arrayUnion(x);
 const NFT={ord:"Новые заказы и доставки",rv:"Готово к приёмке",redo:"Заказ нужно переделать",cm:"Комментарии к заказам",chat:"Сообщения клиентов",team:"Чат команды",pay:"Оплата заказов"};
 let NP=null;
 const npKey=()=>"np_"+(U?U.uid:"x");
-function npGet(){if(NP)return NP;let v={};try{v=JSON.parse(STO.get(npKey())||"{}")}catch(e){}NP={on:v.on!==false,sound:v.sound!==false,sys:!!v.sys,until:+v.until||0,types:v.types||{}};return NP}
+function npGet(){if(NP)return NP;let v={};try{v=JSON.parse(STO.get(npKey())||"{}")}catch(e){eLog(e)}NP={on:v.on!==false,sound:v.sound!==false,sys:!!v.sys,until:+v.until||0,types:v.types||{}};return NP}
 function npSave(){STO.set(npKey(),JSON.stringify(NP))}
-function nfSound(){if(!npGet().sound)return;try{const a=new(window.AudioContext||window.webkitAudioContext)(),t=a.currentTime;[[880,0],[1175,.13]].forEach(([f,d])=>{const o=a.createOscillator(),g=a.createGain();o.type="sine";o.frequency.value=f;g.gain.setValueAtTime(.0001,t+d);g.gain.exponentialRampToValueAtTime(.1,t+d+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d+.26);o.connect(g);g.connect(a.destination);o.start(t+d);o.stop(t+d+.3)});setTimeout(()=>{try{a.close()}catch(e){}},800)}catch(e){}}
+function nfSound(){if(!npGet().sound)return;try{const a=new(window.AudioContext||window.webkitAudioContext)(),t=a.currentTime;[[880,0],[1175,.13]].forEach(([f,d])=>{const o=a.createOscillator(),g=a.createGain();o.type="sine";o.frequency.value=f;g.gain.setValueAtTime(.0001,t+d);g.gain.exponentialRampToValueAtTime(.1,t+d+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d+.26);o.connect(g);g.connect(a.destination);o.start(t+d);o.stop(t+d+.3)});setTimeout(()=>{try{a.close()}catch(e){eLog(e)}},800)}catch(e){eLog(e)}}
 function nfBanner(o){let box=$("nfs");if(!box){box=document.createElement("div");box.id="nfs";document.body.appendChild(box)}
  const el=document.createElement("div");el.className="nfb";el.setAttribute("role","status");el.dataset.tag=o.tag||"";
  el.innerHTML=`<div class="nfi">✿</div><div class="nfx"><div class="nfr"><b>${esc(o.title||"Mirflowers")}</b><span>сейчас</span></div><div class="nfd">${esc(o.body||"")}</div></div>`;
  if(o.tag)[...box.children].forEach(x=>{if(x.dataset.tag===o.tag)x.remove()});
  box.prepend(el);while(box.children.length>3)box.lastChild.remove();
  let y0=null,mv=0,tm;const close=()=>{clearTimeout(tm);el.classList.add("out");setTimeout(()=>el.remove(),280)};
- el.addEventListener("pointerdown",e=>{y0=e.clientY;mv=0;try{el.setPointerCapture(e.pointerId)}catch(x){}});
+ el.addEventListener("pointerdown",e=>{y0=e.clientY;mv=0;try{el.setPointerCapture(e.pointerId)}catch(x){eLog(x)}});
  el.addEventListener("pointermove",e=>{if(y0===null)return;mv=e.clientY-y0;el.style.transition="none";el.style.transform=`translateY(${Math.min(0,mv)}px)`});
- el.addEventListener("pointerup",()=>{if(y0===null)return;y0=null;el.style.transition="";if(mv<-24)return close();el.style.transform="";if(Math.abs(mv)<8){if(o.go)try{o.go()}catch(x){}close()}});
+ el.addEventListener("pointerup",()=>{if(y0===null)return;y0=null;el.style.transition="";if(mv<-24)return close();el.style.transform="";if(Math.abs(mv)<8){if(o.go)try{o.go()}catch(x){eLog(x)}close()}});
  tm=setTimeout(close,6500);nfSound();
- const p=npGet();if(p.sys&&document.hidden&&window.Notification&&Notification.permission==="granted")try{new Notification(o.title||"Mirflowers",{body:o.body||""})}catch(e){}
- try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}}
-function nf(o){try{nfLog(o)}catch(e){}if(S&&own()&&!o.imp)return;/* владельцу всплывает только важное, остальное — в колокольчике */if(S&&!own()&&SH.pushShiftOnly!==false&&!SHF()&&!(typeof SLG!=="undefined"&&SLG.some(x=>x.uid===U.uid&&!x.end&&Date.now()-(+x.start||0)<20*36e5)))return;/* сотрудник не на смене — уведомлений нет (в колокольчике событие остаётся) */const p=npGet();if(!p.on||p.until>Date.now()||p.types[o.type]===false)return;nfBanner(o)}
+ const p=npGet();if(p.sys&&document.hidden&&window.Notification&&Notification.permission==="granted")try{new Notification(o.title||"Mirflowers",{body:o.body||""})}catch(e){eLog(e)}
+ try{navigator.vibrate&&navigator.vibrate(60)}catch(e){eLog(e)}}
+function nf(o){try{nfLog(o)}catch(e){eLog(e)}if(S&&own()&&!o.imp)return;/* владельцу всплывает только важное, остальное — в колокольчике */if(S&&!own()&&SH.pushShiftOnly!==false&&!SHF()&&!(typeof SLG!=="undefined"&&SLG.some(x=>x.uid===U.uid&&!x.end&&Date.now()-(+x.start||0)<20*36e5)))return;/* сотрудник не на смене — уведомлений нет (в колокольчике событие остаётся) */const p=npGet();if(!p.on||p.until>Date.now()||p.types[o.type]===false)return;nfBanner(o)}
 const nfTime=t=>new Date(t).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
 function nfCard(){const p=npGet(),mu=p.until>Date.now(),sw=(k,l,on)=>`<label class="row" style="color:var(--ink);margin:10px 0 0">${l}<input type="checkbox" data-np="${k}" ${on?"checked":""} style="width:26px;min-height:26px"></label>`,
  perm=window.Notification?Notification.permission:"none";
@@ -1830,7 +1850,7 @@ function cmForm(o){modal(hd("Комментарий к заказу")+`<p class=
   run(async()=>{const ts=Date.now();await db.collection("orders").doc(o.id).update({cm:fvUn({k:"note",t,by:U.uid,byName:S.name||"",ts}),cmAt:ts,cmBy:U.uid,updatedAt:TS()});log("Комментарий к заказу",o,t);modal("");toast("Комментарий добавлен")})}}
 
 /* ---------- Флорист: подтверждение «Начать сборку» и передача заказа с двойным подтверждением ---------- */
-let SKEW=0;async function skewSync(){try{const t0=Date.now(),r=await fetch(location.href.split("#")[0].split("?")[0],{method:"HEAD",cache:"no-store"}),t1=Date.now(),d=Date.parse(r.headers.get("Date")||"");if(d)SKEW=d-(t0+t1)/2}catch(e){}}skewSync();setInterval(skewSync,300000);const NOW=()=>Date.now()+SKEW;
+let SKEW=0;async function skewSync(){try{const t0=Date.now(),r=await fetch(location.href.split("#")[0].split("?")[0],{method:"HEAD",cache:"no-store"}),t1=Date.now(),d=Date.parse(r.headers.get("Date")||"");if(d)SKEW=d-(t0+t1)/2}catch(e){eLog(e)}}skewSync();setInterval(skewSync,300000);const NOW=()=>Date.now()+SKEW;
 const XF_MS=60000,
 xfNum=o=>String(o.id).slice(-5).toUpperCase(),
 xfPend=o=>!!o&&o.xfSt==="wait"&&!!o.xfTo&&NOW()-(+o.xfAt||0)<XF_MS,
@@ -1864,7 +1884,7 @@ async function xfAnswer(o,yes){const ref=db.collection("orders").doc(o.id);
 const xfBusy=new Set();
 async function xfExpire(o){if(xfBusy.has(o.id+o.xfAt))return;xfBusy.add(o.id+o.xfAt);try{await db.runTransaction(async t=>{const ref=db.collection("orders").doc(o.id),sn=await t.get(ref);if(!sn.exists)return;const d=sn.data();
   if(d.xfSt!=="wait"||NOW()-(+d.xfAt||0)<XF_MS)return;
-  t.update(ref,{xfSt:"",xfTo:"",xfFrom:"",xfAt:0,xfRes:"to",xfResAt:NOW(),xfResFrom:d.xfFrom,xfResTo:d.xfTo,updatedAt:TS(),statusBy:U.uid})})}catch(e){}}
+  t.update(ref,{xfSt:"",xfTo:"",xfFrom:"",xfAt:0,xfRes:"to",xfResAt:NOW(),xfResFrom:d.xfFrom,xfResTo:d.xfTo,updatedAt:TS(),statusBy:U.uid})})}catch(e){eLog(e)}}
 function xfPrompt(o){
  modal(hd("Передача заказа")+`<div id="xfq"><p style="font-size:17px">${esc(nm(o.xfFrom))} передает тебе заказ №${esc(xfNum(o))}. Примешь?</p><p class="mut">«${esc(o.bn||"Заказ")}» · <b id="xfc"></b></p></div><div class="acts"><button class="btn g" type="button" id="xfn">Отмена</button><button class="btn" type="button" id="xfy">Да</button></div>`);
  const go=y=>{$("xfy").disabled=$("xfn").disabled=true;run(()=>xfAnswer(o,y))};
@@ -1984,7 +2004,7 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-a="chk_add
 /* Cloud Functions SDK сам просит у messaging токен и регистрирует /firebase-messaging-sw.js в КОРНЕ домена; на GitHub Pages (папка репозитория) это падает.
    Подсказываем messaging правильный (относительный) сервис-воркер и повторяем вызов. */
 let swOk=null;
-function swFix(){if(!swOk)swOk=(async()=>{try{if(!("serviceWorker"in navigator))return;const reg=await navigator.serviceWorker.register("firebase-messaging-sw.js");await navigator.serviceWorker.ready;try{firebase.messaging().useServiceWorker(reg)}catch(e){}}catch(e){}})();return swOk}
+function swFix(){if(!swOk)swOk=(async()=>{try{if(!("serviceWorker"in navigator))return;const reg=await navigator.serviceWorker.register("firebase-messaging-sw.js");await navigator.serviceWorker.ready;try{firebase.messaging().useServiceWorker(reg)}catch(e){eLog(e)}}catch(e){eLog(e)}})();return swOk}
 async function upImg(u,dir){if(!u||u.slice(0,5)!=="data:")return u||"";try{const r=firebase.storage().ref(dir+"/"+Date.now()+"_"+Math.random().toString(36).slice(2,8)+".jpg");await r.putString(u,"data_url");return await r.getDownloadURL()}catch(e){return u}}
 const FNC=n=>async d=>{const u=auth.currentUser;if(!u)throw{code:"unauthenticated",message:"Войдите в систему"};
  let r;try{const tok=await u.getIdToken();r=await fetch("https://"+FNR+"-"+cfg.projectId+".cloudfunctions.net/"+n,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok},body:JSON.stringify({data:d})})}
@@ -1992,7 +2012,7 @@ const FNC=n=>async d=>{const u=auth.currentUser;if(!u)throw{code:"unauthenticate
  const j=await r.json().catch(()=>({}));
  if(!r.ok||j.error){const e=j.error||{};throw{code:String(e.status||"internal").toLowerCase().replace(/_/g,"-"),message:e.message||"Ошибка функции"}}
  return{data:j.result}};
-try{if(Notification.permission==="granted")swFix()}catch(e){}
+try{if(Notification.permission==="granted")swFix()}catch(e){eLog(e)}
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="tpw"]');if(!b||!S||!adm())return;const id=b.dataset.id;if(!canMng(id)||!SF[id])return toast("Этому сотруднику пароль менять нельзя");
  modal(hd("Пароль: "+esc(SF[id].name||""))+`<p class="mut">${esc(SF[id].email||"")}. Новый пароль сразу заменит старый в Firebase Authentication (минимум 6 символов). В базе пароли не хранятся.</p><label>Новый пароль</label><input id="npw" type="text" autocomplete="off" minlength="6"><div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button><button class="btn g" type="button" id="npg">Сгенерировать</button><button class="btn g" type="button" id="npm">Письмо для сброса</button><button class="btn" type="button" id="npk">Сменить</button></div>`);
  $("npg").onclick=()=>{const c="abcdefghjkmnpqrstuvwxyz23456789",a=new Uint8Array(8);crypto.getRandomValues(a);$("npw").value=[...a].map(x=>c[x%c.length]).join("")};
@@ -2118,9 +2138,9 @@ const hdt=d=>{if(!d)return"";const t=today();if(d===t)return"сегодня";if(
  const scan=r=>{(r.querySelectorAll?r:document).querySelectorAll("input").forEach(fx);if(r.tagName==="INPUT")fx(r)};
  new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(x=>{if(x.nodeType===1)scan(x)}))).observe(document.documentElement,{childList:true,subtree:true});scan(document);
  const isTel=el=>el&&el.tagName==="INPUT"&&((el.getAttribute("type")||"")==="tel"||el.name==="phone");
- const toEnd=el=>{try{const L=el.value.length;el.setSelectionRange(L,L)}catch(e){}};
+ const toEnd=el=>{try{const L=el.value.length;el.setSelectionRange(L,L)}catch(e){eLog(e)}};
  /* курсор в конец у телефона; «0» в числовом поле выделяем, чтобы новая цифра заменила его */
- document.addEventListener("focusin",e=>{const el=e.target;if(isTel(el)){if(!el.value)el.value="+7 ";setTimeout(()=>toEnd(el),0);setTimeout(()=>toEnd(el),60)}else if(el.tagName==="INPUT"&&el.type==="number"&&(el.value==="0"||el.value==="")){setTimeout(()=>{try{el.select()}catch(x){}},0)}});
+ document.addEventListener("focusin",e=>{const el=e.target;if(isTel(el)){if(!el.value)el.value="+7 ";setTimeout(()=>toEnd(el),0);setTimeout(()=>toEnd(el),60)}else if(el.tagName==="INPUT"&&el.type==="number"&&(el.value==="0"||el.value==="")){setTimeout(()=>{try{el.select()}catch(x){eLog(x)}},0)}});
  document.addEventListener("click",e=>{const el=e.target;if(isTel(el)&&/^\+?7?\s*$/.test(el.value.trim()))toEnd(el)});
  /* формат телефона: +7 707 136 20 09 (8… и 7… приводим к +7) */
  const fmt=v=>{const pre=/^\s*\+\s*7/.test(v);let d=v.replace(/\D/g,"");if(!d)return"+7 ";let r;if(pre){r=d.slice(1)}else{if(d.length>=11&&(d[0]==="8"||d[0]==="7"))d=d.slice(1);r=d}if(r[0]==="8")r=r.slice(1);if(r.length>10&&r[0]==="7")r=r.slice(1);r=r.slice(0,10);let s="+7";if(r.length)s+=" "+r.slice(0,3);if(r.length>3)s+=" "+r.slice(3,6);if(r.length>6)s+=" "+r.slice(6,8);if(r.length>8)s+=" "+r.slice(8,10);return s};
@@ -2165,10 +2185,10 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-a="go2"]')
 /* ===== Списание со склада по заказу (разд. 58) ===== */
 const recOf=o=>{const n=String(o&&o.bn||"").trim().toLowerCase();return n?BQ.find(b=>String(b.name||"").trim().toLowerCase()===n):null};
 async function deductOrder(o){try{const cur=O.find(x=>x.id===o.id)||o;if(cur.sc||(cur.dd&&cur.dd.length))return;const b=recOf(cur);if(!b||!(b.items||[]).length){toast("Склад не списан: нет рецепта «"+(cur.bn||"")+"» (Склад → Букеты)");return}
- const done=[],short=[];for(const i of b.items){const q=+i.q||0;if(!q)continue;const it=inv(i.iid);try{await move(i.iid,"out",q,"Заказ: "+(cur.bn||"")+" · "+(cur.client||""));done.push({iid:i.iid,q})}catch(e){const have=it?lq(it,myLoc()):0;if(have>0){try{await move(i.iid,"out",have,"Заказ (не хватило): "+(cur.bn||""));done.push({iid:i.iid,q:have})}catch(x){}}short.push((it&&it.name||"?")+" −"+(q-(have>0?have:0)))}}
+ const done=[],short=[];for(const i of b.items){const q=+i.q||0;if(!q)continue;const it=inv(i.iid);try{await move(i.iid,"out",q,"Заказ: "+(cur.bn||"")+" · "+(cur.client||""));done.push({iid:i.iid,q})}catch(e){const have=it?lq(it,myLoc()):0;if(have>0){try{await move(i.iid,"out",have,"Заказ (не хватило): "+(cur.bn||""));done.push({iid:i.iid,q:have})}catch(x){eLog(x)}}short.push((it&&it.name||"?")+" −"+(q-(have>0?have:0)))}}
  if(done.length)await db.collection("orders").doc(cur.id).update({dd:done,updatedAt:TS()});
  toast(short.length?"Списано со склада, но не хватило: "+short.join(", "):"Списано со склада по рецепту: "+done.length+" поз.")}catch(e){console.warn("deductOrder",e)}}
-async function returnOrder(o){try{const cur=O.find(x=>x.id===o.id)||o;if(!(cur.dd&&cur.dd.length))return;for(const d of cur.dd){try{await move(d.iid,"in",+d.q||0,"Отмена заказа: "+(cur.bn||""))}catch(e){}}await db.collection("orders").doc(cur.id).update({dd:[],updatedAt:TS()});toast("Цветы возвращены на склад")}catch(e){console.warn("returnOrder",e)}}
+async function returnOrder(o){try{const cur=O.find(x=>x.id===o.id)||o;if(!(cur.dd&&cur.dd.length))return;for(const d of cur.dd){try{await move(d.iid,"in",+d.q||0,"Отмена заказа: "+(cur.bn||""))}catch(e){eLog(e)}}await db.collection("orders").doc(cur.id).update({dd:[],updatedAt:TS()});toast("Цветы возвращены на склад")}catch(e){console.warn("returnOrder",e)}}
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="z_rec"]');if(!b||!S)return;e.preventDefault();const o=O.find(x=>x.id===b.dataset.id);if(!o)return;bqForm();setTimeout(()=>{const f=$("bf");if(f){f.name.value=o.bn||"";f.price.value=+o.p||""}},30)});
 /* ===== «Нужно сделать» наверху главной (разд. 59): у каждой роли свой список, нажатие ведёт к делу ===== */
 function todoTop(){if(!S)return"";const now=Date.now(),t=today(),r=S.role,L=[],add=(n,f,tail,ic,col,act,id)=>{if(n>0)L.push({n,txt:pl(n,f[0],f[1],f[2])+(tail?" — "+tail:""),ic,col,act,id})},
@@ -2256,11 +2276,11 @@ async function geoPick(id){if(!SH.gisKey)return modal(hd("Нужен ключ 2�
  const cur=geoPts()[id];PKC=cur&&cur.lat?[cur.lng,cur.lat]:null;
  modal(hd("Где магазин «"+esc(lname(id))+"»?")+`<p class="mut" style="font-size:13px">Найдите магазин и нажмите на него на карте — появится метка. Потом «Сохранить».</p><div class="row" style="gap:6px"><input id="pkq" placeholder="Адрес, например 19А мкр 107/1" value="${esc(locAddr(id))}"><button type="button" class="btn g s" id="pkf" style="flex:none">Найти</button></div><div id="pkm" style="height:38vh;border-radius:16px;overflow:hidden;margin-top:10px;background:var(--c2)"></div><div class="mut" id="pkt" style="font-size:13px;margin-top:6px">${PKC?"Сейчас сохранено место — метка на карте":"Метка не поставлена"}</div><div class="acts" style="position:sticky;bottom:0;background:var(--bg);padding:8px 0;margin:0"><button type="button" class="btn" id="pks" style="width:100%" ${PKC?"":"disabled"}>Сохранить место</button></div>`);
  try{await mapLoad()}catch(e){$("pkm").innerHTML=`<div class="mut" style="padding:12px">${esc(e.message)}</div>`;return}
- try{if(PKM)PKM.destroy()}catch(e){}PKM=new mapgl.Map($("pkm"),{center:PKC||AKT,zoom:PKC?17:13,key:SH.gisKey});
- const put=c=>{PKC=c;try{if(PKMK)PKMK.destroy()}catch(e){}PKMK=new mapgl.HtmlMarker(PKM,{coordinates:c,html:'<span class="gmshop">🌸 магазин</span>'});$("pks").disabled=false;$("pkt").textContent="Метка поставлена. Если не там — нажмите в другом месте."};
+ try{if(PKM)PKM.destroy()}catch(e){eLog(e)}PKM=new mapgl.Map($("pkm"),{center:PKC||AKT,zoom:PKC?17:13,key:SH.gisKey});
+ const put=c=>{PKC=c;try{if(PKMK)PKMK.destroy()}catch(e){eLog(e)}PKMK=new mapgl.HtmlMarker(PKM,{coordinates:c,html:'<span class="gmshop">🌸 магазин</span>'});$("pks").disabled=false;$("pkt").textContent="Метка поставлена. Если не там — нажмите в другом месте."};
  if(PKC)put(PKC);PKM.on("click",ev=>put(ev.lngLat));
  $("pkf").onclick=async()=>{const f=await geoFind($("pkq").value||"").catch(()=>null);if(!f)return toast("Не нашёл адрес — найдите магазин на карте вручную");PKM.setCenter([f.lng,f.lat]);PKM.setZoom(17);put([f.lng,f.lat])};
- $("pks").onclick=()=>run(async()=>{await db.collection("settings").doc("main").set({locGeo:{[id]:{lat:PKC[1],lng:PKC[0],acc:15,src:"map",at:Date.now()}}},{merge:true});log("Задано место точки на карте",{bn:lname(id)},"");try{PKM.destroy()}catch(e){}PKM=null;modal("");toast("✓ Место «"+lname(id)+"» сохранено");draw()})}
+ $("pks").onclick=()=>run(async()=>{await db.collection("settings").doc("main").set({locGeo:{[id]:{lat:PKC[1],lng:PKC[0],acc:15,src:"map",at:Date.now()}}},{merge:true});log("Задано место точки на карте",{bn:lname(id)},"");try{PKM.destroy()}catch(e){eLog(e)}PKM=null;modal("");toast("✓ Место «"+lname(id)+"» сохранено");draw()})}
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="geo_map"]');if(!b||!own())return;e.preventDefault();geoPick(b.dataset.id||"main")});
 (function(){const s=document.createElement("style");s.textContent=".adrs{border:1px solid var(--line);border-radius:14px;margin-top:6px;overflow:hidden;background:var(--card)}.adri{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);padding:9px 12px;font:inherit;cursor:pointer}.adri:last-child{border:0}.adri span{font-size:12px;color:var(--mut)}.gmshop{display:inline-block;white-space:nowrap;background:#fff;color:#111;border-radius:99px;padding:4px 9px;font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.3);transform:translate(-50%,-100%)}";document.head.appendChild(s)})();
 /* ===== Mirflowers: удаление данных, статистика сотрудников, отчёты ===== */
@@ -2292,7 +2312,7 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-a="x_del"]
  if(!confirm(msg))return;
  run(async()=>{await delDoc(col,id,t);if(col!=="activityLogs")log("Удалено: "+(DELN[col]||col),{bn:t});modal("");toast("Удалено")})});
 function injDel(h){if(!h||!adm())return;const s=document.querySelector("#m .sh");if(s)s.insertAdjacentHTML("beforeend",`<div class="acts" style="margin-top:8px">${h}</div>`)}
-const wrapDel=(n,f)=>{const o=window[n];window[n]=function(...a){const r=o.apply(this,a),go=()=>{try{injDel(f(...a))}catch(x){}};return r&&r.then?r.then(v=>{go();return v}):(go(),r)}};
+const wrapDel=(n,f)=>{const o=window[n];window[n]=function(...a){const r=o.apply(this,a),go=()=>{try{injDel(f(...a))}catch(x){eLog(x)}};return r&&r.then?r.then(v=>{go();return v}):(go(),r)}};
 wrapDel("dealOpen",id=>{const d=DL.find(x=>x.id===id);return d?delBtn("deals",id,d.title||d.client):""});
 wrapDel("cDetail",k=>{const c=clients().find(x=>x.k===k);return c?delBtn("customers",k,c.name):""});
 wrapDel("locForm",id=>id&&id!=="main"?delBtn("locations",id,(LC.find(l=>l.id===id)||{}).name):"");
@@ -2459,7 +2479,7 @@ async function pushTok(){const reg=await navigator.serviceWorker.register("fireb
 async function pushSave(t){await db.collection("pushTokens").doc(t).set({uid:U.uid,role:S.role,ua:navigator.userAgent.slice(0,120),ts:Date.now()},{merge:true});
  const d=await db.collection("pushTokens").doc(t).get();PT={tok:t,ev:(d.data()||{}).ev||{}};STO.set(pushKey(),t)}
 // при входе: если на устройстве уже разрешены push, обновляем токен и роль
-async function pushSync(){try{if(!S||!U||!SH.vapid||!pushOK()||Notification.permission!=="granted"||!STO.get(pushKey()))return;await pushSave(await pushTok());dq()}catch(e){}}
+async function pushSync(){try{if(!S||!U||!SH.vapid||!pushOK()||Notification.permission!=="granted"||!STO.get(pushKey()))return;await pushSave(await pushTok());dq()}catch(e){eLog(e)}}
 auth.onAuthStateChanged(u=>{PT={tok:"",ev:{}};if(u)setTimeout(pushSync,3500)});
 function pushCard(){if(!S)return"";const ev=pushEvs(),tok=STO.get(pushKey())&&PT.tok||"",
  sw=k=>`<label class="row" style="color:var(--ink);margin:10px 0 0">${PUSHEV[k]}<input type="checkbox" data-pe="${k}" ${PT.ev[k]!==false?"checked":""} style="width:26px;min-height:26px"></label>`;
@@ -2478,7 +2498,7 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-a^="push_"
  else if(a==="push_on")run(async()=>{if(!pushOK())return toast("Push не поддерживаются в этом браузере");if(!SH.vapid)return toast("Владелец не вставил ключ VAPID");
   const p=await Notification.requestPermission();if(p!=="granted")return toast("Разрешите уведомления в настройках браузера");
   await pushSave(await pushTok());toast("Push включены");draw()})
- else if(a==="push_off")run(async()=>{if(PT.tok){try{await firebase.messaging().deleteToken()}catch(x){}await db.collection("pushTokens").doc(PT.tok).delete().catch(()=>{})}STO.set(pushKey(),"");PT={tok:"",ev:{}};toast("Push выключены");draw()})
+ else if(a==="push_off")run(async()=>{if(PT.tok){try{await firebase.messaging().deleteToken()}catch(x){eLog(x)}await db.collection("pushTokens").doc(PT.tok).delete().catch(()=>{})}STO.set(pushKey(),"");PT={tok:"",ev:{}};toast("Push выключены");draw()})
  else if(a==="push_test")run(async()=>{await FNC("pushTest")({});toast("Проверка отправлена")})});
 document.addEventListener("change",e=>{const i=e.target.closest("[data-pe]");if(!i||!S||!PT.tok)return;PT.ev[i.dataset.pe]=i.checked;db.collection("pushTokens").doc(PT.tok).set({ev:PT.ev},{merge:true}).catch(x=>toast(er(x)))});
 
@@ -2519,7 +2539,7 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-a="v_add"]
 // ===== точка на смену =====
 function locUntil(){const n=Date.now(),d=today();let best=0;[addD(d,-1),d].forEach(dy=>{const s=SHL.find(x=>x.uid===U.uid&&x.date===dy&&x.t==="work"&&x.from&&x.to);if(!s)return;const a=new Date(dy+"T"+s.from).getTime();let z=new Date(dy+"T"+s.to).getTime();if(z<=a)z+=864e5;if(a-36e5<=n&&z>n)best=Math.max(best,z)});return best||n+12*36e5}
 function locSave(id){LOC=id;STO.set("locSel",JSON.stringify({uid:U.uid,id,until:locUntil()}))}
-function locGate(){const g0=document.getElementById("locgate");if(g0)g0.remove();if(!S||!U||fixed()||own()||S.role==="courier"||locs().length<2)return;let s=null;try{s=JSON.parse(STO.get("locSel")||"null")}catch(e){}
+function locGate(){const g0=document.getElementById("locgate");if(g0)g0.remove();if(!S||!U||fixed()||own()||S.role==="courier"||locs().length<2)return;let s=null;try{s=JSON.parse(STO.get("locSel")||"null")}catch(e){eLog(e)}
  if(s&&s.uid===U.uid&&s.until>Date.now()&&(s.id===""?adm():locs().some(x=>x.id===s.id))){LOC=s.id;return}
  LOC=""}
 setInterval(()=>{if(S)locGate()},60000);
@@ -2539,7 +2559,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b
 // ссылка из push: ?o=ID открывает заказ, ?tab=... открывает вкладку
 function openLink(u){try{const q=new URL(u,location.href).searchParams,o=q.get("o"),t=q.get("tab");if(!S)return false;if(o){tab="orders";draw();detail(o)}else if(t){tab=t;draw()}else return true;history.replaceState(null,"",location.pathname);return true}catch(e){return true}}
 let pendLink=location.search||"";if(pendLink)setInterval(function(){if(S&&pendLink&&O.length){if(openLink(pendLink))pendLink=""}},700);
-try{navigator.serviceWorker&&navigator.serviceWorker.addEventListener("message",m=>{if(m.data&&m.data.go)openLink(m.data.go)})}catch(e){}
+try{navigator.serviceWorker&&navigator.serviceWorker.addEventListener("message",m=>{if(m.data&&m.data.go)openLink(m.data.go)})}catch(e){eLog(e)}
 // после сна телефона / потери сети сразу переподключить обновления
-let hidAt=0;document.addEventListener("visibilitychange",()=>{if(document.hidden){hidAt=Date.now();return}if(S){if(hidAt&&Date.now()-hidAt>20000)netKick("back");else{try{db.enableNetwork()}catch(e){}}dq()}});addEventListener("online",()=>{if(S)netKick("online")});
+let hidAt=0;document.addEventListener("visibilitychange",()=>{if(document.hidden){hidAt=Date.now();return}if(S){if(hidAt&&Date.now()-hidAt>20000)netKick("back");else{try{db.enableNetwork()}catch(e){eLog(e)}}dq()}});addEventListener("online",()=>{if(S)netKick("online")});
 </script></body></html>
