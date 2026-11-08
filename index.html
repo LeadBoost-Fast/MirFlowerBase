@@ -254,6 +254,7 @@ details.imore{margin-top:4px}details.imore>summary{cursor:pointer;list-style:non
 html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}a,button,input,select,textarea,label,[data-a],[data-t]{touch-action:manipulation}@supports (-webkit-touch-callout:none){input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:max(16px,1em)}}
 #tb .tbb{position:relative}#tb .tbn{position:absolute;top:1px;right:-2px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#ff3b30;color:#fff;font:700 11px/18px -apple-system,system-ui,sans-serif;text-align:center;box-shadow:0 0 0 2px var(--bg);pointer-events:none}
 .meln{display:flex;align-items:center;gap:10px;margin:2px 2px 12px;cursor:pointer}.meln .mav{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--ac) 18%,var(--card));color:var(--ink);font-weight:700;flex:none}.meln div{min-width:0;display:flex;flex-direction:column}.meln b{font-size:15px;line-height:1.2}.meln span{font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gmk{display:flex;flex-direction:column;align-items:center;line-height:1.15;padding:5px 10px 6px!important}.gmk b{font-size:14px}.gmk small{font:600 11px system-ui,sans-serif;opacity:.8;max-width:130px;overflow:hidden;text-overflow:ellipsis}.gmk.late{outline:3px solid #ff3b30;outline-offset:1px}
 </style></head><body>
 <main id="v"><p class="mut">Подключение…</p></main>
 <script>
@@ -916,11 +917,15 @@ async function mapAfter(){const ph=$("gmph");if(!ph)return;if(!GMEL){GMEL=docume
  try{await mapLoad()}catch(e){GMEL.innerHTML=`<div class="card mut" style="margin:12px">${esc(e.message)}</div>`;return}
  if(!GM){try{GM=new mapgl.Map(GMEL,{center:AKT,zoom:12,key:SH.gisKey})}catch(e){GMEL.innerHTML=`<div class="card mut" style="margin:12px">Карта не открылась: ${esc(e.message||e)}</div>`;return}}else{try{GM.invalidateSize()}catch(e){}}
  mapSync()}
-async function mapSync(fit){const L=mapOrders(),sig=L.map(o=>o.id+":"+o.st+":"+(o.time||"")+":"+gq(o)).join("|");if(sig===GMSIG&&!fit)return;GMSIG=sig;const seq=++GMSEQ,pts=[],miss=[];
+/* метка доставки: крупно время доставки (или дата / «без времени»), ниже букет; «в пути» — с какого времени у курьера */
+function gmkHtml(o,k){const t=String(o.time||"").slice(0,5),td=today(),d=o.date||"",when=t?(d&&d!==td?new Date(d+"T12:00:00").toLocaleDateString("ru-RU",{day:"numeric",month:"short"})+" ":"")+t:(d&&d!==td?new Date(d+"T12:00:00").toLocaleDateString("ru-RU",{day:"numeric",month:"short"}):"без времени"),
+ sub=+o.st===3&&o.cAcc?"в пути с "+chTs(o.cAcc):String(o.bn||"").slice(0,18),late=t&&d&&+o.st<4&&new Date(d+"T"+t).getTime()<Date.now();
+ return `<button class="gmk${late?" late":""}" style="--mk:${MKC[k]}" data-a="det" data-id="${o.id}"><b>${esc(when)}</b>${sub?`<small>${esc(sub)}</small>`:""}</button>`}
+async function mapSync(fit){const L=mapOrders(),sig=L.map(o=>o.id+":"+o.st+":"+(o.time||"")+":"+(o.date||"")+":"+(o.cAcc||"")+":"+gq(o)).join("|");if(sig===GMSIG&&!fit)return;GMSIG=sig;const seq=++GMSEQ,pts=[],miss=[];
  GMK.forEach(m=>{try{m.destroy()}catch(e){}});GMK=[];
  Object.entries(geoPts()).forEach(([k,v])=>{if(v&&v.lat)try{GMK.push(new mapgl.HtmlMarker(GM,{coordinates:[v.lng,v.lat],html:`<span class="gmshop" title="${esc(lname(k))}">🌸 ${esc(lname(k))}</span>`}))}catch(e){}});
  for(const o of L){const a=gq(o);let c=o.geo&&o.geo.lat?[o.geo.lng,o.geo.lat]:geoC(a);if(c===null){try{c=await geocode(a)}catch(e){c=0}}if(seq!==GMSEQ||!GM)return;if(!c){miss.push(o);continue}pts.push(c);
-  const k=Math.min(3,+o.st||0);GMK.push(new mapgl.HtmlMarker(GM,{coordinates:c,html:`<button class="gmk" style="--mk:${MKC[k]}" data-a="det" data-id="${o.id}">${esc(o.time||"•")}</button>`}))}
+  const k=Math.min(3,+o.st||0);GMK.push(new mapgl.HtmlMarker(GM,{coordinates:c,html:gmkHtml(o,k)}))}
  if(fit&&pts.length){const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);try{GM.fitBounds({southWest:[Math.min(...xs),Math.min(...ys)],northEast:[Math.max(...xs),Math.max(...ys)]},{padding:{top:60,bottom:60,left:40,right:40}})}catch(e){}}
  GMXH=miss.length?`<h2>Адрес не найден на карте · ${miss.length}</h2><div class="og">${miss.map(card).join("")}</div>`:"";const x=$("gmx");if(x)x.innerHTML=GMXH}
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="gm_me"],[data-a="gm_all"]');if(!b||!S)return;
