@@ -253,6 +253,8 @@ details.imore{margin-top:4px}details.imore>summary{cursor:pointer;list-style:non
 @media(max-width:899px){.sc{min-width:36px;padding:10px 1px;font-size:11px;letter-spacing:-.2px}.sch td.nm{max-width:70px;font-size:12px}.sch table{border-spacing:2px}}
 html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}a,button,input,select,textarea,label,[data-a],[data-t]{touch-action:manipulation}@supports (-webkit-touch-callout:none){input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:max(16px,1em)}}
 #tb .tbb{position:relative}#tb .tbn{position:absolute;top:1px;right:-2px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#ff3b30;color:#fff;font:700 11px/18px -apple-system,system-ui,sans-serif;text-align:center;box-shadow:0 0 0 2px var(--bg);pointer-events:none}
+.meln{display:flex;align-items:center;gap:10px;margin:2px 2px 12px;cursor:pointer}.meln .mav{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--ac) 18%,var(--card));color:var(--ink);font-weight:700;flex:none}.meln div{min-width:0;display:flex;flex-direction:column}.meln b{font-size:15px;line-height:1.2}.meln span{font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gmk{display:flex;flex-direction:column;align-items:center;line-height:1.15;padding:5px 10px 6px!important}.gmk b{font-size:14px}.gmk small{font:600 11px system-ui,sans-serif;opacity:.8;max-width:130px;overflow:hidden;text-overflow:ellipsis}.gmk.late{outline:3px solid #ff3b30;outline-offset:1px}
 </style></head><body>
 <main id="v"><p class="mut">Подключение…</p></main>
 <script>
@@ -700,7 +702,7 @@ let __authDone=0;setTimeout(()=>{if(!__authDone&&typeof login==="function"){try{
 auth.onAuthStateChanged(async u=>{await FSREADY;__authDone=1;U=u;S=null;O=[];ON=0;OX=new Map();OXR={date:[],ts:[]};UPON=0;SF={};PRS=[];INV=[];INV0=[];CST={};DL=[];BQ=[];LG=[];VS=[];CU={};SC=[];LD=[];EX=[];SHL=[];SR=[];RP=[];BL=[];CHS=[];CHERR="";chStop();ORD0=false;TCM=[];TCERR="";tcLast=0;NP=null;subs.forEach(f=>f());subs=[];if(!u)return login();
  try{const d=await db.collection("staff").doc(u.uid).get();const s=d.exists?d.data():null;if(s&&s.active===true&&(s.role==="owner"||isOwnEm(u.email))){s.own=true;s.head=String(u.email||"").toLowerCase()===HEAD_EM;s.role="admin"}
   if(!s||s.active!==true||!RL[s.role]){await auth.signOut();return login(!s?"Профиль сотрудника не создан. Обратитесь к администратору.":"Аккаунт отключён или роль не задана.")}
-  S=s;try{const hd=localStorage.getItem("hangDiag");if(hd){localStorage.removeItem("hangDiag");setTimeout(()=>log("Связь зависла (диагностика)",{bn:""},hd.slice(0,2000)),3000)}}catch(e){}if(s.role!=="admin"&&s.role!=="courier"&&s.loc)LOC=s.loc;try{if(!sessionStorage.getItem("lg")){sessionStorage.setItem("lg","1");log("Вход в систему",{bn:""})}}catch(x){}
+  S=s;try{const hd=localStorage.getItem("hangDiag");if(hd){localStorage.removeItem("hangDiag");setTimeout(()=>log("Связь зависла (диагностика)",{bn:""},hd.slice(0,2000)),3000)}}catch(e){}if(s.role!=="admin"&&s.role!=="courier"&&s.loc)LOC=s.loc;try{if(!sessionStorage.getItem("lg")){sessionStorage.setItem("lg","1");log("Вход в систему",{bn:""});setTimeout(()=>{try{nfBanner({title:"Здравствуйте, "+(S.name||"")+"! 🌸",body:(RL[S.role]||"")+(SH&&SH.name?" · "+SH.name:"")+" · хорошего дня",tag:"hello"})}catch(e){}},900)}}catch(x){}
  }catch(e){await auth.signOut();return login("Не удалось проверить доступ: "+er(e))}
  subs.push(db.collection("staff").onSnapshot(s=>{SF={};s.forEach(d=>SF[d.id]=d.data());dq()},e=>toast(er(e))));
  const q=db.collection("orders").orderBy("ts","desc").limit(300);
@@ -795,8 +797,9 @@ function stBlock(c){const y=LY(),act=[0,1,2,3].reduce((a,i)=>a+c(i),0)||1,A=i=>`
  if(y==="b"){const mx=Math.max(1,...[0,1,2,3,4,5].map(c));return `<div class="card hbc"><b class="rgt">Заказы по статусам</b>${SLB.map((n,i)=>`<div class="hbx" ${A(i)}><span>${n}</span><i><b style="width:${Math.max(c(i)?6:0,c(i)/mx*100)}%;background:var(--s${i})"></b></i><em>${c(i)}</em></div>`).join("")}</div>`}
  return ""}
 function geoBanner(){if(!S||!own())return"";const L=locs().filter(l=>!(geoPts()[l.id]||{}).lat);if(!L.length)return"";return `<div class="card geob"><b>📍 Задайте место магазинов</b><p class="mut" style="margin:4px 0 10px;font-size:13px">Пока место не задано, сотрудники могут начать смену откуда угодно. Нажмите <b>«На карте»</b> и ткните в свой магазин на карте 2ГИС (или «По адресу» / «Я здесь», если вы внутри). После этого смену можно будет начать только в 50 м от него.</p>${L.map(l=>`<div class="lcr"><div style="color:var(--ink)"><b>${esc(l.name)}</b></div><div class="lcb"><button class="btn s" data-a="geo_map" data-id="${esc(l.id)}">🗺 На карте</button><button class="btn g s" data-a="geo_addr" data-id="${esc(l.id)}">По адресу</button><button class="btn g s" data-a="geo_set" data-id="${esc(l.id)}">📍 Я здесь</button></div></div>`).join("")}</div>`}
-function home(){return geoBanner()+home0()+(mgr()?repHome():"")+shiftEndCard()}
+function home(){return meLine()+geoBanner()+home0()+(mgr()?repHome():"")+shiftEndCard()}
 /* Главная по профессиям (разд. 37): флорист и оператор — рабочая очередь без графиков; помощник — витрина и свежесть, затем очередь; админ и владельцы — сводка */
+function meLine(){const n=String(S.name||"").trim()||"Сотрудник";return `<div class="meln" data-a="goto" data-id="me"><span class="mav">${esc(n.charAt(0).toUpperCase())}</span><div><b>${esc(n)}</b><span>${myRL()}${U&&U.email?" · "+esc(U.email):""}</span></div></div>`}
 function home0(){return shiftCard()+todoTop()+home00()}
 function home00(){if(S.role==="courier")return homeC();if(S.role==="assistant")return homeAs()+homeFl(true)+myEarn();if(S.role==="florist"||S.role==="operator")return homeFl()+myEarn();return homeOp()+(own()?"":myEarn())}
 /* ===== Заработок сотрудников (разд. 46): ставки владельца в settings/main.pay ===== */
@@ -875,7 +878,7 @@ function homeOp(){const vsold=SC.filter(x=>x.st==="sold"&&new Date(x.at||0).toLo
  const money=td.reduce((a,o)=>a+tot(o),0),ym=yo.reduce((a,o)=>a+tot(o),0),up=act.slice().sort((a,b)=>((a.date||"")+(a.time||"")).localeCompare((b.date||"")+(b.time||""))).slice(0,6),
  w7=live.filter(o=>o.date>=addD(t,-6)&&o.date<=t),avg=w7.length?w7.reduce((a,o)=>a+tot(o),0)/w7.length:0,
  tl=(i,x,k)=>`<div class="tile" data-a="tf" data-id="${i}" data-k style="--k:${k}"><b>${c(i)}</b><span>${x}</span></div>`;
- const y=LY(),G=`<div style="position:relative">${flr("branch","deco")}<h1>Здравствуйте, ${esc(S.name||"")}</h1><p class="mut">${esc(SH.name||"Mirflowers")} · ${myRL()} · ${new Date().toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long"})}</p></div>`,
+ const y=LY(),G="",
  ST=`<div style="margin-top:14px">${stBlock(c)}</div>`,CT=ctrlBlock(),HR=adm()||S.role==="operator"?dashHero():"",AL=`<div class="w">${alerts()}</div>`,
  OC=mgr()?ordCnt()+`${vsold.length?`<p class="mut">Продано с витрины сегодня: ${vsold.length} на ${M(vsold.reduce((a,x)=>a+(+x.price||0),0))}</p>`:""}`:"",
  WG=`<div class="dg" style="margin-top:6px">${todayStaff()}${widgets()}</div>`,RV=rvSec(),
@@ -914,11 +917,15 @@ async function mapAfter(){const ph=$("gmph");if(!ph)return;if(!GMEL){GMEL=docume
  try{await mapLoad()}catch(e){GMEL.innerHTML=`<div class="card mut" style="margin:12px">${esc(e.message)}</div>`;return}
  if(!GM){try{GM=new mapgl.Map(GMEL,{center:AKT,zoom:12,key:SH.gisKey})}catch(e){GMEL.innerHTML=`<div class="card mut" style="margin:12px">Карта не открылась: ${esc(e.message||e)}</div>`;return}}else{try{GM.invalidateSize()}catch(e){}}
  mapSync()}
-async function mapSync(fit){const L=mapOrders(),sig=L.map(o=>o.id+":"+o.st+":"+(o.time||"")+":"+gq(o)).join("|");if(sig===GMSIG&&!fit)return;GMSIG=sig;const seq=++GMSEQ,pts=[],miss=[];
+/* метка доставки: крупно время доставки (или дата / «без времени»), ниже букет; «в пути» — с какого времени у курьера */
+function gmkHtml(o,k){const t=String(o.time||"").slice(0,5),td=today(),d=o.date||"",when=t?(d&&d!==td?new Date(d+"T12:00:00").toLocaleDateString("ru-RU",{day:"numeric",month:"short"})+" ":"")+t:(d&&d!==td?new Date(d+"T12:00:00").toLocaleDateString("ru-RU",{day:"numeric",month:"short"}):"без времени"),
+ sub=+o.st===3&&o.cAcc?"в пути с "+chTs(o.cAcc):String(o.bn||"").slice(0,18),late=t&&d&&+o.st<4&&new Date(d+"T"+t).getTime()<Date.now();
+ return `<button class="gmk${late?" late":""}" style="--mk:${MKC[k]}" data-a="det" data-id="${o.id}"><b>${esc(when)}</b>${sub?`<small>${esc(sub)}</small>`:""}</button>`}
+async function mapSync(fit){const L=mapOrders(),sig=L.map(o=>o.id+":"+o.st+":"+(o.time||"")+":"+(o.date||"")+":"+(o.cAcc||"")+":"+gq(o)).join("|");if(sig===GMSIG&&!fit)return;GMSIG=sig;const seq=++GMSEQ,pts=[],miss=[];
  GMK.forEach(m=>{try{m.destroy()}catch(e){}});GMK=[];
  Object.entries(geoPts()).forEach(([k,v])=>{if(v&&v.lat)try{GMK.push(new mapgl.HtmlMarker(GM,{coordinates:[v.lng,v.lat],html:`<span class="gmshop" title="${esc(lname(k))}">🌸 ${esc(lname(k))}</span>`}))}catch(e){}});
  for(const o of L){const a=gq(o);let c=o.geo&&o.geo.lat?[o.geo.lng,o.geo.lat]:geoC(a);if(c===null){try{c=await geocode(a)}catch(e){c=0}}if(seq!==GMSEQ||!GM)return;if(!c){miss.push(o);continue}pts.push(c);
-  const k=Math.min(3,+o.st||0);GMK.push(new mapgl.HtmlMarker(GM,{coordinates:c,html:`<button class="gmk" style="--mk:${MKC[k]}" data-a="det" data-id="${o.id}">${esc(o.time||"•")}</button>`}))}
+  const k=Math.min(3,+o.st||0);GMK.push(new mapgl.HtmlMarker(GM,{coordinates:c,html:gmkHtml(o,k)}))}
  if(fit&&pts.length){const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);try{GM.fitBounds({southWest:[Math.min(...xs),Math.min(...ys)],northEast:[Math.max(...xs),Math.max(...ys)]},{padding:{top:60,bottom:60,left:40,right:40}})}catch(e){}}
  GMXH=miss.length?`<h2>Адрес не найден на карте · ${miss.length}</h2><div class="og">${miss.map(card).join("")}</div>`:"";const x=$("gmx");if(x)x.innerHTML=GMXH}
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="gm_me"],[data-a="gm_all"]');if(!b||!S)return;
@@ -1171,6 +1178,7 @@ function gsOpen(){modal(hd("Поиск")+`<input id="gsq" type="search" placehol
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="nfc"],[data-a="nfo"],[data-a="nfclr"],[data-a="gso"],[data-a^="gs_"]');if(!b||!S)return;const a=b.dataset.a,id=b.dataset.id;
  if(a==="nfc")nfCenter();else if(a==="nfo"){const x=nfhLoad()[+id];modal("");if(x)nfGo(x)}else if(a==="nfclr"){NFH=[];STO.set(nfhKey(),"[]");nfCenter()}
  else if(a==="gso")gsOpen();else if(a==="gs_o"){modal("");detail(id)}else if(a==="gs_c"){modal("");tab="crm";draw();cDetail(id)}else if(a==="gs_i"){modal("");tab="stock";sv="i";draw();const it=inv(id);if(it)itemForm(it)}else if(a==="gs_ch"){modal("");tab="chats";chV="list";draw();chStart(id)}});
+document.addEventListener("change",e=>{const c=e.target.closest('[data-a="np_shift"]');if(!c||!S||!own())return;run(async()=>{await db.collection("settings").doc("main").set({pushShiftOnly:c.checked},{merge:true});toast(c.checked?"Сотрудникам — только во время смены":"Сотрудникам — всегда")})});
 function moreV(){return `<h1>Ещё</h1><div class="mg">`+MORE.map(t=>`<button type="button" data-a="goto" data-id="${t[0]}">${tic(t[0])}${t[2]}${nbG(t[0])?`<b class="nb">${nbG(t[0])}</b>`:""}</button>`).join("")+`</div>`}
 let GP={};
 const GR=[["orders","fl"],["chats","tpl"],["stock"],["show","gal"],["crm","leads","deals"],["rep","st","jr"],["fin","an"],["map","cur"],["team","sched","tc"]],GRA=GR,
@@ -1179,7 +1187,7 @@ const GR=[["orders","fl"],["chats","tpl"],["stock"],["show","gal"],["crm","leads
  hd0=k=>(GP[k]||[k])[0],
  gtab=()=>{const p=GP[tab];if(!p||p.length<2||tab==="chats")return"";return `<div class="gtab" role="tablist">${p.map(k=>`<button type="button" role="tab" class="${k===tab?"on":""}" data-a="goto" data-id="${k}">${GLB[k]||k}${nbN(k)?` <b class="nb">${nbN(k)}</b>`:""}</button>`).join("")}</div>`};
 function homeF(){const q=O.filter(o=>+o.st<2).sort(byDt),c=i=>O.filter(o=>+o.st===i).length;
- return `<div style="position:relative">${flr("branch","deco")}<h1>Очередь сборки</h1><p class="mut">${esc(S.name||"")} · ${myRL()}</p></div><div class="rgs">${[["Новые",0],["В сборке",1],["Готовы",2]].map(a=>`<div class="tile"><b>${c(a[1])}</b><span>${a[0]}</span></div>`).join("")}</div><div class="dg">${alerts()}${todayStaff()}</div><h2>Собрать</h2><div class="og ly-${LY()}">${oRender(q)||`<div class="card mut" style="text-align:center">${flr("tulip")}<br>Очередь пуста</div>`}</div>`}
+ return `<div style="position:relative">${flr("branch","deco")}<h1>Очередь сборки</h1></div><div class="rgs">${[["Новые",0],["В сборке",1],["Готовы",2]].map(a=>`<div class="tile"><b>${c(a[1])}</b><span>${a[0]}</span></div>`).join("")}</div><div class="dg">${alerts()}${todayStaff()}</div><h2>Собрать</h2><div class="og ly-${LY()}">${oRender(q)||`<div class="card mut" style="text-align:center">${flr("tulip")}<br>Очередь пуста</div>`}</div>`}
 function curActs(o,freeO){if(freeO)return `<button class="btn s" data-a="cur_take" data-id="${o.id}">Взять доставку</button>`;
  if(o.courier!==U.uid||+o.st>=4)return"";
  if(!o.cAcc)return `<button class="btn s" data-a="cur_acc" data-id="${o.id}">Принять в работу</button><button class="btn r s" data-a="cur_rel" data-id="${o.id}">Отказаться</button>`;
@@ -1194,7 +1202,7 @@ function homeC(){const mine=O.filter(o=>o.dv&&+o.st<4&&o.courier===U.uid).sort(b
  <div class="mut">${esc(o.client)} · ${esc(o.phone)}<br>${hdt(o.date)} ${esc(o.time||"")}<br>${esc(addrFull(o)||o.addr||"")}</div>
  ${addrNote(o)?`<div class="cmt">📝 ${esc(addrNote(o))}</div>`:""}
  <div class="acts">${gisBtnO(o)}${curActs(o,freeO)}<button class="btn g s" data-a="det" data-id="${o.id}">Подробнее</button></div></div>`};
- return `<div style="position:relative">${flr("branch","deco")}<h1>Доставки</h1><p class="mut">${esc(S.name||"")} · ${myRL()}</p></div><div class="dg">${alerts()}${widgets()}</div>
+ return `<div style="position:relative">${flr("branch","deco")}<h1>Доставки</h1></div><div class="dg">${alerts()}${widgets()}</div>
  <h2>Мои</h2><div class="og">${mine.map(cardC).join("")||`<div class="card mut" style="text-align:center">Пока нет назначенных</div>`}</div>
  <h2>Свободные — можно взять</h2><div class="og">${free.map(cardC).join("")||`<div class="card mut" style="text-align:center">Свободных нет</div>`}</div>
  ${prep.length?`<h2>На сборке у других курьеров</h2><div class="og">${prep.map(cardC).join("")}</div>`:""}`}
@@ -1653,11 +1661,11 @@ function nfBanner(o){let box=$("nfs");if(!box){box=document.createElement("div")
  tm=setTimeout(close,6500);nfSound();
  const p=npGet();if(p.sys&&document.hidden&&window.Notification&&Notification.permission==="granted")try{new Notification(o.title||"Mirflowers",{body:o.body||""})}catch(e){}
  try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}}
-function nf(o){try{nfLog(o)}catch(e){}const p=npGet();if(!p.on||p.until>Date.now()||p.types[o.type]===false)return;nfBanner(o)}
+function nf(o){try{nfLog(o)}catch(e){}if(S&&!own()&&SH.pushShiftOnly!==false&&!SHF()&&!(typeof SLG!=="undefined"&&SLG.some(x=>x.uid===U.uid&&!x.end&&Date.now()-(+x.start||0)<20*36e5)))return;/* сотрудник не на смене — уведомлений нет (в колокольчике событие остаётся) */const p=npGet();if(!p.on||p.until>Date.now()||p.types[o.type]===false)return;nfBanner(o)}
 const nfTime=t=>new Date(t).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
 function nfCard(){const p=npGet(),mu=p.until>Date.now(),sw=(k,l,on)=>`<label class="row" style="color:var(--ink);margin:10px 0 0">${l}<input type="checkbox" data-np="${k}" ${on?"checked":""} style="width:26px;min-height:26px"></label>`,
  perm=window.Notification?Notification.permission:"none";
- return `<h2>Уведомления на сайте</h2><div class="card"><div class="mut">Всплывающие сообщения, пока сайт открыт (новый заказ, готов букет и т. д.). Настройка только для этого устройства. Когда сайт закрыт, работает блок «Push на телефон» ниже.</div>${sw("on","Показывать уведомления",p.on)}
+ return `<h2>Уведомления на сайте</h2>${own()?`<div class="card"><label class="row" style="color:var(--ink);margin:0">Сотрудникам — только во время смены<input type="checkbox" data-a="np_shift" ${SH.pushShiftOnly!==false?"checked":""} style="width:26px;min-height:26px"></label><div class="mut" style="font-size:13px;margin-top:6px">Начал смену — уведомления и push приходят, закончил — перестают. Владельцам приходят всегда. Настройка для всего магазина.</div></div>`:(SH.pushShiftOnly!==false?`<p class="mut" style="margin:0 2px 8px">Уведомления и push приходят, только пока вы на смене.</p>`:"")}<div class="card"><div class="mut">Всплывающие сообщения, пока сайт открыт (новый заказ, готов букет и т. д.). Настройка только для этого устройства. Когда сайт закрыт, работает блок «Push на телефон» ниже.</div>${sw("on","Показывать уведомления",p.on)}
  <div class="mut" style="margin:14px 2px 6px">Отключить на время:</div><div class="chips" style="margin:0">${[[1,"1 час"],[3,"3 часа"],[24,"1 день"]].map(x=>`<button class="chip" data-a="np_sn" data-id="${x[0]}">${x[1]}</button>`).join("")}${mu?'<button class="chip on" data-a="np_sn" data-id="0">Включить сейчас</button>':""}</div>
  ${mu?`<p class="pill warn" style="margin:10px 0 0">Отключены до ${nfTime(p.until)}${new Date(p.until).toDateString()!==new Date().toDateString()?" завтра":""}</p>`:""}
  <h2 style="margin:18px 0 0">Что показывать</h2>${Object.keys(NFT).map(k=>sw("t:"+k,NFT[k],p.types[k]!==false)).join("")}
@@ -1691,7 +1699,7 @@ rvSec=()=>{if(!isOp())return"";const w=O.filter(o=>+o.st===2&&o.rv==="wait").sor
 function homeFl(sub){const mine=O.filter(o=>+o.st===1),redo=mine.filter(o=>o.rv==="redo").sort(byMk),inw=mine.filter(o=>o.rv!=="redo").sort((a,b)=>(b.takenBy===U.uid)-(a.takenBy===U.uid)||byMk(a,b)),nw=O.filter(o=>+o.st===0).sort(byMk),wt=O.filter(o=>+o.st===2&&o.rv==="wait").length,
  sec=(t,l)=>l.length?`<h2>${t} · ${l.length}</h2><div class="og">${l.map(card).join("")}</div>`:"";
  const shift=SHL.some(x=>x.date===today()&&x.t==="work");
- return `${sub?"":`<div style="position:relative">${flr("branch","deco")}<h1>Заказы к сборке</h1><p class="mut">${esc(S.name||"")} · ${RL[S.role]}</p></div>`}
+ return `${sub?"":`<div style="position:relative">${flr("branch","deco")}<h1>Заказы к сборке</h1></div>`}
  <div class="rgs"><div class="tile" data-a="tf" data-id="0" style="cursor:pointer"><b>${nw.length}</b><span>Новые</span></div><div class="tile" data-a="tf" data-id="1" style="cursor:pointer"><b>${inw.length}</b><span>В сборке</span></div><div class="tile"><b>${redo.length}</b><span>Переделать</span></div></div>
  ${sub?"":chatWait()}<div class="dg">${alerts()}${shift?todayStaff():""}</div>${sec("⚠ Нужно переделать",redo)}${sec("Собираются сейчас",inw)}${sec("Новые: принять на себя",nw)}
  ${redo.length||inw.length||nw.length?"":`<div class="card mut" style="text-align:center">${flr("tulip")}<br>Очередь пуста</div>`}${wt?`<p class="mut">На приёмке у оператора: ${wt}</p>`:""}`}

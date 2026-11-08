@@ -79,11 +79,15 @@ async function push(type,who,msg,exclude){
   const db=admin.firestore();
   const [st,tk]=await Promise.all([db.collection("staff").get(),db.collection("pushTokens").get()]);
   const S={};st.forEach(d=>S[d.id]=d.data());
+  // сотрудникам push только во время смены (settings.pushShiftOnly, по умолчанию включено); владельцам — всегда
+  let onShift=null;
+  if(type!=="test"){try{const sm=await db.doc("settings/main").get();if(!sm.exists||sm.data().pushShiftOnly!==false){onShift=new Set();const ls=await db.collection("shiftLog").where("start",">=",Date.now()-20*36e5).get();ls.forEach(d=>{const x=d.data();if(x.uid&&!x.end)onShift.add(x.uid)})}}catch(e){console.error("push shift",e);onShift=null}}
   const toks=[];
   tk.forEach(d=>{const t=d.data(),p=S[t.uid];
     if(!p||p.active!==true||t.uid===exclude)return;
     if(t.ev&&t.ev[type]===false)return;
     const top=TOP.includes(String(p.email||"").toLowerCase());
+    if(onShift&&!top&&p.role!=="owner"&&!onShift.has(t.uid))return;
     if(who({uid:t.uid,role:p.role,top}))toks.push(d.id)});
   if(!toks.length)return 0;
   const data={title:String(msg.title||"Mirflowers"),body:String(msg.body||"").slice(0,200),tag:String(msg.tag||type),url:String(msg.url||"/")};
