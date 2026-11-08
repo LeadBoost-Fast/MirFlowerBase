@@ -1613,10 +1613,10 @@ async function finishReady(o,img){const ri=img?await upImg(img,"orders"):"";cons
  await deductOrder(o);
  if(img&&FX("photoAuto"))await sendClientPhoto(o,ri||img)}
 function readyFlow(o){if(!(o.needPhoto&&FX("photoAuto")))return run(()=>finishReady(o,""));let u="";
- modal(hd(esc(o.bn||"Заказ"))+`<p class="mut">Сделайте фото или выберите готовое из галереи или файлов. Фото сразу уйдёт клиенту (${esc(o.client||"")}).</p><input id="rpf" type="file" accept="image/*"><img id="rpi" alt="" style="width:100%;border-radius:16px;margin-top:10px" hidden><p class="mut" id="rps"></p><div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button>${isDirect()?'<button class="btn g" type="button" id="rpn">Без фото</button>':""}<button class="btn" id="rpb" disabled>Готов, отправить клиенту</button></div>`);
+ modal(hd(esc(o.bn||"Заказ"))+`<p class="mut">Сделайте фото или выберите готовое из галереи или файлов. Фото сразу уйдёт клиенту (${esc(o.client||"")}).</p><input id="rpf" type="file" accept="image/*"><img id="rpi" alt="" style="width:100%;border-radius:16px;margin-top:10px" hidden><p class="mut" id="rps"></p><div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button>${isOp()?'<button class="btn g" type="button" id="rpn">Без фото</button>':""}<button class="btn" id="rpb" disabled>Готов, отправить клиенту</button></div>`);
  $("rpf").onchange=async e=>{const f=e.target.files[0];if(!f)return;$("rps").textContent="Обрабатываю фото…";u=await imgBig(f);$("rpi").src=u;$("rpi").hidden=false;$("rps").textContent="";$("rpb").disabled=false};
  $("rpb").onclick=()=>{if(u)run(async()=>{await finishReady(o,u);modal("");toast(FX("rvOn")&&!isDirect()?"Готово. Фото отправлено клиенту, заказ ушёл на приёмку":"Готово. Фото отправлено клиенту")})};
- const n=$("rpn");if(n)n.onclick=()=>run(async()=>{await finishReady(o,"");modal("")})}
+ const n=$("rpn");if(n)n.onclick=()=>run(async()=>{await finishReady(o,"");modal("");if(FX("rvOn")&&!isDirect())toast("Готово. Заказ ушёл на приёмку")})}
 async function sendClientPhoto(o,img){const d=dg(o.phone);if(!d)return;const id="wa_"+d,ref=db.collection("chats").doc(id),ts=Date.now(),old=CHS.find(x=>x.id===id),b=db.batch(),t=photoText(o),
  u={last:"📷 "+t,lastDir:"out",lastTs:ts,unread:0,nOut:fvInc(1)};
  if(old)b.update(ref,u);else b.set(ref,{...u,ch:"wa",name:o.client||"Клиент",phone:o.phone,handle:"",loc:o.loc||myLoc(),st:"open",resp:U.uid,nIn:0,firstTs:0,firstReplyTs:0,leadId:"",ts});
