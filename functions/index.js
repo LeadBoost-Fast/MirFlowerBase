@@ -238,3 +238,60 @@ exports.backupNow=onCall({...OPT,memory:"1GiB",timeoutSeconds:540},async req=>{
 
 // WhatsApp, Instagram, Telegram
 Object.assign(exports,require("./channels"));
+
+// ================= ОТЗЫВ ПОСЛЕ ДОСТАВКИ =================
+// Заказ стал «Выдан/Доставлен» → через час (rvAskAt) в чат клиента уходит просьба оценить букет со ссылкой на
+// status.html. Оценку клиент ставит там: создаётся reviews/{токен}; сервер переносит её в заказ (rate),
+// плохую (1–3) сразу шлёт push админам и владельцу. Заказы без чата (покупатель с улицы) пропускаются.
+const crypto=require("crypto");
+const SITE_DEF="https://leadboost-fast.github.io/MirFlowerBase/";
+const RV_DELAY=60*60*1000;
+async function pubDoc(db,ref,o,sh){
+  let k=String(o.pub||"");
+  if(!/^[a-f0-9]{24}$/.test(k)){k=crypto.randomBytes(12).toString("hex");await ref.update({pub:k})}
+  const rev=((sh.revUrl||{})[o.loc||"main"])||((sh.revUrl||{}).all)||"";
+  await db.doc("pubOrders/"+k).set({bn:o.bn||"",st:+o.st||0,dv:!!o.dv,date:o.date||"",time:o.time||"",shop:sh.name||"",phone:sh.phone||"",rev,ts:Date.now()},{merge:true});
+  return k;
+}
+async function chatOf(db,o){
+  const ids=[o.chat,o.pk||String(o.phone||"").replace(/\D/g,"")?"wa_"+(o.pk||String(o.phone||"").replace(/\D/g,"")):""].filter(Boolean);
+  for(const id of ids){const c=await db.doc("chats/"+id).get();if(c.exists){const d=c.data();if(d.grp&&d.grp!==id){const g=await db.doc("chats/"+d.grp).get();if(g.exists)return g}return c}}
+  return null;
+}
+exports.reviewArm=onDocumentUpdated({...OPT,document:"orders/{id}"},async e=>{
+  const a=e.data.before.data(),b=e.data.after.data();
+  if(!(+b.st===4&&+a.st!==4)||b.rate||b.rvAsked||b.rvAskAt)return;
+  await e.data.after.ref.update({rvAskAt:Date.now()+RV_DELAY});
+});
+exports.reviewAsk=onSchedule({...OPT,schedule:"*/15 * * * *",timeZone:TZ},async()=>{
+  const db=admin.firestore(),now=Date.now(),q=await db.collection("orders").where("rvAskAt","<=",now).limit(40).get();
+  if(q.empty)return;
+  const s=await db.doc("settings/main").get(),sh=s.exists?s.data():{};
+  const del=admin.firestore.FieldValue.delete();
+  for(const d of q.docs){const o=d.data();
+    try{
+      if(sh.revOff||+o.st!==4||o.rate){await d.ref.update({rvAskAt:del,rvAsked:"skip"});continue}
+      const c=await chatOf(db,o);
+      if(!c){await d.ref.update({rvAskAt:del,rvAsked:"nochat"});continue}
+      const cd=c.data();
+      // WhatsApp и Instagram разрешают писать первыми только 24 часа после последнего сообщения клиента
+      if(["wa","ig"].includes(cd.ch)&&cd.lastInTs&&now-cd.lastInTs>23.5*36e5){await d.ref.update({rvAskAt:del,rvAsked:"window"});continue}
+      if(cd.ch==="gis"){await d.ref.update({rvAskAt:del,rvAsked:"nochat"});continue}
+      const k=await pubDoc(db,d.ref,o,sh),link=String(sh.siteUrl||SITE_DEF).replace(/\/?$/,"/")+"status.html?t="+k;
+      const t=String(sh.revMsg||"Спасибо, что выбрали {shop}! 🌸 Оцените, пожалуйста, букет — это займёт 10 секунд: {link}").replace("{shop}",sh.name||"нас").replace("{link}",link);
+      const b=db.batch(),ts=Date.now();
+      b.set(c.ref.collection("msgs").doc(),{dir:"out",t,ts,by:"",byName:"Авто: отзыв",st:"pending",auto:"review",oid:d.id});
+      b.update(c.ref,{last:t,lastDir:"out",lastTs:ts});
+      b.update(d.ref,{rvAskAt:del,rvAsked:ts,pub:k});
+      await b.commit();
+    }catch(err){console.error("reviewAsk",d.id,err);await d.ref.update({rvAskAt:del,rvAsked:"err"}).catch(()=>{})}
+  }
+});
+exports.reviewIn=onDocumentCreated({...OPT,document:"reviews/{tok}"},async e=>{
+  const r=e.data&&e.data.data();if(!r)return;
+  const db=admin.firestore(),q=await db.collection("orders").where("pub","==",e.params.tok).limit(1).get();
+  if(q.empty)return;
+  const od=q.docs[0],o=od.data(),s=Math.max(1,Math.min(5,Math.round(+r.s||0))),c=String(r.c||"").slice(0,500);
+  await od.ref.update({rate:{s,c,at:Date.now()}});
+  if(s<=3)await push("ord",u=>u.top||u.role==="admin",{title:"⚠ Плохой отзыв: "+"★".repeat(s)+"☆".repeat(5-s),body:[o.bn||"Букет",o.client,c].filter(Boolean).join(" · "),tag:"rate_"+od.id,url:"/?o="+od.id});
+});

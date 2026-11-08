@@ -222,6 +222,19 @@ service cloud.firestore {
       allow create, update, delete: if isWork();
     }
 
+    // Оценка заказа клиентом со страницы статуса: одна на заказ, только когда заказ выдан/доставлен
+    match /reviews/{tok} {
+      allow get: if true;
+      allow list: if isWork();
+      allow create: if tok.matches('^[a-f0-9]{24}$')
+        && exists(/databases/$(database)/documents/pubOrders/$(tok))
+        && get(/databases/$(database)/documents/pubOrders/$(tok)).data.st == 4
+        && request.resource.data.keys().hasOnly(['s','c'])
+        && request.resource.data.s is int && request.resource.data.s >= 1 && request.resource.data.s <= 5
+        && (!('c' in request.resource.data) || (request.resource.data.c is string && request.resource.data.c.size() <= 500));
+      allow update, delete: if false;
+    }
+
     // Ключи каналов связи (WhatsApp, Instagram, Telegram): пишет только владелец, с сайта читать нельзя, читает сервер
     match /secrets/{id} {
       allow write: if isOwner();

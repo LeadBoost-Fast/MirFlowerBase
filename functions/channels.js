@@ -45,7 +45,7 @@ async function ingest(o){
   const ref=db().collection("chats").doc(o.ch+"_"+o.key),mref=ref.collection("msgs").doc("m_"+safe(o.mid||Date.now()+"_"+Math.random()));
   if((await mref.get()).exists)return;
   const ts=Date.now(),inc=n=>admin.firestore.FieldValue.increment(n),s=await ref.get();
-  const base={last:o.text||(o.img?"📷 Фото":""),lastDir:"in",lastTs:ts,unread:inc(1),nIn:inc(1),st:"open"};
+  const base={last:o.text||(o.img?"📷 Фото":""),lastDir:"in",lastTs:ts,lastInTs:ts,unread:inc(1),nIn:inc(1),st:"open"};
   if(s.exists){
     const upd={...base},d=s.data();
     if(o.biz&&!d.biz)upd.biz=String(o.biz);
