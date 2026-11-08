@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><meta name="theme-color" content="#f6f1ea"><title>Статус заказа</title>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="robots" content="noindex"><meta name="theme-color" content="#f6f1ea"><title>Статус заказа</title>
 <style>
 :root{--bg:#f6f1ea;--bg2:#efe6da;--card:#fffdf9;--ink:#1f1a15;--mut:#7a7166;--ac:#a35a6b;--ac2:#d08a74;--ok:#4f8a5b;--line:#e6dccf}
 @media(prefers-color-scheme:dark){:root{--bg:#120f0d;--bg2:#1c1714;--card:#1d1916;--ink:#f3ede5;--mut:#a89f94;--ac:#e08ea0;--ac2:#e9a98f;--ok:#7fc08a;--line:#342d27}}
@@ -40,6 +40,7 @@ li span{flex:1}li b{font-size:12px;font-weight:700;color:var(--ac);background:co
 .stars{display:flex;justify-content:center;gap:6px;margin:6px 0 12px}.stars button{all:unset;cursor:pointer;font-size:40px;line-height:1;color:var(--line);transition:transform .1s}.stars button.on{color:#f5b301}.stars button:active{transform:scale(.9)}
 .rate textarea{width:100%;min-height:76px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;font:inherit;background:var(--bg);color:var(--ink);resize:vertical}
 .rbtn{display:flex;align-items:center;justify-content:center;width:100%;min-height:50px;border:0;border-radius:16px;margin-top:10px;font-weight:700;font-size:16px;font-family:inherit;background:var(--ac);color:#fff;text-decoration:none;cursor:pointer}.rbtn:disabled{opacity:.5}.rbtn.g{background:#19aa1e}
+html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}a,button,input,select,textarea,label,[data-a],[data-t]{touch-action:manipulation}@supports (-webkit-touch-callout:none){input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:max(16px,1em)}}
 </style></head><body>
 <div class="top"><span class="logo"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8"/><path d="M12 13c-3 0-5-2-5-5 2 0 3.5.6 5 2 1.5-1.4 3-2 5-2 0 3-2 5-5 5z"/><path d="M12 10V5M9.5 6.5 12 4l2.5 2.5"/><path d="M12 17c-2-2-4-2-6-1M12 17c2-2 4-2 6-1"/></svg></span><div class="shop" id="shop">Mirflowers<small>Статус заказа</small></div></div>
 <main id="main"><div class="hero"><div class="sk" style="width:60%;height:28px"></div><div class="sk" style="width:40%"></div></div></main>
