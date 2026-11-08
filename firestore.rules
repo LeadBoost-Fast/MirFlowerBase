@@ -72,10 +72,14 @@ service cloud.firestore {
         // приёмка своего заказа (rv: wait → ok)
         && (!(k.hasAny(['rv']) && d.get('rv', '') == 'ok' && r.get('rv', '') == 'wait') || boss
             || r.get('asm', '') != request.auth.uid)
-        // отмена и снижение цены — только админ/владелец; остальные отправляют запрос (rqK)
+        // отмена и снижение цены — сам сотрудник только отправляет запрос (rqK); разрешает или отклоняет
+        // любой другой сотрудник (не автор запроса; курьер сюда не попадает — у него своя ветка), админ или владелец
         && ((!(k.hasAny(['st']) && d.get('st', 0) == 5 && r.get('st', 0) != 5)
              && !(k.hasAny(['p']) && d.get('p', 0) < r.get('p', 0))
-             && !(k.hasAny(['rqK']) && d.get('rqBy', '') != request.auth.uid)) || boss);
+             && !(k.hasAny(['rqK']) && d.get('rqBy', '') != request.auth.uid)) || boss
+            || (r.get('rqK', '') != '' && r.get('rqBy', '') != request.auth.uid && d.get('rqK', '') == ''
+                && (!(k.hasAny(['st']) && d.get('st', 0) == 5 && r.get('st', 0) != 5) || r.get('rqK', '') == 'cx')
+                && (!(k.hasAny(['p']) && d.get('p', 0) < r.get('p', 0)) || (r.get('rqK', '') == 'p' && d.get('p', 0) == r.get('rqP', 0)))));
     }
 
     match /orders/{id} {

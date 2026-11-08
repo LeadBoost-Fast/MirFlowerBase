@@ -124,9 +124,9 @@ exports.pushOrderChange=onDocumentUpdated({...OPT,document:"orders/{id}"},async 
   if(b.courier&&b.courier!==a.courier)
     await push("courier",u=>u.uid===b.courier,{title:"🚚 Вам назначена доставка",body:[name,b.addr,b.time].filter(Boolean).join(" · "),tag:"cur_"+id,url:"/?o="+id});
   if(b.rqK&&b.rqT&&b.rqT!==a.rqT)
-    await push("ord",u=>u.top||u.role==="admin",{title:b.rqK==="cx"?"⚠ Запрос на отмену заказа":"⚠ Запрос на скидку",body:[name,b.rqK==="p"&&b.rqP?"цена до "+b.rqP+" ₸":"",b.rqWhy,b.rqN].filter(Boolean).join(" · "),tag:"rq_"+id,url:"/?o="+id,imp:true},b.rqBy);
+    await push("ord",u=>ALLW.includes(u.role),{title:b.rqK==="cx"?"⚠ Запрос на отмену заказа":"⚠ Запрос на скидку",body:[name,b.rqK==="p"&&b.rqP?"цена до "+b.rqP+" ₸":"",b.rqWhy,b.rqN].filter(Boolean).join(" · "),tag:"rq_"+id,url:"/?o="+id},b.rqBy);
   if(a.courier&&!b.courier&&b.cRelAt&&b.cRelAt!==a.cRelAt)
-    await push("ord",u=>isOpsOrTop(u),{title:"🚚 Курьер отказался от доставки",body:name+(b.cRelNote?": "+b.cRelNote:""),tag:"crel_"+id,url:"/?o="+id,imp:true},a.courier);
+    await push("ord",u=>isOpsOrTop(u),{title:"🚚 Курьер отказался от доставки",body:name+(b.cRelNote?": "+b.cRelNote:""),tag:"crel_"+id,url:"/?o="+id},a.courier);
 });
 
 // Новая заявка
@@ -151,7 +151,7 @@ exports.pushNewReport=onDocumentCreated({...OPT,document:"reports/{id}"},async e
   const r=e.data&&e.data.data();if(!r)return;
   const T={show:"Витрина",desk:"Рабочее место",op:"Смена оператора"};
   const bad=r.type==="desk"?r.cl==="dirty":r.type==="show"?r.fresh==="bad"||r.fresh==="mid":Array.isArray(r.ck)&&r.ck.some(x=>!x);
-  await push("rep",u=>u.top||u.role==="admin",{title:(bad?"⚠ ":"📋 ")+"Отчёт: "+(T[r.type]||r.type),body:(r.byName||"")+(bad?" · есть замечания":""),imp:bad,tag:"rep_"+e.params.id,url:"/?tab=rep"},r.by);
+  await push("rep",u=>u.top||u.role==="admin",{title:r.type==="op"&&r.kas==="bad"?"❗ Касса не сходится":(bad?"⚠ ":"📋 ")+"Отчёт: "+(T[r.type]||r.type),body:(r.byName||"")+(r.type==="op"&&r.kas==="bad"?(r.kasd?" · расхождение "+r.kasd+" ₸":"")+(r.note?" · "+String(r.note).slice(0,80):""):(bad?" · есть замечания":"")),imp:r.type==="op"&&r.kas==="bad",tag:"rep_"+e.params.id,url:"/?tab=rep"},r.by);
 });
 
 // Каждый вечер напоминание тем, кто работал по графику и не сдал отчёт
