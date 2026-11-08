@@ -313,7 +313,7 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
 .ond{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok,#22c55e);margin-right:6px;vertical-align:middle;box-shadow:0 0 0 3px color-mix(in srgb,var(--ok,#22c55e) 25%,transparent)}.ei[data-k=dot]{color:var(--ok)}
 .shc .acts .btn.s{flex:1 1 100%;white-space:normal}
 .card:empty,.dg>.w:empty{display:none}
-</style></head><body>
+.sc small.scl{display:block;font-size:9px;opacity:.75;letter-spacing:0;white-space:nowrap}</style></head><body>
 <main id="v"><p class="mut">Подключение…</p></main>
 <script>
 /* Тихие ошибки: не теряются, а пишутся в журнал диагностики (Профиль → «Связь с базой») */
@@ -1508,7 +1508,7 @@ const hh=t=>{const[a,b]=String(t||"").split(":");return b==="00"?String(+a):a.re
 const sh=(u,d)=>SHL.find(x=>x.id===u+"_"+d);
 function sched(){const t=today(),m0=addD(mon(t),wk*7),days=[...Array(7)].map((_,i)=>addD(m0,i)),
  ppl=Object.keys(SF).filter(i=>SF[i].active!==false&&inS(i)).sort((a,b)=>Object.keys(RL).indexOf(SF[a].role)-Object.keys(RL).indexOf(SF[b].role)||String(SF[a].name).localeCompare(String(SF[b].name))),A=adm();
- const cell=(id,d)=>{const x=sh(id,d),c=x?x.t==="off"?"o":"w":"",tx=x?x.t==="off"?"вых":hh(x.from)+"–"+hh(x.to):"·",cl=`sc ${c}${id===U.uid?" me":""}`;
+ const cell=(id,d)=>{const x=sh(id,d),c=x?x.t==="off"?"o":"w":"",tx=x?x.t==="off"?"вых":hh(x.from)+"–"+hh(x.to)+(x.loc&&locs().length>1?`<small class="scl">${esc(String(lname(x.loc)).split(",")[0])}</small>`:""):"·",cl=`sc ${c}${id===U.uid?" me":""}`;
   const pend=(SR||[]).find(r=>r.uid===id&&r.date===d&&r.st==="wait");
   const label=pend?(pend.t==="off"?"⏳вых":"⏳"+hh(pend.from)+"–"+hh(pend.to)):tx;
   if(A)return `<td><button class="${cl}" data-a="w_e" data-id="${id}" data-d="${d}">${label}</button></td>`;
@@ -1522,7 +1522,7 @@ function sched(){const t=today(),m0=addD(mon(t),wk*7),days=[...Array(7)].map((_,
  ${ppl.map(id=>`<tr><td class="nm">${esc(SF[id].name)}<small>${rl(id)}</small></td>${days.map(d=>cell(id,d)).join("")}</tr>`).join("")}
  <tr><td class="nm">Работают</td>${days.map(d=>`<td style="text-align:center;font-size:13px"><b>${SHL.filter(x=>x.date===d&&x.t==="work"&&SF[x.uid]&&SF[x.uid].active!==false&&inS(x.uid)).length}</b></td>`).join("")}</tr></table></div>
  <p class="mut">«вых» — выходной, «·» — не назначено, цифры внизу — сколько человек на смене.</p>
- ${A?`<div class="acts"><button class="btn g" data-a="w_cp">Скопировать с прошлой недели</button></div>`:""}
+ ${A?`<div class="acts"><button class="btn" data-a="w_tpl">Заполнить по шаблону недели</button><button class="btn g" data-a="w_cp">Скопировать с прошлой недели</button></div>`:""}
  ${(A&&SR&&SR.length)?`<h2>Заявки на смену</h2><div class="og">${SR.map(r=>`<div class="card"><b>${esc(r.byName||nm(r.uid))}</b> · ${esc(r.date)} · ${r.t==="off"?"выходной":r.t==="clr"?"убрать":hh(r.from)+"–"+hh(r.to)}
  <div class="acts"><button class="btn s" data-a="w_ok" data-id="${r.id}">Принять</button><button class="btn r s" data-a="w_no" data-id="${r.id}">Отклонить</button></div></div>`).join("")}</div>`:""}
  ${card2("Моя неделя",mine)}`}
@@ -1547,6 +1547,42 @@ async function copyWeek(){const m0=addD(mon(today()),wk*7);let n=0;const bt=db.b
  Object.keys(SF).filter(i=>SF[i].active!==false).forEach(id=>{for(let i=0;i<7;i++){const src=sh(id,addD(m0,i-7)),dst=addD(m0,i);if(src&&!sh(id,dst)){n++;bt.set(db.collection("shifts").doc(id+"_"+dst),{uid:id,date:dst,t:src.t,from:src.from||"",to:src.to||"",by:U.uid,updatedAt:TS()})}}});
  if(!n)return toast("Нечего копировать: на прошлой неделе пусто или эта уже заполнена");await bt.commit();log("График скопирован с прошлой недели",{bn:""},n+" смен");toast("Скопировано смен: "+n)}
 
+/* --- график по шаблону недели: текст «точка: день — имя» → смены на несколько недель --- */
+const WK_DEF="Помощник:\n10 мкр:\nПонедельник - Сержан\nВторник - Сержан\nСреда - Ержан\nЧетверг - Ержан\nПятница - Сержан\nСуббота - ?\nВоскресенье - ?\n19 мкр:\nПонедельник - Ержан\nВторник - Ержан\nСреда - Сержан\nЧетверг - Сержан\nПятница - Ержан\nСуббота - Қозы\nВоскресенье - Қозы\n\nМенеджер:\n10 мкр:\nПонедельник - Гибрат\nВторник - Гибрат\nСреда - Асыл\nЧетверг - Асыл\nПятница - Гибрат\nСуббота - Ерке\nВоскресенье - Гибрат\n19 мкр:\nПонедельник - Махаббат\nВторник - Махаббат\nСреда - Дильназ\nЧетверг - Дильназ\nПятница - Махаббат\nСуббота - Махаббат\nВоскресенье - Дильназ\n\nФлорист:\n10 мкр:\nПонедельник - Акерке\nВторник - Акерке\nСреда - Санду\nЧетверг - Санду\nПятница - Акерке\nСуббота - Акерке\nВоскресенье - Мадина\n19 мкр:\nПонедельник - Санду\nВторник - Санду\nСреда - Мадина\nЧетверг - Мадина\nПятница - Санду\nСуббота - Мадина\nВоскресенье - Санду",
+ WKD=["понедельник","вторник","среда","четверг","пятница","суббота","воскресенье"],
+ WKR={помощник:"assistant",менеджер:"operator",оператор:"operator",флорист:"florist",курьер:"courier",админ:"admin",администратор:"admin"},
+ nrmN=s=>String(s||"").toLowerCase().replace(/қ/g,"к").replace(/ғ/g,"г").replace(/[үұ]/g,"у").replace(/ә/g,"а").replace(/ө/g,"о").replace(/і/g,"и").replace(/ң/g,"н").replace(/һ/g,"х").replace(/ё/g,"е").replace(/[^a-zа-я0-9]/g,""),
+ wkLoc=h=>{const d=(/\d+/.exec(h)||[""])[0],L=locs();return (d&&L.find(l=>(/^\D*(\d+)/.exec(l.name)||[])[1]===d))||L.find(l=>nrmN(l.name).includes(nrmN(h)))||null},
+ wkWho=(n,role)=>{const k=nrmN(n),c=Object.keys(SF).filter(i=>SF[i].active!==false&&SF[i].name&&(nrmN(SF[i].name)===k||nrmN(String(SF[i].name).split(/\s+/)[0])===k||nrmN(SF[i].name).startsWith(k)));return c.length>1?(c.find(i=>SF[i].role===role)||c[0]):c[0]||null};
+function wkParse(t){const out=[],bad=[];let L=null,R="",H="";String(t||"").split(/\n/).forEach(raw=>{const r=raw.trim();if(!r)return;
+  const m=/^([^\-–—:]+?)\s*[-–—:]\s*(.*)$/.exec(r),w=m?WKD.indexOf(nrmN(m[1]).replace(/[^а-я]/g,"")):-1;
+  if(w>=0){const n=m[2].trim();if(!n||/^\?+$/.test(n))return;if(!L){bad.push("Не указана точка для: "+r);return}String(n).split(/[,/]| и /).map(x=>x.trim()).filter(x=>x&&x!=="?").forEach(nn=>out.push({loc:L,lh:H,wd:w,name:nn,role:R,uid:wkWho(nn,R)}));return}
+  const h=r.replace(/:$/,"").trim(),rk=WKR[nrmN(h).replace(/[^а-я]/g,"")];if(rk){R=rk;return}
+  const l=wkLoc(h);if(l){L=l.id;H=h;return}bad.push("Не понял строку: "+r)});
+ return {out,bad}}
+function wkForm(){if(!adm())return;const m=/(\d{1,2}:\d{2})\D+(\d{1,2}:\d{2})/.exec(SH.hours||""),pad=s=>s.padStart(5,"0");
+ modal(hd("График по шаблону недели")+`<p class="mut">Впишите неделю как в заметке: роль, точка, дальше «день — имя». «?» — пока никого. Сайт найдёт сотрудников по имени и поставит смены с точкой.</p>
+ <form id="wkf"><label>Шаблон</label><textarea name="t" rows="12" style="font-size:14px">${esc(SH.wkTpl||WK_DEF)}</textarea>
+ <div class="g2"><div><label>С</label><input type="time" name="from" value="${m?pad(m[1]):"09:00"}"></div><div><label>До</label><input type="time" name="to" value="${m?pad(m[2]):"21:00"}"></div></div>
+ <label>На сколько недель</label><select name="n"><option value="1">1 неделя (с ${dm(addD(mon(today()),wk*7))})</option><option value="2">2 недели</option><option value="4" selected>4 недели</option><option value="8">8 недель</option></select>
+ <div id="wkp"></div><div class="acts"><button type="button" class="btn g" data-a="wk_chk">Проверить</button><button class="btn">Заполнить график</button></div></form>`);
+ const f=$("wkf"),prev=()=>{const {out,bad}=wkParse(f.elements.t.value),miss=[...new Set(out.filter(x=>!x.uid).map(x=>x.name))],G={};
+  out.forEach(x=>{(G[x.loc]=G[x.loc]||[...Array(7)].map(()=>[]))[x.wd].push(x)});
+  const dbl=[];const seen={};out.filter(x=>x.uid).forEach(x=>{const k=x.uid+"|"+x.wd;if(seen[k]&&seen[k]!==x.loc)dbl.push(SF[x.uid].name+" · "+WD[x.wd]);seen[k]=x.loc});
+  $("wkp").innerHTML=(miss.length?`<div class="card" style="border-left:3px solid #EF4444"><b>Нет в команде: ${miss.map(esc).join(", ")}</b><div class="mut">Добавьте их в разделе «Команда» (или поправьте имя в шаблоне) и нажмите «Проверить» снова. Остальные смены можно заполнить уже сейчас.</div></div>`:`<div class="card mut">Все сотрудники найдены.</div>`)
+   +(dbl.length?`<div class="card" style="border-left:3px solid #F59E0B"><b>В один день на двух точках:</b> ${dbl.map(esc).join(", ")}</div>`:"")
+   +(bad.length?`<div class="card mut">${bad.slice(0,5).map(esc).join("<br>")}</div>`:"")
+   +Object.keys(G).map(l=>`<div class="card"><b>${esc(lname(l))}</b>${G[l].map((a,i)=>`<div class="ln"><span>${WD[i]}</span><b style="text-align:right">${a.length?a.map(x=>x.uid?esc(SF[x.uid].name)+` <small class="mut">${esc(RL[SF[x.uid].role]||"")}</small>`:`<span style="color:#EF4444">${esc(x.name)} — нет</span>`).join("<br>"):'<span class="mut">—</span>'}</b></div>`).join("")}</div>`).join("");return out};
+ f.querySelector('[data-a=wk_chk]').onclick=prev;prev();
+ f.onsubmit=e=>{e.preventDefault();const out=prev().filter(x=>x.uid),fr=f.elements.from.value,to=f.elements.to.value,n=+f.elements.n.value,m0=addD(mon(today()),wk*7);
+  if(!out.length)return toast("Некого ставить: ни одно имя не найдено в команде");if(!(fr&&to&&fr<to))return toast("Конец смены должен быть позже начала");
+  const W=[],t0=today();for(let k=0;k<n;k++)out.forEach(x=>{const d=addD(m0,k*7+x.wd);if(d>=t0)W.push([x.uid+"_"+d,{uid:x.uid,date:d,t:"work",from:fr,to,loc:x.loc,by:U.uid,updatedAt:TS()}])});
+  if(!W.length)return toast("Все дни уже прошли: выберите неделю вперёд");
+  if(!confirm(`Поставить ${W.length} ${pl(W.length,"смену","смены","смен")} (${n} ${pl(n,"неделя","недели","недель")}, прошедшие дни пропускаются)? Клетки этих сотрудников в эти дни будут заменены.`))return;
+  run(async()=>{
+   for(let i=0;i<W.length;i+=400){const bt=db.batch();W.slice(i,i+400).forEach(([id,v])=>bt.set(db.collection("shifts").doc(id),v));await bt.commit()}
+   if(own())await db.collection("settings").doc("main").set({wkTpl:f.elements.t.value,updatedAt:TS()},{merge:true}).catch(e=>eLog(e));
+   log("График заполнен по шаблону",{bn:""},W.length+" смен, "+n+" нед.");modal("");toast("График заполнен: "+W.length+" смен")})}}
 /* --- каталог букетов и быстрый заказ --- */
 function quickOpts(){const s=SC.filter(x=>x.st==="in"),g=(t,a)=>a.length?`<optgroup label="${t}">${a.join("")}</optgroup>`:"";
  return g("Готовые на витрине",s.map(x=>`<option value="s:${x.id}">${esc(x.name)} · ${M(x.price)}</option>`))+g("Каталог букетов",BQ.map(b=>`<option value="b:${b.id}">${esc(b.name)} · ${M(b.price)}</option>`))}
@@ -1560,7 +1596,7 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-a^="lc_"],
  if(a==="lc_s"){locSave(id);draw()}else if(a==="lc_n"&&own())locForm();else if(a==="lc_e"&&own())locForm(id);
  else if(a==="tf"){fs=id||"fresh";fz2="";fdt="";tab="orders";draw();scrollTo(0,0)}else if(a==="tab"){tab=id;draw();scrollTo(0,0)}else if(a==="fdt"){fdt=id;draw()}
  else if(a==="w_p"){wk=Math.max(-8,wk-1);draw()}else if(a==="w_n"){wk=Math.min(26,wk+1);draw()}else if(a==="w_t"){wk=0;draw()}
- else if(a==="w_e"&&adm())shiftForm(id,b.dataset.d);
+ else if(a==="w_e"&&adm())shiftForm(id,b.dataset.d);else if(a==="w_tpl"&&adm())wkForm();
  else if(a==="w_req"&&id===U.uid)shiftReq(b.dataset.d);
  else if(a==="w_ok"&&adm())run(async()=>{const r=SR.find(x=>x.id===id);if(!r)return;const key=r.uid+"_"+r.date;const ex=SHL.find(x=>x.uid===r.uid&&x.date===r.date);
   if(r.t==="clr"){if(ex)await db.collection("shifts").doc(ex.id).delete()}
