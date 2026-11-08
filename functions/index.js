@@ -154,16 +154,19 @@ exports.pushNewReport=onDocumentCreated({...OPT,document:"reports/{id}"},async e
   await push("rep",u=>u.top||u.role==="admin",{title:r.type==="op"&&r.kas==="bad"?"❗ Касса не сходится":(bad?"⚠ ":"📋 ")+"Отчёт: "+(T[r.type]||r.type),body:(r.byName||"")+(r.type==="op"&&r.kas==="bad"?(r.kasd?" · расхождение "+r.kasd+" ₸":"")+(r.note?" · "+String(r.note).slice(0,80):""):(bad?" · есть замечания":"")),imp:r.type==="op"&&r.kas==="bad",tag:"rep_"+e.params.id,url:"/?tab=rep"},r.by);
 });
 
-// Каждый вечер напоминание тем, кто работал по графику и не сдал отчёт
-exports.pushReportReminder=onSchedule({...OPT,schedule:"0 20 * * *",timeZone:TZ},async()=>{
-  const db=admin.firestore(),today=new Date().toLocaleDateString("sv-SE",{timeZone:TZ});
-  const sh=await db.collection("shifts").where("date","==",today).get();
-  const work=new Set();sh.forEach(d=>{const x=d.data();if(x.t==="work"&&x.uid)work.add(x.uid)});
-  if(!work.size)return;
-  const rp=await db.collection("reports").where("date","==",today).get();
-  const done=new Set();rp.forEach(d=>done.add(d.data().by));
-  const miss=new Set([...work].filter(u=>!done.has(u)));
-  if(miss.size)await push("remind",u=>miss.has(u.uid)&&["florist","operator","assistant"].includes(u.role),{title:"📋 Сдайте отчёт за смену",body:"Витрина, рабочее место или смена оператора",url:"/?tab=rep",tag:"remind_"+today});
+// Напоминание об отчётах: через 30 минут после времени показа отчётов (settings.rpAt, по умолчанию 23:00 → 23:30, время Актау).
+// Кому: тем, кто сейчас на смене (shiftLog без end), если на их точке за рабочий день (сейчас − 4 ч) не сданы их отчёты.
+const RPW={assistant:["show","desk"],florist:["desk","op"],operator:["op","desk"]},RPN={show:"Витрина",desk:"Рабочее место",op:"Смена: касса"};
+exports.pushReportReminder=onSchedule({...OPT,schedule:"*/30 * * * *",timeZone:TZ},async()=>{
+  const db=admin.firestore(),now=Date.now(),s=await db.doc("settings/main").get(),sh=s.exists?s.data():{};
+  const [h,m]=String(sh.rpAt||"23:00").split(":").map(Number),tgt=((h*60+(m||0)+30)%1440);
+  const loc=new Date(now).toLocaleTimeString("ru-RU",{timeZone:TZ,hour:"2-digit",minute:"2-digit",hour12:false}).split(":").map(Number),cur=loc[0]*60+loc[1];
+  if(((cur-tgt+1440)%1440)>=30)return; // запускается раз в 30 минут — шлём только в слоте сразу после rpAt + 30 мин
+  const day=new Date(now-4*36e5).toLocaleDateString("sv-SE",{timeZone:TZ});
+  const [ls,st,dn]=await Promise.all([db.collection("shiftLog").where("start",">=",now-20*36e5).get(),db.collection("staff").get(),db.collection("rpDone").where("date","==",day).get()]);
+  const done=new Set();dn.forEach(d=>done.add(d.id));const role={};st.forEach(d=>role[d.id]=d.data().role);
+  const miss={};ls.forEach(d=>{const x=d.data();if(!x.uid||x.end)return;const t=(RPW[role[x.uid]]||[]).filter(k=>!done.has(day+"_"+(x.loc||"main")+"_"+k));if(t.length)miss[x.uid]=t});
+  for(const uid of Object.keys(miss))await push("remind",u=>u.uid===uid,{title:"📋 Сдайте отчёт за смену",body:"Не сдано: "+miss[uid].map(k=>RPN[k]).join(", "),url:"/?tab=rep",tag:"remind_"+day});
 });
 
 // Проверка: прислать push самому себе
