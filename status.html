@@ -36,9 +36,14 @@ li span{flex:1}li b{font-size:12px;font-weight:700;color:var(--ac);background:co
 .err{flex:1;display:grid;place-items:center;text-align:center;color:var(--mut);padding:40px 10px}
 .sk{height:16px;border-radius:8px;background:linear-gradient(90deg,var(--line),var(--bg2),var(--line));background-size:200% 100%;animation:sk 1.2s infinite;margin:10px auto}
 @keyframes sk{to{background-position:-200% 0}}
+.rate{text-align:center;padding:16px 18px 18px}.rate h2{margin:4px 0 4px;font-size:20px}.rate p{color:var(--mut);margin:0 0 10px;font-size:14px}
+.stars{display:flex;justify-content:center;gap:6px;margin:6px 0 12px}.stars button{all:unset;cursor:pointer;font-size:40px;line-height:1;color:var(--line);transition:transform .1s}.stars button.on{color:#f5b301}.stars button:active{transform:scale(.9)}
+.rate textarea{width:100%;min-height:76px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;font:inherit;background:var(--bg);color:var(--ink);resize:vertical}
+.rbtn{display:flex;align-items:center;justify-content:center;width:100%;min-height:50px;border:0;border-radius:16px;margin-top:10px;font-weight:700;font-size:16px;font-family:inherit;background:var(--ac);color:#fff;text-decoration:none;cursor:pointer}.rbtn:disabled{opacity:.5}.rbtn.g{background:#19aa1e}
 </style></head><body>
 <div class="top"><span class="logo"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8"/><path d="M12 13c-3 0-5-2-5-5 2 0 3.5.6 5 2 1.5-1.4 3-2 5-2 0 3-2 5-5 5z"/><path d="M12 10V5M9.5 6.5 12 4l2.5 2.5"/><path d="M12 17c-2-2-4-2-6-1M12 17c2-2 4-2 6-1"/></svg></span><div class="shop" id="shop">Mirflowers<small>Статус заказа</small></div></div>
 <main id="main"><div class="hero"><div class="sk" style="width:60%;height:28px"></div><div class="sk" style="width:40%"></div></div></main>
+<div id="rate" style="width:100%;max-width:560px;margin:0 auto;padding:0 22px"></div>
 <div class="bar" id="bar" hidden></div>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
@@ -50,7 +55,17 @@ const IC={0:'<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 
 const svg=p=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
 const MON=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
 const hd=(d,t)=>{if(!d)return"";const td=new Date().toLocaleDateString("sv-SE"),tm=new Date(Date.now()+864e5).toLocaleDateString("sv-SE");const w=d===td?"сегодня":d===tm?"завтра":(+d.slice(8))+" "+MON[+d.slice(5,7)-1];return w+(t?" в "+t.slice(0,5):"")};
-function draw(d){
+let RS=0,RD=null;
+async function rateUi(d){const box=$("rate");if(d.st!==4){box.innerHTML="";return}if(RD)return;RD=d;
+ let r=null;try{const x=await fdb.collection("reviews").doc(k).get();if(x.exists)r=x.data()}catch(e){}
+ if(r)return rateDone(r.s,d);
+ box.innerHTML='<div class="card rate"><h2>Как вам букет?</h2><p>Поставьте оценку — нам важно ваше мнение</p><div class="stars">'+[1,2,3,4,5].map(i=>'<button type="button" data-s="'+i+'" aria-label="'+i+'">★</button>').join("")+'</div><textarea id="rc" maxlength="500" placeholder="Комментарий (необязательно)"></textarea><button class="rbtn" id="rsend" disabled>Отправить</button></div>';
+ box.querySelector(".stars").onclick=e=>{const b=e.target.closest("button");if(!b)return;RS=+b.dataset.s;box.querySelectorAll(".stars button").forEach(x=>x.classList.toggle("on",+x.dataset.s<=RS));$("rsend").disabled=false};
+ $("rsend").onclick=async()=>{if(!RS)return;$("rsend").disabled=true;$("rsend").textContent="Отправляю…";const c=$("rc").value.trim().slice(0,500);
+  try{await fdb.collection("reviews").doc(k).set(c?{s:RS,c}:{s:RS});rateDone(RS,d)}catch(e){$("rsend").disabled=false;$("rsend").textContent="Не отправилось, попробуйте ещё раз"}}}
+function rateDone(s,d){const st="★".repeat(s)+"☆".repeat(5-s);
+ $("rate").innerHTML='<div class="card rate"><div style="font-size:30px;color:#f5b301;letter-spacing:2px">'+st+'</div><h2>Спасибо за оценку!</h2>'+(s>=4?(d.rev?'<p>Будем рады, если оставите отзыв в 2ГИС — это очень помогает нам 🌸</p><a class="rbtn g" href="'+esc(d.rev)+'" target="_blank" rel="noopener">Оставить отзыв в 2ГИС</a>':'<p>Рады, что вам понравилось 🌸</p>'):'<p>Нам жаль, что что-то пошло не так. Мы уже знаем и свяжемся с вами.</p>')+'</div>'}
+function draw(d){rateUi(d);
  const shop=d.shop||"Mirflowers";$("shop").innerHTML=esc(shop)+"<small>Статус заказа</small>";document.title=shop+" · статус заказа";
  const steps=d.dv?[[0,"Заказ принят"],[1,"Собираем букет"],[2,"Букет готов"],[3,"Курьер в пути"],[4,"Доставлен"]]:[[0,"Заказ принят"],[1,"Собираем букет"],[2,"Готов — можно забирать"],[4,"Выдан"]];
  let h;
