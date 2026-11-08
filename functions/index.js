@@ -121,6 +121,9 @@ exports.pushOrderChange=onDocumentUpdated({...OPT,document:"orders/{id}"},async 
     await push("ready",u=>u.uid===b.asm,{title:"↩ Заказ на переделку",body:name+(b.redoNote?": "+b.redoNote:""),tag:"redo_"+id,url:"/?o="+id});
   if(b.xfSt==="wait"&&a.xfSt!=="wait"&&b.xfTo)
     await push("ord",u=>u.uid===b.xfTo,{title:"🔁 Передача заказа",body:name+" · передаёт "+(b.xfFrom||"флорист")+", ответь в течение минуты",tag:"xf_"+id,url:"/?o="+id},b.xfFrom);
+  // выставили на доставку — всем курьерам на смене
+  if(b.dv&&b.dvPost&&!a.dvPost&&!b.courier)
+    await push("courier",u=>u.role==="courier",{title:"🚚 Новая доставка",body:[name,b.time?"к "+b.time:"",b.addr].filter(Boolean).join(" · "),tag:"dvp_"+id,url:"/?o="+id});
   if(b.courier&&b.courier!==a.courier)
     await push("courier",u=>u.uid===b.courier,{title:"🚚 Вам назначена доставка",body:[name,b.addr,b.time].filter(Boolean).join(" · "),tag:"cur_"+id,url:"/?o="+id});
   if(b.rqK&&b.rqT&&b.rqT!==a.rqT)
