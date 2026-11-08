@@ -88,6 +88,8 @@ async function push(type,who,msg,exclude){
     if(t.ev&&t.ev[type]===false)return;
     const top=TOP.includes(String(p.email||"").toLowerCase());
     if(onShift&&!top&&p.role!=="owner"&&!onShift.has(t.uid))return;
+    // владельцам — только важное (msg.imp): плохой отзыв, запрос на отмену/скидку, отказ курьера, товар закончился, отчёт с замечаниями
+    if((top||p.role==="owner")&&type!=="test"&&!msg.imp)return;
     if(who({uid:t.uid,role:p.role,top}))toks.push(d.id)});
   if(!toks.length)return 0;
   const data={title:String(msg.title||"Mirflowers"),body:String(msg.body||"").slice(0,200),tag:String(msg.tag||type),url:String(msg.url||"/")};
@@ -121,8 +123,10 @@ exports.pushOrderChange=onDocumentUpdated({...OPT,document:"orders/{id}"},async 
     await push("ord",u=>u.uid===b.xfTo,{title:"🔁 Передача заказа",body:name+" · передаёт "+(b.xfFrom||"флорист")+", ответь в течение минуты",tag:"xf_"+id,url:"/?o="+id},b.xfFrom);
   if(b.courier&&b.courier!==a.courier)
     await push("courier",u=>u.uid===b.courier,{title:"🚚 Вам назначена доставка",body:[name,b.addr,b.time].filter(Boolean).join(" · "),tag:"cur_"+id,url:"/?o="+id});
+  if(b.rqK&&b.rqT&&b.rqT!==a.rqT)
+    await push("ord",u=>u.top||u.role==="admin",{title:b.rqK==="cx"?"⚠ Запрос на отмену заказа":"⚠ Запрос на скидку",body:[name,b.rqK==="p"&&b.rqP?"цена до "+b.rqP+" ₸":"",b.rqWhy,b.rqN].filter(Boolean).join(" · "),tag:"rq_"+id,url:"/?o="+id,imp:true},b.rqBy);
   if(a.courier&&!b.courier&&b.cRelAt&&b.cRelAt!==a.cRelAt)
-    await push("ord",u=>isOpsOrTop(u),{title:"🚚 Курьер отказался от доставки",body:name+(b.cRelNote?": "+b.cRelNote:""),tag:"crel_"+id,url:"/?o="+id},a.courier);
+    await push("ord",u=>isOpsOrTop(u),{title:"🚚 Курьер отказался от доставки",body:name+(b.cRelNote?": "+b.cRelNote:""),tag:"crel_"+id,url:"/?o="+id,imp:true},a.courier);
 });
 
 // Новая заявка
@@ -147,7 +151,7 @@ exports.pushNewReport=onDocumentCreated({...OPT,document:"reports/{id}"},async e
   const r=e.data&&e.data.data();if(!r)return;
   const T={show:"Витрина",desk:"Рабочее место",op:"Смена оператора"};
   const bad=r.type==="desk"?r.cl==="dirty":r.type==="show"?r.fresh==="bad"||r.fresh==="mid":Array.isArray(r.ck)&&r.ck.some(x=>!x);
-  await push("rep",u=>u.top||u.role==="admin",{title:(bad?"⚠ ":"📋 ")+"Отчёт: "+(T[r.type]||r.type),body:(r.byName||"")+(bad?" · есть замечания":""),tag:"rep_"+e.params.id,url:"/?tab=rep"},r.by);
+  await push("rep",u=>u.top||u.role==="admin",{title:(bad?"⚠ ":"📋 ")+"Отчёт: "+(T[r.type]||r.type),body:(r.byName||"")+(bad?" · есть замечания":""),imp:bad,tag:"rep_"+e.params.id,url:"/?tab=rep"},r.by);
 });
 
 // Каждый вечер напоминание тем, кто работал по графику и не сдал отчёт
@@ -179,7 +183,7 @@ exports.pushLowStock=onDocumentUpdated({...OPT,document:"inventory/{id}"},async 
   const a=e.data.before.data(),b=e.data.after.data(),m=+b.min||0,qa=+a.qty||0,qb=+b.qty||0;
   if(!(qa>m&&qb<=m))return;
   const out=qb<=0,u=b.unit||"";
-  await push("stock",x=>x.top||ALLW.includes(x.role),{title:out?"❗ Закончилось: "+b.name:"⚠ Заканчивается: "+b.name,body:out?"На складе 0 "+u:"Осталось "+qb+" "+u+(m?", минимум "+m:""),tag:"stock_"+e.params.id});
+  await push("stock",x=>x.top||ALLW.includes(x.role),{imp:out,title:out?"❗ Закончилось: "+b.name:"⚠ Заканчивается: "+b.name,body:out?"На складе 0 "+u:"Осталось "+qb+" "+u+(m?", минимум "+m:""),tag:"stock_"+e.params.id});
 });
 
 // ================= СТРАНИЦА СТАТУСА ДЛЯ КЛИЕНТА =================
@@ -297,5 +301,5 @@ exports.reviewIn=onDocumentCreated({...OPT,document:"reviews/{tok}"},async e=>{
   if(q.empty)return;
   const od=q.docs[0],o=od.data(),s=Math.max(1,Math.min(5,Math.round(+r.s||0))),c=String(r.c||"").slice(0,500);
   await od.ref.update({rate:{s,c,at:Date.now()}});
-  if(s<=3)await push("ord",u=>u.top||u.role==="admin",{title:"⚠ Плохой отзыв: "+"★".repeat(s)+"☆".repeat(5-s),body:[o.bn||"Букет",o.client,c].filter(Boolean).join(" · "),tag:"rate_"+od.id,url:"/?o="+od.id});
+  if(s<=3)await push("ord",u=>u.top||u.role==="admin",{imp:true,title:"⚠ Плохой отзыв: "+"★".repeat(s)+"☆".repeat(5-s),body:[o.bn||"Букет",o.client,c].filter(Boolean).join(" · "),tag:"rate_"+od.id,url:"/?o="+od.id});
 });
