@@ -164,7 +164,7 @@ async function ingestOut(o){
   const ref=db().collection("chats").doc(o.ch+"_"+o.key),mref=ref.collection("msgs").doc("m_"+safe(o.mid||Date.now()+"_"+Math.random()));
   if((await mref.get()).exists)return;
   const ts=Date.now(),s=await ref.get(),base={last:o.text||(o.img?"Фото":""),lastDir:"out",lastTs:ts};
-  if(s.exists)await ref.update({...base,nOut:FV.increment(1)});
+  if(s.exists)await ref.update({...base,unread:0,nOut:FV.increment(1)}); // оператор ответил с телефона — чат прочитан
   else await ref.set({...base,...(o.wi!==undefined?{wi:String(o.wi)}:{}),ch:o.ch,name:o.name||"Без имени",phone:o.phone||"",handle:"",ext:String(o.key),biz:"",loc:o.loc0||"",resp:"",nIn:0,nOut:1,unread:0,firstTs:ts,firstReplyTs:0,leadId:"",st:"open",ts});
   await mref.set({dir:"out",t:o.text||"",...(o.img?{img:o.img}:{}),...(o.aud?{aud:o.aud}:{}),...(o.x||{}),ts,st:"sent",sentAt:ts,via:"phone"});
 }
