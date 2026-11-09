@@ -157,7 +157,7 @@ exports.pushClientMsg=onDocumentCreated({...OPT,document:"chats/{cid}/msgs/{mid}
 // Новый отчёт сотрудника: админам и владельцам
 exports.pushNewReport=onDocumentCreated({...OPT,document:"reports/{id}"},async e=>{
   const r=e.data&&e.data.data();if(!r)return;
-  const T={show:"Витрина",desk:"Рабочее место",op:"Смена оператора"};
+  const T={show:"Витрина",desk:"Рабочее место",op:"Смена оператора",wo:"Списание — проверьте и примите"};
   const bad=r.type==="desk"?r.cl==="dirty":r.type==="show"?r.fresh==="bad"||r.fresh==="mid":Array.isArray(r.ck)&&r.ck.some(x=>!x);
   await push("rep",u=>u.top||u.role==="admin",{loc:r.loc||"main",title:r.type==="op"&&r.kas==="bad"?"❗ Касса не сходится":(bad?"⚠ ":"📋 ")+"Отчёт: "+(T[r.type]||r.type),body:(r.byName||"")+(r.type==="op"&&r.kas==="bad"?(r.kasd?" · расхождение "+r.kasd+" ₸":"")+(r.note?" · "+String(r.note).slice(0,80):""):(bad?" · есть замечания":"")),imp:r.type==="op"&&r.kas==="bad",tag:"rep_"+e.params.id,url:"/?tab=rep"},r.by);
 });
@@ -174,7 +174,7 @@ exports.pushReportReminder=onSchedule({...OPT,schedule:"*/30 * * * *",timeZone:T
   const [ls,st,dn]=await Promise.all([db.collection("shiftLog").where("start",">=",now-20*36e5).get(),db.collection("staff").get(),db.collection("rpDone").where("date","==",day).get()]);
   const done=new Set();dn.forEach(d=>done.add(d.id));const role={};st.forEach(d=>role[d.id]=d.data().role);
   const miss={};ls.forEach(d=>{const x=d.data();if(!x.uid||x.end)return;const t=(RPW[role[x.uid]]||[]).filter(k=>!done.has(day+"_"+(x.loc||"main")+"_"+k));if(t.length)miss[x.uid]=t});
-  for(const uid of Object.keys(miss))await push("remind",u=>u.uid===uid,{title:"📋 Сдайте отчёт за смену",body:"Не сдано: "+miss[uid].map(k=>RPN[k]).join(", "),url:"/?tab=rep",tag:"remind_"+day});
+  for(const uid of Object.keys(miss))await push("remind",u=>u.uid===uid,{title:"📋 Сдайте отчёт за смену",body:"Не сдано: "+miss[uid].map(k=>RPN[k]).join(", ")+". Если есть что списать — сдайте «Списание»",url:"/?tab=rep",tag:"remind_"+day});
 });
 
 // Проверка: прислать push самому себе
