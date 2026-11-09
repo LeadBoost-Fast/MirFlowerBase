@@ -1809,7 +1809,8 @@ TPL=()=>{const a=SH.tpls;return Array.isArray(a)&&a.length?a:DEFTPL.map(x=>({n:x
 CHTPL=["Здравствуйте! Подскажите, на какую дату и в какой бюджет подобрать букет?","Спасибо! Букет принят в работу, напишем, когда будет готов.","Отправим фото готовых букетов с витрины, вам что-то подобрать по цене?"];
 let CHS=[],CHERR="",chOpen="",chMsgs=[],chSub=null,chF="all",chC="",chV="list",chDraft="",chPer="30",chPrev=null;
 const chOn=k=>((SH.channels||{})[k]||{}).on===true,
-chW=c=>c.st!=="closed"&&c.lastDir==="in",
+chW=c=>c.st!=="closed"&&c.lastDir==="in"&&((+c.unread||0)>0||Date.now()-(c.lastTs||0)<36e5), // ждёт ответа: клиент писал последним меньше часа назад (или чат ещё не прочитан); через час без ответа диалог считается законченным
+
 chUn=()=>CHS.filter(c=>chW(c)&&chInL(c)).length,
  /* значок «Чаты» в меню: непрочитанные диалоги (открытый сейчас не считается — он прочитан); «ждут ответа» — внутри раздела */
  chUnr=c=>c.st!=="closed"&&(+c.unread||0)>0&&c.lastDir!=="out"&&chInL(c),chNew=()=>CHS.filter(c=>c.st!=="closed"&&(+c.unread||0)>0&&c.lastDir!=="out"&&c.id!==chOpen&&chInL(c)).length,
