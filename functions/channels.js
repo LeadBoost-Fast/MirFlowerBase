@@ -127,7 +127,9 @@ const topOnly=req=>{
 // Несколько номеров WhatsApp (у каждой точки свой): номер "" — основной (secrets.wa / settings.channels.wa), остальные — secrets.waI[id] / settings.channels.waI[id]
 const iidOf=x=>String(x||"").replace(/[^A-Za-z0-9_-]/g,"").slice(0,40);
 async function cfgOf(i){const s=await db().doc("secrets/channels").get(),d=(s.exists&&s.data())||{},c=(i?(d.waI||{})[i]:d.wa)||{};
-  if(i&&c.mode==="evo"){const m=d.wa||{};if(!c.evurl&&m.evurl)c.evurl=m.evurl;if(!c.evkey&&m.evkey)c.evkey=m.evkey} // второй номер на том же сервере Evolution
+  if(!c.evurl){ // у номера нет своего адреса Evolution — берём у другого номера (сервер один на оба номера)
+    const src=[d.wa||{},...Object.values(d.waI||{})].find(x=>x&&x.evurl);
+    if(src){c.evurl=src.evurl;if(!c.evkey)c.evkey=src.evkey;if(!c.mode||(i&&c.mode!=="waha"&&c.mode!=="green"))c.mode="evo"}}
   return c}
 async function setOf(i){const s=await db().doc("settings/main").get(),c=(((s.exists&&s.data())||{}).channels)||{};return (i?(c.waI||{})[i]:c.wa)||{}}
 const waState=(st,i)=>db().doc("settings/main").set({channels:i?{waI:{[i]:{state:String(st||""),stateAt:Date.now()}}}:{wa:{state:String(st||""),stateAt:Date.now()}}},{merge:true});
@@ -282,10 +284,11 @@ exports.waEvoHook=onRequest({...OPT,maxInstances:10,minInstances:1,invoker:"publ
         try{const r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:{key:{id:sid}},convertToMp4:true});const b64=String(r.base64||"").replace(/^data:[^,]*,/,"");
           if(b64){aud=await saveBuf(Buffer.from(b64,"base64"),/mp4|m4a/.test(String(r.mimetype||"audio/mp4"))?"audio/mp4":String(r.mimetype||"audio/mp4").split(";")[0],"wa_"+key);text="Голосовое сообщение"}
         }catch(e){console.error("evo audio",e)}
+        if(!aud){const b0=String(msg.base64||m.base64||"").replace(/^data:[^,]*,/,"");if(b0){try{aud=await saveBuf(Buffer.from(b0,"base64"),String((msg.audioMessage||{}).mimetype||"audio/ogg").split(";")[0],"wa_"+key);text="Голосовое сообщение"}catch(e){}}}
         if(!aud)text="Голосовое сообщение (откройте в WhatsApp)"}
       else if(msg.videoMessage||msg.documentMessage||msg.documentWithCaptionMessage){ // файлы и видео сохраняем у себя — открываются прямо из чата
         const dm=msg.documentMessage||((msg.documentWithCaptionMessage||{}).message||{}).documentMessage||msg.videoMessage||{},isV=!!msg.videoMessage,nm0=String(dm.fileName||(isV?"видео.mp4":"файл"));
-        try{if((+dm.fileLength||0)>25*1048576)throw new Error("big");const r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:{key:{id:sid}}});const b64=String(r.base64||"").replace(/^data:[^,]*,/,"");
+        try{if((+dm.fileLength||0)>25*1048576)throw new Error("big");let r={base64:String(msg.base64||m.base64||""),mimetype:dm.mimetype};if(!r.base64)r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:{key:{id:sid}}});const b64=String(r.base64||"").replace(/^data:[^,]*,/,"");
           if(b64){const ct=String(dm.mimetype||r.mimetype||(isV?"video/mp4":"application/octet-stream")).split(";")[0],u=await saveBuf(Buffer.from(b64,"base64"),ct,"wa_"+key);x=isV?{vid:u}:{file:{url:u,name:nm0}};text=(isV?"Видео":"Файл: "+nm0)+(dm.caption?"\n"+dm.caption:"")}
         }catch(e){if(e.message!=="big")console.error("evo file",e)}
         if(!x)text=(isV?"Видео":"Файл: "+nm0)+" (откройте в WhatsApp)"+(dm.caption?"\n"+dm.caption:"")}
@@ -317,7 +320,7 @@ exports.chMediaFetch=onCall({...OPT,timeoutSeconds:120},async req=>{
   const cref=db().doc("chats/"+cid),ch=await cref.get();if(!ch.exists)throw new HttpsError("not-found","Чат не найден");
   const mref=cref.collection("msgs").doc(mid),ms=await mref.get();if(!ms.exists)throw new HttpsError("not-found","Сообщение не найдено");
   const m=ms.data(),t=String(m.t||""),wi=iidOf(ch.data().wi),c=await cfgOf(wi);
-  if(c.mode!=="evo")throw new HttpsError("failed-precondition","Загрузка работает только с Evolution API");
+  if(!c.evurl)throw new HttpsError("failed-precondition","Не найден адрес сервера Evolution API — проверьте подключение WhatsApp в настройках");
   const kind=/^Файл: /.test(t)?"file":/^Видео/.test(t)?"vid":/^Голосовое/.test(t)?"aud":/\[Фото/.test(t)?"img":"";
   if(!kind)throw new HttpsError("failed-precondition","В этом сообщении нет файла");
   let r;try{r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:{key:{id:mid.slice(2)}},...(kind==="aud"?{convertToMp4:true}:{})})}
@@ -330,7 +333,7 @@ exports.chMediaFetch=onCall({...OPT,timeoutSeconds:120},async req=>{
   const u=await saveBuf(buf,ct,cid),clean=t.replace(/ ?\(откройте в WhatsApp\)/,"").replace(/\n?\[Фото[^\]]*\]/,"");
   const upd=kind==="file"?{file:{url:u,name:(/^Файл: (.+)/.exec(clean.split("\n")[0])||[])[1]||"файл"}}:kind==="vid"?{vid:u}:kind==="aud"?{aud:u}:{img:u};
   await mref.update({...upd,t:clean||(kind==="img"?"":t)});
-  return{ok:true};
+  return{ok:true,url:u};
 });
 // Подключение: включает уведомления Green API на наш адрес
 exports.waGreenSetup=onCall(OPT,async req=>{
