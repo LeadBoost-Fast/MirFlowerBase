@@ -764,7 +764,7 @@ window.trN=null;
 const langCard=()=>`<h2>Язык</h2><div class="card"><div class="row" style="gap:8px"><button class="btn ${LANG==="ru"?"":"g"}" data-a="lang_ru" style="flex:1">Русский</button><button class="btn ${LANG==="kk"?"":"g"}" data-a="lang_kk" style="flex:1">Қазақша</button></div></div>`;
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="lang_ru"],[data-a="lang_kk"]');if(!b)return;e.stopImmediatePropagation();const l=b.dataset.a==="lang_kk"?"kk":"ru";if(l!==LANG)setLang(l)},true);
 const ERR={"auth/invalid-credential":"Неверный email или пароль","auth/wrong-password":"Неверный email или пароль","auth/user-not-found":"Неверный email или пароль","auth/invalid-login-credentials":"Неверный email или пароль","auth/missing-password":"Введите пароль","auth/missing-email":"Введите email","auth/too-many-requests":"Слишком много попыток, подождите","auth/network-request-failed":"Нет интернета","auth/invalid-email":"Некорректный email","auth/user-disabled":"Учётная запись отключена","auth/email-already-in-use":"Этот email уже занят. Удалённого сотрудника нужно убрать и в Firebase → Authentication, либо взять другой email","auth/weak-password":"Пароль короче 6 символов","permission-denied":"Недостаточно прав","messaging/failed-service-worker-registration":"Не удалось подключить уведомления. Обновите страницу и повторите","messaging/permission-blocked":"Уведомления заблокированы в браузере","unavailable":"Нет интернета. Подождите 20 сек.","deadline-exceeded":"Нет интернета. Подождите 20 сек."};
-const er=e=>ERR[e.code]||(/(^|\/)(internal|failed-precondition|invalid-argument)$/.test(String(e.code||""))&&e.message&&!/^(INTERNAL|internal)$/.test(e.message)?e.message:null)||(/INTERNAL ASSERTION/i.test(String(e.message||""))?"Сбой связи с базой. Нажмите ещё раз":"Ошибка: "+(e.code||e.message));
+const er=e=>ERR[e.code]||(/(^|\/)(internal|failed-precondition|invalid-argument)$/.test(String(e.code||""))&&e.message&&!/^(INTERNAL|internal)$/.test(e.message)?e.message:null)||(/INTERNAL ASSERTION/i.test(String(e.message||""))?"Сбой связи с базой. Нажмите ещё раз":"Ошибка: "+(e.code||String(e.message||e).replace(/\s*\(evaluating [\s\S]*$/,"").replace(/\s*\(In '[\s\S]*$/,"").slice(0,140)));
 async function log(act,o,x){try{await db.collection("activityLogs").add({act,oid:o.id||"",name:o.bn||"",by:U.uid,byName:S.name||"",x:x||(o.client?o.client+(o.p!=null?" · "+M((+o.p||0)+(+o.fee||0)):""):""),loc:LOC||(S&&S.loc)||"main",ts:TS()})}catch(e){eLog(e)}}
 /* действие по кнопке: защита от двойного нажатия 1,5 с, дальше кнопки свободны, а результат/ошибка приходят, когда ответит сервер */
 /* Связь с базой на телефоне иногда «зависает» молча (смена Wi-Fi/мобильной сети, телефон в кармане, свёрнутое приложение):
@@ -830,7 +830,7 @@ async function netKick(why){try{await db.enableNetwork()}catch(e){eLog(e)}}
 async function run(fn){if(lock&&Date.now()-lock<1500)return;if(navigator.onLine===false){toast("Нет интернета. Подождите 20 сек.");return}const my=lock=Date.now();
  /* нажатая кнопка заблокирована, пока действие не закончится: при медленной связи второй заказ случайно не создать */
  const bt=lastBtnEl&&Date.now()-lastBtnAt<1500&&lastBtnEl.tagName==="BUTTON"&&!lastBtnEl.disabled?lastBtnEl:null;if(bt)bt.disabled=true;
- let done=false;const p=Promise.resolve().then(fn).catch(e=>{toast(er(e))}).finally(()=>{done=true;if(bt)bt.disabled=false});
+ let done=false;const p=Promise.resolve().then(fn).catch(e=>{try{eLog(e)}catch(x){}toast(er(e))}).finally(()=>{done=true;if(bt)bt.disabled=false});
  setTimeout(()=>{if(!done){toast("Сервер отвечает медленно, переподключаюсь…");netKick("run")}},6000);
  setTimeout(()=>{if(!done)hangCheck(my)},20000);
  await Promise.race([p,new Promise(r=>setTimeout(r,1500))]);if(lock===my)lock=0;return p}
@@ -1635,8 +1635,8 @@ function wkForm(){if(!adm())return;const m=/(\d{1,2}:\d{2})\D+(\d{1,2}:\d{2})/.e
  const f=$("wkf"),prev=()=>{const {out,bad}=wkParse(f.elements.t.value),miss=[...new Set(out.filter(x=>!x.uid).map(x=>x.name))],G={};
   out.forEach(x=>{(G[x.loc]=G[x.loc]||[...Array(7)].map(()=>[]))[x.wd].push(x)});
   const dbl=[];const seen={};out.filter(x=>x.uid).forEach(x=>{const k=x.uid+"|"+x.wd;if(seen[k]&&seen[k]!==x.loc)dbl.push(SF[x.uid].name+" · "+WD[x.wd]);seen[k]=x.loc});
-  const rc=wkRoles(out),rcl=Object.keys(rc);
-  $("wkp").innerHTML=(rcl.length&&f.elements.rl&&f.elements.rl.checked?`<div class="card" style="border-left:3px solid #3B82F6"><b>Должность будет изменена:</b><div class="mut">${rcl.map(i=>esc(SF[i].name)+": "+esc(RL[SF[i].role]||SF[i].role)+" → "+esc(RL[rc[i]])).join("<br>")}</div></div>`:"")+(miss.length?`<div class="card" style="border-left:3px solid #EF4444"><b>Нет в команде: ${miss.map(esc).join(", ")}</b><div class="mut">Добавьте их в разделе «Команда» (или поправьте имя в шаблоне) и нажмите «Проверить» снова. Остальные смены можно заполнить уже сейчас.</div></div>`:`<div class="card mut">Все сотрудники найдены.</div>`)
+  const rc=wkRoles(out),rcl=Object.keys(rc),box=$("wkp");if(!box)return out;
+  box.innerHTML=(rcl.length&&f.elements.rl&&f.elements.rl.checked?`<div class="card" style="border-left:3px solid #3B82F6"><b>Должность будет изменена:</b><div class="mut">${rcl.map(i=>esc(SF[i].name)+": "+esc(RL[SF[i].role]||SF[i].role)+" → "+esc(RL[rc[i]])).join("<br>")}</div></div>`:"")+(miss.length?`<div class="card" style="border-left:3px solid #EF4444"><b>Нет в команде: ${miss.map(esc).join(", ")}</b><div class="mut">Добавьте их в разделе «Команда» (или поправьте имя в шаблоне) и нажмите «Проверить» снова. Остальные смены можно заполнить уже сейчас.</div></div>`:`<div class="card mut">Все сотрудники найдены.</div>`)
    +(dbl.length?`<div class="card" style="border-left:3px solid #F59E0B"><b>В один день на двух точках:</b> ${dbl.map(esc).join(", ")}</div>`:"")
    +(bad.length?`<div class="card mut">${bad.slice(0,5).map(esc).join("<br>")}</div>`:"")
    +Object.keys(G).map(l=>`<div class="card"><b>${esc(lname(l))}</b>${G[l].map((a,i)=>`<div class="ln"><span>${WD[i]}</span><b style="text-align:right">${a.length?a.map(x=>x.uid?esc(SF[x.uid].name)+` <small class="mut">${esc(RL[(f.elements.rl&&f.elements.rl.checked&&x.role)||SF[x.uid].role]||"")}</small>`:`<span style="color:#EF4444">${esc(x.name)} — нет</span>`).join("<br>"):'<span class="mut">—</span>'}</b></div>`).join("")}</div>`).join("");return out};
@@ -1646,10 +1646,11 @@ function wkForm(){if(!adm())return;const m=/(\d{1,2}:\d{2})\D+(\d{1,2}:\d{2})/.e
   const W=[],t0=today();for(let k=0;k<n;k++)out.forEach(x=>{const d=addD(m0,k*7+x.wd);if(d>=t0)W.push([x.uid+"_"+d,{uid:x.uid,date:d,t:"work",from:fr,to,loc:x.loc,by:U.uid,updatedAt:TS()}])});
   if(!W.length)return toast("Все дни уже прошли: выберите неделю вперёд");
   if(!confirm(`Поставить ${W.length} ${pl(W.length,"смену","смены","смен")} (${n} ${pl(n,"неделя","недели","недель")}, прошедшие дни пропускаются)? Клетки этих сотрудников в эти дни будут заменены.`))return;
+  const rc=own()&&f.elements.rl&&f.elements.rl.checked?wkRoles(out):{},tpl=f.elements.t.value;
   run(async()=>{
    for(let i=0;i<W.length;i+=400){const bt=db.batch();W.slice(i,i+400).forEach(([id,v])=>bt.set(db.collection("shifts").doc(id),v));await bt.commit()}
-   const rc=own()&&f.elements.rl&&f.elements.rl.checked?wkRoles(prev()):{};for(const i of Object.keys(rc)){await db.collection("staff").doc(i).update({role:rc[i]});log("Должность изменена по шаблону",{bn:SF[i].name},RL[rc[i]])}
-   if(own())await db.collection("settings").doc("main").set({wkTpl:f.elements.t.value,updatedAt:TS()},{merge:true}).catch(e=>eLog(e));
+   for(const i of Object.keys(rc)){await db.collection("staff").doc(i).update({role:rc[i]});log("Должность изменена по шаблону",{bn:(SF[i]||{}).name||""},RL[rc[i]]||rc[i])}
+   if(own())await db.collection("settings").doc("main").set({wkTpl:tpl,updatedAt:TS()},{merge:true}).catch(e=>eLog(e));
    log("График заполнен по шаблону",{bn:""},W.length+" смен, "+n+" нед.");modal("");toast("График заполнен: "+W.length+" смен"+(Object.keys(rc).length?", должностей изменено: "+Object.keys(rc).length:""))})}}
 /* --- каталог букетов и быстрый заказ --- */
 function quickOpts(){const s=SC.filter(x=>x.st==="in"),g=(t,a)=>a.length?`<optgroup label="${t}">${a.join("")}</optgroup>`:"";
