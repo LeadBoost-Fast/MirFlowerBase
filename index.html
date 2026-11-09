@@ -1541,7 +1541,7 @@ function shiftForm(id,d){const x=sh(id,d)||{},m=/(\d{1,2}:\d{2})\D+(\d{1,2}:\d{2
  <label>Применить</label><select name="rng"><option value="1">Только этот день</option><option value="5">Пн–Пт этой недели</option><option value="7">Вся неделя, Пн–Вс</option></select>${btns("Сохранить")}</form>`);
  const f=$("wf");f.elements.t.onchange=()=>{$("wt").hidden=f.elements.t.value!=="work"};f.elements.t.onchange();
  f.onsubmit=e=>{e.preventDefault();const g=k=>f.elements[k].value,ty=g("t"),r=+g("rng"),m0=mon(d),dl=r===1?[d]:[...Array(r)].map((_,i)=>addD(m0,i));
-  if(ty==="work"&&!(g("from")&&g("to")&&g("from")<g("to")))return toast("Конец смены должен быть позже начала");
+  if(ty==="work"&&!(g("from")&&g("to")&&g("from")!==g("to")))return toast("Укажите начало и конец смены");
   run(async()=>{const bt=db.batch();dl.forEach(dd=>{const ref=db.collection("shifts").doc(id+"_"+dd);if(ty==="clr")bt.delete(ref);else bt.set(ref,{uid:id,date:dd,t:ty,from:ty==="work"?g("from"):"",to:ty==="work"?g("to"):"",by:U.uid,updatedAt:TS()})});await bt.commit();log("График изменён",{bn:nm(id)},wdn(d)+" "+dm(d)+": "+(ty==="work"?g("from")+"–"+g("to"):ty==="off"?"выходной":"очищено")+(r>1?" ("+r+" дн.)":""));modal("");toast("График сохранён")})}}
 async function copyWeek(){const m0=addD(mon(today()),wk*7);let n=0;const bt=db.batch();
  Object.keys(SF).filter(i=>SF[i].active!==false).forEach(id=>{for(let i=0;i<7;i++){const src=sh(id,addD(m0,i-7)),dst=addD(m0,i);if(src&&!sh(id,dst)){n++;bt.set(db.collection("shifts").doc(id+"_"+dst),{uid:id,date:dst,t:src.t,from:src.from||"",to:src.to||"",by:U.uid,updatedAt:TS()})}}});
@@ -1556,6 +1556,7 @@ const WK_DEF="Помощник:\n10 мкр:\nПонедельник - Сержа
  nrmN=s=>lat2cyr(s).replace(/қ/g,"к").replace(/ғ/g,"г").replace(/[үұ]/g,"у").replace(/ә/g,"а").replace(/ө/g,"о").replace(/і/g,"и").replace(/ң/g,"н").replace(/һ/g,"х").replace(/ё/g,"е").replace(/[ыйи]/g,"и").replace(/э/g,"е").replace(/[ьъ]/g,"").replace(/[^а-я0-9]/g,""),
  wkLoc=h=>{const d=(/\d+/.exec(h)||[""])[0],L=locs();return (d&&L.find(l=>(/^\D*(\d+)/.exec(l.name)||[])[1]===d))||L.find(l=>nrmN(l.name).includes(nrmN(h)))||null},
  wkWho=(n,role)=>{const k=nrmN(n),c=Object.keys(SF).filter(i=>SF[i].active!==false&&SF[i].name&&(nrmN(SF[i].name)===k||nrmN(String(SF[i].name).split(/\s+/)[0])===k||nrmN(SF[i].name).startsWith(k)));return c.length>1?(c.find(i=>SF[i].role===role)||c[0]):c[0]||null};
+function wkRoles(out){const r={};out.forEach(x=>{if(x.uid&&x.role&&!r[x.uid])r[x.uid]=x.role});Object.keys(r).forEach(i=>{if(!SF[i]||isOwnId(i)||i===U.uid||SF[i].role===r[i])delete r[i]});return r}
 function wkParse(t){const out=[],bad=[];let L=null,R="",H="";String(t||"").split(/\n/).forEach(raw=>{const r=raw.trim();if(!r)return;
   const m=/^([^\-–—:]+?)\s*[-–—:]\s*(.*)$/.exec(r),w=m?WKD.map(nrmN).indexOf(nrmN(m[1]).replace(/[^а-я]/g,"")):-1;
   if(w>=0){const n=m[2].trim();if(!n||/^\?+$/.test(n))return;if(!L){bad.push("Не указана точка для: "+r);return}String(n).split(/[,/]| и /).map(x=>x.trim()).filter(x=>x&&x!=="?").forEach(nn=>out.push({loc:L,lh:H,wd:w,name:nn,role:R,uid:wkWho(nn,R)}));return}
@@ -1567,24 +1568,26 @@ function wkForm(){if(!adm())return;const m=/(\d{1,2}:\d{2})\D+(\d{1,2}:\d{2})/.e
  <form id="wkf"><label>Шаблон</label><textarea name="t" rows="12" style="font-size:14px">${esc(SH.wkTpl||WK_DEF)}</textarea>
  <div class="g2"><div><label>С</label><input type="time" name="from" value="${m?pad(m[1]):"09:00"}"></div><div><label>До</label><input type="time" name="to" value="${m?pad(m[2]):"21:00"}"></div></div>
  <label>На сколько недель</label><select name="n"><option value="1">1 неделя (с ${dm(addD(mon(today()),wk*7))})</option><option value="2">2 недели</option><option value="4" selected>4 недели</option><option value="8">8 недель</option></select>
- <div id="wkp"></div><div class="acts"><button type="button" class="btn g" data-a="wk_chk">Проверить</button><button class="btn">Заполнить график</button></div></form>`);
+ ${own()?`<label class="row" style="justify-content:flex-start;gap:10px;margin:12px 0 4px;text-transform:none;letter-spacing:0;font-size:15px"><input type="checkbox" name="rl" checked style="width:22px;height:22px;flex:none"> Поставить каждому должность из шаблона</label><p class="mut" style="margin:0 0 6px;font-size:13px">Помощник → Помощник флориста, Менеджер → Оператор, Флорист → Флорист. Владельца не меняет.</p>`:""}<p class="mut" style="font-size:13px;margin:6px 0">Если конец раньше начала (например 10:00–02:00), смена заканчивается после полуночи.</p><div id="wkp"></div><div class="acts"><button type="button" class="btn g" data-a="wk_chk">Проверить</button><button class="btn">Заполнить график</button></div></form>`);
  const f=$("wkf"),prev=()=>{const {out,bad}=wkParse(f.elements.t.value),miss=[...new Set(out.filter(x=>!x.uid).map(x=>x.name))],G={};
   out.forEach(x=>{(G[x.loc]=G[x.loc]||[...Array(7)].map(()=>[]))[x.wd].push(x)});
   const dbl=[];const seen={};out.filter(x=>x.uid).forEach(x=>{const k=x.uid+"|"+x.wd;if(seen[k]&&seen[k]!==x.loc)dbl.push(SF[x.uid].name+" · "+WD[x.wd]);seen[k]=x.loc});
-  $("wkp").innerHTML=(miss.length?`<div class="card" style="border-left:3px solid #EF4444"><b>Нет в команде: ${miss.map(esc).join(", ")}</b><div class="mut">Добавьте их в разделе «Команда» (или поправьте имя в шаблоне) и нажмите «Проверить» снова. Остальные смены можно заполнить уже сейчас.</div></div>`:`<div class="card mut">Все сотрудники найдены.</div>`)
+  const rc=wkRoles(out),rcl=Object.keys(rc);
+  $("wkp").innerHTML=(rcl.length&&f.elements.rl&&f.elements.rl.checked?`<div class="card" style="border-left:3px solid #3B82F6"><b>Должность будет изменена:</b><div class="mut">${rcl.map(i=>esc(SF[i].name)+": "+esc(RL[SF[i].role]||SF[i].role)+" → "+esc(RL[rc[i]])).join("<br>")}</div></div>`:"")+(miss.length?`<div class="card" style="border-left:3px solid #EF4444"><b>Нет в команде: ${miss.map(esc).join(", ")}</b><div class="mut">Добавьте их в разделе «Команда» (или поправьте имя в шаблоне) и нажмите «Проверить» снова. Остальные смены можно заполнить уже сейчас.</div></div>`:`<div class="card mut">Все сотрудники найдены.</div>`)
    +(dbl.length?`<div class="card" style="border-left:3px solid #F59E0B"><b>В один день на двух точках:</b> ${dbl.map(esc).join(", ")}</div>`:"")
    +(bad.length?`<div class="card mut">${bad.slice(0,5).map(esc).join("<br>")}</div>`:"")
-   +Object.keys(G).map(l=>`<div class="card"><b>${esc(lname(l))}</b>${G[l].map((a,i)=>`<div class="ln"><span>${WD[i]}</span><b style="text-align:right">${a.length?a.map(x=>x.uid?esc(SF[x.uid].name)+` <small class="mut">${esc(RL[SF[x.uid].role]||"")}</small>`:`<span style="color:#EF4444">${esc(x.name)} — нет</span>`).join("<br>"):'<span class="mut">—</span>'}</b></div>`).join("")}</div>`).join("");return out};
- f.querySelector('[data-a=wk_chk]').onclick=prev;prev();
+   +Object.keys(G).map(l=>`<div class="card"><b>${esc(lname(l))}</b>${G[l].map((a,i)=>`<div class="ln"><span>${WD[i]}</span><b style="text-align:right">${a.length?a.map(x=>x.uid?esc(SF[x.uid].name)+` <small class="mut">${esc(RL[(f.elements.rl&&f.elements.rl.checked&&x.role)||SF[x.uid].role]||"")}</small>`:`<span style="color:#EF4444">${esc(x.name)} — нет</span>`).join("<br>"):'<span class="mut">—</span>'}</b></div>`).join("")}</div>`).join("");return out};
+ f.querySelector('[data-a=wk_chk]').onclick=prev;if(f.elements.rl)f.elements.rl.onchange=prev;prev();
  f.onsubmit=e=>{e.preventDefault();const out=prev().filter(x=>x.uid),fr=f.elements.from.value,to=f.elements.to.value,n=+f.elements.n.value,m0=addD(mon(today()),wk*7);
-  if(!out.length)return toast("Некого ставить: ни одно имя не найдено в команде");if(!(fr&&to&&fr<to))return toast("Конец смены должен быть позже начала");
+  if(!out.length)return toast("Некого ставить: ни одно имя не найдено в команде");if(!(fr&&to&&fr!==to))return toast("Укажите начало и конец смены");
   const W=[],t0=today();for(let k=0;k<n;k++)out.forEach(x=>{const d=addD(m0,k*7+x.wd);if(d>=t0)W.push([x.uid+"_"+d,{uid:x.uid,date:d,t:"work",from:fr,to,loc:x.loc,by:U.uid,updatedAt:TS()}])});
   if(!W.length)return toast("Все дни уже прошли: выберите неделю вперёд");
   if(!confirm(`Поставить ${W.length} ${pl(W.length,"смену","смены","смен")} (${n} ${pl(n,"неделя","недели","недель")}, прошедшие дни пропускаются)? Клетки этих сотрудников в эти дни будут заменены.`))return;
   run(async()=>{
    for(let i=0;i<W.length;i+=400){const bt=db.batch();W.slice(i,i+400).forEach(([id,v])=>bt.set(db.collection("shifts").doc(id),v));await bt.commit()}
+   const rc=own()&&f.elements.rl&&f.elements.rl.checked?wkRoles(prev()):{};for(const i of Object.keys(rc)){await db.collection("staff").doc(i).update({role:rc[i]});log("Должность изменена по шаблону",{bn:SF[i].name},RL[rc[i]])}
    if(own())await db.collection("settings").doc("main").set({wkTpl:f.elements.t.value,updatedAt:TS()},{merge:true}).catch(e=>eLog(e));
-   log("График заполнен по шаблону",{bn:""},W.length+" смен, "+n+" нед.");modal("");toast("График заполнен: "+W.length+" смен")})}}
+   log("График заполнен по шаблону",{bn:""},W.length+" смен, "+n+" нед.");modal("");toast("График заполнен: "+W.length+" смен"+(Object.keys(rc).length?", должностей изменено: "+Object.keys(rc).length:""))})}}
 /* --- каталог букетов и быстрый заказ --- */
 function quickOpts(){const s=SC.filter(x=>x.st==="in"),g=(t,a)=>a.length?`<optgroup label="${t}">${a.join("")}</optgroup>`:"";
  return g("Готовые на витрине",s.map(x=>`<option value="s:${x.id}">${esc(x.name)} · ${M(x.price)}</option>`))+g("Каталог букетов",BQ.map(b=>`<option value="b:${b.id}">${esc(b.name)} · ${M(b.price)}</option>`))}
