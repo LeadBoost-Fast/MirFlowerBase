@@ -239,7 +239,7 @@ exports.chMediaFetch=onCall({...OPT,timeoutSeconds:120},async req=>{
   if(!kind)throw new HttpsError("failed-precondition","В этом сообщении нет файла");
   let r;try{r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:(()=>{try{if(m.wraw)return JSON.parse(m.wraw)}catch(e){}return{key:{id:mid.slice(2),remoteJid:String(ch.data().ext||""),fromMe:m.dir==="out"}}})(),...(kind==="aud"?{convertToMp4:true}:{})})}
   catch(e){throw new HttpsError("not-found","Сервер WhatsApp не отдал файл ("+String(e.message||e).slice(0,160)+"). Откройте его в WhatsApp на телефоне")}
-  const b64=String((r&&r.base64)||"").replace(/^data:[^,]*,/,"");if(!b64)throw new HttpsError("not-found","Файл уже недоступен на сервере WhatsApp. Откройте его в WhatsApp на телефоне");
+  const b64=String((r&&r.base64)||"").replace(/^data:[^,]*,/,"");if(!b64)throw new HttpsError("not-found","Сервер WhatsApp ответил без файла (поля: "+Object.keys(r||{}).join(", ").slice(0,120)+"; есть данные сообщения: "+(m.wraw?"да":"нет")+"). Откройте его в WhatsApp на телефоне");
   const buf=Buffer.from(b64,"base64");if(buf.length>25*1048576)throw new HttpsError("failed-precondition","Файл больше 25 МБ — откройте в WhatsApp");
   let ct=String((r&&r.mimetype)||"").split(";")[0];
   if(kind==="aud")ct=/mp4|m4a/.test(ct||"audio/mp4")?"audio/mp4":ct;
