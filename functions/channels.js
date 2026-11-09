@@ -238,6 +238,24 @@ exports.waWahaHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(req
   res.sendStatus(200);
 });
 // Уведомления Evolution API: messages.upsert (входящие и с телефона), connection.update
+// Цитата: клиент ответил на конкретное сообщение (например, выбрал одно из присланных фото).
+// Ищем исходное у себя (по id), иначе берём текст/миниатюру из самой цитаты
+async function quoteOf(msg,m,key){
+  let ci=m.contextInfo||null;
+  if(!ci)for(const v of Object.values(msg||{}))if(v&&typeof v==="object"&&v.contextInfo){ci=v.contextInfo;break}
+  if(!ci||!ci.stanzaId&&!ci.quotedMessage)return null;
+  const id=String(ci.stanzaId||""),qm=ci.quotedMessage||{};
+  if(id){try{
+    const a=await db().collection("chats").doc("wa_"+key).collection("msgs").doc("m_"+safe(id)).get();
+    if(a.exists){const y=a.data();return{t:String(y.t||"").slice(0,300),img:y.img||"",dir:y.dir||""}}
+    const w=await db().doc("waSent/"+safe(id)).get();
+    if(w.exists&&(w.data().t||w.data().img))return{t:String(w.data().t||""),img:w.data().img||"",dir:"out"};
+  }catch(e){}}
+  const qi=qm.imageMessage||qm.videoMessage||null,th=qi&&qi.jpegThumbnail;let img="";
+  if(th){try{const b=typeof th==="string"?th:Buffer.from(Object.values(th)).toString("base64");if(b.length<60000)img="data:image/jpeg;base64,"+b}catch(e){}}
+  const t=String(qm.conversation||(qm.extendedTextMessage||{}).text||(qi&&qi.caption)||(qm.documentMessage?"Файл: "+(qm.documentMessage.fileName||""):"")||(qm.audioMessage?"Голосовое сообщение":"")||(qi&&!img?"Фото":"")).slice(0,300);
+  return t||img?{t,img,dir:ci.participant?"":"out"}:null;
+}
 exports.waEvoHook=onRequest({...OPT,maxInstances:10,minInstances:1,invoker:"public"},async(req,res)=>{
   if(req.method!=="POST")return res.sendStatus(405);
   const wi=iidOf(req.query.i),c=await cfgOf(wi),tok=String(c.gHook||"");
@@ -274,6 +292,7 @@ exports.waEvoHook=onRequest({...OPT,maxInstances:10,minInstances:1,invoker:"publ
       else if(msg.contactMessage)text="Контакт: "+((msg.contactMessage||{}).displayName||"");
       else if(msg.stickerMessage)text="Стикер";
       if(!text&&!img)continue; // реакции, служебные
+      try{const q=await quoteOf(msg,m,key);if(q)x={...(x||{}),q}}catch(e){console.error("evo quote",e)}
       if(fromMe){ // свой ответ из CRM приходит обратно — второй раз не записываем
         const ours=async()=>{if(sid&&(await db().doc("waSent/"+safe(sid)).get()).exists)return true;const q=await db().collection("chats").doc("wa_"+key).collection("msgs").where("ts",">",Date.now()-180000).get();return q.docs.some(x=>{const y=x.data();return y.dir==="out"&&y.via!=="phone"&&String(y.t||"").trim()===text.trim()})};
         if(await ours())continue;await new Promise(r=>setTimeout(r,2500));if(await ours())continue;
@@ -447,7 +466,7 @@ const SEND={
     if(c.mode==="evo"){
       if(!c.evurl)throw new Error("Не задан адрес сервера Evolution API");
       const ext=String((chat&&chat.ext)||""),number=/@lid$/.test(ext)?ext:String(to).replace(/\D/g,""),inst=eName(iidOf(chat&&chat.wi));
-      const remember=async r=>{const id=String((r&&r.key&&r.key.id)||"");if(id)await db().doc("waSent/"+safe(id)).set({ts:Date.now()})};
+      const remember=async r=>{const id=String((r&&r.key&&r.key.id)||"");if(id)await db().doc("waSent/"+safe(id)).set({ts:Date.now(),t:String(t||"").slice(0,300),img:img||""})}; // t/img — чтобы показать цитату, если клиент ответит на это сообщение
       if(img)await remember(await eCall(c,"POST","/message/sendMedia/"+inst,{number,mediatype:"image",mimetype:"image/jpeg",media:img,fileName:"photo.jpg",...(t?{caption:t.slice(0,1000)}:{})}));
       else await remember(await eCall(c,"POST","/message/sendText/"+inst,{number,text:t.slice(0,4000)}));
       return;
