@@ -275,20 +275,20 @@ exports.waEvoHook=onRequest({...OPT,maxInstances:10,minInstances:1,invoker:"publ
       if(!/@(s\.whatsapp\.net|c\.us|lid)$/.test(jid))continue; // группы и статусы не берём
       const digits=jid.replace(/@.*/,"").replace(/\D/g,"");if(!digits)continue;
       const lid=/@lid$/.test(jid),key=lid?"lid"+digits:digits,sid=String(k.id||"");
-      const msg=m.message||{},im=msg.imageMessage,ty=String(m.messageType||Object.keys(msg)[0]||"");
+      const msg=m.message||{},raw={key:k,message:Object.fromEntries(Object.entries(msg).filter(([x])=>x!=="base64"))},im=msg.imageMessage,ty=String(m.messageType||Object.keys(msg)[0]||"");
       let text=String(msg.conversation||(msg.extendedTextMessage||{}).text||(im&&im.caption)||((msg.videoMessage||{}).caption)||""),img="";
-      if(im){try{let b64=String(msg.base64||m.base64||"");if(!b64){const r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:{key:{id:sid}}});b64=String(r.base64||"")}
+      if(im){try{let b64=String(msg.base64||m.base64||"");if(!b64){const r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:raw});b64=String(r.base64||"")}
         if(b64)img=await saveBuf(Buffer.from(b64.replace(/^data:[^,]*,/,""),"base64"),String(im.mimetype||"image/jpeg").split(";")[0],"wa_"+key);else text=(text?text+"\n":"")+"[Фото, откройте в WhatsApp]"}catch(e){text=(text?text+"\n":"")+"[Фото не загрузилось, откройте в WhatsApp]"}}
       let aud="",x=null;
       if(!im&&msg.audioMessage){ // голосовое: просим сервер перекодировать в mp4 — так оно играет на iPhone
-        try{const r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:{key:{id:sid}},convertToMp4:true});const b64=String(r.base64||"").replace(/^data:[^,]*,/,"");
+        try{const r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:raw,convertToMp4:true});const b64=String(r.base64||"").replace(/^data:[^,]*,/,"");
           if(b64){aud=await saveBuf(Buffer.from(b64,"base64"),/mp4|m4a/.test(String(r.mimetype||"audio/mp4"))?"audio/mp4":String(r.mimetype||"audio/mp4").split(";")[0],"wa_"+key);text="Голосовое сообщение"}
         }catch(e){console.error("evo audio",e)}
         if(!aud){const b0=String(msg.base64||m.base64||"").replace(/^data:[^,]*,/,"");if(b0){try{aud=await saveBuf(Buffer.from(b0,"base64"),String((msg.audioMessage||{}).mimetype||"audio/ogg").split(";")[0],"wa_"+key);text="Голосовое сообщение"}catch(e){}}}
         if(!aud)text="Голосовое сообщение (откройте в WhatsApp)"}
       else if(msg.videoMessage||msg.documentMessage||msg.documentWithCaptionMessage){ // файлы и видео сохраняем у себя — открываются прямо из чата
         const dm=msg.documentMessage||((msg.documentWithCaptionMessage||{}).message||{}).documentMessage||msg.videoMessage||{},isV=!!msg.videoMessage,nm0=String(dm.fileName||(isV?"видео.mp4":"файл"));
-        try{if((+dm.fileLength||0)>25*1048576)throw new Error("big");let r={base64:String(msg.base64||m.base64||""),mimetype:dm.mimetype};if(!r.base64)r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:{key:{id:sid}}});const b64=String(r.base64||"").replace(/^data:[^,]*,/,"");
+        try{if((+dm.fileLength||0)>25*1048576)throw new Error("big");let r={base64:String(msg.base64||m.base64||""),mimetype:dm.mimetype};if(!r.base64)r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:raw});const b64=String(r.base64||"").replace(/^data:[^,]*,/,"");
           if(b64){const ct=String(dm.mimetype||r.mimetype||(isV?"video/mp4":"application/octet-stream")).split(";")[0],u=await saveBuf(Buffer.from(b64,"base64"),ct,"wa_"+key);x=isV?{vid:u}:{file:{url:u,name:nm0}};text=(isV?"Видео":"Файл: "+nm0)+(dm.caption?"\n"+dm.caption:"")}
         }catch(e){if(e.message!=="big")console.error("evo file",e)}
         if(!x)text=(isV?"Видео":"Файл: "+nm0)+" (откройте в WhatsApp)"+(dm.caption?"\n"+dm.caption:"")}
@@ -296,6 +296,7 @@ exports.waEvoHook=onRequest({...OPT,maxInstances:10,minInstances:1,invoker:"publ
       else if(msg.contactMessage)text="Контакт: "+((msg.contactMessage||{}).displayName||"");
       else if(msg.stickerMessage)text="Стикер";
       if(!text&&!img)continue; // реакции, служебные
+      if(/откройте в WhatsApp/.test(text)){try{const w=JSON.stringify(raw);if(w.length<20000)x={...(x||{}),wraw:w}}catch(e){}} // чтобы потом можно было скачать кнопкой «Загрузить»
       try{const q=await quoteOf(msg,m,key);if(q)x={...(x||{}),q}}catch(e){console.error("evo quote",e)}
       if(fromMe){ // свой ответ из CRM приходит обратно — второй раз не записываем
         const ours=async()=>{if(sid&&(await db().doc("waSent/"+safe(sid)).get()).exists)return true;const q=await db().collection("chats").doc("wa_"+key).collection("msgs").where("ts",">",Date.now()-180000).get();return q.docs.some(x=>{const y=x.data();return y.dir==="out"&&y.via!=="phone"&&String(y.t||"").trim()===text.trim()})};
@@ -323,7 +324,7 @@ exports.chMediaFetch=onCall({...OPT,timeoutSeconds:120},async req=>{
   if(!c.evurl)throw new HttpsError("failed-precondition","Не найден адрес сервера Evolution API — проверьте подключение WhatsApp в настройках");
   const kind=/^Файл: /.test(t)?"file":/^Видео/.test(t)?"vid":/^Голосовое/.test(t)?"aud":/\[Фото/.test(t)?"img":"";
   if(!kind)throw new HttpsError("failed-precondition","В этом сообщении нет файла");
-  let r;try{r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:{key:{id:mid.slice(2)}},...(kind==="aud"?{convertToMp4:true}:{})})}
+  let r;try{r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:(()=>{try{if(m.wraw)return JSON.parse(m.wraw)}catch(e){}return{key:{id:mid.slice(2),remoteJid:String(ch.data().ext||""),fromMe:m.dir==="out"}}})(),...(kind==="aud"?{convertToMp4:true}:{})})}
   catch(e){throw new HttpsError("not-found","Файл уже недоступен на сервере WhatsApp. Откройте его в WhatsApp на телефоне")}
   const b64=String((r&&r.base64)||"").replace(/^data:[^,]*,/,"");if(!b64)throw new HttpsError("not-found","Файл уже недоступен на сервере WhatsApp. Откройте его в WhatsApp на телефоне");
   const buf=Buffer.from(b64,"base64");if(buf.length>25*1048576)throw new HttpsError("failed-precondition","Файл больше 25 МБ — откройте в WhatsApp");
@@ -332,7 +333,7 @@ exports.chMediaFetch=onCall({...OPT,timeoutSeconds:120},async req=>{
   if(!ct)ct=kind==="file"?"application/pdf":kind==="vid"?"video/mp4":kind==="img"?"image/jpeg":"audio/mp4";
   const u=await saveBuf(buf,ct,cid),clean=t.replace(/ ?\(откройте в WhatsApp\)/,"").replace(/\n?\[Фото[^\]]*\]/,"");
   const upd=kind==="file"?{file:{url:u,name:(/^Файл: (.+)/.exec(clean.split("\n")[0])||[])[1]||"файл"}}:kind==="vid"?{vid:u}:kind==="aud"?{aud:u}:{img:u};
-  await mref.update({...upd,t:clean||(kind==="img"?"":t)});
+  await mref.update({...upd,t:clean||(kind==="img"?"":t),wraw:FV.delete()});
   return{ok:true,url:u};
 });
 // Подключение: включает уведомления Green API на наш адрес
