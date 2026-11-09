@@ -259,6 +259,19 @@ exports.waGreenQr=onCall(OPT,async req=>{
     return{state:st.stateInstance||"",qr:q.type==="qrCode"?String(q.message||""):"",msg:q.type==="error"?String(q.message||""):""};
   }catch(e){throw new HttpsError("internal",String(e.message||e))}
 });
+// Привязка без камеры: код для входа по номеру телефона (WhatsApp → Связанные устройства → Привязать по номеру телефона)
+exports.waGreenCode=onCall(OPT,async req=>{
+  topOnly(req);const c=await greenCfg();
+  let ph=String((req.data&&req.data.phone)||"").replace(/\D/g,"");if(/^8\d{10}$/.test(ph))ph="7"+ph.slice(1);
+  if(!/^\d{10,15}$/.test(ph))throw new HttpsError("invalid-argument","Введите номер магазина полностью, например 77011234567");
+  try{
+    let code="";
+    if(c.mode==="waha"){await wCall(c,"POST","/api/sessions/"+WS+"/start").catch(()=>{});const r=await wCall(c,"POST","/api/"+WS+"/auth/request-code",{phoneNumber:ph});code=String(r.code||"")}
+    else{const r=await gCall(c,"getAuthorizationCode",{phoneNumber:Number(ph)});if(r.status===false)throw new Error("Green API не выдал код: "+(r.message||"проверьте номер"));code=String(r.code||"")}
+    if(!code)throw new Error("Код не получен, попробуйте ещё раз через минуту");
+    return{code};
+  }catch(e){throw new HttpsError("internal",String(e.message||e))}
+});
 // Отвязать телефон
 exports.waGreenLogout=onCall(OPT,async req=>{
   topOnly(req);const c=await greenCfg();
