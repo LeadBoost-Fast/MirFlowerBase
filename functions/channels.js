@@ -195,14 +195,15 @@ exports.waEvoHook=onRequest({...OPT,maxInstances:10,minInstances:1,invoker:"publ
       if(!im&&msg.audioMessage){ // голосовое: просим сервер перекодировать в mp4 — так оно играет на iPhone
         try{const r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:raw,convertToMp4:true});const b64=String(r.base64||"").replace(/^data:[^,]*,/,"");
           if(b64){aud=await saveBuf(Buffer.from(b64,"base64"),/mp4|m4a/.test(String(r.mimetype||"audio/mp4"))?"audio/mp4":String(r.mimetype||"audio/mp4").split(";")[0],"wa_"+key);text="Голосовое сообщение"}
-        }catch(e){console.error("evo audio",e)}
+        }catch(e){console.error("evo audio",e);x={...(x||{}),merr:String(e.message||e).slice(0,200)}}
+        if(!aud){try{const r2=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:raw});const b2=String(r2.base64||"").replace(/^data:[^,]*,/,"");if(b2){aud=await saveBuf(Buffer.from(b2,"base64"),String(r2.mimetype||(msg.audioMessage||{}).mimetype||"audio/ogg").split(";")[0],"wa_"+key);text="Голосовое сообщение";if(x)delete x.merr}}catch(e){x={...(x||{}),merr:String(e.message||e).slice(0,200)}}}
         if(!aud){const b0=String(msg.base64||m.base64||"").replace(/^data:[^,]*,/,"");if(b0){try{aud=await saveBuf(Buffer.from(b0,"base64"),String((msg.audioMessage||{}).mimetype||"audio/ogg").split(";")[0],"wa_"+key);text="Голосовое сообщение"}catch(e){}}}
         if(!aud)text="Голосовое сообщение (откройте в WhatsApp)"}
       else if(msg.videoMessage||msg.documentMessage||msg.documentWithCaptionMessage){ // файлы и видео сохраняем у себя — открываются прямо из чата
         const dm=msg.documentMessage||((msg.documentWithCaptionMessage||{}).message||{}).documentMessage||msg.videoMessage||{},isV=!!msg.videoMessage,nm0=String(dm.fileName||(isV?"видео.mp4":"файл"));
         try{if((+dm.fileLength||0)>25*1048576)throw new Error("big");let r={base64:String(msg.base64||m.base64||""),mimetype:dm.mimetype};if(!r.base64)r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:raw});const b64=String(r.base64||"").replace(/^data:[^,]*,/,"");
           if(b64){const ct=String(dm.mimetype||r.mimetype||(isV?"video/mp4":"application/octet-stream")).split(";")[0],u=await saveBuf(Buffer.from(b64,"base64"),ct,"wa_"+key);x=isV?{vid:u}:{file:{url:u,name:nm0}};text=(isV?"Видео":"Файл: "+nm0)+(dm.caption?"\n"+dm.caption:"")}
-        }catch(e){if(e.message!=="big")console.error("evo file",e)}
+        }catch(e){if(e.message!=="big"){console.error("evo file",e);x={...(x||{}),merr:String(e.message||e).slice(0,200)}}}
         if(!x)text=(isV?"Видео":"Файл: "+nm0)+" (откройте в WhatsApp)"+(dm.caption?"\n"+dm.caption:"")}
       else if(msg.locationMessage){const l=msg.locationMessage;text="Геопозиция: "+l.degreesLatitude+", "+l.degreesLongitude}
       else if(msg.contactMessage)text="Контакт: "+((msg.contactMessage||{}).displayName||"");
@@ -237,8 +238,8 @@ exports.chMediaFetch=onCall({...OPT,timeoutSeconds:120},async req=>{
   const kind=/^Файл: /.test(t)?"file":/^Видео/.test(t)?"vid":/^Голосовое/.test(t)?"aud":/\[Фото/.test(t)?"img":"";
   if(!kind)throw new HttpsError("failed-precondition","В этом сообщении нет файла");
   let r;try{r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:(()=>{try{if(m.wraw)return JSON.parse(m.wraw)}catch(e){}return{key:{id:mid.slice(2),remoteJid:String(ch.data().ext||""),fromMe:m.dir==="out"}}})(),...(kind==="aud"?{convertToMp4:true}:{})})}
-  catch(e){throw new HttpsError("not-found","Файл уже недоступен на сервере WhatsApp. Откройте его в WhatsApp на телефоне")}
-  const b64=String((r&&r.base64)||"").replace(/^data:[^,]*,/,"");if(!b64)throw new HttpsError("not-found","Файл уже недоступен на сервере WhatsApp. Откройте его в WhatsApp на телефоне");
+  catch(e){throw new HttpsError("not-found","Сервер WhatsApp не отдал файл ("+String(e.message||e).slice(0,160)+"). Откройте его в WhatsApp на телефоне")}
+  const b64=String((r&&r.base64)||"").replace(/^data:[^,]*,/,"");if(!b64)throw new HttpsError("not-found","Сервер WhatsApp ответил без файла (поля: "+Object.keys(r||{}).join(", ").slice(0,120)+"; есть данные сообщения: "+(m.wraw?"да":"нет")+"). Откройте его в WhatsApp на телефоне");
   const buf=Buffer.from(b64,"base64");if(buf.length>25*1048576)throw new HttpsError("failed-precondition","Файл больше 25 МБ — откройте в WhatsApp");
   let ct=String((r&&r.mimetype)||"").split(";")[0];
   if(kind==="aud")ct=/mp4|m4a/.test(ct||"audio/mp4")?"audio/mp4":ct;
