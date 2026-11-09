@@ -5,6 +5,7 @@
 const {onCall,onRequest,HttpsError}=require("firebase-functions/v2/https");
 const {onDocumentCreated}=require("firebase-functions/v2/firestore");
 const admin=require("firebase-admin");
+const {FieldValue:FV}=require("firebase-admin/firestore");
 const crypto=require("crypto");
 if(!admin.apps.length)admin.initializeApp();
 
@@ -44,7 +45,7 @@ async function bizLoc(ch,biz){if(!biz)return"";try{const s=await db().doc("setti
 async function ingest(o){
   const ref=db().collection("chats").doc(o.ch+"_"+o.key),mref=ref.collection("msgs").doc("m_"+safe(o.mid||Date.now()+"_"+Math.random()));
   if((await mref.get()).exists)return;
-  const ts=Date.now(),inc=n=>admin.firestore.FieldValue.increment(n),s=await ref.get();
+  const ts=Date.now(),inc=n=>FV.increment(n),s=await ref.get();
   const base={last:o.text||(o.img?"📷 Фото":""),lastDir:"in",lastTs:ts,lastInTs:ts,unread:inc(1),nIn:inc(1),st:"open"};
   if(s.exists){
     const upd={...base},d=s.data();
@@ -106,6 +107,94 @@ exports.waHook=onRequest({...OPT,maxInstances:10},async(req,res)=>{
     }
   }catch(e){console.error("waHook",e)}
   res.sendStatus(200);
+});
+
+// ================= WhatsApp по QR-коду (Green API) =================
+// Номер остаётся в телефоне (как WhatsApp Web). Ключи: secrets/channels.wa = {mode:"green", gid, gtok, gurl, gHook}
+const gBase=c=>String(c.gurl||"https://api.green-api.com").trim().replace(/\/+$/,"")+"/waInstance"+String(c.gid||"").trim();
+async function gCall(c,m,body){
+  const r=await jf(gBase(c)+"/"+m+"/"+String(c.gtok||"").trim(),body===undefined?{}:{method:"POST",headers:CT,body:JSON.stringify(body)});
+  if(!r.ok)throw new Error("Green API: "+(r.j.message||r.j.error||("HTTP "+r.status)));
+  return r.j;
+}
+const topOnly=req=>{
+  if(!req.auth)throw new HttpsError("unauthenticated","Войдите в систему");
+  if(!TOP.includes(String(req.auth.token.email||"").toLowerCase()))throw new HttpsError("permission-denied","Только владелец и главный админ");
+};
+const waState=st=>db().doc("settings/main").set({channels:{wa:{state:String(st||""),stateAt:Date.now()}}},{merge:true});
+async function greenCfg(){
+  const c=await secretsOf("wa");
+  if(c.mode!=="green"||!c.gid||!c.gtok)throw new HttpsError("failed-precondition","Сначала сохраните ID инстанса и токен Green API");
+  return c;
+}
+// Исходящее, отправленное с самого телефона: тоже показываем в CRM
+async function ingestOut(o){
+  const ref=db().collection("chats").doc(o.ch+"_"+o.key),mref=ref.collection("msgs").doc("m_"+safe(o.mid||Date.now()+"_"+Math.random()));
+  if((await mref.get()).exists)return;
+  const ts=Date.now(),s=await ref.get(),base={last:o.text||(o.img?"Фото":""),lastDir:"out",lastTs:ts};
+  if(s.exists)await ref.update({...base,nOut:FV.increment(1)});
+  else await ref.set({...base,ch:o.ch,name:o.name||"Без имени",phone:o.phone||"",handle:"",ext:String(o.key),biz:"",loc:"",resp:"",nIn:0,nOut:1,unread:0,firstTs:ts,firstReplyTs:0,leadId:"",st:"open",ts});
+  await mref.set({dir:"out",t:o.text||"",...(o.img?{img:o.img}:{}),ts,st:"sent",sentAt:ts,via:"phone"});
+}
+exports.waGreenHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(req,res)=>{
+  if(req.method!=="POST")return res.sendStatus(405);
+  const c=await secretsOf("wa"),tok=String(c.gHook||""),auth=String(req.get("authorization")||"");
+  if(!tok||!(req.query.k===tok||auth==="Bearer "+tok||auth===tok))return res.sendStatus(403);
+  const b=req.body||{};
+  try{
+    if(b.typeWebhook==="stateInstanceChanged"){await waState(b.stateInstance);return res.sendStatus(200)}
+    if(b.typeWebhook!=="incomingMessageReceived"&&b.typeWebhook!=="outgoingMessageReceived")return res.sendStatus(200);
+    if(!(await isOn("wa")))return res.sendStatus(200);
+    const sd=b.senderData||{},chatId=String(sd.chatId||"");
+    if(!/@c\.us$/.test(chatId))return res.sendStatus(200); // группы и рассылки не берём
+    const ph=chatId.replace(/\D/g,"");if(!ph)return res.sendStatus(200);
+    const md=b.messageData||{},tm=md.typeMessage,fd=md.fileMessageData||{};let text="",img="";
+    const add=x=>{text=(text?text+"\n":"")+x};
+    if(tm==="textMessage")text=(md.textMessageData||{}).textMessage||"";
+    else if(tm==="extendedTextMessage"||tm==="quotedMessage")text=(md.extendedTextMessageData||{}).text||"";
+    else if(tm==="imageMessage"){text=fd.caption||"";if(fd.downloadUrl){try{const f=await getBuf(fd.downloadUrl);img=await saveBuf(f.buf,f.ct,"wa_"+ph)}catch(e){add("[Фото не загрузилось, откройте в WhatsApp]")}}}
+    else if(tm==="audioMessage")text="Голосовое сообщение (откройте в WhatsApp)";
+    else if(tm==="videoMessage"){text="Видео (откройте в WhatsApp)";if(fd.caption)add(fd.caption)}
+    else if(tm==="documentMessage")text="Файл: "+(fd.fileName||"документ")+" (откройте в WhatsApp)";
+    else if(tm==="locationMessage"){const l=md.locationMessageData||{};text="Геопозиция: "+l.latitude+", "+l.longitude}
+    else if(tm==="contactMessage")text="Контакт: "+((md.contactMessageData||{}).displayName||"");
+    else if(tm==="stickerMessage")text="Стикер";
+    else if(tm==="reactionMessage"||tm==="deletedMessage"||tm==="editedMessage")return res.sendStatus(200);
+    else text="Сообщение ("+(tm||"другое")+"), откройте в WhatsApp";
+    const biz=String((b.instanceData||{}).wid||"").replace(/\D/g,"");
+    if(b.typeWebhook==="incomingMessageReceived")await ingest({ch:"wa",key:ph,ext:ph,phone:"+"+ph,name:sd.senderName||sd.chatName||"",text,img,mid:b.idMessage,biz});
+    else await ingestOut({ch:"wa",key:ph,phone:"+"+ph,name:sd.chatName||"",text,img,mid:b.idMessage});
+  }catch(e){console.error("waGreenHook",e)}
+  res.sendStatus(200);
+});
+// Подключение: включает уведомления Green API на наш адрес
+exports.waGreenSetup=onCall(OPT,async req=>{
+  topOnly(req);
+  const url=String((req.data&&req.data.url)||"");let host="";try{host=new URL(url).hostname}catch(e){}
+  if(!/^https:\/\//.test(url)||!/(cloudfunctions\.net|run\.app)$/.test(host))throw new HttpsError("invalid-argument","Неверный адрес webhook");
+  const c=await greenCfg();
+  let tok=c.gHook;if(!tok){tok=crypto.randomBytes(16).toString("hex");await db().doc("secrets/channels").set({wa:{gHook:tok}},{merge:true})}
+  try{
+    await gCall(c,"setSettings",{webhookUrl:url+"?k="+tok,webhookUrlToken:tok,incomingWebhook:"yes",outgoingMessageWebhook:"yes",outgoingAPIMessageWebhook:"no",stateWebhook:"yes",outgoingWebhook:"no"});
+    const st=await gCall(c,"getStateInstance");await waState(st.stateInstance);
+    return{state:st.stateInstance||""};
+  }catch(e){throw new HttpsError("internal",String(e.message||e))}
+});
+// QR-код для привязки телефона (обновляется каждые ~20 секунд, сайт спрашивает заново)
+exports.waGreenQr=onCall(OPT,async req=>{
+  topOnly(req);const c=await greenCfg();
+  try{
+    const st=await gCall(c,"getStateInstance").catch(()=>({}));
+    if(st.stateInstance==="authorized"){await waState("authorized");return{state:"authorized"}}
+    const q=await gCall(c,"qr");
+    if(q.type==="alreadyLogged"){await waState("authorized");return{state:"authorized"}}
+    return{state:st.stateInstance||"",qr:q.type==="qrCode"?String(q.message||""):"",msg:q.type==="error"?String(q.message||""):""};
+  }catch(e){throw new HttpsError("internal",String(e.message||e))}
+});
+// Отвязать телефон
+exports.waGreenLogout=onCall(OPT,async req=>{
+  topOnly(req);const c=await greenCfg();
+  try{await gCall(c,"logout");await waState("notAuthorized");return{ok:true}}catch(e){throw new HttpsError("internal",String(e.message||e))}
 });
 
 // ================= Instagram =================
@@ -187,6 +276,13 @@ exports.tgSetup=onCall(OPT,async req=>{
 // ================= Отправка ответов =================
 const SEND={
   async wa(c,to,t,img,chat){
+    if(c.mode==="green"){
+      if(!c.gid||!c.gtok)throw new Error("Не заданы ID инстанса и токен Green API");
+      const chatId=String(to).replace(/\D/g,"")+"@c.us";
+      if(img)await gCall(c,"sendFileByUrl",{chatId,urlFile:img,fileName:"photo.jpg",...(t?{caption:t.slice(0,1000)}:{})});
+      else await gCall(c,"sendMessage",{chatId,message:t.slice(0,4000)});
+      return;
+    }
     // отвечаем с того же номера, на который написал клиент (у точки может быть свой номер)
     const pid=(chat&&chat.biz)||c.phoneId;
     if(!c.token||!pid)throw new Error("Не заданы токен или Phone number ID");

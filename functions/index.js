@@ -10,6 +10,7 @@ const {defineSecret}=require("firebase-functions/params");
 const {onDocumentCreated,onDocumentUpdated}=require("firebase-functions/v2/firestore");
 const {onSchedule}=require("firebase-functions/v2/scheduler");
 const admin=require("firebase-admin");
+const {FieldValue:FV}=require("firebase-admin/firestore");
 const {FieldPath}=require("firebase-admin/firestore");
 const KEY=defineSecret("ANTHROPIC_API_KEY");
 admin.initializeApp();
@@ -283,7 +284,7 @@ exports.reviewAsk=onSchedule({...OPT,schedule:"*/15 * * * *",timeZone:TZ},async(
   const db=admin.firestore(),now=Date.now(),q=await db.collection("orders").where("rvAskAt","<=",now).limit(40).get();
   if(q.empty)return;
   const s=await db.doc("settings/main").get(),sh=s.exists?s.data():{};
-  const del=admin.firestore.FieldValue.delete();
+  const del=FV.delete();
   for(const d of q.docs){const o=d.data();
     try{
       if(sh.revOff||+o.st!==4||o.rate){await d.ref.update({rvAskAt:del,rvAsked:"skip"});continue}
