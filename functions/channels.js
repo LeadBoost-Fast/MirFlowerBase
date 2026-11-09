@@ -49,6 +49,7 @@ async function ingest(o){
   const base={last:o.text||(o.img?"📷 Фото":""),lastDir:"in",lastTs:ts,lastInTs:ts,unread:inc(1),nIn:inc(1),st:"open"};
   if(s.exists){
     const upd={...base},d=s.data();
+    if(d.lastDir==="out")upd.unread=1; // оператор уже ответил — считаем заново только новые сообщения клиента
     if(o.biz&&!d.biz)upd.biz=String(o.biz);
     if(o.wi!==undefined){upd.wi=String(o.wi);if(o.biz)upd.biz=String(o.biz)} // отвечаем с того номера, на который клиент написал последним
     if(!d.loc&&o.loc0)upd.loc=o.loc0;
