@@ -125,12 +125,15 @@ const topOnly=req=>{
 };
 // Несколько номеров WhatsApp (у каждой точки свой): номер "" — основной (secrets.wa / settings.channels.wa), остальные — secrets.waI[id] / settings.channels.waI[id]
 const iidOf=x=>String(x||"").replace(/[^A-Za-z0-9_-]/g,"").slice(0,40);
-async function cfgOf(i){const s=await db().doc("secrets/channels").get(),d=(s.exists&&s.data())||{};return (i?(d.waI||{})[i]:d.wa)||{}}
+async function cfgOf(i){const s=await db().doc("secrets/channels").get(),d=(s.exists&&s.data())||{},c=(i?(d.waI||{})[i]:d.wa)||{};
+  if(i&&c.mode==="evo"){const m=d.wa||{};if(!c.evurl&&m.evurl)c.evurl=m.evurl;if(!c.evkey&&m.evkey)c.evkey=m.evkey} // второй номер на том же сервере Evolution
+  return c}
 async function setOf(i){const s=await db().doc("settings/main").get(),c=(((s.exists&&s.data())||{}).channels)||{};return (i?(c.waI||{})[i]:c.wa)||{}}
 const waState=(st,i)=>db().doc("settings/main").set({channels:i?{waI:{[i]:{state:String(st||""),stateAt:Date.now()}}}:{wa:{state:String(st||""),stateAt:Date.now()}}},{merge:true});
 async function greenCfg(i){
   const c=await cfgOf(i);
   if(c.mode==="waha"){if(!c.wurl)throw new HttpsError("failed-precondition","Сначала сохраните адрес сервера WAHA");return c}
+  if(c.mode==="evo"){if(!c.evurl)throw new HttpsError("failed-precondition","Сначала сохраните адрес сервера Evolution API");return c}
   if(c.mode!=="green"||!c.gid||!c.gtok)throw new HttpsError("failed-precondition","Сначала сохраните ID инстанса и токен Green API");
   return c;
 }
@@ -144,6 +147,17 @@ async function wCall(c,method,path,body){
 }
 const WST={WORKING:"authorized",SCAN_QR_CODE:"notAuthorized",STARTING:"starting",STOPPED:"stopped",FAILED:"failed"};
 async function wStatus(c){try{const j=await wCall(c,"GET","/api/sessions/"+WS);return WST[j.status]||String(j.status||"")}catch(e){if(e.status===404)return"stopped";throw e}}
+// ---------- Evolution API (свой сервер, бесплатная программа; несколько номеров на одном сервере, фото отправляются) ----------
+const eBase=c=>String(c.evurl||"").trim().replace(/\/+$/,""),eName=i=>"mirflowers"+(i?"_"+i:"");
+async function eCall(c,method,path,body){
+  const h={Accept:"application/json",apikey:String(c.evkey||"").trim(),...(body!==undefined?CT:{})};
+  const r=await jf(eBase(c)+path,{method,headers:h,...(body!==undefined?{body:JSON.stringify(body)}:{})});
+  if(!r.ok){const m=r.j.response&&r.j.response.message;const e=new Error("Evolution API: "+(Array.isArray(m)?m.join(", "):m||r.j.message||r.j.error||("HTTP "+r.status)));e.status=r.status;throw e}
+  return r.j;
+}
+const EST={open:"authorized",close:"notAuthorized",connecting:"starting"};
+async function eState(c,i){try{const j=await eCall(c,"GET","/instance/connectionState/"+eName(i));const st=(j.instance&&j.instance.state)||j.state||"";return EST[st]||st||"notAuthorized"}catch(e){if(e.status===404)return"stopped";throw e}}
+const EVENTS=["MESSAGES_UPSERT","CONNECTION_UPDATE"];
 const shortId=id=>String(id&&(id._serialized||id.id)||id||"").split("_").pop();
 // Исходящее, отправленное с самого телефона: тоже показываем в CRM
 async function ingestOut(o){
@@ -223,6 +237,43 @@ exports.waWahaHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(req
   }catch(e){console.error("waWahaHook",e)}
   res.sendStatus(200);
 });
+// Уведомления Evolution API: messages.upsert (входящие и с телефона), connection.update
+exports.waEvoHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(req,res)=>{
+  if(req.method!=="POST")return res.sendStatus(405);
+  const wi=iidOf(req.query.i),c=await cfgOf(wi),tok=String(c.gHook||"");
+  if(!tok||req.query.k!==tok)return res.sendStatus(403);
+  const b=req.body||{},ev=String(b.event||"").toLowerCase().replace(/_/g,"."),d=b.data||{};
+  try{
+    if(ev==="connection.update"){const st=d.state||"";await waState(EST[st]||st,wi);return res.sendStatus(200)}
+    if(ev!=="messages.upsert")return res.sendStatus(200);
+    const ws=await setOf(wi);if(!ws.on)return res.sendStatus(200);
+    const list=Array.isArray(d)?d:(Array.isArray(d.messages)?d.messages:[d]);
+    for(const m of list){
+      const k=m.key||{},fromMe=!!k.fromMe;let jid=String(k.remoteJid||"");
+      if(/@lid$/.test(jid)&&(k.remoteJidAlt||k.senderPn))jid=String(k.remoteJidAlt||k.senderPn);
+      if(!/@(s\.whatsapp\.net|c\.us|lid)$/.test(jid))continue; // группы и статусы не берём
+      const digits=jid.replace(/@.*/,"").replace(/\D/g,"");if(!digits)continue;
+      const lid=/@lid$/.test(jid),key=lid?"lid"+digits:digits,sid=String(k.id||"");
+      const msg=m.message||{},im=msg.imageMessage,ty=String(m.messageType||Object.keys(msg)[0]||"");
+      let text=String(msg.conversation||(msg.extendedTextMessage||{}).text||(im&&im.caption)||((msg.videoMessage||{}).caption)||""),img="";
+      if(im){try{let b64=String(msg.base64||m.base64||"");if(!b64){const r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:{key:{id:sid}}});b64=String(r.base64||"")}
+        if(b64)img=await saveBuf(Buffer.from(b64.replace(/^data:[^,]*,/,""),"base64"),String(im.mimetype||"image/jpeg").split(";")[0],"wa_"+key);else text=(text?text+"\n":"")+"[Фото, откройте в WhatsApp]"}catch(e){text=(text?text+"\n":"")+"[Фото не загрузилось, откройте в WhatsApp]"}}
+      else if(msg.audioMessage)text="Голосовое сообщение (откройте в WhatsApp)";
+      else if(msg.videoMessage)text="Видео (откройте в WhatsApp)"+(text?"\n"+text:"");
+      else if(msg.documentMessage)text="Файл: "+((msg.documentMessage||{}).fileName||"документ")+" (откройте в WhatsApp)";
+      else if(msg.locationMessage){const l=msg.locationMessage;text="Геопозиция: "+l.degreesLatitude+", "+l.degreesLongitude}
+      else if(msg.contactMessage)text="Контакт: "+((msg.contactMessage||{}).displayName||"");
+      else if(msg.stickerMessage)text="Стикер";
+      if(!text&&!img)continue; // реакции, служебные
+      if(fromMe){ // свой ответ из CRM приходит обратно — второй раз не записываем
+        const ours=async()=>{if(sid&&(await db().doc("waSent/"+safe(sid)).get()).exists)return true;const q=await db().collection("chats").doc("wa_"+key).collection("msgs").where("ts",">",Date.now()-180000).get();return q.docs.some(x=>{const y=x.data();return y.dir==="out"&&y.via!=="phone"&&String(y.t||"").trim()===text.trim()})};
+        if(await ours())continue;await new Promise(r=>setTimeout(r,2500));if(await ours())continue;
+        await ingestOut({ch:"wa",key,phone:lid?"":"+"+digits,name:"",text,img,mid:sid,wi,loc0:ws.loc||""});
+      }else await ingest({ch:"wa",key,ext:jid,phone:lid?"":"+"+digits,name:String(m.pushName||""),text,img,mid:sid,wi,loc0:ws.loc||"",biz:String(b.sender||"").replace(/@.*/,"").replace(/\D/g,"")});
+    }
+  }catch(e){console.error("waEvoHook",e)}
+  res.sendStatus(200);
+});
 // Подключение: включает уведомления Green API на наш адрес
 exports.waGreenSetup=onCall(OPT,async req=>{
   topOnly(req);
@@ -230,6 +281,14 @@ exports.waGreenSetup=onCall(OPT,async req=>{
   if(!/^https:\/\//.test(url)||!/(cloudfunctions\.net|run\.app)$/.test(host))throw new HttpsError("invalid-argument","Неверный адрес webhook");
   const wi=iidOf(req.data&&req.data.i),c=await greenCfg(wi);
   let tok=c.gHook;if(!tok){tok=crypto.randomBytes(16).toString("hex");await db().doc("secrets/channels").set(wi?{waI:{[wi]:{gHook:tok}}}:{wa:{gHook:tok}},{merge:true})}
+  if(c.mode==="evo"){
+    const hook=url.replace(/waGreenHook$/,"waEvoHook")+"?k="+tok+(wi?"&i="+wi:""),wh={enabled:true,url:hook,byEvents:false,base64:true,events:EVENTS};
+    try{
+      try{await eCall(c,"POST","/instance/create",{instanceName:eName(wi),integration:"WHATSAPP-BAILEYS",qrcode:true,webhook:wh})}
+      catch(e){if(![400,403,409].includes(e.status))throw e;await eCall(c,"POST","/webhook/set/"+eName(wi),{webhook:wh})} // номер уже создан — обновляем адрес уведомлений
+      const st=await eState(c,wi);await waState(st,wi);return{state:st};
+    }catch(e){throw new HttpsError("internal",String(e.message||e))}
+  }
   if(c.mode==="waha"){
     const hook=url.replace(/waGreenHook$/,"waWahaHook")+"?k="+tok+(wi?"&i="+wi:""),config={webhooks:[{url:hook,events:["message.any","session.status"]}]};
     try{
@@ -248,6 +307,13 @@ exports.waGreenSetup=onCall(OPT,async req=>{
 // QR-код для привязки телефона (обновляется каждые ~20 секунд, сайт спрашивает заново)
 exports.waGreenQr=onCall(OPT,async req=>{
   topOnly(req);const wi=iidOf(req.data&&req.data.i),c=await greenCfg(wi);
+  if(c.mode==="evo"){
+    try{
+      const st=await eState(c,wi);if(st==="authorized"){await waState(st,wi);return{state:st}}
+      const j=await eCall(c,"GET","/instance/connect/"+eName(wi));const b=String(j.base64||(j.qrcode&&j.qrcode.base64)||"").replace(/^data:image\/\w+;base64,/,"");
+      return{state:st,qr:b,msg:b?"":"QR-код ещё не готов, подождите"};
+    }catch(e){throw new HttpsError("internal",String(e.message||e))}
+  }
   if(c.mode==="waha"){
     try{
       const st=await wStatus(c);if(st==="authorized"){await waState(st,wi);return{state:st}}
@@ -272,7 +338,8 @@ exports.waGreenCode=onCall(OPT,async req=>{
   if(!/^\d{10,15}$/.test(ph))throw new HttpsError("invalid-argument","Введите номер магазина полностью, например 77011234567");
   try{
     let code="";
-    if(c.mode==="waha"){await wCall(c,"POST","/api/sessions/"+WS+"/start").catch(()=>{});const r=await wCall(c,"POST","/api/"+WS+"/auth/request-code",{phoneNumber:ph});code=String(r.code||"")}
+    if(c.mode==="evo"){const r=await eCall(c,"GET","/instance/connect/"+eName(iidOf(req.data&&req.data.i))+"?number="+ph);code=String(r.pairingCode||r.code&&String(r.code).length<=12&&r.code||"")}
+    else if(c.mode==="waha"){await wCall(c,"POST","/api/sessions/"+WS+"/start").catch(()=>{});const r=await wCall(c,"POST","/api/"+WS+"/auth/request-code",{phoneNumber:ph});code=String(r.code||"")}
     else{const r=await gCall(c,"getAuthorizationCode",{phoneNumber:Number(ph)});if(r.status===false)throw new Error("Green API не выдал код: "+(r.message||"проверьте номер"));code=String(r.code||"")}
     if(!code)throw new Error("Код не получен, попробуйте ещё раз через минуту");
     return{code};
@@ -281,7 +348,7 @@ exports.waGreenCode=onCall(OPT,async req=>{
 // Отвязать телефон
 exports.waGreenLogout=onCall(OPT,async req=>{
   topOnly(req);const wi=iidOf(req.data&&req.data.i),c=await greenCfg(wi);
-  try{if(c.mode==="waha")await wCall(c,"POST","/api/sessions/"+WS+"/logout");else await gCall(c,"logout");await waState("notAuthorized",wi);return{ok:true}}catch(e){throw new HttpsError("internal",String(e.message||e))}
+  try{if(c.mode==="evo")await eCall(c,"DELETE","/instance/logout/"+eName(wi));else if(c.mode==="waha")await wCall(c,"POST","/api/sessions/"+WS+"/logout");else await gCall(c,"logout");await waState("notAuthorized",wi);return{ok:true}}catch(e){throw new HttpsError("internal",String(e.message||e))}
 });
 
 // ================= Instagram =================
@@ -364,6 +431,14 @@ exports.tgSetup=onCall(OPT,async req=>{
 const SEND={
   async wa(c,to,t,img,chat){
     if(chat&&chat.wi){const ci=await cfgOf(iidOf(chat.wi));if(ci.mode)c=ci} // второй номер (другая точка)
+    if(c.mode==="evo"){
+      if(!c.evurl)throw new Error("Не задан адрес сервера Evolution API");
+      const ext=String((chat&&chat.ext)||""),number=/@lid$/.test(ext)?ext:String(to).replace(/\D/g,""),inst=eName(iidOf(chat&&chat.wi));
+      const remember=async r=>{const id=String((r&&r.key&&r.key.id)||"");if(id)await db().doc("waSent/"+safe(id)).set({ts:Date.now()})};
+      if(img)await remember(await eCall(c,"POST","/message/sendMedia/"+inst,{number,mediatype:"image",mimetype:"image/jpeg",media:img,fileName:"photo.jpg",...(t?{caption:t.slice(0,1000)}:{})}));
+      else await remember(await eCall(c,"POST","/message/sendText/"+inst,{number,text:t.slice(0,4000)}));
+      return;
+    }
     if(c.mode==="waha"){
       if(!c.wurl)throw new Error("Не задан адрес сервера WAHA");
       const ext=String((chat&&chat.ext)||""),chatId=/@/.test(ext)?ext:String(to).replace(/\D/g,"")+"@c.us";
