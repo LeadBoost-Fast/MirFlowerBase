@@ -114,33 +114,33 @@ const isOpsOrTop=u=>u.top||OPS.includes(u.role);
 // Новый заказ: всем, кто работает с заказами
 exports.pushNewOrder=onDocumentCreated({...OPT,document:"orders/{id}"},async e=>{
   const o=e.data&&e.data.data();if(!o)return;
-  await push("ord",u=>u.top||ALLW.includes(u.role),{loc:o.loc||"main",title:"🌸 Новый заказ",body:[o.bn||"Букет",o.client,((o.date||"")+" "+(o.time||"")).trim()].filter(Boolean).join(" · "),tag:"ord_"+e.params.id,url:"/?o="+e.params.id},o.by);
+  await push("ord",u=>u.top||ALLW.includes(u.role),{loc:o.loc||"main",title:"Новый заказ",body:[o.bn||"Букет",o.client,((o.date||"")+" "+(o.time||"")).trim()].filter(Boolean).join(" · "),tag:"ord_"+e.params.id,url:"/?o="+e.params.id},o.by);
 });
 
 // Статусы заказа: готов к приёмке, переделка, назначена доставка
 exports.pushOrderChange=onDocumentUpdated({...OPT,document:"orders/{id}"},async e=>{
   const a=e.data.before.data(),b=e.data.after.data(),id=e.params.id,name=b.bn||"Букет";
   if(b.rv==="wait"&&a.rv!=="wait")
-    await push("ready",u=>isOpsOrTop(u),{loc:b.loc||"main",title:"✅ Заказ готов, нужна приёмка",body:name+(b.client?" · "+b.client:""),tag:"rv_"+id,url:"/?o="+id},b.asm||b.by);
+    await push("ready",u=>isOpsOrTop(u),{loc:b.loc||"main",title:"Заказ готов, нужна приёмка",body:name+(b.client?" · "+b.client:""),tag:"rv_"+id,url:"/?o="+id},b.asm||b.by);
   if(b.rv==="redo"&&a.rv!=="redo"&&b.asm)
-    await push("ready",u=>u.uid===b.asm,{title:"↩ Заказ на переделку",body:name+(b.redoNote?": "+b.redoNote:""),tag:"redo_"+id,url:"/?o="+id});
+    await push("ready",u=>u.uid===b.asm,{title:"Заказ на переделку",body:name+(b.redoNote?": "+b.redoNote:""),tag:"redo_"+id,url:"/?o="+id});
   if(b.xfSt==="wait"&&a.xfSt!=="wait"&&b.xfTo)
-    await push("ord",u=>u.uid===b.xfTo,{title:"🔁 Передача заказа",body:name+" · передаёт "+(b.xfFrom||"флорист")+", ответь в течение минуты",tag:"xf_"+id,url:"/?o="+id},b.xfFrom);
+    await push("ord",u=>u.uid===b.xfTo,{title:"Передача заказа",body:name+" · передаёт "+(b.xfFrom||"флорист")+", ответь в течение минуты",tag:"xf_"+id,url:"/?o="+id},b.xfFrom);
   // выставили на доставку — всем курьерам на смене
   if(b.dv&&b.dvPost&&!a.dvPost&&!b.courier)
-    await push("courier",u=>u.role==="courier",{title:"🚚 Новая доставка",body:[name,b.time?"к "+b.time:"",b.addr].filter(Boolean).join(" · "),tag:"dvp_"+id,url:"/?o="+id});
+    await push("courier",u=>u.role==="courier",{title:"Новая доставка",body:[name,b.time?"к "+b.time:"",b.addr].filter(Boolean).join(" · "),tag:"dvp_"+id,url:"/?o="+id});
   if(b.courier&&b.courier!==a.courier)
-    await push("courier",u=>u.uid===b.courier,{title:"🚚 Вам назначена доставка",body:[name,b.addr,b.time].filter(Boolean).join(" · "),tag:"cur_"+id,url:"/?o="+id});
+    await push("courier",u=>u.uid===b.courier,{title:"Вам назначена доставка",body:[name,b.addr,b.time].filter(Boolean).join(" · "),tag:"cur_"+id,url:"/?o="+id});
   if(b.rqK&&b.rqT&&b.rqT!==a.rqT)
-    await push("ord",u=>ALLW.includes(u.role),{loc:b.loc||"main",title:b.rqK==="cx"?"⚠ Запрос на отмену заказа":"⚠ Запрос на скидку",body:[name,b.rqK==="p"&&b.rqP?"цена до "+b.rqP+" ₸":"",b.rqWhy,b.rqN].filter(Boolean).join(" · "),tag:"rq_"+id,url:"/?o="+id},b.rqBy);
+    await push("ord",u=>ALLW.includes(u.role),{loc:b.loc||"main",title:b.rqK==="cx"?"Запрос на отмену заказа":"Запрос на скидку",body:[name,b.rqK==="p"&&b.rqP?"цена до "+b.rqP+" ₸":"",b.rqWhy,b.rqN].filter(Boolean).join(" · "),tag:"rq_"+id,url:"/?o="+id},b.rqBy);
   if(a.courier&&!b.courier&&b.cRelAt&&b.cRelAt!==a.cRelAt)
-    await push("ord",u=>isOpsOrTop(u),{loc:b.loc||"main",title:"🚚 Курьер отказался от доставки",body:name+(b.cRelNote?": "+b.cRelNote:""),tag:"crel_"+id,url:"/?o="+id},a.courier);
+    await push("ord",u=>isOpsOrTop(u),{loc:b.loc||"main",title:"Курьер отказался от доставки",body:name+(b.cRelNote?": "+b.cRelNote:""),tag:"crel_"+id,url:"/?o="+id},a.courier);
 });
 
 // Новая заявка
 exports.pushNewLead=onDocumentCreated({...OPT,document:"leads/{id}"},async e=>{
   const l=e.data&&e.data.data();if(!l)return;
-  await push("lead",isOpsOrTop,{loc:l.loc||"",title:"✉ Новая заявка",body:[l.name||l.client,l.phone,l.note||l.text].filter(Boolean).join(" · "),tag:"lead_"+e.params.id,url:"/?tab=leads"},l.by);
+  await push("lead",isOpsOrTop,{loc:l.loc||"",title:"Новая заявка",body:[l.name||l.client,l.phone,l.note||l.text].filter(Boolean).join(" · "),tag:"lead_"+e.params.id,url:"/?tab=leads"},l.by);
 });
 
 // Новое сообщение клиента в чате
@@ -151,7 +151,7 @@ exports.pushClientMsg=onDocumentCreated({...OPT,document:"chats/{cid}/msgs/{mid}
   let from=({wa:"WhatsApp",ig:"Instagram",tg:"Telegram",gis:"2ГИС"})[cd.ch]||"";
   if(cd.loc){try{const l=await admin.firestore().doc("locations/"+cd.loc).get();if(l.exists&&l.data().name)from=l.data().name+(from?" · "+from:"")}catch(x){}}
   // кто выключил уведомления этого чата на время — тому не шлём
-  await push("chat",u=>isOpsOrTop(u)&&!((+mu[u.uid]||0)>now),{loc:cd.loc||"main",title:"💬 "+name+(from?" · "+from:""),body:m.t||(m.img?"📷 Фото":"Новое сообщение"),tag:"chat_"+e.params.cid,url:"/?tab=chats"});
+  await push("chat",u=>isOpsOrTop(u)&&!((+mu[u.uid]||0)>now),{loc:cd.loc||"main",title:"Сообщение · "+name+(from?" · "+from:""),body:m.t||(m.img?"Фото":"Новое сообщение"),tag:"chat_"+e.params.cid,url:"/?tab=chats"});
 });
 
 // Новый отчёт сотрудника: админам и владельцам
@@ -159,7 +159,7 @@ exports.pushNewReport=onDocumentCreated({...OPT,document:"reports/{id}"},async e
   const r=e.data&&e.data.data();if(!r)return;
   const T={show:"Витрина",desk:"Рабочее место",op:"Смена оператора",wo:"Списание — проверьте и примите"};
   const bad=r.type==="desk"?r.cl==="dirty":r.type==="show"?r.fresh==="bad"||r.fresh==="mid":Array.isArray(r.ck)&&r.ck.some(x=>!x);
-  await push("rep",u=>u.top||u.role==="admin",{loc:r.loc||"main",title:r.type==="op"&&r.kas==="bad"?"❗ Касса не сходится":(bad?"⚠ ":"📋 ")+"Отчёт: "+(T[r.type]||r.type),body:(r.byName||"")+(r.type==="op"&&r.kas==="bad"?(r.kasd?" · расхождение "+r.kasd+" ₸":"")+(r.note?" · "+String(r.note).slice(0,80):""):(bad?" · есть замечания":"")),imp:r.type==="op"&&r.kas==="bad",tag:"rep_"+e.params.id,url:"/?tab=rep"},r.by);
+  await push("rep",u=>u.top||u.role==="admin",{loc:r.loc||"main",title:r.type==="op"&&r.kas==="bad"?"Касса не сходится":(bad?"Замечание · ":"")+"Отчёт: "+(T[r.type]||r.type),body:(r.byName||"")+(r.type==="op"&&r.kas==="bad"?(r.kasd?" · расхождение "+r.kasd+" ₸":"")+(r.note?" · "+String(r.note).slice(0,80):""):(bad?" · есть замечания":"")),imp:r.type==="op"&&r.kas==="bad",tag:"rep_"+e.params.id,url:"/?tab=rep"},r.by);
 });
 
 // Напоминание об отчётах: через 30 минут после времени показа отчётов (settings.rpAt, по умолчанию 23:00 → 23:30, время Актау).
@@ -174,14 +174,14 @@ exports.pushReportReminder=onSchedule({...OPT,schedule:"*/30 * * * *",timeZone:T
   const [ls,st,dn]=await Promise.all([db.collection("shiftLog").where("start",">=",now-20*36e5).get(),db.collection("staff").get(),db.collection("rpDone").where("date","==",day).get()]);
   const done=new Set();dn.forEach(d=>done.add(d.id));const role={};st.forEach(d=>role[d.id]=d.data().role);
   const miss={};ls.forEach(d=>{const x=d.data();if(!x.uid||x.end)return;const t=(RPW[role[x.uid]]||[]).filter(k=>!done.has(day+"_"+(x.loc||"main")+"_"+k));if(t.length)miss[x.uid]=t});
-  for(const uid of Object.keys(miss))await push("remind",u=>u.uid===uid,{title:"📋 Сдайте отчёт за смену",body:"Не сдано: "+miss[uid].map(k=>RPN[k]).join(", ")+". Если есть что списать — сдайте «Списание»",url:"/?tab=rep",tag:"remind_"+day});
+  for(const uid of Object.keys(miss))await push("remind",u=>u.uid===uid,{title:"Сдайте отчёт за смену",body:"Не сдано: "+miss[uid].map(k=>RPN[k]).join(", ")+". Если есть что списать — сдайте «Списание»",url:"/?tab=rep",tag:"remind_"+day});
 });
 
 // Проверка: прислать push самому себе
 exports.pushTest=onCall({...OPT,invoker:"public"},async req=>{
   if(!req.auth)throw new HttpsError("unauthenticated","Войдите в систему");
   let n;
-  try{n=await push("test",u=>u.uid===req.auth.uid,{title:"🔔 Проверка уведомлений",body:"Всё работает: push приходят на это устройство",tag:"test"})}
+  try{n=await push("test",u=>u.uid===req.auth.uid,{title:"Проверка уведомлений",body:"Всё работает: push приходят на это устройство",tag:"test"})}
   catch(err){console.error("pushTest",err);const m=String(err&&(err.code||"")+" "+(err.message||err));
     throw new HttpsError("internal",/SERVICE_DISABLED|has not been used|is disabled/i.test(m)?"Не включён сервис Firebase Cloud Messaging API в Google Cloud":"Push не отправлен: "+m.slice(0,250))}
   if(!n)throw new HttpsError("failed-precondition","Нет активных устройств. Включите push в Профиле");
@@ -198,7 +198,7 @@ exports.pushLowStock=onDocumentUpdated({...OPT,document:"inventory/{id}"},async 
   const qa=k?(+(((a.qs||{})[k])??(k==="main"?a.qty:0))||0):(+a.qty||0),qb=k?(+b.qs[k]||0):(+b.qty||0);
   if(!(qa>m&&qb<=m))continue;
   const out=qb<=0,u=b.unit||"";
-  await push("stock",x=>x.top||ALLW.includes(x.role),{...(k?{loc:k}:{}),imp:out,title:out?"❗ Закончилось: "+b.name:"⚠ Заканчивается: "+b.name,body:out?"На складе 0 "+u:"Осталось "+qb+" "+u+(m?", минимум "+m:""),tag:"stock_"+e.params.id});
+  await push("stock",x=>x.top||ALLW.includes(x.role),{...(k?{loc:k}:{}),imp:out,title:out?"Закончилось: "+b.name:"Заканчивается: "+b.name,body:out?"На складе 0 "+u:"Осталось "+qb+" "+u+(m?", минимум "+m:""),tag:"stock_"+e.params.id});
   }
 });
 
@@ -317,5 +317,5 @@ exports.reviewIn=onDocumentCreated({...OPT,document:"reviews/{tok}"},async e=>{
   if(q.empty)return;
   const od=q.docs[0],o=od.data(),s=Math.max(1,Math.min(5,Math.round(+r.s||0))),c=String(r.c||"").slice(0,500);
   await od.ref.update({rate:{s,c,at:Date.now()}});
-  if(s<=3)await push("ord",u=>u.top||u.role==="admin",{imp:true,title:"⚠ Плохой отзыв: "+"★".repeat(s)+"☆".repeat(5-s),body:[o.bn||"Букет",o.client,c].filter(Boolean).join(" · "),tag:"rate_"+od.id,url:"/?o="+od.id});
+  if(s<=3)await push("ord",u=>u.top||u.role==="admin",{imp:true,title:"Плохой отзыв: "+"★".repeat(s)+"☆".repeat(5-s),body:[o.bn||"Букет",o.client,c].filter(Boolean).join(" · "),tag:"rate_"+od.id,url:"/?o="+od.id});
 });

@@ -46,7 +46,7 @@ async function ingest(o){
   const ref=db().collection("chats").doc(o.ch+"_"+o.key),mref=ref.collection("msgs").doc("m_"+safe(o.mid||Date.now()+"_"+Math.random()));
   if((await mref.get()).exists)return;
   const ts=Date.now(),inc=n=>FV.increment(n),s=await ref.get();
-  const base={last:o.text||(o.img?"📷 Фото":""),lastDir:"in",lastTs:ts,lastInTs:ts,unread:inc(1),nIn:inc(1),st:"open"};
+  const base={last:o.text||(o.img?"Фото":""),lastDir:"in",lastTs:ts,lastInTs:ts,unread:inc(1),nIn:inc(1),st:"open"};
   if(s.exists){
     const upd={...base},d=s.data();
     if(d.lastDir==="out")upd.unread=1; // оператор уже ответил — считаем заново только новые сообщения клиента
@@ -101,9 +101,9 @@ exports.waHook=onRequest({...OPT,maxInstances:10},async(req,res)=>{
         else if(m.type==="image"){text=(m.image||{}).caption||"";try{img=await waMedia(c,m.image.id,from)}catch(e){text=(text?text+"\n":"")+"[Фото не загрузилось, откройте в WhatsApp]"}}
         else if(m.type==="button")text=(m.button||{}).text||"";
         else if(m.type==="interactive"){const i=m.interactive||{};text=(i.button_reply||i.list_reply||{}).title||"[ответ]"}
-        else if(m.type==="location")text="📍 Геопозиция: "+((m.location||{}).latitude)+", "+((m.location||{}).longitude);
-        else if(m.type==="audio")text="🎤 Голосовое сообщение (откройте в WhatsApp)";
-        else if(m.type==="sticker")text="🙂 Стикер";
+        else if(m.type==="location")text="Геопозиция: "+((m.location||{}).latitude)+", "+((m.location||{}).longitude);
+        else if(m.type==="audio")text="Голосовое сообщение (откройте в WhatsApp)";
+        else if(m.type==="sticker")text="Стикер";
         else text="["+m.type+"] откройте в WhatsApp";
         await ingest({ch:"wa",key:from,ext:from,phone:"+"+from,name:names[from]||"",text,img,mid:m.id,biz:(v.metadata||{}).phone_number_id||""});
       }
@@ -312,10 +312,10 @@ exports.igHook=onRequest({...OPT,maxInstances:10},async(req,res)=>{
       for(const a of m.attachments||[]){
         const u=(a.payload||{}).url;
         if(a.type==="image"&&u&&!img){try{const f=await getBuf(u);img=await saveBuf(f.buf,f.ct,"ig_"+from)}catch(e){text=(text?text+"\n":"")+"[Фото не загрузилось, откройте в Instagram]"}}
-        else if(a.type==="audio")text=(text?text+"\n":"")+"🎤 Голосовое сообщение (откройте в Instagram)";
-        else if(a.type==="video"||a.type==="reel")text=(text?text+"\n":"")+"🎬 Видео (откройте в Instagram)";
-        else if(a.type==="share"||a.type==="story_mention"||a.type==="ig_reel")text=(text?text+"\n":"")+"🔗 Публикация или история"+(u?": "+u:"");
-        else if(a.type!=="image")text=(text?text+"\n":"")+"📎 Вложение (откройте в Instagram)";
+        else if(a.type==="audio")text=(text?text+"\n":"")+"Голосовое сообщение (откройте в Instagram)";
+        else if(a.type==="video"||a.type==="reel")text=(text?text+"\n":"")+"Видео (откройте в Instagram)";
+        else if(a.type==="share"||a.type==="story_mention"||a.type==="ig_reel")text=(text?text+"\n":"")+"Публикация или история"+(u?": "+u:"");
+        else if(a.type!=="image")text=(text?text+"\n":"")+"Вложение (откройте в Instagram)";
       }
       await ingest({ch:"ig",key:from,ext:from,text,img,mid:m.mid,biz:String((ev.recipient||{}).id||en.id||""),
         prof:async()=>{const r=await jf(`${base}/${from}?fields=name,username&access_token=${encodeURIComponent(c.token)}`);return r.j||{}}});
@@ -342,12 +342,12 @@ exports.tgHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(req,res
           const b=await getBuf(`https://api.telegram.org/file/bot${c.token}/${f.j.result.file_path}`);
           img=await saveBuf(b.buf,"image/jpeg","tg_"+id);
         }catch(e){add("[Фото не загрузилось, откройте в Telegram]")}
-      }else if(m.voice||m.audio)add("🎤 Голосовое сообщение (откройте в Telegram)");
-      else if(m.video||m.video_note)add("🎬 Видео (откройте в Telegram)");
-      else if(m.sticker)add("🙂 Стикер "+(m.sticker.emoji||""));
-      else if(m.document)add("📎 Файл: "+(m.document.file_name||"документ")+" (откройте в Telegram)");
-      else if(m.location)add("📍 Геопозиция: "+m.location.latitude+", "+m.location.longitude);
-      else if(m.contact)add("📞 Контакт: "+[m.contact.first_name,m.contact.phone_number].filter(Boolean).join(" "));
+      }else if(m.voice||m.audio)add("Голосовое сообщение (откройте в Telegram)");
+      else if(m.video||m.video_note)add("Видео (откройте в Telegram)");
+      else if(m.sticker)add("Стикер "+(m.sticker.emoji||""));
+      else if(m.document)add("Файл: "+(m.document.file_name||"документ")+" (откройте в Telegram)");
+      else if(m.location)add("Геопозиция: "+m.location.latitude+", "+m.location.longitude);
+      else if(m.contact)add("Контакт: "+[m.contact.first_name,m.contact.phone_number].filter(Boolean).join(" "));
       const name=[m.from.first_name,m.from.last_name].filter(Boolean).join(" ");
       await ingest({ch:"tg",key:id,ext:id,name,handle:m.from.username||"",text,img,mid:u.update_id!=null?"u"+u.update_id:"m"+id+"_"+m.message_id});
     }
