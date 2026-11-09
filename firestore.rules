@@ -142,6 +142,7 @@ service cloud.firestore {
     }
     // Каталог букетов: удалять могут админы, владельцы, флористы и помощники флориста
     match /bouquets/{id}        { allow read, create, update: if isMgr(); allow delete: if isAdmin() || isOwner() || (isActive() && role() in ['florist','assistant']); }
+    match /gallery/{id}         { allow read: if isWork(); allow create: if isWork() && request.resource.data.by == request.auth.uid; allow update: if isMgr(); allow delete: if isMgr() || isAdmin() || isOwner(); }
     match /showcase/{id}        { allow read, create, update: if isWork(); allow delete: if isAdmin() || isOwner(); }
     match /visits/{id}          { allow read, create, update: if isWork(); allow delete: if isAdmin() || isOwner(); }
 
