@@ -50,14 +50,16 @@ async function ingest(o){
   if(s.exists){
     const upd={...base},d=s.data();
     if(o.biz&&!d.biz)upd.biz=String(o.biz);
-    if(!d.loc&&o.biz){const lc=await bizLoc(o.ch,o.biz);if(lc)upd.loc=lc}
+    if(o.wi!==undefined){upd.wi=String(o.wi);if(o.biz)upd.biz=String(o.biz)} // отвечаем с того номера, на который клиент написал последним
+    if(!d.loc&&o.loc0)upd.loc=o.loc0;
+    else if(!d.loc&&o.biz){const lc=await bizLoc(o.ch,o.biz);if(lc)upd.loc=lc}
     if(o.name&&(!d.name||d.name==="Без имени"))upd.name=o.name;
     await ref.update(upd);
   }else{
     let name=o.name||"",handle=o.handle||"";
     if(o.prof){try{const p=await o.prof();name=name||p.name||p.username||"";handle=handle||p.username||""}catch(e){}}
-    const lc=await bizLoc(o.ch,o.biz);
-    await ref.set({...base,ch:o.ch,name:name||"Без имени",phone:o.phone||"",handle,ext:String(o.ext||o.key),biz:String(o.biz||""),loc:lc,resp:"",nOut:0,firstTs:ts,firstReplyTs:0,leadId:"",ts});
+    const lc=o.loc0||await bizLoc(o.ch,o.biz);
+    await ref.set({...base,...(o.wi!==undefined?{wi:String(o.wi)}:{}),ch:o.ch,name:name||"Без имени",phone:o.phone||"",handle,ext:String(o.ext||o.key),biz:String(o.biz||""),loc:lc,resp:"",nOut:0,firstTs:ts,firstReplyTs:0,leadId:"",ts});
   }
   await mref.set({dir:"in",t:o.text||"",...(o.img?{img:o.img}:{}),ts});
 }
@@ -121,9 +123,13 @@ const topOnly=req=>{
   if(!req.auth)throw new HttpsError("unauthenticated","Войдите в систему");
   if(!TOP.includes(String(req.auth.token.email||"").toLowerCase()))throw new HttpsError("permission-denied","Только владелец и главный админ");
 };
-const waState=st=>db().doc("settings/main").set({channels:{wa:{state:String(st||""),stateAt:Date.now()}}},{merge:true});
-async function greenCfg(){
-  const c=await secretsOf("wa");
+// Несколько номеров WhatsApp (у каждой точки свой): номер "" — основной (secrets.wa / settings.channels.wa), остальные — secrets.waI[id] / settings.channels.waI[id]
+const iidOf=x=>String(x||"").replace(/[^A-Za-z0-9_-]/g,"").slice(0,40);
+async function cfgOf(i){const s=await db().doc("secrets/channels").get(),d=(s.exists&&s.data())||{};return (i?(d.waI||{})[i]:d.wa)||{}}
+async function setOf(i){const s=await db().doc("settings/main").get(),c=(((s.exists&&s.data())||{}).channels)||{};return (i?(c.waI||{})[i]:c.wa)||{}}
+const waState=(st,i)=>db().doc("settings/main").set({channels:i?{waI:{[i]:{state:String(st||""),stateAt:Date.now()}}}:{wa:{state:String(st||""),stateAt:Date.now()}}},{merge:true});
+async function greenCfg(i){
+  const c=await cfgOf(i);
   if(c.mode==="waha"){if(!c.wurl)throw new HttpsError("failed-precondition","Сначала сохраните адрес сервера WAHA");return c}
   if(c.mode!=="green"||!c.gid||!c.gtok)throw new HttpsError("failed-precondition","Сначала сохраните ID инстанса и токен Green API");
   return c;
@@ -145,18 +151,18 @@ async function ingestOut(o){
   if((await mref.get()).exists)return;
   const ts=Date.now(),s=await ref.get(),base={last:o.text||(o.img?"Фото":""),lastDir:"out",lastTs:ts};
   if(s.exists)await ref.update({...base,nOut:FV.increment(1)});
-  else await ref.set({...base,ch:o.ch,name:o.name||"Без имени",phone:o.phone||"",handle:"",ext:String(o.key),biz:"",loc:"",resp:"",nIn:0,nOut:1,unread:0,firstTs:ts,firstReplyTs:0,leadId:"",st:"open",ts});
+  else await ref.set({...base,...(o.wi!==undefined?{wi:String(o.wi)}:{}),ch:o.ch,name:o.name||"Без имени",phone:o.phone||"",handle:"",ext:String(o.key),biz:"",loc:o.loc0||"",resp:"",nIn:0,nOut:1,unread:0,firstTs:ts,firstReplyTs:0,leadId:"",st:"open",ts});
   await mref.set({dir:"out",t:o.text||"",...(o.img?{img:o.img}:{}),ts,st:"sent",sentAt:ts,via:"phone"});
 }
 exports.waGreenHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(req,res)=>{
   if(req.method!=="POST")return res.sendStatus(405);
-  const c=await secretsOf("wa"),tok=String(c.gHook||""),auth=String(req.get("authorization")||"");
+  const wi=iidOf(req.query.i),c=await cfgOf(wi),tok=String(c.gHook||""),auth=String(req.get("authorization")||"");
   if(!tok||!(req.query.k===tok||auth==="Bearer "+tok||auth===tok))return res.sendStatus(403);
   const b=req.body||{};
   try{
-    if(b.typeWebhook==="stateInstanceChanged"){await waState(b.stateInstance);return res.sendStatus(200)}
+    if(b.typeWebhook==="stateInstanceChanged"){await waState(b.stateInstance,wi);return res.sendStatus(200)}
     if(b.typeWebhook!=="incomingMessageReceived"&&b.typeWebhook!=="outgoingMessageReceived")return res.sendStatus(200);
-    if(!(await isOn("wa")))return res.sendStatus(200);
+    const ws=await setOf(wi);if(!ws.on)return res.sendStatus(200);
     const sd=b.senderData||{},chatId=String(sd.chatId||"");
     if(!/@c\.us$/.test(chatId))return res.sendStatus(200); // группы и рассылки не берём
     const ph=chatId.replace(/\D/g,"");if(!ph)return res.sendStatus(200);
@@ -174,21 +180,21 @@ exports.waGreenHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(re
     else if(tm==="reactionMessage"||tm==="deletedMessage"||tm==="editedMessage")return res.sendStatus(200);
     else text="Сообщение ("+(tm||"другое")+"), откройте в WhatsApp";
     const biz=String((b.instanceData||{}).wid||"").replace(/\D/g,"");
-    if(b.typeWebhook==="incomingMessageReceived")await ingest({ch:"wa",key:ph,ext:ph,phone:"+"+ph,name:sd.senderName||sd.chatName||"",text,img,mid:b.idMessage,biz});
-    else await ingestOut({ch:"wa",key:ph,phone:"+"+ph,name:sd.chatName||"",text,img,mid:b.idMessage});
+    if(b.typeWebhook==="incomingMessageReceived")await ingest({ch:"wa",key:ph,ext:ph,phone:"+"+ph,name:sd.senderName||sd.chatName||"",text,img,mid:b.idMessage,biz,wi,loc0:ws.loc||""});
+    else await ingestOut({ch:"wa",key:ph,phone:"+"+ph,name:sd.chatName||"",text,img,mid:b.idMessage,wi,loc0:ws.loc||""});
   }catch(e){console.error("waGreenHook",e)}
   res.sendStatus(200);
 });
 // Уведомления от WAHA: message.any (входящие и написанные с телефона), session.status
 exports.waWahaHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(req,res)=>{
   if(req.method!=="POST")return res.sendStatus(405);
-  const c=await secretsOf("wa"),tok=String(c.gHook||"");
+  const wi=iidOf(req.query.i),c=await cfgOf(wi),tok=String(c.gHook||"");
   if(!tok||req.query.k!==tok)return res.sendStatus(403);
   const b=req.body||{},p=b.payload||{};
   try{
-    if(b.event==="session.status"){await waState(WST[p.status]||String(p.status||""));return res.sendStatus(200)}
+    if(b.event==="session.status"){await waState(WST[p.status]||String(p.status||""),wi);return res.sendStatus(200)}
     if(b.event!=="message.any"&&b.event!=="message")return res.sendStatus(200);
-    if(!(await isOn("wa")))return res.sendStatus(200);
+    const ws=await setOf(wi);if(!ws.on)return res.sendStatus(200);
     const fromMe=!!p.fromMe,peer=String(fromMe?p.to:p.from||"");
     if(!/@(c\.us|s\.whatsapp\.net|lid)$/.test(peer))return res.sendStatus(200); // группы, статусы, рассылки не берём
     const digits=peer.replace(/@.*/,"").replace(/\D/g,"");if(!digits)return res.sendStatus(200);
@@ -212,8 +218,8 @@ exports.waWahaHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(req
     }
     if(!text&&!img)return res.sendStatus(200); // реакции, служебные
     const name=String((p._data&&(p._data.notifyName||p._data.pushName))||"");
-    if(fromMe)await ingestOut({ch:"wa",key,phone:lid?"":"+"+digits,name:"",text,img,mid:sid||p.id});
-    else await ingest({ch:"wa",key,ext:peer,phone:lid?"":"+"+digits,name,text,img,mid:sid||p.id,biz:String((b.me&&b.me.id)||"").replace(/@.*/,"").replace(/\D/g,"")});
+    if(fromMe)await ingestOut({ch:"wa",key,phone:lid?"":"+"+digits,name:"",text,img,mid:sid||p.id,wi,loc0:ws.loc||""});
+    else await ingest({ch:"wa",key,ext:peer,phone:lid?"":"+"+digits,name,text,img,mid:sid||p.id,wi,loc0:ws.loc||"",biz:String((b.me&&b.me.id)||"").replace(/@.*/,"").replace(/\D/g,"")});
   }catch(e){console.error("waWahaHook",e)}
   res.sendStatus(200);
 });
@@ -222,29 +228,29 @@ exports.waGreenSetup=onCall(OPT,async req=>{
   topOnly(req);
   const url=String((req.data&&req.data.url)||"");let host="";try{host=new URL(url).hostname}catch(e){}
   if(!/^https:\/\//.test(url)||!/(cloudfunctions\.net|run\.app)$/.test(host))throw new HttpsError("invalid-argument","Неверный адрес webhook");
-  const c=await greenCfg();
-  let tok=c.gHook;if(!tok){tok=crypto.randomBytes(16).toString("hex");await db().doc("secrets/channels").set({wa:{gHook:tok}},{merge:true})}
+  const wi=iidOf(req.data&&req.data.i),c=await greenCfg(wi);
+  let tok=c.gHook;if(!tok){tok=crypto.randomBytes(16).toString("hex");await db().doc("secrets/channels").set(wi?{waI:{[wi]:{gHook:tok}}}:{wa:{gHook:tok}},{merge:true})}
   if(c.mode==="waha"){
-    const hook=url.replace(/waGreenHook$/,"waWahaHook")+"?k="+tok,config={webhooks:[{url:hook,events:["message.any","session.status"]}]};
+    const hook=url.replace(/waGreenHook$/,"waWahaHook")+"?k="+tok+(wi?"&i="+wi:""),config={webhooks:[{url:hook,events:["message.any","session.status"]}]};
     try{
       try{await wCall(c,"PUT","/api/sessions/"+WS,{name:WS,config})}
       catch(e){if(e.status!==404)throw e;await wCall(c,"POST","/api/sessions",{name:WS,start:true,config})}
       await wCall(c,"POST","/api/sessions/"+WS+"/start").catch(()=>{});
-      const st=await wStatus(c);await waState(st);return{state:st};
+      const st=await wStatus(c);await waState(st,wi);return{state:st};
     }catch(e){throw new HttpsError("internal",String(e.message||e))}
   }
   try{
-    await gCall(c,"setSettings",{webhookUrl:url+"?k="+tok,webhookUrlToken:tok,incomingWebhook:"yes",outgoingMessageWebhook:"yes",outgoingAPIMessageWebhook:"no",stateWebhook:"yes",outgoingWebhook:"no"});
-    const st=await gCall(c,"getStateInstance");await waState(st.stateInstance);
+    await gCall(c,"setSettings",{webhookUrl:url+"?k="+tok+(wi?"&i="+wi:""),webhookUrlToken:tok,incomingWebhook:"yes",outgoingMessageWebhook:"yes",outgoingAPIMessageWebhook:"no",stateWebhook:"yes",outgoingWebhook:"no"});
+    const st=await gCall(c,"getStateInstance");await waState(st.stateInstance,wi);
     return{state:st.stateInstance||""};
   }catch(e){throw new HttpsError("internal",String(e.message||e))}
 });
 // QR-код для привязки телефона (обновляется каждые ~20 секунд, сайт спрашивает заново)
 exports.waGreenQr=onCall(OPT,async req=>{
-  topOnly(req);const c=await greenCfg();
+  topOnly(req);const wi=iidOf(req.data&&req.data.i),c=await greenCfg(wi);
   if(c.mode==="waha"){
     try{
-      const st=await wStatus(c);if(st==="authorized"){await waState(st);return{state:st}}
+      const st=await wStatus(c);if(st==="authorized"){await waState(st,wi);return{state:st}}
       if(st==="stopped")await wCall(c,"POST","/api/sessions/"+WS+"/start").catch(()=>{});
       if(st!=="notAuthorized")return{state:st,qr:"",msg:"Сервер запускает WhatsApp, подождите…"};
       const q=await wCall(c,"GET","/api/"+WS+"/auth/qr?format=image");
@@ -253,15 +259,15 @@ exports.waGreenQr=onCall(OPT,async req=>{
   }
   try{
     const st=await gCall(c,"getStateInstance").catch(()=>({}));
-    if(st.stateInstance==="authorized"){await waState("authorized");return{state:"authorized"}}
+    if(st.stateInstance==="authorized"){await waState("authorized",wi);return{state:"authorized"}}
     const q=await gCall(c,"qr");
-    if(q.type==="alreadyLogged"){await waState("authorized");return{state:"authorized"}}
+    if(q.type==="alreadyLogged"){await waState("authorized",wi);return{state:"authorized"}}
     return{state:st.stateInstance||"",qr:q.type==="qrCode"?String(q.message||""):"",msg:q.type==="error"?String(q.message||""):""};
   }catch(e){throw new HttpsError("internal",String(e.message||e))}
 });
 // Привязка без камеры: код для входа по номеру телефона (WhatsApp → Связанные устройства → Привязать по номеру телефона)
 exports.waGreenCode=onCall(OPT,async req=>{
-  topOnly(req);const c=await greenCfg();
+  topOnly(req);const c=await greenCfg(iidOf(req.data&&req.data.i));
   let ph=String((req.data&&req.data.phone)||"").replace(/\D/g,"");if(/^8\d{10}$/.test(ph))ph="7"+ph.slice(1);
   if(!/^\d{10,15}$/.test(ph))throw new HttpsError("invalid-argument","Введите номер магазина полностью, например 77011234567");
   try{
@@ -274,8 +280,8 @@ exports.waGreenCode=onCall(OPT,async req=>{
 });
 // Отвязать телефон
 exports.waGreenLogout=onCall(OPT,async req=>{
-  topOnly(req);const c=await greenCfg();
-  try{if(c.mode==="waha")await wCall(c,"POST","/api/sessions/"+WS+"/logout");else await gCall(c,"logout");await waState("notAuthorized");return{ok:true}}catch(e){throw new HttpsError("internal",String(e.message||e))}
+  topOnly(req);const wi=iidOf(req.data&&req.data.i),c=await greenCfg(wi);
+  try{if(c.mode==="waha")await wCall(c,"POST","/api/sessions/"+WS+"/logout");else await gCall(c,"logout");await waState("notAuthorized",wi);return{ok:true}}catch(e){throw new HttpsError("internal",String(e.message||e))}
 });
 
 // ================= Instagram =================
@@ -357,6 +363,7 @@ exports.tgSetup=onCall(OPT,async req=>{
 // ================= Отправка ответов =================
 const SEND={
   async wa(c,to,t,img,chat){
+    if(chat&&chat.wi){const ci=await cfgOf(iidOf(chat.wi));if(ci.mode)c=ci} // второй номер (другая точка)
     if(c.mode==="waha"){
       if(!c.wurl)throw new Error("Не задан адрес сервера WAHA");
       const ext=String((chat&&chat.ext)||""),chatId=/@/.test(ext)?ext:String(to).replace(/\D/g,"")+"@c.us";
@@ -406,7 +413,7 @@ exports.sendChannelMsg=onDocumentCreated({...OPT,document:"chats/{cid}/msgs/{mid
   if(!chat.exists)return;
   const c=chat.data(),k=c.ch;
   if(!SEND[k])return;
-  if(!(await isOn(k)))return; // канал выключен: сообщение остаётся «не отправлено», сайт покажет это
+  if(!(k==="wa"&&c.wi?!!(await setOf(iidOf(c.wi))).on:await isOn(k)))return; // канал выключен: сообщение остаётся «не отправлено», сайт покажет это
   // защита от повторного запуска: забираем сообщение себе
   const got=await db().runTransaction(async t=>{const s=await t.get(ref);if(!s.exists||s.data().st!=="pending")return null;t.update(ref,{st:"sending"});return s.data()});
   if(!got)return;
