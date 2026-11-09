@@ -21,7 +21,7 @@ async function isOn(k){const s=await db().doc("settings/main").get();return !!((
 async function jf(url,opt){const r=await fetch(url,opt);let j={};try{j=await r.json()}catch(e){}return{ok:r.ok,status:r.status,j:j||{}}}
 const gerr=r=>{const e=r.j.error||{};return (e.message||r.j.description||("HTTP "+r.status))+(e.code?" ("+e.code+")":"")};
 const safe=s=>String(s).replace(/[^A-Za-z0-9_-]/g,"_").slice(0,120);
-const EXT={"image/jpeg":"jpg","image/png":"png","image/webp":"webp","application/pdf":"pdf"};
+const EXT={"image/jpeg":"jpg","image/png":"png","image/webp":"webp","application/pdf":"pdf","audio/mp4":"m4a","audio/mpeg":"mp3","audio/ogg":"ogg","audio/aac":"aac"};
 
 // Сохраняем файл в Storage и отдаём постоянную ссылку с токеном (её открывают WhatsApp/Instagram/Telegram и сайт)
 async function saveBuf(buf,ct,dir){
@@ -61,7 +61,7 @@ async function ingest(o){
     const lc=o.loc0||await bizLoc(o.ch,o.biz);
     await ref.set({...base,...(o.wi!==undefined?{wi:String(o.wi)}:{}),ch:o.ch,name:name||"Без имени",phone:o.phone||"",handle,ext:String(o.ext||o.key),biz:String(o.biz||""),loc:lc,resp:"",nOut:0,firstTs:ts,firstReplyTs:0,leadId:"",ts});
   }
-  await mref.set({dir:"in",t:o.text||"",...(o.img?{img:o.img}:{}),ts});
+  await mref.set({dir:"in",t:o.text||"",...(o.img?{img:o.img}:{}),...(o.aud?{aud:o.aud}:{}),ts});
 }
 
 function sigOk(req,secret){
@@ -166,7 +166,7 @@ async function ingestOut(o){
   const ts=Date.now(),s=await ref.get(),base={last:o.text||(o.img?"Фото":""),lastDir:"out",lastTs:ts};
   if(s.exists)await ref.update({...base,nOut:FV.increment(1)});
   else await ref.set({...base,...(o.wi!==undefined?{wi:String(o.wi)}:{}),ch:o.ch,name:o.name||"Без имени",phone:o.phone||"",handle:"",ext:String(o.key),biz:"",loc:o.loc0||"",resp:"",nIn:0,nOut:1,unread:0,firstTs:ts,firstReplyTs:0,leadId:"",st:"open",ts});
-  await mref.set({dir:"out",t:o.text||"",...(o.img?{img:o.img}:{}),ts,st:"sent",sentAt:ts,via:"phone"});
+  await mref.set({dir:"out",t:o.text||"",...(o.img?{img:o.img}:{}),...(o.aud?{aud:o.aud}:{}),ts,st:"sent",sentAt:ts,via:"phone"});
 }
 exports.waGreenHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(req,res)=>{
   if(req.method!=="POST")return res.sendStatus(405);
@@ -238,7 +238,7 @@ exports.waWahaHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(req
   res.sendStatus(200);
 });
 // Уведомления Evolution API: messages.upsert (входящие и с телефона), connection.update
-exports.waEvoHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(req,res)=>{
+exports.waEvoHook=onRequest({...OPT,maxInstances:10,minInstances:1,invoker:"public"},async(req,res)=>{
   if(req.method!=="POST")return res.sendStatus(405);
   const wi=iidOf(req.query.i),c=await cfgOf(wi),tok=String(c.gHook||"");
   if(!tok||req.query.k!==tok)return res.sendStatus(403);
@@ -258,7 +258,12 @@ exports.waEvoHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(req,
       let text=String(msg.conversation||(msg.extendedTextMessage||{}).text||(im&&im.caption)||((msg.videoMessage||{}).caption)||""),img="";
       if(im){try{let b64=String(msg.base64||m.base64||"");if(!b64){const r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:{key:{id:sid}}});b64=String(r.base64||"")}
         if(b64)img=await saveBuf(Buffer.from(b64.replace(/^data:[^,]*,/,""),"base64"),String(im.mimetype||"image/jpeg").split(";")[0],"wa_"+key);else text=(text?text+"\n":"")+"[Фото, откройте в WhatsApp]"}catch(e){text=(text?text+"\n":"")+"[Фото не загрузилось, откройте в WhatsApp]"}}
-      else if(msg.audioMessage)text="Голосовое сообщение (откройте в WhatsApp)";
+      let aud="";
+      if(!im&&msg.audioMessage){ // голосовое: просим сервер перекодировать в mp4 — так оно играет на iPhone
+        try{const r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:{key:{id:sid}},convertToMp4:true});const b64=String(r.base64||"").replace(/^data:[^,]*,/,"");
+          if(b64){aud=await saveBuf(Buffer.from(b64,"base64"),/mp4|m4a/.test(String(r.mimetype||"audio/mp4"))?"audio/mp4":String(r.mimetype||"audio/mp4").split(";")[0],"wa_"+key);text="Голосовое сообщение"}
+        }catch(e){console.error("evo audio",e)}
+        if(!aud)text="Голосовое сообщение (откройте в WhatsApp)"}
       else if(msg.videoMessage)text="Видео (откройте в WhatsApp)"+(text?"\n"+text:"");
       else if(msg.documentMessage)text="Файл: "+((msg.documentMessage||{}).fileName||"документ")+" (откройте в WhatsApp)";
       else if(msg.locationMessage){const l=msg.locationMessage;text="Геопозиция: "+l.degreesLatitude+", "+l.degreesLongitude}
@@ -268,8 +273,12 @@ exports.waEvoHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(req,
       if(fromMe){ // свой ответ из CRM приходит обратно — второй раз не записываем
         const ours=async()=>{if(sid&&(await db().doc("waSent/"+safe(sid)).get()).exists)return true;const q=await db().collection("chats").doc("wa_"+key).collection("msgs").where("ts",">",Date.now()-180000).get();return q.docs.some(x=>{const y=x.data();return y.dir==="out"&&y.via!=="phone"&&String(y.t||"").trim()===text.trim()})};
         if(await ours())continue;await new Promise(r=>setTimeout(r,2500));if(await ours())continue;
-        await ingestOut({ch:"wa",key,phone:lid?"":"+"+digits,name:"",text,img,mid:sid,wi,loc0:ws.loc||""});
-      }else await ingest({ch:"wa",key,ext:jid,phone:lid?"":"+"+digits,name:String(m.pushName||""),text,img,mid:sid,wi,loc0:ws.loc||"",biz:String(b.sender||"").replace(/@.*/,"").replace(/\D/g,"")});
+        await ingestOut({ch:"wa",key,phone:lid?"":"+"+digits,name:"",text,img,aud,mid:sid,wi,loc0:ws.loc||""});
+      }else{await ingest({ch:"wa",key,ext:jid,phone:lid?"":"+"+digits,name:String(m.pushName||""),text,img,aud,mid:sid,wi,loc0:ws.loc||"",biz:String(b.sender||"").replace(/@.*/,"").replace(/\D/g,"")});
+        // фото клиента на аватарку: раз в неделю берём с WhatsApp и сохраняем у себя (ссылки WhatsApp быстро протухают)
+        try{const cref=db().collection("chats").doc("wa_"+key),cd=(await cref.get()).data()||{};if(!cd.avaAt||Date.now()-cd.avaAt>7*864e5){await cref.update({avaAt:Date.now()});
+          const r=await eCall(c,"POST","/chat/fetchProfilePictureUrl/"+eName(wi),{number:lid?jid:digits});const u=r.profilePictureUrl||r.profilePicUrl||"";
+          if(u){const f=await getBuf(u);await cref.update({ava:await saveBuf(f.buf,f.ct,"ava_"+key)})}}}catch(e){console.error("evo avatar",e)}}
     }
   }catch(e){console.error("waEvoHook",e)}
   res.sendStatus(200);
@@ -481,7 +490,7 @@ const SEND={
 };
 
 // Новое исходящее сообщение из CRM (st:"pending") → отправка в канал
-exports.sendChannelMsg=onDocumentCreated({...OPT,document:"chats/{cid}/msgs/{mid}",timeoutSeconds:90},async e=>{
+exports.sendChannelMsg=onDocumentCreated({...OPT,minInstances:1,document:"chats/{cid}/msgs/{mid}",timeoutSeconds:90},async e=>{
   const first=e.data&&e.data.data();
   if(!first||first.dir!=="out"||first.st!=="pending")return;
   const cid=e.params.cid,ref=e.data.ref,chat=await db().doc("chats/"+cid).get();
