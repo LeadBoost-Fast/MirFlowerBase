@@ -209,9 +209,12 @@ exports.waEvoHook=onRequest({...OPT,maxInstances:10,minInstances:1,invoker:"publ
         if(!x)text=(isV?"Видео":"Файл: "+nm0)+" (откройте в WhatsApp)"+(dm.caption?"\n"+dm.caption:"")}
       else if(msg.locationMessage){const l=msg.locationMessage;text="Геопозиция: "+l.degreesLatitude+", "+l.degreesLongitude}
       else if(msg.contactMessage)text="Контакт: "+((msg.contactMessage||{}).displayName||"");
-      else if(msg.stickerMessage)text="Стикер";
+      else if(msg.stickerMessage){ // стикер — показываем картинкой (webp)
+        try{let b64=String(msg.base64||m.base64||"");if(!b64){const r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eNm(c,wi),{message:raw});b64=String(r.base64||"")}
+          if(b64){img=await saveBuf(Buffer.from(b64.replace(/^data:[^,]*,/,""),"base64"),String(msg.stickerMessage.mimetype||"image/webp").split(";")[0],"wa_"+key);x={...(x||{}),stk:1};text=""}}catch(e){console.error("evo sticker",e)}
+        if(!img)text="Стикер"}
       if(!text&&!img)continue; // реакции, служебные
-      if(/откройте в WhatsApp/.test(text)){try{const w=JSON.stringify(raw);if(w.length<20000)x={...(x||{}),wraw:w}}catch(e){}} // чтобы потом можно было скачать кнопкой «Загрузить»
+      if(/откройте в WhatsApp|^Стикер$/.test(text)){try{const w=JSON.stringify(raw);if(w.length<20000)x={...(x||{}),wraw:w}}catch(e){}} // чтобы потом можно было скачать кнопкой «Загрузить»
       try{const q=await quoteOf(msg,m,key);if(q)x={...(x||{}),q}}catch(e){console.error("evo quote",e)}
       if(fromMe){ // свой ответ из CRM приходит обратно — второй раз не записываем
         const ours=async()=>{if(sid&&(await db().doc("waSent/"+safe(sid)).get()).exists)return true;const q=await db().collection("chats").doc("wa_"+key).collection("msgs").where("ts",">",Date.now()-180000).get();return q.docs.some(x=>{const y=x.data();return y.dir==="out"&&y.via!=="phone"&&String(y.t||"").trim()===text.trim()})};
@@ -237,20 +240,20 @@ exports.chMediaFetch=onCall({...OPT,timeoutSeconds:120},async req=>{
   const mref=cref.collection("msgs").doc(mid),ms=await mref.get();if(!ms.exists)throw new HttpsError("not-found","Сообщение не найдено");
   const m=ms.data(),t=String(m.t||""),wi=iidOf(ch.data().wi),c=await cfgOf(wi);
   if(!c.evurl)throw new HttpsError("failed-precondition","Не найден адрес сервера Evolution API — проверьте подключение WhatsApp в настройках");
-  const kind=/^Файл: /.test(t)?"file":/^Видео/.test(t)?"vid":/^Голосовое/.test(t)?"aud":/\[Фото/.test(t)?"img":"";
+  const kind=/^Файл: /.test(t)?"file":/^Видео/.test(t)?"vid":/^Голосовое/.test(t)?"aud":/\[Фото/.test(t)?"img":/^Стикер/.test(t)?"stk":"";
   if(!kind)throw new HttpsError("failed-precondition","В этом сообщении нет файла");
   const body={message:(()=>{try{if(m.wraw)return JSON.parse(m.wraw)}catch(e){}return{key:{id:mid.slice(2),remoteJid:String(ch.data().ext||""),fromMe:m.dir==="out"}}})(),...(kind==="aud"?{convertToMp4:true}:{})},tryI=nm=>eCall(c,"POST","/chat/getBase64FromMediaMessage/"+nm,body);
   let r;try{try{r=await tryI(eNm(c,wi))}catch(e1){if(!/does not exist|not found|404/i.test(String(e1.message)))throw e1; // имя номера неизвестно — пробуем все номера на сервере
     let L=[];try{L=await eCall(c,"GET","/instance/fetchInstances")}catch(e3){throw new Error("не получил список номеров: "+e3.message)}const arr=Array.isArray(L)?L:(L&&Array.isArray(L.instances)?L.instances:[]),names=arr.map(x=>x.name||x.instanceName||(x.instance&&x.instance.instanceName)).filter(Boolean),tried=[];let ok=null;for(const nm of names){try{r=await tryI(nm);if(r&&r.base64){ok=nm;break}tried.push(nm+": пусто")}catch(e2){tried.push(nm+": "+String(e2.message).replace(/^Evolution API: /,"").slice(0,60))}}if(!ok)throw new Error("номера на сервере: "+(tried.join("; ")||"не найдено")+(m.wraw?"":" · нет данных сообщения"));await db().doc("secrets/channels").set(wi?{waI:{[wi]:{einst:ok}}}:{wa:{einst:ok}},{merge:true})}}
-  catch(e){throw new HttpsError("not-found","Сервер WhatsApp не отдал файл ("+String(e.message||e).slice(0,160)+"). Откройте его в WhatsApp на телефоне")}
-  const b64=String((r&&r.base64)||"").replace(/^data:[^,]*,/,"");if(!b64)throw new HttpsError("not-found","Сервер WhatsApp ответил без файла (поля: "+Object.keys(r||{}).join(", ").slice(0,120)+"; есть данные сообщения: "+(m.wraw?"да":"нет")+"). Откройте его в WhatsApp на телефоне");
+  catch(e){try{await mref.update({mgone:true})}catch(x){}throw new HttpsError("not-found","Сервер WhatsApp не отдал файл ("+String(e.message||e).slice(0,160)+"). Откройте его в WhatsApp на телефоне")}
+  const b64=String((r&&r.base64)||"").replace(/^data:[^,]*,/,"");if(!b64){try{await mref.update({mgone:true})}catch(x){}}if(!b64)throw new HttpsError("not-found","Сервер WhatsApp ответил без файла (поля: "+Object.keys(r||{}).join(", ").slice(0,120)+"; есть данные сообщения: "+(m.wraw?"да":"нет")+"). Откройте его в WhatsApp на телефоне");
   const buf=Buffer.from(b64,"base64");if(buf.length>25*1048576)throw new HttpsError("failed-precondition","Файл больше 25 МБ — откройте в WhatsApp");
   let ct=String((r&&r.mimetype)||"").split(";")[0];
   if(kind==="aud")ct=/mp4|m4a/.test(ct||"audio/mp4")?"audio/mp4":ct;
-  if(!ct)ct=kind==="file"?"application/pdf":kind==="vid"?"video/mp4":kind==="img"?"image/jpeg":"audio/mp4";
+  if(!ct)ct=kind==="file"?"application/pdf":kind==="vid"?"video/mp4":kind==="img"?"image/jpeg":kind==="stk"?"image/webp":"audio/mp4";
   const u=await saveBuf(buf,ct,cid),clean=t.replace(/ ?\(откройте в WhatsApp\)/,"").replace(/\n?\[Фото[^\]]*\]/,"");
-  const upd=kind==="file"?{file:{url:u,name:(/^Файл: (.+)/.exec(clean.split("\n")[0])||[])[1]||"файл"}}:kind==="vid"?{vid:u}:kind==="aud"?{aud:u}:{img:u};
-  await mref.update({...upd,t:clean||(kind==="img"?"":t),wraw:FV.delete()});
+  const upd=kind==="file"?{file:{url:u,name:(/^Файл: (.+)/.exec(clean.split("\n")[0])||[])[1]||"файл"}}:kind==="vid"?{vid:u}:kind==="aud"?{aud:u}:kind==="stk"?{img:u,stk:1}:{img:u};
+  await mref.update({...upd,t:kind==="stk"?"":(clean||(kind==="img"?"":t)),wraw:FV.delete(),mgone:FV.delete()});
   return{ok:true,url:u};
 });
 // Подключение номера к Evolution API: создаёт инстанс и включает уведомления на наш адрес
