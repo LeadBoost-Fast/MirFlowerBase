@@ -124,9 +124,21 @@ const topOnly=req=>{
 const waState=st=>db().doc("settings/main").set({channels:{wa:{state:String(st||""),stateAt:Date.now()}}},{merge:true});
 async function greenCfg(){
   const c=await secretsOf("wa");
+  if(c.mode==="waha"){if(!c.wurl)throw new HttpsError("failed-precondition","Сначала сохраните адрес сервера WAHA");return c}
   if(c.mode!=="green"||!c.gid||!c.gtok)throw new HttpsError("failed-precondition","Сначала сохраните ID инстанса и токен Green API");
   return c;
 }
+// ---------- WAHA (свой сервер с бесплатной программой WAHA, сессия "default") ----------
+const WS="default",wBase=c=>String(c.wurl||"").trim().replace(/\/+$/,"");
+async function wCall(c,method,path,body){
+  const h={Accept:"application/json",...(c.wkey?{"X-Api-Key":String(c.wkey).trim()}:{}),...(body!==undefined?CT:{})};
+  const r=await jf(wBase(c)+path,{method,headers:h,...(body!==undefined?{body:JSON.stringify(body)}:{})});
+  if(!r.ok){const e=new Error("WAHA: "+(r.j.message||r.j.error||("HTTP "+r.status)));e.status=r.status;throw e}
+  return r.j;
+}
+const WST={WORKING:"authorized",SCAN_QR_CODE:"notAuthorized",STARTING:"starting",STOPPED:"stopped",FAILED:"failed"};
+async function wStatus(c){try{const j=await wCall(c,"GET","/api/sessions/"+WS);return WST[j.status]||String(j.status||"")}catch(e){if(e.status===404)return"stopped";throw e}}
+const shortId=id=>String(id&&(id._serialized||id.id)||id||"").split("_").pop();
 // Исходящее, отправленное с самого телефона: тоже показываем в CRM
 async function ingestOut(o){
   const ref=db().collection("chats").doc(o.ch+"_"+o.key),mref=ref.collection("msgs").doc("m_"+safe(o.mid||Date.now()+"_"+Math.random()));
@@ -167,6 +179,44 @@ exports.waGreenHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(re
   }catch(e){console.error("waGreenHook",e)}
   res.sendStatus(200);
 });
+// Уведомления от WAHA: message.any (входящие и написанные с телефона), session.status
+exports.waWahaHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(req,res)=>{
+  if(req.method!=="POST")return res.sendStatus(405);
+  const c=await secretsOf("wa"),tok=String(c.gHook||"");
+  if(!tok||req.query.k!==tok)return res.sendStatus(403);
+  const b=req.body||{},p=b.payload||{};
+  try{
+    if(b.event==="session.status"){await waState(WST[p.status]||String(p.status||""));return res.sendStatus(200)}
+    if(b.event!=="message.any"&&b.event!=="message")return res.sendStatus(200);
+    if(!(await isOn("wa")))return res.sendStatus(200);
+    const fromMe=!!p.fromMe,peer=String(fromMe?p.to:p.from||"");
+    if(!/@(c\.us|s\.whatsapp\.net|lid)$/.test(peer))return res.sendStatus(200); // группы, статусы, рассылки не берём
+    const digits=peer.replace(/@.*/,"").replace(/\D/g,"");if(!digits)return res.sendStatus(200);
+    const lid=/@lid$/.test(peer),key=lid?"lid"+digits:digits;
+    const sid=shortId(p.id);
+    let text=String(p.body||""),img="";
+    if(fromMe){ // ответ, отправленный из CRM, приходит обратно — второй раз не записываем
+      const ours=async()=>{if(sid&&(await db().doc("waSent/"+safe(sid)).get()).exists)return true;
+        const q=await db().collection("chats").doc("wa_"+key).collection("msgs").where("ts",">",Date.now()-180000).get();
+        return q.docs.some(d=>{const x=d.data();return x.dir==="out"&&x.via!=="phone"&&String(x.t||"").trim()===text.trim()})};
+      if(await ours())return res.sendStatus(200);
+      await new Promise(r=>setTimeout(r,2500));if(await ours())return res.sendStatus(200);
+    }
+    if(p.hasMedia){
+      const m=p.media||{},mt=String(m.mimetype||"");
+      if(m.url&&/^image\//.test(mt)){try{const f=await getBuf(m.url,c.wkey?{"X-Api-Key":String(c.wkey).trim()}:{});img=await saveBuf(f.buf,f.ct,"wa_"+key)}catch(e){text=(text?text+"\n":"")+"[Фото не загрузилось, откройте в WhatsApp]"}}
+      else if(/^audio\//.test(mt)||p.type==="ptt")text="Голосовое сообщение (откройте в WhatsApp)";
+      else if(/^video\//.test(mt))text="Видео (откройте в WhatsApp)"+(text?"\n"+text:"");
+      else if(!m.url&&!text)text="Фото или файл (откройте в WhatsApp)";
+      else if(!/^image\//.test(mt))text="Файл"+(m.filename?": "+m.filename:"")+" (откройте в WhatsApp)"+(text?"\n"+text:"");
+    }
+    if(!text&&!img)return res.sendStatus(200); // реакции, служебные
+    const name=String((p._data&&(p._data.notifyName||p._data.pushName))||"");
+    if(fromMe)await ingestOut({ch:"wa",key,phone:lid?"":"+"+digits,name:"",text,img,mid:sid||p.id});
+    else await ingest({ch:"wa",key,ext:peer,phone:lid?"":"+"+digits,name,text,img,mid:sid||p.id,biz:String((b.me&&b.me.id)||"").replace(/@.*/,"").replace(/\D/g,"")});
+  }catch(e){console.error("waWahaHook",e)}
+  res.sendStatus(200);
+});
 // Подключение: включает уведомления Green API на наш адрес
 exports.waGreenSetup=onCall(OPT,async req=>{
   topOnly(req);
@@ -174,6 +224,15 @@ exports.waGreenSetup=onCall(OPT,async req=>{
   if(!/^https:\/\//.test(url)||!/(cloudfunctions\.net|run\.app)$/.test(host))throw new HttpsError("invalid-argument","Неверный адрес webhook");
   const c=await greenCfg();
   let tok=c.gHook;if(!tok){tok=crypto.randomBytes(16).toString("hex");await db().doc("secrets/channels").set({wa:{gHook:tok}},{merge:true})}
+  if(c.mode==="waha"){
+    const hook=url.replace(/waGreenHook$/,"waWahaHook")+"?k="+tok,config={webhooks:[{url:hook,events:["message.any","session.status"]}]};
+    try{
+      try{await wCall(c,"PUT","/api/sessions/"+WS,{name:WS,config})}
+      catch(e){if(e.status!==404)throw e;await wCall(c,"POST","/api/sessions",{name:WS,start:true,config})}
+      await wCall(c,"POST","/api/sessions/"+WS+"/start").catch(()=>{});
+      const st=await wStatus(c);await waState(st);return{state:st};
+    }catch(e){throw new HttpsError("internal",String(e.message||e))}
+  }
   try{
     await gCall(c,"setSettings",{webhookUrl:url+"?k="+tok,webhookUrlToken:tok,incomingWebhook:"yes",outgoingMessageWebhook:"yes",outgoingAPIMessageWebhook:"no",stateWebhook:"yes",outgoingWebhook:"no"});
     const st=await gCall(c,"getStateInstance");await waState(st.stateInstance);
@@ -183,6 +242,15 @@ exports.waGreenSetup=onCall(OPT,async req=>{
 // QR-код для привязки телефона (обновляется каждые ~20 секунд, сайт спрашивает заново)
 exports.waGreenQr=onCall(OPT,async req=>{
   topOnly(req);const c=await greenCfg();
+  if(c.mode==="waha"){
+    try{
+      const st=await wStatus(c);if(st==="authorized"){await waState(st);return{state:st}}
+      if(st==="stopped")await wCall(c,"POST","/api/sessions/"+WS+"/start").catch(()=>{});
+      if(st!=="notAuthorized")return{state:st,qr:"",msg:"Сервер запускает WhatsApp, подождите…"};
+      const q=await wCall(c,"GET","/api/"+WS+"/auth/qr?format=image");
+      return{state:st,qr:String(q.data||""),msg:q.data?"":"QR-код ещё не готов"};
+    }catch(e){throw new HttpsError("internal",String(e.message||e))}
+  }
   try{
     const st=await gCall(c,"getStateInstance").catch(()=>({}));
     if(st.stateInstance==="authorized"){await waState("authorized");return{state:"authorized"}}
@@ -194,7 +262,7 @@ exports.waGreenQr=onCall(OPT,async req=>{
 // Отвязать телефон
 exports.waGreenLogout=onCall(OPT,async req=>{
   topOnly(req);const c=await greenCfg();
-  try{await gCall(c,"logout");await waState("notAuthorized");return{ok:true}}catch(e){throw new HttpsError("internal",String(e.message||e))}
+  try{if(c.mode==="waha")await wCall(c,"POST","/api/sessions/"+WS+"/logout");else await gCall(c,"logout");await waState("notAuthorized");return{ok:true}}catch(e){throw new HttpsError("internal",String(e.message||e))}
 });
 
 // ================= Instagram =================
@@ -276,6 +344,16 @@ exports.tgSetup=onCall(OPT,async req=>{
 // ================= Отправка ответов =================
 const SEND={
   async wa(c,to,t,img,chat){
+    if(c.mode==="waha"){
+      if(!c.wurl)throw new Error("Не задан адрес сервера WAHA");
+      const ext=String((chat&&chat.ext)||""),chatId=/@/.test(ext)?ext:String(to).replace(/\D/g,"")+"@c.us";
+      const remember=async r=>{const id=shortId(r&&(r.id||(r.key&&r.key.id)));if(id)await db().doc("waSent/"+safe(id)).set({ts:Date.now()})};
+      if(img){
+        try{await remember(await wCall(c,"POST","/api/sendImage",{session:WS,chatId,file:{mimetype:"image/jpeg",url:img,filename:"photo.jpg"},...(t?{caption:t.slice(0,1000)}:{})}))}
+        catch(e){await remember(await wCall(c,"POST","/api/sendText",{session:WS,chatId,text:(t?t.slice(0,3000)+"\n":"")+img}))} // бесплатная WAHA может не уметь фото: отправляем ссылку
+      }else await remember(await wCall(c,"POST","/api/sendText",{session:WS,chatId,text:t.slice(0,4000)}));
+      return;
+    }
     if(c.mode==="green"){
       if(!c.gid||!c.gtok)throw new Error("Не заданы ID инстанса и токен Green API");
       const chatId=String(to).replace(/\D/g,"")+"@c.us";
