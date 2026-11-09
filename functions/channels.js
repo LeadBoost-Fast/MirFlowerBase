@@ -307,6 +307,31 @@ exports.waEvoHook=onRequest({...OPT,maxInstances:10,minInstances:1,invoker:"publ
   }catch(e){console.error("waEvoHook",e)}
   res.sendStatus(200);
 });
+// Старое сообщение без файла («откройте в WhatsApp»): по кнопке на сайте пробуем скачать файл с сервера Evolution по id сообщения
+exports.chMediaFetch=onCall({...OPT,timeoutSeconds:120},async req=>{
+  if(!req.auth)throw new HttpsError("unauthenticated","Войдите в систему");
+  const st=await db().doc("staff/"+req.auth.uid).get(),sd=st.exists?st.data():{};
+  if(!sd.active||!["admin","operator","florist","assistant"].includes(sd.role))throw new HttpsError("permission-denied","Нет доступа");
+  const cid=String((req.data&&req.data.cid)||""),mid=String((req.data&&req.data.mid)||"");
+  if(!/^wa_[A-Za-z0-9_-]+$/.test(cid)||!/^m_[A-Za-z0-9_-]+$/.test(mid))throw new HttpsError("invalid-argument","Неверное сообщение");
+  const cref=db().doc("chats/"+cid),ch=await cref.get();if(!ch.exists)throw new HttpsError("not-found","Чат не найден");
+  const mref=cref.collection("msgs").doc(mid),ms=await mref.get();if(!ms.exists)throw new HttpsError("not-found","Сообщение не найдено");
+  const m=ms.data(),t=String(m.t||""),wi=iidOf(ch.data().wi),c=await cfgOf(wi);
+  if(c.mode!=="evo")throw new HttpsError("failed-precondition","Загрузка работает только с Evolution API");
+  const kind=/^Файл: /.test(t)?"file":/^Видео/.test(t)?"vid":/^Голосовое/.test(t)?"aud":/\[Фото/.test(t)?"img":"";
+  if(!kind)throw new HttpsError("failed-precondition","В этом сообщении нет файла");
+  let r;try{r=await eCall(c,"POST","/chat/getBase64FromMediaMessage/"+eName(wi),{message:{key:{id:mid.slice(2)}},...(kind==="aud"?{convertToMp4:true}:{})})}
+  catch(e){throw new HttpsError("not-found","Файл уже недоступен на сервере WhatsApp. Откройте его в WhatsApp на телефоне")}
+  const b64=String((r&&r.base64)||"").replace(/^data:[^,]*,/,"");if(!b64)throw new HttpsError("not-found","Файл уже недоступен на сервере WhatsApp. Откройте его в WhatsApp на телефоне");
+  const buf=Buffer.from(b64,"base64");if(buf.length>25*1048576)throw new HttpsError("failed-precondition","Файл больше 25 МБ — откройте в WhatsApp");
+  let ct=String((r&&r.mimetype)||"").split(";")[0];
+  if(kind==="aud")ct=/mp4|m4a/.test(ct||"audio/mp4")?"audio/mp4":ct;
+  if(!ct)ct=kind==="file"?"application/pdf":kind==="vid"?"video/mp4":kind==="img"?"image/jpeg":"audio/mp4";
+  const u=await saveBuf(buf,ct,cid),clean=t.replace(/ ?\(откройте в WhatsApp\)/,"").replace(/\n?\[Фото[^\]]*\]/,"");
+  const upd=kind==="file"?{file:{url:u,name:(/^Файл: (.+)/.exec(clean.split("\n")[0])||[])[1]||"файл"}}:kind==="vid"?{vid:u}:kind==="aud"?{aud:u}:{img:u};
+  await mref.update({...upd,t:clean||(kind==="img"?"":t)});
+  return{ok:true};
+});
 // Подключение: включает уведомления Green API на наш адрес
 exports.waGreenSetup=onCall(OPT,async req=>{
   topOnly(req);
