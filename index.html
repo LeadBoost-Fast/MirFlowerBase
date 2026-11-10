@@ -727,7 +727,7 @@ Object.assign(KZ,{
 "Ставки":"Ставкалар","ставки не заданы":"ставкалар қойылмаған","Бонусы":"Бонустар","Проблемы":"Проблемалар","Не сдано за день":"Бүгін тапсырылмаған",
 "Здесь отчёты сотрудников: проверьте и отметьте «Ок» или «Замечание».":"Мұнда қызметкерлердің есептері: тексеріп, «Ок» не «Ескерту» деп белгіле.",
 "Отчёты появляются на главной у всех с":"Есептер барлығының басты бетінде мына уақыттан шығады:",
-"до 04:00 утра. Отчёт после полуночи засчитывается за прошедший день. Каждый отчёт сдаётся один раз на точку.":"таңғы 04:00-ге дейін. Түн ортасынан кейінгі есеп өткен күнге саналады. Әр есеп бір дүкенге бір рет тапсырылады.",
+"до 06:00 утра. Все отчёты смены записываются датой начала смены, даже если сданы ночью. Каждый отчёт сдаётся один раз на точку.":"таңғы 06:00-ге дейін. Ауысымның барлық есебі ауысым басталған күнмен жазылады, түнде тапсырылса да. Әр есеп бір дүкенге бір рет тапсырылады.",
 "Изменить имя":"Атын өзгерту","Смены":"Сменалар","Нажмите на клетку, чтобы назначить смену или выходной.":"Смена не демалыс қою үшін торды бас.","Заполнить по шаблону недели":"Апта шаблонымен толтыру",
 "Сотрудникам — только во время смены":"Қызметкерлерге — тек смена кезінде","Начал смену — уведомления и push приходят, закончил — перестают. Настройка для всего магазина.":"Сменаны бастадың — хабарлама мен push келеді, бітірдің — тоқтайды. Бұл баптау бүкіл дүкенге.",
 "Владельцам":"Иелеріне","всегда, но только важное: плохой отзыв клиента, товар закончился, касса не сходится. Остальное видно в":"әрқашан, бірақ тек маңыздысы: клиенттің жаман пікірі, тауар бітті, касса сәйкес емес. Қалғаны мұнда көрінеді:",
@@ -2549,7 +2549,7 @@ function todoTop(){if(!S)return"";const now=Date.now(),t=today(),r=S.role,L=[],a
   if(mgr()||own())add(O.filter(o=>o.rqK&&+o.st!==5&&rqCan(o)).length,["запрос на отмену или скидку","запроса на отмену или скидку","запросов на отмену или скидку"],"решить","warn","#EF4444","tab","home");
   if(["admin","operator","florist","assistant"].includes(r))add(INVL().filter(isLow).length,["позиция на складе заканчивается","позиции на складе заканчиваются","позиций на складе заканчивается"],"заказать","stock","#F59E0B","al","stock|low");
   if(["admin","operator","florist","assistant"].includes(r)){const fw=INVL().filter(i=>{const f=fresh(i);return f.w||f.b}).length;add(fw,["позиция скоро завянет","позиции скоро завянут","позиций скоро завянут"],"использовать первыми","stock","#EA580C","tab","stock")}
-  if(mgr()&&typeof rpTypes==="function"&&rpWin()){add(rpTypes().filter(x=>!rpDone(x)).length,["отчёт за день не сдан","отчёта за день не сдано","отчётов за день не сдано"],"сдать","clip","#64748B","tab","rep")}
+  if(mgr()&&typeof rpTypes==="function"&&rpWin()){add(rpTypes().filter(x=>x!=="wo"&&!rpDone(x)).length,["отчёт за день не сдан","отчёта за день не сдано","отчётов за день не сдано"],"сдать","clip","#64748B","tab","rep")}
  }
  alerts.d++;/* старый блок «Сейчас нужно» ниже больше не показываем, всё здесь */
  const n=L.reduce((q,x)=>q+x.n,0);
@@ -2655,9 +2655,9 @@ WIPE.push(["reports","Отчёты сотрудников"],["builds","Сбор�
 
 /* ---------- 2. Подписки ---------- */
 let RPD=[];const RP_LOC=["desk","show","op"],ALLRP=["desk","show","op"],
- rpDay=()=>new Date(Date.now()-4*36e5).toLocaleDateString("sv-SE"),/* рабочий день: отчёт после полуночи засчитывается за вчера */
+ rpDay=()=>{const s=typeof SHF==="function"?SHF():null;return s&&s.start?new Date(s.start).toLocaleDateString("sv-SE"):new Date(Date.now()-6*36e5).toLocaleDateString("sv-SE")},/* рабочий день = день начала смены (вся смена — одна дата, даже если отчёт сдан ночью); без смены — до 06:00 считается вчера */
  rpAt=()=>String((typeof SH!=="undefined"&&SH&&SH.rpAt)||"23:00"),
- rpWin=()=>{const n=new Date(),hm=String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");return hm>=rpAt()||hm<"04:00"},
+ rpWin=()=>{const n=new Date(),hm=String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");return hm>=rpAt()||hm<"06:00"},
  rpFind=(k,L)=>{const t=rpDay();L=L||myLoc();return RPD.find(x=>x.date===t&&x.type===k&&(x.loc||"main")===L)||RP.find(r=>r.date===t&&r.type===k&&(r.loc||"main")===L)},
  rpDone=(k)=>!!rpFind(k),rpDoneBy=k=>{const x=rpFind(k);return x?x.byName||"":""},
  rpMissLoc=()=>locs().map(l=>[l,ALLRP.filter(k=>!rpFind(k,l.id))]).filter(x=>x[1].length);
@@ -2738,7 +2738,7 @@ const rpCard=r=>{const f=rpFlag(r),R=RPT[r.type]||{n:r.type,ic:"📋"},when=new 
  return `<div class="card"><div class="row"><b>${R.ic} ${R.n}</b><span class="pill ${f[0]}">${f[1]}</span></div><div class="mut">${esc(r.byName)} · ${when}${locs().length>1&&r.loc?" · "+esc(lname(r.loc)):""}</div>${det?`<div style="margin-top:6px">${det}</div>`:""}${r.note?`<div style="margin-top:6px">💬 ${esc(r.note)}</div>`:""}${(r.photos||[]).length?`<div class="rpp">${r.photos.map(s=>`<img class="th" src="${s}" alt="">`).join("")}</div>`:""}${r.rv==="ok"?`<span class="pill ok">Проверено ✓ ${esc(r.rvByName||"")}</span>`:r.rv==="bad"?`<div class="pill bad">Замечание: ${esc(r.rvNote||"")}</div>`:""}${acts?`<div class="acts">${acts}</div>`:""}</div>`};
 function repV(){const t=rpDay(),types=rpTypes(),mine=RP.filter(r=>r.by===U.uid&&r.date===t),chip=(a,id,l,on)=>`<button class="chip ${on?"on":""}" data-a="${a}" data-id="${id}">${l}</button>`;
  let h=`<h1>Отчёты</h1>${adm()?`<p class="mut">Здесь отчёты сотрудников: проверьте и отметьте «Принять» или «Замечание». Списание уходит со склада только после «Принять и списать».</p>`:""}${types.length?`<div class="card"><b>${types.length===1&&types[0]==="wo"?"Есть что списать?":"Сдать отчёт"}</b>${types.map(k=>{const done=k!=="wo"&&rpDone(k),wh=done&&RP_LOC.includes(k)&&!mine.some(r=>r.type===k)?rpDoneBy(k):"";return `<div class="row" style="margin-top:10px"><span>${RPT[k].ic} <b>${RPT[k].n}</b><br><span class="mut">${RPT[k].d}${done?(wh?" · сдал(а) "+esc(wh)+" ✓":" · сдан ✓"):""}</span></span><button class="btn ${done&&k!=="wo"?"g ":""}s" data-a="rp_new" data-id="${k}">${k==="wo"?"Списать":done?"Ещё":"Сдать"}</button></div>`}).join("")}</div>`:`<p class="mut">Здесь отчёты сотрудников: проверьте и отметьте «Ок» или «Замечание».</p>`}`;
- if(own())h+=`<div class="card"><div class="row"><span>Отчёты появляются на главной у всех с</span><input type="time" value="${rpAt()}" style="width:128px;flex:none;min-height:40px" onchange="run(async()=>{await db.collection('settings').doc('main').set({rpAt:this.value||'23:00'},{merge:true});toast('Сохранено')})"></div><div class="mut" style="font-size:12px">до 04:00 утра. Отчёт после полуночи засчитывается за прошедший день. Каждый отчёт сдаётся один раз на точку.</div></div>`;
+ if(own())h+=`<div class="card"><div class="row"><span>Отчёты появляются на главной у всех с</span><input type="time" value="${rpAt()}" style="width:128px;flex:none;min-height:40px" onchange="run(async()=>{await db.collection('settings').doc('main').set({rpAt:this.value||'23:00'},{merge:true});toast('Сохранено')})"></div><div class="mut" style="font-size:12px">до 06:00 утра. Все отчёты смены записываются датой начала смены, даже если сданы ночью. Каждый отчёт сдаётся один раз на точку.</div></div>`;
  if(adm()&&rpWin())h+=rpMissing();
  h+=(RP.some(r=>r.type==="wo"&&(r.date||"")===t&&inL(r))?`<div class="acts" style="margin:0 0 8px"><button class="btn g s" data-a="rp_cpd">Копировать все списания за сегодня</button></div>`:"")+`<div class="chips">${chip("rp_f","",adm()?"Все":"Мои",!rpt)}${Object.keys(RPT).map(k=>chip("rp_f",k,RPT[k].ic+" "+RPT[k].n,rpt===k)).join("")}${adm()?chip("rp_pr","1","⚠ Проблемы",rpb):""}</div>`;
  const l=RP.filter(inL).filter(r=>(!rpt||r.type===rpt)&&(!rpb||rpFlag(r)[0]!=="ok"||r.rv==="bad")).slice(0,60);let cur="";

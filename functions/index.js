@@ -170,7 +170,7 @@ exports.pushReportReminder=onSchedule({...OPT,schedule:"*/30 * * * *",timeZone:T
   const [h,m]=String(sh.rpAt||"23:00").split(":").map(Number),tgt=((h*60+(m||0)+30)%1440);
   const loc=new Date(now).toLocaleTimeString("ru-RU",{timeZone:TZ,hour:"2-digit",minute:"2-digit",hour12:false}).split(":").map(Number),cur=loc[0]*60+loc[1];
   if(((cur-tgt+1440)%1440)>=30)return; // запускается раз в 30 минут — шлём только в слоте сразу после rpAt + 30 мин
-  const day=new Date(now-4*36e5).toLocaleDateString("sv-SE",{timeZone:TZ});
+  const day=new Date(now-6*36e5).toLocaleDateString("sv-SE",{timeZone:TZ});
   const [ls,st,dn]=await Promise.all([db.collection("shiftLog").where("start",">=",now-20*36e5).get(),db.collection("staff").get(),db.collection("rpDone").where("date","==",day).get()]);
   const done=new Set();dn.forEach(d=>done.add(d.id));const role={};st.forEach(d=>role[d.id]=d.data().role);
   const miss={};ls.forEach(d=>{const x=d.data();if(!x.uid||x.end)return;const t=(RPW[role[x.uid]]||[]).filter(k=>!done.has(day+"_"+(x.loc||"main")+"_"+k));if(t.length)miss[x.uid]=t});
