@@ -184,6 +184,22 @@ exports.pushReportReminder=onSchedule({...OPT,schedule:"*/30 * * * *",timeZone:T
 });
 
 
+// Автозакрытие смены: если сотрудник не нажал «Закончить смену» — через час после конца смены по графику (shifts)
+// время ухода ставится по графику, с пометкой auto. Без графика — через 16 ч, уход = начало + 12 ч. Выход из магазина смену не закрывает.
+exports.shiftAutoClose=onSchedule({...OPT,schedule:"*/30 * * * *",timeZone:TZ},async()=>{
+  const db=admin.firestore(),now=Date.now();
+  const off=Math.round((new Date(new Date(now).toLocaleString("en-US",{timeZone:TZ}))-new Date(new Date(now).toLocaleString("en-US",{timeZone:"UTC"})))/6e4);
+  const at=(d,hm)=>{const[y,mo,dd]=d.split("-").map(Number),[h,mi]=String(hm).split(":").map(Number);return Date.UTC(y,mo-1,dd,h||0,mi||0)-off*6e4};
+  const dOf=t=>new Date(t).toLocaleDateString("sv-SE",{timeZone:TZ});
+  const [ls,sc]=await Promise.all([db.collection("shiftLog").where("start",">=",now-30*36e5).get(),db.collection("shifts").where("date",">=",dOf(now-2*864e5)).get()]);
+  const plan={};sc.forEach(d=>{const x=d.data();if(x.t==="work"&&x.uid&&x.from&&x.to)(plan[x.uid]=plan[x.uid]||[]).push(x)});
+  for(const d of ls.docs){const x=d.data(),st=+x.start||0;if(!x.uid||+x.end||!st)continue;
+    const ends=(plan[x.uid]||[]).map(p=>{const s0=at(p.date,p.from);let en=at(p.date,p.to);if(en<=s0)en+=864e5;return{s0,en}}).filter(p=>p.en>st&&p.s0<st+12*36e5).sort((a,b)=>a.en-b.en);
+    let end=0;if(ends.length){if(now>ends[0].en+36e5)end=Math.max(ends[0].en,st+6e4)}else if(now-st>16*36e5)end=st+12*36e5;
+    if(end)await d.ref.set({end,min:Math.round((end-st)/6e4),auto:true},{merge:true});
+  }
+});
+
 // Проверка: прислать push самому себе
 exports.pushTest=onCall({...OPT,invoker:"public"},async req=>{
   if(!req.auth)throw new HttpsError("unauthenticated","Войдите в систему");
