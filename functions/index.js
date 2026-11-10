@@ -166,16 +166,23 @@ exports.pushNewReport=onDocumentCreated({...OPT,document:"reports/{id}"},async e
 // Кому: тем, кто сейчас на смене (shiftLog без end), если на их точке за рабочий день (сейчас − 4 ч) не сданы их отчёты.
 const RPW={assistant:["show","desk"],florist:["desk","op"],operator:["op","desk"]},RPN={show:"Витрина",desk:"Рабочее место",op:"Смена: касса"};
 exports.pushReportReminder=onSchedule({...OPT,schedule:"*/30 * * * *",timeZone:TZ},async()=>{
+  // Напоминание «сдайте отчёт» — каждому в конце его смены: за час до окончания по графику (shifts). Без графика — после settings.rpAt + 30 мин.
   const db=admin.firestore(),now=Date.now(),s=await db.doc("settings/main").get(),sh=s.exists?s.data():{};
-  const [h,m]=String(sh.rpAt||"23:00").split(":").map(Number),tgt=((h*60+(m||0)+30)%1440);
-  const loc=new Date(now).toLocaleTimeString("ru-RU",{timeZone:TZ,hour:"2-digit",minute:"2-digit",hour12:false}).split(":").map(Number),cur=loc[0]*60+loc[1];
-  if(((cur-tgt+1440)%1440)>=30)return; // запускается раз в 30 минут — шлём только в слоте сразу после rpAt + 30 мин
-  const day=new Date(now-6*36e5).toLocaleDateString("sv-SE",{timeZone:TZ});
-  const [ls,st,dn]=await Promise.all([db.collection("shiftLog").where("start",">=",now-20*36e5).get(),db.collection("staff").get(),db.collection("rpDone").where("date","==",day).get()]);
-  const done=new Set();dn.forEach(d=>done.add(d.id));const role={};st.forEach(d=>role[d.id]=d.data().role);
-  const miss={};ls.forEach(d=>{const x=d.data();if(!x.uid||x.end)return;const t=(RPW[role[x.uid]]||[]).filter(k=>!done.has(day+"_"+(x.loc||"main")+"_"+k));if(t.length)miss[x.uid]=t});
-  for(const uid of Object.keys(miss))await push("remind",u=>u.uid===uid,{title:"Сдайте отчёт за смену",body:"Не сдано: "+miss[uid].map(k=>RPN[k]).join(", ")+". Если есть что списать — сдайте «Списание»",url:"/?tab=rep",tag:"remind_"+day});
+  const off=Math.round((new Date(new Date(now).toLocaleString("en-US",{timeZone:TZ}))-new Date(new Date(now).toLocaleString("en-US",{timeZone:"UTC"})))/6e4); // минуты от UTC
+  const at=(d,hm)=>{const[y,mo,dd]=d.split("-").map(Number),[h,mi]=String(hm).split(":").map(Number);return Date.UTC(y,mo-1,dd,h||0,mi||0)-off*6e4};
+  const dOf=t=>new Date(t).toLocaleDateString("sv-SE",{timeZone:TZ}),today=dOf(now),yest=dOf(now-864e5);
+  const [h,m]=String(sh.rpAt||"23:00").split(":").map(Number),tgt=((h*60+(m||0)+30)%1440),loc=new Date(now).toLocaleTimeString("ru-RU",{timeZone:TZ,hour:"2-digit",minute:"2-digit",hour12:false}).split(":").map(Number),cur=loc[0]*60+loc[1],globSlot=((cur-tgt+1440)%1440)<30;
+  const [ls,st,sc]=await Promise.all([db.collection("shiftLog").where("start",">=",now-20*36e5).get(),db.collection("staff").get(),db.collection("shifts").where("date",">=",yest).get()]);
+  const role={};st.forEach(d=>role[d.id]=d.data().role);const plan={};sc.forEach(d=>{const x=d.data();if(x.t==="work"&&x.uid&&x.from&&x.to&&(x.date===today||x.date===yest))(plan[x.uid]=plan[x.uid]||[]).push(x)});
+  const cand=[];ls.forEach(d=>{const x=d.data();if(!x.uid||x.end||!(RPW[role[x.uid]]||[]).length)return;
+    const pl=(plan[x.uid]||[]).map(p=>{const st0=at(p.date,p.from);let en=at(p.date,p.to);if(en<=st0)en+=864e5;return en}).filter(en=>now<=en+3*36e5&&now>=en-12*36e5).sort((a,b)=>a-b)[0];
+    const due=pl?(now>=pl-36e5&&now<pl-30*6e4):globSlot; // ровно один слот: за час до конца смены
+    if(due)cand.push({uid:x.uid,loc:x.loc||"main",day:dOf(x.start||now)})});
+  if(!cand.length)return;
+  const days=[...new Set(cand.map(c=>c.day))],done=new Set();for(const dd of days){(await db.collection("rpDone").where("date","==",dd).get()).forEach(d=>done.add(d.id))}
+  for(const c of cand){const t=(RPW[role[c.uid]]||[]).filter(k=>!done.has(c.day+"_"+c.loc+"_"+k));if(t.length)await push("remind",u=>u.uid===c.uid,{title:"Сдайте отчёт за смену",body:"Смена скоро заканчивается. Не сдано: "+t.map(k=>RPN[k]).join(", ")+". Если есть что списать — сдайте «Списание»",url:"/?tab=rep",tag:"remind_"+c.day})}
 });
+
 
 // Проверка: прислать push самому себе
 exports.pushTest=onCall({...OPT,invoker:"public"},async req=>{
