@@ -1044,7 +1044,7 @@ function ctrlBlock(){if(!adm())return"";const now=Date.now(),t=today(),day0=new 
  const rpToday=RP.filter(r=>r.date===rpDay()),bad=rpToday.filter(r=>r.rv==="bad").length,wait=rpToday.filter(r=>!r.rv).length;
  const qual=(!rpWin()?L("Отчёты за день","с "+rpAt()):rmiss.length?rmiss.map(([l,ks])=>L("Не сдано · "+esc(l.name),esc(ks.map(k=>RPT[k].n).join(", ")))).join(""):L("Отчёты за день","все сданы"))+L("Отчётов сегодня",rpToday.length)+(wait?L("Ждут проверки",wait):"")+(bad?L("С замечаниями",bad):"")+L("Переделок сегодня",redo);
  const rqs=rqList();
- return `${wkBlock()}${rqs?`<h2>Запросы на подтверждение</h2><div class="card">${rqs}</div>`:""}<h2>Контроль</h2><div class="dg ctrl">
+ return `${lvBlock()}${rqs?`<h2>Запросы на подтверждение</h2><div class="card">${rqs}</div>`:""}<h2>Контроль</h2><div class="dg ctrl">
   <div class="card"><b>Сейчас работают · ${on.length}</b>${work||'<p class="mut">Никого нет в сети</p>'}</div>
   <div class="card"><b>Требует внимания</b>${att||'<p class="mut" style="color:var(--ok,#22c55e)">Всё в порядке</p>'}</div>
   <div class="card"><b>Деньги сегодня</b>${money}</div>
@@ -1769,22 +1769,610 @@ function wkParse(t){const out=[],bad=[];let L=null,R="",H="";String(t||"").split
   const h=r.replace(/:$/,"").trim(),rk=WKR[Object.keys(WKR).find(k=>nrmN(k)===nrmN(h))];if(rk){R=rk;return}
   const l=wkLoc(h);if(l){L=l.id;H=h;return}bad.push("Не понял строку: "+r)});
  return {out,bad}}
-function wkForm(){const L=myLoc(),bqs=BQ.slice().sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""),"ru")),adminOk=adm()||own();let pay=STO.get("wkpay");if(!PAY.includes(pay))pay=PAY[0];let chkU="",chkPdf=false,it={},pMan=false;
- modal(hd("Живой клиент")+`<form id="wkf"><label>Букет</label><select name="bq"><option value="">— ввести вручную —</option>${bqs.map(b=>`<option value="${esc(b.id)}">${esc(b.name)} · ${M(b.price)}</option>`).join("")}</select><div id="wkn"><input name="bn" placeholder="Название букета (можно не писать)" autocomplete="off"></div>
- <label>Цветы со склада</label><div id="wksel"></div><div class="chips" id="wkch" style="flex-wrap:wrap;overflow-x:hidden;overflow-y:auto;max-height:132px;margin:6px 0 0"></div>
+function wkForm(){if(!adm())return;const m=/(\d{1,2}:\d{2})\D+(\d{1,2}:\d{2})/.exec(SH.hours||""),pad=s=>s.padStart(5,"0");
+ modal(hd("График по шаблону недели")+`<p class="mut">Впишите неделю как в заметке: роль, точка, дальше «день — имя». «?» — пока никого. Сайт найдёт сотрудников по имени и поставит смены с точкой.</p>
+ <form id="wkf"><label>Шаблон</label><textarea name="t" rows="12" style="font-size:14px">${esc(SH.wkTpl||WK_DEF)}</textarea>
+ <div class="g2"><div><label>С</label><input type="time" name="from" value="${m?pad(m[1]):"09:00"}"></div><div><label>До</label><input type="time" name="to" value="${m?pad(m[2]):"21:00"}"></div></div>
+ <label>На сколько недель</label><select name="n"><option value="1">1 неделя (с ${dm(addD(mon(today()),wk*7))})</option><option value="2">2 недели</option><option value="4" selected>4 недели</option><option value="8">8 недель</option></select>
+ ${own()?`<label class="row" style="justify-content:flex-start;gap:10px;margin:12px 0 4px;text-transform:none;letter-spacing:0;font-size:15px"><input type="checkbox" name="rl" checked style="width:22px;height:22px;flex:none"> Поставить каждому должность и точку из шаблона</label><p class="mut" style="margin:0 0 6px;font-size:13px">Помощник → Помощник флориста, Менеджер → Оператор, Флорист → Флорист. Точка: если человек в шаблоне только в одной точке — закрепится за ней; если в двух — точка каждый день берётся из графика. Владельца не меняет.</p>`:""}<p class="mut" style="font-size:13px;margin:6px 0">Если конец раньше начала (например 10:00–02:00), смена заканчивается после полуночи.</p><div id="wkp"></div><div class="acts"><button type="button" class="btn g" data-a="wk_chk">Проверить</button><button class="btn">Заполнить график</button></div></form>`);
+ const f=$("wkf"),prev=()=>{const {out,bad}=wkParse(f.elements.t.value),miss=[...new Set(out.filter(x=>!x.uid).map(x=>x.name))],G={};
+  out.forEach(x=>{(G[x.loc]=G[x.loc]||[...Array(7)].map(()=>[]))[x.wd].push(x)});
+  const dbl=[];const seen={};out.filter(x=>x.uid).forEach(x=>{const k=x.uid+"|"+x.wd;if(seen[k]&&seen[k]!==x.loc)dbl.push(SF[x.uid].name+" · "+WD[x.wd]);seen[k]=x.loc});
+  const rc=wkRoles(out),rcl=Object.keys(rc),lc=wkLocs(out),lcl=Object.keys(lc),box=$("wkp");if(!box)return out;
+  box.innerHTML=((rcl.length||lcl.length)&&f.elements.rl&&f.elements.rl.checked?`<div class="card" style="border-left:3px solid #3B82F6"><b>Будет изменено по шаблону:</b><div class="mut">${[...new Set([...rcl,...lcl])].map(i=>esc(SF[i].name)+": "+[rc[i]?esc(RL[SF[i].role]||SF[i].role)+" → "+esc(RL[rc[i]]):"",i in lc?"точка → "+(lc[i]?esc(lname(lc[i])):"по графику (работает в двух точках)"):""].filter(Boolean).join(", ")).join("<br>")}</div></div>`:"")+(miss.length?`<div class="card" style="border-left:3px solid #EF4444"><b>Нет в команде: ${miss.map(esc).join(", ")}</b><div class="mut">Добавьте их в разделе «Команда» (или поправьте имя в шаблоне) и нажмите «Проверить» снова. Остальные смены можно заполнить уже сейчас.</div></div>`:`<div class="card mut">Все сотрудники найдены.</div>`)
+   +(dbl.length?`<div class="card" style="border-left:3px solid #F59E0B"><b>В один день на двух точках:</b> ${dbl.map(esc).join(", ")}</div>`:"")
+   +(bad.length?`<div class="card mut">${bad.slice(0,5).map(esc).join("<br>")}</div>`:"")
+   +Object.keys(G).map(l=>`<div class="card"><b>${esc(lname(l))}</b>${G[l].map((a,i)=>`<div class="ln"><span>${WD[i]}</span><b style="text-align:right">${a.length?a.map(x=>x.uid?esc(SF[x.uid].name)+` <small class="mut">${esc(RL[(f.elements.rl&&f.elements.rl.checked&&x.role)||SF[x.uid].role]||"")}</small>`:`<span style="color:#EF4444">${esc(x.name)} — нет</span>`).join("<br>"):'<span class="mut">—</span>'}</b></div>`).join("")}</div>`).join("");return out};
+ f.querySelector('[data-a=wk_chk]').onclick=prev;if(f.elements.rl)f.elements.rl.onchange=prev;prev();
+ f.onsubmit=e=>{e.preventDefault();const out=prev().filter(x=>x.uid),fr=f.elements.from.value,to=f.elements.to.value,n=+f.elements.n.value,m0=addD(mon(today()),wk*7);
+  if(!out.length)return toast("Некого ставить: ни одно имя не найдено в команде");if(!(fr&&to&&fr!==to))return toast("Укажите начало и конец смены");
+  const W=[],t0=today();for(let k=0;k<n;k++)out.forEach(x=>{const d=addD(m0,k*7+x.wd);if(d>=t0)W.push([x.uid+"_"+d,{uid:x.uid,date:d,t:"work",from:fr,to,loc:x.loc,by:U.uid,updatedAt:TS()}])});
+  if(!W.length)return toast("Все дни уже прошли: выберите неделю вперёд");
+  if(!confirm(`Поставить ${W.length} ${pl(W.length,"смену","смены","смен")} (${n} ${pl(n,"неделя","недели","недель")}, прошедшие дни пропускаются)? Клетки этих сотрудников в эти дни будут заменены.`))return;
+  const on2=own()&&f.elements.rl&&f.elements.rl.checked,rc=on2?wkRoles(out):{},lc=on2?wkLocs(out):{},tpl=f.elements.t.value;
+  run(async()=>{
+   for(let i=0;i<W.length;i+=400){const bt=db.batch();W.slice(i,i+400).forEach(([id,v])=>bt.set(db.collection("shifts").doc(id),v));await bt.commit()}
+   for(const i of Object.keys(lc)){await db.collection("staff").doc(i).update({loc:lc[i]});log("Точка сотрудника по шаблону",{bn:(SF[i]||{}).name||""},lc[i]?lname(lc[i]):"по графику")}
+   for(const i of Object.keys(rc)){await db.collection("staff").doc(i).update({role:rc[i]});log("Должность изменена по шаблону",{bn:(SF[i]||{}).name||""},RL[rc[i]]||rc[i])}
+   if(own())await db.collection("settings").doc("main").set({wkTpl:tpl,updatedAt:TS()},{merge:true}).catch(e=>eLog(e));
+   log("График заполнен по шаблону",{bn:""},W.length+" смен, "+n+" нед.");modal("");toast("График заполнен: "+W.length+" смен"+(Object.keys(rc).length?", должностей изменено: "+Object.keys(rc).length:""))})}}
+/* --- каталог букетов и быстрый заказ --- */
+function quickOpts(ns){const s=ns?[]:SC.filter(x=>x.st==="in"),g=(t,a)=>a.length?`<optgroup label="${t}">${a.join("")}</optgroup>`:"";
+ return g("Готовые на витрине",s.map(x=>`<option value="s:${x.id}">${esc(x.name)} · ${M(x.price)}</option>`))+g("Каталог букетов",BQ.map(b=>`<option value="b:${b.id}">${esc(b.name)} · ${M(b.price)}</option>`))}
+function catCard(b){const n=bmake(b),lim=blim(b);return `<div class="card"><div class="row">${th(b.img)}<b style="flex:1">${esc(b.name)}</b><b>${M(b.price)}</b></div><div class="mut">${esc(bcomp(b))}</div><div style="margin-top:8px">${n?`<span class="pill ok">Можно собрать: ${n} ${pl(n,"букет","букета","букетов")}</span>`:`<span class="pill bad">Не хватает: ${esc(lim)}</span>`}</div>${mgr()?`<div class="acts"><button class="btn s" data-a="q_bo" data-id="${b.id}">Оформить заказ</button></div>`:""}${adm()?`<div class="acts">${delBtn("bouquets",b.id,b.name)}</div>`:""}</div>`}
+function vit(){const a=SC.filter(x=>x.st==="in"),h=SC.filter(x=>x.st!=="in").sort((p,q)=>(q.at||0)-(p.at||0)).slice(0,10),T={sold:"Продан",wo:"Списан",order:"В заказе"},
+ vs=SC.filter(x=>x.st==="sold"&&new Date(x.at||0).toLocaleDateString("sv-SE")===today()),chips=`<div class="chips"><button class="chip on">Готовые на витрине (${a.length})</button><button class="btn s" data-a="v_add">Добавить букет</button></div>${vs.length?`<p class="mut">Продано сегодня: ${vs.length} на ${M(vs.reduce((q,x)=>q+(+x.price||0),0))}</p>`:""}`;
+ if(vv==="c")return `<h1>Витрина</h1>${chips}<p class="mut">Рецепты букетов. «Оформить заказ» откроет форму заказа, уже заполненную названием, составом и ценой.</p>`+(BQ.map(catCard).join("")||'<div class="card mut">Каталог пуст. Рецепты создаются в разделе Склад → Букеты.</div>');
+ return `<h1>Витрина</h1>${chips}${vcard()}<p class="mut">Готовые букеты, которые уже собраны. Выставить новый: кнопка «Добавить букет» (или Склад → Букеты → «На витрину»).</p>`+((LY()==="n"||LY()==="i")&&a.length?scRender(a):"")+(((LY()==="n"||LY()==="i")?[]:a).map(x=>{const d=vleft(x),m=x.price?Math.round((x.price-ccost(x))/x.price*100):0;return `<div class="card"><div class="row">${th(x.img)}<b style="flex:1">${esc(x.name)}</b><b>${M(x.price)}</b></div><div class="mut">Собран ${esc(x.made)} · ${esc(x.byName)} ${own()?`· себестоимость ${M(ccost(x))} · маржа ${m}%`:""}</div><span class="pill ${d<=0?"bad":d<=1?"warn":"ok"}">${d<=0?"Срок вышел":"Осталось дней: "+d}</span><div class="acts">${mgr()?`<button class="btn s" data-a="v_on" data-id="${x.id}">Оформить заказ</button>`:""}<button class="btn g s" data-a="v_sell" data-id="${x.id}">Продать</button><button class="btn r s" data-a="v_wo" data-id="${x.id}">Списать</button></div>${mgr()||adm()?`<details class="imore"><summary>Ещё</summary><div class="acts">${mgr()?`<button class="btn g s" data-a="v_ord" data-id="${x.id}">В готовый заказ</button>`:""}${delBtn("showcase",x.id,x.name)}</div></details>`:""}</div>`}).join("")||(a.length?"":`<div class="card mut" style="text-align:center">${flr("bloom")}<br>На витрине пусто. Нажмите «Добавить букет».</div>`))+(h.length?`<h2>История операций</h2><div class="card">${h.map(x=>`<div class="ln"><span>${esc(x.name)}</span><span>${T[x.st]||""} · ${new Date(x.at||0).toLocaleDateString("ru-RU")}${x.why?" · "+esc(x.why):""}${adm()?` · <a href="#" data-a="v_back" data-id="${x.id}" style="color:var(--ac)">вернуть</a>`:""}${adm()?` · <a href="#" data-a="x_del" data-col="showcase" data-id="${x.id}" data-t="${esc(x.name)}" style="color:var(--bad)">удалить</a>`:""}</span></div>`).join("")}</div>`:"")}
+
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a^="lc_"],[data-a^="w_"],[data-a="tf"],[data-a="tab"],[data-a="fdt"],[data-a="q_bo"],[data-a="v_on"],[data-a="v_sv"]');if(!b||!S)return;const a=b.dataset.a,id=b.dataset.id;
+ if(a==="lc_s"){locSave(id);draw()}else if(a==="lc_n"&&own())locForm();else if(a==="lc_e"&&own())locForm(id);
+ else if(a==="tf"){fs=id||"fresh";fz2="";fdt="";tab="orders";draw();scrollTo(0,0)}else if(a==="tab"){tab=id;draw();scrollTo(0,0)}else if(a==="fdt"){fdt=id;draw()}
+ else if(a==="w_p"){wk=Math.max(-8,wk-1);draw()}else if(a==="w_n"){wk=Math.min(26,wk+1);draw()}else if(a==="w_t"){wk=0;draw()}
+ else if(a==="w_e"&&adm())shiftForm(id,b.dataset.d);else if(a==="w_tpl"&&adm())wkForm();
+ else if(a==="w_req"&&id===U.uid)shiftReq(b.dataset.d);
+ else if(a==="w_ok"&&adm())run(async()=>{const r=SR.find(x=>x.id===id);if(!r)return;const key=r.uid+"_"+r.date;const ex=SHL.find(x=>x.uid===r.uid&&x.date===r.date);
+  if(r.t==="clr"){if(ex)await db.collection("shifts").doc(ex.id).delete()}
+  else{const body={uid:r.uid,date:r.date,t:r.t,from:r.from||"",to:r.to||""};if(ex)await db.collection("shifts").doc(ex.id).update(body);else await db.collection("shifts").add(body)}
+  await db.collection("shiftRequests").doc(r.id).update({st:"ok",rvBy:U.uid,rvAt:Date.now()});log("Заявка на смену принята",{bn:r.byName},r.date);toast("Смена обновлена")});
+ else if(a==="w_no"&&adm())run(async()=>{await db.collection("shiftRequests").doc(id).update({st:"no",rvBy:U.uid,rvAt:Date.now()});toast("Заявка отклонена")});else if(a==="w_cp"&&adm()&&confirm("Скопировать смены с прошлой недели в пустые клетки этой?"))run(copyWeek);
+ else if(a==="q_bo"&&mgr()){const q=BQ.find(x=>x.id===id);if(q)form({bn:q.name,comp:bcomp(q),p:q.price,img:q.img})}
+ else if(a==="v_on"&&mgr()){const x=SC.find(y=>y.id===id),q=x&&BQ.find(z=>z.id===x.bid);if(x)form({bn:x.name,comp:q?bcomp(q):"",p:x.price,wrap:x.wrap||0,loc:x.loc,img:x.img||(q&&q.img)},id)}
+ else if(a==="v_sv"){vv=id;draw()}});
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="tnm"]');if(!b||!S||!adm())return;const id=b.dataset.id,st=SF[id];if(!st||!(canMng(id)||(id===U.uid&&own())))return;
+ const v=prompt("Имя сотрудника (так его найдёт шаблон графика и увидят в заказах)",st.name||"");if(v==null)return;const n=v.trim().replace(/\s+/g," ").slice(0,60);if(!n)return toast("Имя не может быть пустым");if(n===st.name)return;
+ run(async()=>{await db.collection("staff").doc(id).update({name:n});log("Имя сотрудника изменено",{bn:n},(st.name||"")+" → "+n);toast("Имя изменено: "+n)})});
+document.addEventListener("change",e=>{const x=e.target.closest('[data-a="sloc"]');if(x&&adm())run(async()=>{await db.collection("staff").doc(x.dataset.id).update({loc:x.value});log("Точка сотрудника изменена",{bn:(SF[x.dataset.id]||{}).name},x.value?lname(x.value):"Все точки");toast("Точка сотрудника изменена")})});
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="o_st"],[data-a="o_del"],[data-a="lg_f"],[data-a="lg_c"],[data-a="lg_p"],[data-a="tdel"]');if(!b||!S||!adm())return;const a=b.dataset.a,id=b.dataset.id,o=O.find(x=>x.id===id);if(a==="tdel"&&!canMng(id))return toast("Этого сотрудника удалять нельзя");
+ if(a==="lg_f"){lgf=id;draw()}else if(a==="lg_c"){lgc=id;draw()}else if(a==="lg_p"){lgp=id;draw()}else if(a==="tdel"&&SF[id]&&id!==U.uid&&confirm("Удалить сотрудника полностью? Будут удалены аккаунт входа и профиль. Его заказы и записи журнала сохранятся."))run(async()=>{const n0=SF[id].name;try{await FNC("deleteStaff")({uid:id});toast("Сотрудник удалён полностью")}catch(e){if(!/not-found|unavailable|internal|unknown/.test(e.code||""))throw e;await db.collection("staff").doc(id).delete();try{await db.collection("presence").doc(id).delete()}catch(x){eLog(x)}toast("Профиль удалён. Аккаунт входа удалите в Firebase → Authentication (функции не развёрнуты)")}log("Сотрудник удалён",{bn:n0})})
+ else if(a==="o_st"&&o){modal(hd("Исправить статус")+`<p class="mut">${esc(o.bn)} · сейчас: ${ST[+o.st]}</p><form id="sf2"><select name="s">${ST.map((n,i)=>`<option value="${i}" ${+o.st===i?"selected":""}>${n}</option>`).join("")}</select>${btns("Сохранить")}</form>`);
+  $("sf2").onsubmit=ev=>{ev.preventDefault();const n=+new FormData($("sf2")).get("s");run(async()=>{await db.collection("orders").doc(id).update({st:n,updatedAt:TS(),statusBy:U.uid});log("Статус исправлен админом",o,ST[+o.st]+" → "+ST[n]);modal("");toast("Статус исправлен")})}}
+ else if(a==="o_del"&&o&&confirm("Удалить заказ полностью? Он исчезнет из статистики. Если нужен только отказ клиента, лучше «Отменить заказ»."))run(async()=>{const bt=db.batch();bt.delete(db.collection("orders").doc(id));if(o.sc)bt.update(db.collection("showcase").doc(o.sc),{st:"in",at:Date.now()});await bt.commit();log("Заказ удалён админом",o,o.client+", "+M(tot(o)));modal("");toast("Заказ удалён")})});
+document.addEventListener("click",e=>{const g=e.target.closest('[data-a="goto"]');if(g&&S){tab=g.dataset.id;draw();scrollTo(0,0)}
+ const v=e.target.closest('[data-a="vs_in"],[data-a="vs_buy"]');if(!v||!S||!["admin","operator","florist","assistant"].includes(S.role))return;
+ if(locs().length>1&&!LOC)return toast("Выберите точку вверху (под «Mirflowers»)");const t=today(),L=myLoc(),k=v.dataset.a==="vs_in"?"in":"buy",d=+v.dataset.id,cur=VS.find(x=>x.id===t+"_"+L);
+ if(d<0&&!(cur&&cur[k]>0))return;run(()=>db.collection("visits").doc(t+"_"+L).set({date:t,loc:L,[k]:firebase.firestore.FieldValue.increment(d)},{merge:true}))});
+
+/* ===== Mirflowers: ссылки, сделки (Kanban), аналитика ===== */
+const LK=[["Instagram","https://www.instagram.com/mir_flowers_aktau"],["2ГИС · 19А мкр, 107/1","https://2gis.kz/aktau/firm/70000001100232006"],["2ГИС · 10 мкр, 10/2","https://2gis.kz/aktau/firm/70000001117708431"],["WhatsApp · 19А мкр","https://wa.me/77771027292"],["WhatsApp · 10 мкр","https://wa.me/77067073622"]],
+links=()=>`<h2>Ссылки магазина</h2><div class="card"><div class="mut" style="margin-bottom:6px">Страницы магазина в интернете. «Открыть» откроет их в новой вкладке.</div>${LK.map(l=>`<div class="ln"><span style="color:var(--ink)">${l[0]}</span><a href="${l[1]}" target="_blank" rel="noopener" style="color:var(--ac)">Открыть</a></div>`).join("")}</div>`;
+const ccost=x=>x.cost||bcost(BQ.find(z=>z.id===x.bid)||{});const DS=["Новая заявка","В работе","Ожидает оплаты","Успешно завершена","Не состоялась","Отложена"],OKR=["Продажа состоялась","Заказ выполнен","Оплата подтверждена"],NOR=["Клиент отказался","Не устроила цена","Нет товара","Не удалось связаться","Выбрал конкурента","Заказ отменён","Другая причина"],dd=t=>new Date(t||0).toLocaleDateString("sv-SE");
+function dealsV(){const l=DL.filter(inL);return `<h1>Сделки</h1><p class="mut">Воронка для крупных и корпоративных заказов: ведите переговоры здесь, пока клиент не решился. Каждая колонка — этап: новая заявка, в работе, ожидает оплаты, завершена или не состоялась (с причиной). Нажмите на карточку, чтобы сменить этап. Не нужен раздел? Профиль, Возможности, «Раздел Сделки».</p><div class="acts" style="margin:6px 0"><button class="btn s" data-a="dl_n">＋ Новая сделка</button></div><div style="display:flex;gap:10px;overflow-x:auto;align-items:flex-start;padding-bottom:8px">${DS.map((n,i)=>{const c=l.filter(d=>+d.st===i).sort((a,b)=>(b.last||0)-(a.last||0));return `<div style="flex:none;width:252px"><h2 style="margin:8px 4px">${n} · ${c.length} · ${M(c.reduce((a,d)=>a+(+d.p||0),0))}</h2>${c.map(d=>`<div class="card" data-a="dl_o" data-id="${d.id}" style="cursor:pointer;margin:6px 0"><b>${esc(d.title||d.client)}</b><div class="mut">${esc(d.client)} · ${esc(d.src||"")}${locTag(d)}<br>${esc(nm(d.by))}</div><div class="row" style="margin-top:6px"><b>${M(d.p)}</b><span class="mut">${dd(d.last||d.ts).slice(5)}</span></div>${d.res?`<span class="pill ${+d.st===3?"ok":"bad"}">${esc(d.res)}</span>`:""}</div>`).join("")||'<div class="mut" style="padding:8px">Пусто</div>'}</div>`}).join("")}</div>`}
+function dealForm(){modal(hd("Новая сделка")+`<form id="df"><label>Клиент *</label><input name="client" required><label>Телефон *</label><input name="phone" type="tel" required value="+7"><label>Что нужно клиенту *</label><input name="title" required placeholder="Например: букет из 51 розы"><div class="g2"><div><label>Сумма, ₸</label><input name="p" type="number" min="0" value="0"></div><div><label>Источник</label><select name="src">${SRC.map(x=>`<option>${x}</option>`).join("")}</select></div></div>${locs().length>1?`<label>Филиал</label><select name="loc">${locOpts(myLoc())}</select>`:""}<label>Связать с заказом</label><select name="oid"><option value="">Без заказа</option>${O.filter(o=>+o.st<5).slice(0,60).map(o=>`<option value="${o.id}">${esc(o.bn)} · ${esc(o.client)}</option>`).join("")}</select><label>Комментарий</label><textarea name="note"></textarea>${btns("Создать")}</form>`);
+ $("df").onsubmit=e=>{e.preventDefault();const f=new FormData($("df")),g=k=>(f.get(k)||"").toString().trim();if(!/^\+?\d[\d\s()-]{9,}$/.test(g("phone")))return toast("Проверьте номер телефона");const t=Date.now(),x={client:g("client"),phone:g("phone"),title:g("title"),p:+g("p")||0,src:g("src"),loc:g("loc")||myLoc(),oid:g("oid"),st:0,by:U.uid,byName:S.name||"",ts:t,last:t,hist:[{t,w:S.name||"",x:"Сделка создана"+(g("note")?" · "+g("note"):"")}]};
+  run(async()=>{await db.collection("deals").add(x);log("Создана сделка",{bn:x.title},x.client+" · "+M(x.p));modal("");toast("Сделка создана")})}}
+function dealOpen(id){const d=DL.find(x=>x.id===id);if(!d)return;const ln=(a,b)=>`<div class="ln"><span>${a}</span><span>${b}</span></div>`;
+ modal(hd(esc(d.title||d.client))+`<div class="card">${ln("Клиент",esc(d.client)+" · "+esc(d.phone))}${ln("Филиал",esc(lname(d.loc)))}${ln("Источник",esc(d.src||"—"))}${ln("Сумма",M(d.p))}${ln("Ответственный",esc(nm(d.by)))}${ln("Создана",dd(d.ts))}${d.oid?ln("Заказ",esc((O.find(o=>o.id===d.oid)||{}).bn||"—")):""}${d.res?ln("Результат",esc(d.res)+" · "+dd(d.closedAt)+" · "+esc(d.closedByName||"")):""}</div>
+ <form id="dof"><label>Этап</label><select name="st">${DS.map((n,i)=>`<option value="${i}" ${+d.st===i?"selected":""}>${n}</option>`).join("")}</select><div id="drs" hidden><label>Результат *</label><select name="res"></select></div><label>Ответственный</label><select name="by">${Object.keys(SF).filter(i=>SF[i].active).map(i=>`<option value="${i}" ${d.by===i?"selected":""}>${esc(SF[i].name)}</option>`).join("")}</select><label>Сумма, ₸</label><input name="p" type="number" min="0" value="${esc(d.p)}"><label>Комментарий</label><textarea name="c"></textarea>${btns("Сохранить")}</form>
+ <h2>История</h2><div class="card">${(d.hist||[]).slice().reverse().map(h=>ln(esc(h.x),esc(h.w)+" · "+new Date(h.t).toLocaleString("ru-RU",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))).join("")}</div>`);
+ const f=$("dof"),sync=()=>{const s=+f.st.value;$("drs").hidden=s!==3&&s!==4;f.res.innerHTML=(s===3?OKR:NOR).map(x=>`<option ${d.res===x?"selected":""}>${x}</option>`).join("")};f.st.onchange=sync;sync();
+ f.onsubmit=ev=>{ev.preventDefault();const s=+f.st.value,cl=s===3||s===4,old=+d.st,w=S.name||"",ch=[],now=Date.now();
+  if(s!==old)ch.push("Этап: "+DS[old]+" → "+DS[s]+(cl?" · "+f.res.value:"")+((old===3||old===4)&&!cl?" (повторно открыта)":""));else if(cl&&f.res.value!==d.res)ch.push("Результат: "+f.res.value);
+  if(f.by.value!==d.by)ch.push("Ответственный: "+nm(f.by.value));if(+f.p.value!==+d.p)ch.push("Сумма: "+M(d.p)+" → "+M(f.p.value));if(f.c.value.trim())ch.push("💬 "+f.c.value.trim());if(!ch.length)return modal("");
+  const u={st:s,by:f.by.value,byName:nm(f.by.value),p:+f.p.value||0,last:now,res:cl?f.res.value:"",closedAt:cl?(old===s&&d.closedAt?d.closedAt:now):0,closedBy:cl?U.uid:"",closedByName:cl?w:"",hist:firebase.firestore.FieldValue.arrayUnion(...ch.map(x=>({t:now,w,x})))};
+  run(async()=>{await db.collection("deals").doc(id).update(u);log("Сделка: "+ch[0],{bn:d.title||d.client});modal("");toast("Сделка сохранена")})}}
+let ap="30",ca="",cb="";
+function apr(){const t=today(),y=+t.slice(0,4),m=+t.slice(5,7)-1,f=x=>x.toLocaleDateString("sv-SE");return({t:[t,t],y:[addD(t,-1),addD(t,-1)],"7":[addD(t,-6),t],"30":[addD(t,-29),t],m:[t.slice(0,8)+"01",t],p:[f(new Date(y,m-1,1)),f(new Date(y,m,0))],c:[ca||"0000-00-00",cb||"9999-99-99"]})[ap].map((x,i)=>i?x:fz(x))}
+function anV(){const[a,b]=apr();histNeed("date",a,b);const In=x=>x>=a&&x<=b,tot=o=>(+o.p||0)+(+o.fee||0),ok=o=>+o.st!==5&&In(o.date||""),os=oH().filter(ok),o0=oHr().filter(ok),ds=DL.filter(inL).filter(d=>In(dd(d.ts))),W=ds.filter(d=>+d.st===3),L=ds.filter(d=>+d.st===4),sum=r=>r.reduce((s,o)=>s+tot(o),0),avg=r=>r.length?sum(r)/r.length:0,pc=(n,m)=>m?Math.round(n/m*100)+"%":"—",
+ grp=(r,f)=>{const m={};r.forEach(x=>{const k=f(x)||"—";(m[k]=m[k]||[]).push(x)});return m},ph=grp(os,o=>dg(o.phone)),rep=Object.values(ph).filter(r=>r.length>1).length,
+ tl=(v,t)=>`<div class="tile"><b>${v}</b><span>${t}</span></div>`,cd=(n,r,x)=>`<div class="card"><div class="row"><b>${esc(n)}</b><b>${r}</b></div><div class="mut">${x}</div></div>`,
+ chips=[["t","Сегодня"],["y","Вчера"],["7","7 дней"],["30","30 дней"],["m","Месяц"],["p","Прошлый месяц"],["c","Период"]].map(c=>`<button class="chip ${ap===c[0]?"on":""}" data-a="ap" data-id="${c[0]}">${c[1]}</button>`).join(""),
+ srcs=[...new Set([...SRC,...ds.map(d=>d.src),...os.map(o=>o.src)].filter(Boolean))],
+ emp=[...new Set([...os.map(o=>o.by),...ds.map(d=>d.by)].filter(Boolean))],
+ top=Object.entries(grp(os,o=>o.bn)).map(([k,r])=>[k,r.length]).sort((x,y)=>y[1]-x[1]).slice(0,6),mx=top.length?top[0][1]:1,
+ why=Object.entries(grp(L,d=>d.res)).sort((x,y)=>y[1].length-x[1].length);
+ return `<h1>Аналитика</h1>${finNote()}<div class="chips">${chips}</div>${ap==="c"?`<div class="g2"><input type="date" name="a" value="${ca}" data-a="an_d"><input type="date" name="b" value="${cb}" data-a="an_d"></div>`:""}
+ <p class="mut">Точка выбирается вверху, под «Mirflowers»: «Все точки · итоги» — обе точки вместе, выбранная точка — только её данные. Прибыль и расходы смотрите в «Финансы».</p>
+ <div class="k4">${tl(ds.length,"Обращений / сделок")}${tl(W.length,"Успешных")}${tl(L.length,"Неуспешных")}${tl(pc(W.length,ds.length),"Конверсия")}${tl(M(sum(os)),"Выручка")}${tl(os.length,"Заказов")}${tl(M(avg(os)),"Средний чек")}${tl(rep,"Повторные клиенты")}</div>
+ <h2>Каналы</h2>${srcs.map(s=>{const D=ds.filter(d=>(d.src||"Другое")===s),R=os.filter(o=>(o.src||"Другое")===s),w=D.filter(d=>+d.st===3).length;return cd(s,M(sum(R)),`Сделок ${D.length} · успешных ${w} · конверсия ${pc(w,D.length)}<br>Заказов ${R.length} · средний чек ${M(avg(R))}`)}).join("")}
+ <h2>Сотрудники</h2>${emp.map(i=>{const R=os.filter(o=>o.by===i),D=ds.filter(d=>d.by===i),w=D.filter(d=>+d.st===3).length;return cd(nm(i),M(sum(R)),`Сделок ${D.length} · успешных ${w} · неуспешных ${D.filter(d=>+d.st===4).length} · конверсия ${pc(w,D.length)}<br>Заказов ${R.length} · средний чек ${M(avg(R))}`)}).join("")||'<div class="card mut">Нет данных за период</div>'}
+ <h2>Причины отказов</h2><div class="card">${why.map(([k,r])=>`<div class="ln"><span>${esc(k)}</span><span>${r.length}</span></div>`).join("")||'<span class="mut">Нет неуспешных сделок</span>'}</div>
+ <h2>Филиалы</h2>${locs().map(l=>{const R=o0.filter(o=>(o.loc||"main")===l.id),D=DL.filter(d=>(d.loc||"main")===l.id&&In(dd(d.ts))),w=D.filter(d=>+d.st===3).length,st=SH.split?" · остаток на складе: "+RAW[4].reduce((s,i)=>s+lq(i,l.id),0)+" ед.":"";return cd(l.name,M(sum(R)),`Заказов ${R.length} · средний чек ${M(avg(R))} · сделок ${D.length} · конверсия ${pc(w,D.length)}${st}`)}).join("")}
+ ${cd("Все филиалы вместе",M(sum(o0)),`Заказов ${o0.length} · средний чек ${M(avg(o0))}`)}
+ <h2>Популярные букеты</h2><div class="card">${top.map(([k,n])=>`<div class="hb"><span>${esc(k)}</span><span class="t"><b style="width:${Math.round(n/mx*100)}%"></b></span><span>${n}</span></div>`).join("")||'<span class="mut">Нет заказов за период</span>'}</div>`+anMore(os,a,b)}
+function anMore(os,a,b){const tot=o=>(+o.p||0)+(+o.fee||0),bars=(rows,fmt)=>{const mx=Math.max(1,...rows.map(r=>r[1])),sm=rows.reduce((q,r)=>q+r[1],0)||1;if(LY()==="g")return `<div class="dtw"><table class="dt"><tbody>${rows.map(([k,v,x])=>`<tr><td><b>${esc(k)}</b>${x?`<br><span class="mut">${x}</span>`:""}</td><td style="width:40%"><div class="bar"><i style="width:${Math.round(v/mx*100)}%"></i></div></td><td class="n">${fmt?fmt(v):v}<br><span class="mut" style="font-weight:600">${Math.round(v/sm*100)}%</span></td></tr>`).join("")}</tbody></table></div>`;return `<div class="card">${rows.map(([k,v,x])=>`<div class="hb"><span>${esc(k)}</span><span class="t"><b style="width:${Math.round(v/mx*100)}%"></b></span><span>${fmt?fmt(v):v}${x?` <small class="mut">${x}</small>`:""}</span></div>`).join("")}</div>`},
+ sec=o=>o.createdAt&&o.createdAt.seconds?o.createdAt.seconds*1e3:0;if(!os.length)return "";
+ const WD=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"],wd=WD.map(()=>[0,0]);os.forEach(o=>{const d=new Date((o.date||"")+"T12:00:00");if(isNaN(d))return;const i=(d.getDay()+6)%7;wd[i][0]++;wd[i][1]+=tot(o)});
+ const hr={};os.forEach(o=>{let h=o.time?+String(o.time).slice(0,2):sec(o)?new Date(sec(o)).getHours():NaN;if(isNaN(h))return;h=Math.max(9,Math.min(23,h));hr[h]=(hr[h]||0)+1});const hk=Object.keys(hr).map(Number).sort((x,y)=>x-y);
+ const rv={};os.forEach(o=>{const k=o.bn||"—";rv[k]=(rv[k]||0)+tot(o)});const rvt=Object.entries(rv).sort((x,y)=>y[1]-x[1]).slice(0,6);
+ const first={};oH().forEach(o=>{const k=dg(o.phone);if(!k||+o.st===5)return;const d=o.date||"";if(!first[k]||d<first[k])first[k]=d});
+ const cl=[...new Set(os.map(o=>dg(o.phone)).filter(Boolean))],nw=cl.filter(k=>first[k]>=a&&first[k]<=b).length,old=cl.length-nw;
+ const rt=os.filter(o=>o.rate&&+o.rate.s),avg=rt.length?(rt.reduce((q,o)=>q+(+o.rate.s),0)/rt.length):0,bad=rt.filter(o=>+o.rate.s<=3).sort((x,y)=>(y.rate.at||0)-(x.rate.at||0));
+ const best=wd.reduce((m,x,i)=>x[0]>wd[m][0]?i:m,0),bh=hk.reduce((m,h)=>hr[h]>(hr[m]||0)?h:m,hk[0]);
+ return `<h2>Когда больше всего заказов</h2><p class="mut">Чаще всего заказывают: <b>${WD[best]}</b>${hk.length?`, около <b>${bh}:00</b>`:""}. Ставьте больше людей в эти дни и часы.</p>
+ ${bars(wd.map((x,i)=>[WD[i],x[0],M(x[1])]))}
+ ${hk.length?`<h2>По часам</h2>${bars(hk.map(h=>[h+":00",hr[h]]))}`:""}
+ <h2>Букеты по выручке</h2>${bars(rvt.map(([k,v])=>[k,v]),M)}
+ <h2>Новые и постоянные клиенты</h2><div class="k4"><div class="tile"><b>${nw}</b><span>Новых клиентов</span></div><div class="tile"><b>${old}</b><span>Вернулись снова</span></div></div>
+ <h2>Оценки клиентов</h2>${rt.length?`<div class="k4"><div class="tile"><b>${avg.toFixed(1)} ★</b><span>Средняя оценка</span></div><div class="tile"><b>${rt.length}</b><span>Оценок</span></div><div class="tile"><b>${bad.length}</b><span>Плохих (1–3)</span></div></div>${bars([5,4,3,2,1].map(n=>["★".repeat(n),rt.filter(o=>+o.rate.s===n).length]))}${bad.length?`<div class="card"><b>Плохие отзывы</b>${bad.slice(0,10).map(o=>`<div class="ln" data-a="det" data-id="${o.id}" style="cursor:pointer"><span>${"★".repeat(+o.rate.s)} ${esc(o.bn||"")} · ${esc(o.client||"")}${o.rate.c?`<br><span class="mut">«${esc(o.rate.c)}»</span>`:""}</span><span>›</span></div>`).join("")}</div>`:""}`:`<div class="card mut">Оценок за период пока нет. После доставки клиенту в чат приходит просьба оценить букет.</div>`}`}
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a^="dl_"],[data-a="ap"]');if(!b||!S||!mgr())return;const a=b.dataset.a;if(a==="ap"){ap=b.dataset.id;draw()}else if(a==="dl_n")dealForm();else if(a==="dl_o")dealOpen(b.dataset.id)});
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="o_pay"]');if(!b||!S||!isOp())return;const o=O.find(x=>x.id===b.dataset.id);if(!o||o.paid)return;if(FX("payOne")||confirm("Оплата получена полностью: "+M(rest(o))+"?\nЗаказ «"+(o.bn||"")+"» будет отмечен как оплаченный."))run(async()=>{await db.collection("orders").doc(o.id).update({paid:true,paidAt:Date.now(),paidBy:U.uid,updatedAt:TS()});log("Оплата подтверждена",o,M((+o.p||0)+(+o.fee||0)));toast("Оплата отмечена")})});
+document.addEventListener("change",e=>{const i=e.target.closest('[data-a="an_d"]');if(i&&S){if(i.name==="a")ca=i.value;else cb=i.value;draw()}});
+
+/* ===== Онлайн сотрудников ===== */
+let PRS=[];const onl=()=>PRS.filter(p=>Date.now()-(p.ts||0)<150000),
+pbHtml=()=>`<div class="chips" id="pb" style="margin:2px 0 0;align-items:center"><span class="mut" style="flex:none">Онлайн:</span>${onl().map(p=>`<span class="chip" style="display:inline-flex;align-items:center;gap:6px"><i style="width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block"></i>${esc(p.name||"—")} <small class="mut">${esc(RL[p.role]||"")}</small></span>`).join("")||'<span class="mut">никого</span>'}</div>`,
+pbU=()=>{tcPres()},
+beat=()=>{if(!U||!S||document.hidden)return;db.collection("presence").doc(U.uid).set({uid:U.uid,name:S.name||"",role:own()?"owner":S.role,loc:LOC||S.loc||"",sh:(SHF()||{}).start||0,ts:Date.now()}).catch(()=>{})};
+setInterval(beat,60000);setInterval(pbU,30000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)beat()});addEventListener("pagehide",()=>{if(U&&S)db.collection("presence").doc(U.uid).set({ts:0},{merge:true}).catch(()=>{})});
+setInterval(()=>document.querySelectorAll("button[data-cw]").forEach(b=>{const r=+b.dataset.cw-Date.now();if(r>0){b.textContent="Доставлено · "+mmss(r);b.disabled=true}else{b.textContent="Доставлено";b.disabled=false;b.classList.remove("g");b.removeAttribute("data-cw")}}),1000);
+setInterval(()=>document.querySelectorAll("button[data-w]").forEach(b=>{const r=+b.dataset.w-Date.now();if(r>0)b.textContent="Доставлено · "+mmss(r);else{b.textContent="Доставлено";b.classList.remove("g");b.removeAttribute("data-w")}}),1000);
+matchMedia("(min-width:900px)").addEventListener("change",()=>{if(S)draw()});
+document.addEventListener("focusin",e=>{const i=e.target;if(i.matches&&i.matches("input[type=number]")&&i.value==="0"){i.value="";i.dataset.z="1"}});
+document.addEventListener("focusout",e=>{const i=e.target;if(i.matches&&i.matches("input[type=number]")&&i.dataset.z==="1"){if(i.value==="")i.value="0";delete i.dataset.z;i.dispatchEvent(new Event("input",{bubbles:true}))}});
+new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType!==1)return;(n.matches("input[type=number]")?[n]:[...n.querySelectorAll("input[type=number]")]).forEach(i=>{if(i.value==="0"){i.value="";i.placeholder="0"}})}))).observe(document.body,{childList:true,subtree:true});
+/* ===== Чаты: WhatsApp / Instagram / Telegram / 2ГИС =====
+   Данные: chats/{канал_идКлиента}  +  chats/{id}/msgs/{id}
+   Серверная часть (webhook) пишет входящие в эти же коллекции и отправляет сообщения со st:"pending".
+   Пока канал не подключён, работает тестовый режим (кнопка «Тест»). */
+const CHN={wa:{n:"WhatsApp",s:"WA",c:"#1f9d55",src:"WhatsApp"},ig:{n:"Instagram",s:"IG",c:"#c13584",src:"Instagram"},tg:{n:"Telegram",s:"TG",c:"#2a8fd0",src:"Другое"},gis:{n:"2ГИС",s:"2Г",c:"#2f9e2f",src:"2ГИС"}},
+DEFTPL=[["Принят","Здравствуйте! Ваш заказ принят."],["Готов","Ваш заказ готов."],["В пути","Курьер уже в пути."],["Дата","На какую дату и время нужен букет?"],["Бюджет","Какой бюджет? Подберём варианты."],["Фото","Отправляем фото."],["Магазин","Ждём вас в магазине."],["Спасибо","Спасибо за заказ!"]],
+TPL=()=>{const a=SH.tpls;return Array.isArray(a)&&a.length?a:DEFTPL.map(x=>({n:x[0],t:x[1]}))},
+CHTPL=["Здравствуйте! Подскажите, на какую дату и в какой бюджет подобрать букет?","Спасибо! Букет принят в работу, напишем, когда будет готов.","Отправим фото готовых букетов с витрины, вам что-то подобрать по цене?"];
+let CHS=[],CHERR="",chOpen="",chMsgs=[],chSub=null,chF="all",chC="",chV="list",chDraft="",chPer="30",chPrev=null;
+const chOn=k=>((SH.channels||{})[k]||{}).on===true,
+chW=c=>c.st!=="closed"&&c.lastDir==="in"&&((+c.unread||0)>0||Date.now()-(c.lastTs||0)<36e5), // ждёт ответа: клиент писал последним меньше часа назад (или чат ещё не прочитан); через час без ответа диалог считается законченным
+
+chUn=()=>CHS.filter(c=>chW(c)&&chInL(c)).length,
+ /* значок «Чаты» в меню: непрочитанные диалоги (открытый сейчас не считается — он прочитан); «ждут ответа» — внутри раздела */
+ chUnr=c=>c.st!=="closed"&&(+c.unread||0)>0&&c.lastDir!=="out"&&chInL(c),chNew=()=>CHS.filter(c=>c.st!=="closed"&&(+c.unread||0)>0&&c.lastDir!=="out"&&c.id!==chOpen&&chInL(c)).length,
+chTs=t=>{const d=new Date(t||0),n=new Date();return d.toDateString()===n.toDateString()?d.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString("ru-RU",{day:"2-digit",month:"2-digit"})},
+chDur=ms=>{if(ms==null||!(ms>=0))return"—";const m=Math.round(ms/6e4);if(m<1)return"<1 мин";if(m<60)return m+" мин";const h=Math.floor(m/60);return h<24?h+" ч "+(m%60)+" м":Math.floor(h/24)+" д"},
+chLk=h=>h.replace(/(https?:\/\/[^\s<]+?)([.,!?)»]*)(?=\s|<|$)/g,(a,u,p)=>`<a class="chlink" href="${u}" target="_blank" rel="noopener">${u}</a>${p}`),chAv=c=>{const k=CHN[c.ch]||{s:"?",c:"#888"};return `<span class="cha">${c.ava?`<img src="${esc(c.ava)}" alt="" loading="lazy" onerror="this.remove()">`:esc((c.name||"?").trim().charAt(0).toUpperCase()||"?")}<i class="chb" style="background:${k.c}">${k.s}</i></span>`},
+chInL=c=>inL(c);
+
+let chMain=null,chTry=0;
+function chSubs(){if(!isOp())return;if(chMain){try{chMain()}catch(e){}chMain=null}
+ const un=db.collection("chats").orderBy("lastTs","desc").limit(300).onSnapshot(s=>{
+  const nw=s.docs.map(d=>({id:d.id,...d.data()}));
+  if(chPrev){nw.forEach(c=>{const p=chPrev[c.id];if(c.lastDir==="in"&&chInL(c)&&c.id!==chOpen&&(!p||c.lastTs>p)&&!(+((c.mu||{})[U.uid])>Date.now()))nf({type:"chat",title:(c.name||"Клиент")+" · "+(c.loc&&typeof lname==="function"?lname(c.loc)+" · ":"")+(CHN[c.ch]||{n:c.ch}).n,body:c.last||"",tag:"c"+c.id,go:()=>{tab="chats";chV="list";chStart(c.id)}})})}
+  chPrev={};nw.forEach(c=>{chPrev[c.id]=c.lastTs;if(c.id===chOpen&&c.unread)db.collection("chats").doc(c.id).update({unread:0}).catch(()=>{})});CHS=nw;CHERR="";chTry=0;draw()},
+  e=>{eLog(e);const code=String(e.code||e.message||"");
+   /* сбой связи (already-exists, unavailable…): не пугаем окном ошибки, а тихо переподключаемся; окно — только при запрете доступа */
+   if(code!=="permission-denied"&&chTry<8){chTry++;setTimeout(()=>{if(S&&isOp())chSubs()},Math.min(30000,2000*chTry));return}
+   CHERR=code;draw()});chMain=un;subs.push(un)}
+function chStop(){if(chSub){chSub();chSub=null}chOpen="";chMsgs=[];chPrev=null}
+/* связанные чаты одного клиента (разд. 47): общий ключ grp, переписка показывается вместе */
+const chG=c=>c.grp||c.id,chMem=id=>{const c=CHS.find(x=>x.id===id);return c?CHS.filter(x=>chG(x)===chG(c)):[]};
+function chStart(id){chStop();chOpen=id;chDraft="";const mm=chMem(id).length?chMem(id):[{id}],parts={};
+ const subs=mm.map(m=>db.collection("chats").doc(m.id).collection("msgs").orderBy("ts").limitToLast(200).onSnapshot(s=>{parts[m.id]=s.docs.map(d=>({id:d.id,_cid:m.id,_ch:m.ch,...d.data()}));chMsgs=[].concat(...Object.values(parts)).sort((a,b)=>(a.ts||0)-(b.ts||0));dq()},e=>toast("Сообщения: "+er(e))));
+ chSub=()=>subs.forEach(f=>f());
+ mm.forEach(m=>{if(m.unread)db.collection("chats").doc(m.id).update({unread:0}).catch(()=>{})});draw()}
+
+/* входящее сообщение. То же самое будет делать серверный webhook */
+async function chIn(o){const key=dg(o.phone)||String(o.handle||"").toLowerCase().replace(/[^a-z0-9._а-яё-]/gi,"")||("u"+Date.now()),id=o.ch+"_"+key,ref=db.collection("chats").doc(id),ts=Date.now(),old=CHS.find(x=>x.id===id),b=db.batch(),inc=n=>firebase.firestore.FieldValue.increment(n);
+ const base={last:o.t,lastDir:"in",lastTs:ts,unread:inc(1),nIn:inc(1),st:"open"};
+ if(old)b.update(ref,base);else b.set(ref,{...base,ch:o.ch,name:o.name||"Без имени",phone:o.phone||"",handle:o.handle||"",loc:myLoc(),resp:"",nOut:0,firstTs:ts,firstReplyTs:0,leadId:"",ts});
+ b.set(ref.collection("msgs").doc(),{dir:"in",t:o.t,ts});await b.commit();return id}
+
+/* исходящее. Сервер подхватит st:"pending", отправит через API и поставит "sent" или "failed" */
+async function chSend(c,t,img){const ts=Date.now(),ref=db.collection("chats").doc(c.id),b=db.batch(),u={last:(img?"📷 ":"")+t,lastDir:"out",lastTs:ts,unread:0,nOut:firebase.firestore.FieldValue.increment(1)};
+ if(!c.resp)u.resp=U.uid;if(!c.firstReplyTs&&c.firstTs)u.firstReplyTs=ts;if(!c.loc&&LOC)u.loc=LOC;
+ b.update(ref,u);b.set(ref.collection("msgs").doc(),{dir:"out",t,ts,by:U.uid,byName:S.name||"",st:c.ch==="gis"?"manual":"pending",...(img?{img}:{})});await b.commit()}
+function chSendUi(){const c=CHS.find(x=>x.id===chOpen),i=$("chin"),t=(i?i.value:chDraft).trim();if(!c||!t)return;chDraft="";if(i){i.value="";i.style.height="auto";i.focus()}
+ /* как в WhatsApp: сообщение сразу в переписке, без блокировки кнопки и ожидания сервера */
+ chSend(c,t).catch(e=>{eLog(e);toast(er(e))});const th=$("cht");if(th)setTimeout(()=>{th.scrollTop=th.scrollHeight},30)}
+
+function chFocus(){const t=$("cht"),a=document.activeElement;return{f:!!(a&&(a.id==="chin"||a.id==="tcin")),s:a&&(a.id==="chin"||a.id==="tcin")?a.selectionStart:0,top:t?t.scrollTop:0,bot:t?t.scrollHeight-t.scrollTop-t.clientHeight<80:true,id:chOpen}}
+function chAfter(cf){if(tab!=="chats"&&tab!=="tc")return;const t=$("cht");if(t)t.scrollTop=(!cf||cf.bot||cf.id!==chOpen)?t.scrollHeight:cf.top;
+ const i=$(tab==="tc"?"tcin":"chin");if(i&&cf&&cf.f){i.focus();try{i.setSelectionRange(cf.s,cf.s)}catch(e){eLog(e)}}}
+function chBind(){const i=$("chin");if(i){i.oninput=()=>{chDraft=i.value;i.style.height="auto";i.style.height=Math.min(i.scrollHeight,120)+"px"};
+ i.onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey&&matchMedia("(pointer:fine)").matches){e.preventDefault();chSendUi()}};if(chDraft)i.style.height=Math.min(i.scrollHeight,120)+"px"}}
+
+function chats(){if(CHERR&&!CHS.length)return chErr();
+ const tabs=`<div class="chips chtabs">${[["list","Диалоги"],["stats","Статистика"],["ch","Каналы"]].map(x=>`<button class="chip ${chV===x[0]?"on":""}" data-a="ch_v" data-id="${x[0]}">${x[1]}${x[0]==="list"&&CHS.some(chUnr)?" · "+CHS.filter(c=>chUnr(c)&&(!c.grp||c.grp===c.id)).length:""}</button>`).join("")}${(GP.chats||[]).includes("tpl")?`<button class="chip" data-a="goto" data-id="tpl">Шаблоны</button>`:""}</div>`;
+ if(chV==="stats")return `<h1>Чаты</h1>${tabs}${chStats()}`;
+ if(chV==="ch")return `<h1>Чаты</h1>${tabs}${chSetup()}`;
+ const c=CHS.find(x=>x.id===chOpen);
+ return `<div class="chw ${c?"open":""}"><div class="chl"><h1>Чаты</h1>${tabs}${chList()}</div><div class="chc">${c?chConv(c):`<div class="mut" style="margin:auto;text-align:center;padding:20px">Выберите диалог слева<br>или создайте тестовое сообщение</div>`}</div></div>`}
+
+function chErr(){return `<h1>Чаты</h1><div class="card"><b>Нет доступа к чатам</b><p class="mut">Код: ${esc(CHERR)}. В Firestore Rules нужно разрешить доступ сотрудникам к <b>chats</b> и <b>chats/{id}/msgs</b>. Пример:</p><pre style="white-space:pre-wrap;font-size:12px;background:var(--c2);padding:10px;border-radius:12px;overflow:auto">match /chats/{id} {
+  allow read, write: if isStaff();
+  match /msgs/{m} { allow read, write: if isStaff(); }
+}
+function isStaff() {
+  return request.auth != null &amp;&amp;
+    exists(/databases/$(database)/documents/staff/$(request.auth.uid)) &amp;&amp;
+    get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.active == true;
+}</pre><p class="mut">Если у вас уже есть такая функция, используйте её. Нужен composite-индекс не нужен: запрос по одному полю.</p></div>`}
+
+function chList(){const q=fq.toLowerCase(),
+ l=CHS.filter(chInL).filter(c=>(!chC||c.ch===chC)&&(chF==="all"?c.st!=="closed":chF==="new"?chUnr(c):chF==="wait"?chW(c):chF==="mine"?c.resp===U.uid&&c.st!=="closed":c.st==="closed")&&(!q||`${c.name} ${c.phone} ${c.handle} ${c.last}`.toLowerCase().includes(q))),now=Date.now();
+ const f=[["all","Все"],...(chF==="new"||CHS.some(chUnr)?[["new","Непрочитанные"]]:[]),["wait","Ждут ответа"],["mine","Мои"],["closed","Закрытые"]],used=Object.keys(CHN).filter(k=>CHS.some(c=>c.ch===k&&chInL(c))),cc=used.length>1||chC?[["","Все каналы"],...used.map(k=>[k,CHN[k].n])]:[];
+ return `<input id="q" class="chq2" placeholder="Поиск: имя, телефон, текст" value="${esc(fq)}"><div class="chfl">${f.map(x=>`<button type="button" class="${chF===x[0]?"on":""}" data-a="ch_f" data-id="${x[0]}">${x[1]}</button>`).join("")}</div>${cc.length?`<div class="chfl">${cc.map(x=>`<button type="button" class="${chC===x[0]?"on":""}" data-a="ch_c" data-id="${x[0]}">${x[1]}</button>`).join("")}</div>`:""}${chPairs()}`+
+ (l.filter((c,i,a)=>a.findIndex(x=>chG(x)===chG(c))===i).map(c=>{const w=chW(c)&&now-c.lastTs>3e5,mm=chMem(c.id),un=mm.reduce((q,x)=>q+(x.lastDir==="out"?0:+x.unread||0),0);c={...c,unread:un};return `<div class="chi ${mm.some(x=>x.id===chOpen)?"on":""}" data-a="ch_open" data-id="${c.id}">${chAv(c)}<div class="bd"><b>${esc(c.name||"Без имени")}${mm.length>1?` <span class="chml">${mm.map(x=>(CHN[x.ch]||{s:x.ch}).s).join("+")}</span>`:""}</b><span>${c.lastDir==="out"?"Вы: ":""}${esc(c.last||"")}</span></div><div class="rt">${chTs(c.lastTs)}${c.unread?`<br><span class="chu">${c.unread}</span>`:""}</div></div>`}).join("")||`<div class="card mut" style="text-align:center">${CHS.length?"Ничего не найдено":"Диалогов пока нет. Сообщения клиентов из WhatsApp и Instagram появятся здесь."}</div>`)+(own()?`<div style="text-align:center;margin:10px 0"><button type="button" class="chlnk" data-a="ch_new">Отправить тестовое сообщение</button></div>`:"")}
+
+function chConv(c){const k=CHN[c.ch]||{n:c.ch},ld=LD.find(x=>x.id===c.leadId),g=c.ch==="gis",mm=chMem(c.id),many=mm.length>1;let cur="";
+ const th=chMsgs.map(m=>{const d=new Date(m.ts).toLocaleDateString("ru-RU",{day:"numeric",month:"long"});let s="";if(d!==cur){cur=d;s=`<div class="chd">${d}</div>`}
+  const st=m.dir!=="out"?"":m.st==="pending"||m.st==="sending"?(chOn(c.ch)?"…":"не отправлено: канал не подключён"):m.st==="failed"?"ошибка отправки"+(m.err?": "+esc(m.err):""):m.st==="manual"?"записано вручную":"✓";
+  return s+`<div class="chm ${m.dir}${m.stk?" stk":""}${CHSEL===m.id?" sel":""}" data-a="ch_msel" data-id="${m.id}">${m.q&&(m.q.t||m.q.img)?`<div class="chqt">${m.q.img?`<img src="${esc(m.q.img)}" alt="">`:""}<span><b>Ответ на${m.q.img?" фото":""}</b>${m.q.t?esc(m.q.t):""}</span></div>`:""}${m.img?(m.stk?`<img class="chstk" src="${esc(m.img)}" alt="Стикер">`:`<img src="${m.img}" alt="Фото" style="max-width:100%;border-radius:12px;display:block;margin-bottom:6px">`):""}${m.aud?`<div class="vce" data-src="${esc(m.aud)}"><button type="button" class="vcb" data-a="ch_play" data-id="${m.id}" aria-label="Слушать">${ix(VCID===m.id&&VCON?"pause":"play")}</button><div class="vcl"><i style="width:${VCID===m.id?VCP:0}%"></i></div><span class="vct">${VCID===m.id&&VCT?VCT:"0:00"}</span></div>`:""}${m.vid?`<video controls playsinline preload="metadata" src="${esc(m.vid)}" style="max-width:100%;max-height:360px;border-radius:12px;display:block;margin-bottom:6px"></video>`:""}${m.file&&m.file.url?`<a class="chfile" href="${esc(m.file.url)}" target="_blank" rel="noopener">${ix("doc")}<span>${esc(m.file.name||"Файл")}</span><b>Открыть</b></a>`:""}${(m.stk&&!m.t)||(m.aud&&/^Голосовое сообщение$/.test(m.t||""))||(m.vid&&/^Видео$/.test(m.t||""))||(m.file&&m.file.url&&/^Файл: /.test(m.t||"")&&!/\n/.test(m.t||""))?"":`<div><!--raw-->${chLk(esc(!m.file&&!m.vid&&!m.aud&&!m.img&&(m._ch||c.ch)==="wa"?String(m.t||"").replace(/ ?\(откройте в WhatsApp\)/,""):m.t)).replace(/\n/g,"<br>")}<!--/raw--></div>`}${!m.file&&!m.vid&&!m.aud&&!m.img&&/откройте в WhatsApp|^Стикер$/.test(m.t||"")&&(m._ch||c.ch)==="wa"?m.mgone?`<div class="mut" style="font-size:12px;margin-top:2px">Файл уже недоступен — откройте в WhatsApp на телефоне</div>`:`<button class="btn g s" style="min-height:32px;padding:4px 10px;margin:2px 0 6px" data-a="ch_mf" data-id="${m.id}" data-c="${esc(m._cid||c.id)}">Загрузить файл</button>${m.merr&&own()?`<div class="mut" style="font-size:11px;margin:-2px 0 6px">Причина: ${esc(m.merr)}</div>`:""}`:""}<span class="chmt${(m.dir==="out"&&(m.byName||m.via==="phone"))||(st&&st!=="✓")||many?" w":""}">${many&&m._ch?`<b class="chtag" style="--c:${(CHN[m._ch]||{}).c||"var(--mut)"}">${(CHN[m._ch]||{n:m._ch}).n}</b> `:""}${m.dir==="out"&&m.byName?esc(m.byName)+" · ":m.dir==="out"&&m.via==="phone"?"с телефона · ":""}${chTs(m.ts)}${st==="✓"?` <i class="chtk">✓</i>`:st?` · <em class="${m.st==="failed"||/^не отправлено/.test(st)?"chbad":""}">${st}</em>`:""}</span>${CHSEL===m.id?`<div class="chma">${(m.img&&!m.stk)||(m.file&&m.file.url)?`<button type="button" data-a="ch_chk" data-id="${m.id}">🧾 Чек к заказу</button>`:""}<button type="button" data-a="ch_mcp" data-id="${m.id}">Копировать</button>${adm()?`<button type="button" data-a="x_del" data-col="chmsg" data-id="${m.id}" data-t="">Удалить</button>`:""}</div>`:""}</div>`}).join("");
+ const mi=(a,ic,t,x)=>`<button type="button" class="chmi" data-a="${a}"${x||""}>${ix(ic)}<span>${t}</span></button>`;
+ return `<div class="chh2"><button type="button" class="chib" data-a="ch_back" aria-label="Назад к списку чатов">${ix("back")}</button>${chAv(c)}<div class="chht"><b>${esc(c.name||"Без имени")}</b><span>${many?mm.map(m=>(CHN[m.ch]||{n:m.ch}).n).join(" + "):k.n}${c.phone?" · "+esc(c.phone):""}${c.handle?" · @"+esc(String(c.handle).replace(/^@/,"")):""}${c.resp?" · "+esc(nm(c.resp)):""}${c.st==="closed"?" · завершён":""}</span></div><button type="button" class="chob" data-a="ch_ord">${ix("plus")}<span>Заказ</span></button><button type="button" class="chib${CHMORE===c.id?" on":""}" data-a="ch_more" aria-label="Действия с чатом">${ix("dots")}</button></div>
+ ${CHMORE===c.id?`<div class="chmenu">${mi("ch_me","user",c.resp===U.uid?"Это мой чат":"Взять себе")}${mi("ch_cl","check",c.st==="closed"?"Вернуть в работу":"Завершить диалог")}<div class="chmi chmu">${chMuBtn(c)}<span>Уведомления</span></div>${locs().length>1?mi("ch_loc","pin","Точка: "+(c.loc?esc(lname(c.loc)):"не выбрана"),` data-id="${esc(c.id)}"`):""}${mi("ch_lk","link",many?"Связано: "+mm.length:"Связать с другим каналом",` data-id="${esc(c.id)}"`)}${ld?`<div class="chmi"><span class="pill ok">Заявка: ${esc(LSN[ld.st]||"")}</span></div>`:mi("ch_lead","note","Создать заявку")}${mi("ch_ph","phone",c.phone?"Изменить телефон":"Указать телефон")}${c.phone?`<a class="chmi" href="tel:${esc(String(c.phone).replace(/[^+\d]/g,""))}">${ix("phone")}<span>Позвонить</span></a>`:""}${canDel("chats")?mi("x_del","trash","Удалить чат",` data-col="chats" data-id="${esc(c.id)}" data-t="${esc(c.name||"диалог")}"`):""}</div>`:""}
+ ${MUPOP===c.id?muPanel(c):""}
+ ${(()=>{const h=chClient(many&&!c.phone?(mm.find(m=>m.phone)||c):c);return /class="chcl mut"/.test(h)?"":h})()}
+ ${chSug(c)}
+ <div class="cht" id="cht">${th||'<div class="chd">Сообщений пока нет</div>'}</div>
+ ${g?`<div class="mut" style="padding:8px 14px;font-size:13px">У 2ГИС нет API для ответов: отправьте ответ в <a href="https://account.2gis.com" target="_blank" rel="noopener" style="color:var(--ac)">кабинете 2ГИС</a>, а здесь запишите, что ответили. Так сохранится история и время ответа.</div>`:""}
+ ${CHATT?`<div class="chatt"><button type="button" data-a="g_pick">${ix("gal")}<span>Фото из галереи</span></button><button type="button" data-a="ch_tplm">${ix("tpl")}<span>Шаблоны ответов</span></button><button type="button" data-a="ch_ai">${ix("spark")}<span>Ответ от ИИ</span></button>${own()?`<button type="button" data-a="ch_sim">${ix("msg")}<span>Тест: ответ клиента</span></button>`:""}</div>`:""}
+ ${many?`<div class="chips" style="margin:0;padding:6px 10px 0"><span class="mut" style="font-size:12px;align-self:center">Ответить через:</span>${mm.map(m=>`<button class="chip ${m.id===c.id?"on":""}" data-a="ch_to" data-id="${esc(m.id)}" style="font-size:12px;padding:6px 11px">${(CHN[m.ch]||{n:m.ch}).n}</button>`).join("")}</div>`:""}
+ <div class="chf2"><button type="button" class="chpl${CHATT?" on":""}" data-a="ch_att" aria-label="Фото, шаблоны, ИИ">${ix("plus")}</button><textarea id="chin" rows="1" placeholder="${g?"Что ответили в 2ГИС…":"Сообщение"}">${esc(chDraft)}</textarea><button type="button" class="chsd" data-a="ch_send" aria-label="${g?"Записать":"Отправить"}">${ix("send")}</button></div>`}
+
+/* карточка клиента в чате: его заказы по телефону, открываются как в обычной CRM */
+function chClient(c){const d=dg(c.phone);if(!d)return `<div class="chcl mut">Телефон не указан: нажмите «Телефон», чтобы видеть заказы клиента и считать статистику.</div>`;
+ const os=O.filter(o=>dg(o.phone)===d).sort((a,b)=>(b.ts||0)-(a.ts||0)),live=os.filter(o=>+o.st!==5),sum=live.reduce((s,o)=>s+(+o.p||0)+(+o.fee||0),0);
+ if(!os.length)return `<div class="chcl mut">Новый клиент: заказов пока нет</div>`;
+ return `<div class="chcl"><b>${live.length} ${pl(live.length,"заказ","заказа","заказов")} · ${M(sum)}</b><div class="chips" style="margin:6px 0 0">${os.slice(0,6).map(o=>`<button class="chip" data-a="det" data-id="${o.id}" style="font-size:12px;padding:6px 11px">${esc(o.bn||"Заказ")} · ${esc(ST[+o.st]||"")}${o.date?" · "+esc(o.date.slice(5).split("-").reverse().join(".")):""}</button>`).join("")}</div></div>`}
+
+function chStats(){const from=chPer==="all"?0:Date.now()-(+chPer)*864e5,cs=CHS.filter(chInL).filter(c=>(c.firstTs||c.ts||0)>=from),tot=o=>(+o.p||0)+(+o.fee||0),os=O.filter(o=>+o.st!==5&&(o.ts||0)>=from),
+ rows=Object.keys(CHN).map(k=>{const a=cs.filter(c=>c.ch===k),rt=a.filter(c=>c.firstReplyTs&&c.firstTs).map(c=>c.firstReplyTs-c.firstTs),avg=rt.length?rt.reduce((x,y)=>x+y,0)/rt.length:null,ph=[...new Set(a.map(c=>dg(c.phone)).filter(Boolean))],ord=os.filter(o=>ph.includes(dg(o.phone)));
+  return{k,n:a.length,w:a.filter(chW).length,avg,rt,lead:a.filter(c=>c.leadId).length,cl:ph.filter(p=>ord.some(o=>dg(o.phone)===p)).length,ord:ord.length,sum:ord.reduce((s,o)=>s+tot(o),0)}}),
+ all=rows.reduce((s,r)=>s+r.n,0),rts=rows.flatMap(r=>r.rt),avg=rts.length?rts.reduce((x,y)=>x+y,0)/rts.length:null,lead=rows.reduce((s,r)=>s+r.lead,0),cl=rows.reduce((s,r)=>s+r.cl,0),
+ src={};SRC.forEach(s=>src[s]=0);os.forEach(o=>{const s=SRC.includes(o.src)?o.src:"Другое";src[s]+=tot(o)});const mx=Math.max(1,...Object.values(src));
+ return `<div class="chips">${[["7","7 дней"],["30","30 дней"],["all","Всё время"]].map(x=>`<button class="chip ${chPer===x[0]?"on":""}" data-a="ch_p" data-id="${x[0]}">${x[1]}</button>`).join("")}</div>
+ <div class="k4"><div class="tile"><b>${all}</b><span>Диалогов</span></div><div class="tile"><b>${chUn()}</b><span>Ждут ответа сейчас</span></div><div class="tile"><b>${chDur(avg)}</b><span>Среднее время первого ответа</span></div><div class="tile"><b>${all?Math.round(cl/all*100):0}%</b><span>Диалогов с заказом (по телефону)</span></div></div>
+ <h2>По каналам</h2>${rows.map(r=>`<div class="card"><div class="row"><b>${chBadgeHtml(r.k)} ${CHN[r.k].n}</b><span class="mut">${r.n} ${pl(r.n,"диалог","диалога","диалогов")}</span></div><div class="k4"><div class="tile"><b>${chDur(r.avg)}</b><span>Первый ответ</span></div><div class="tile"><b>${r.lead}</b><span>Заявок</span></div><div class="tile"><b>${r.ord}</b><span>Заказов</span></div><div class="tile"><b>${M(r.sum)}</b><span>Выручка</span></div></div>${r.w?`<p class="mut" style="margin:8px 0 0">Ждут ответа: <b style="color:var(--warn)">${r.w}</b></p>`:""}</div>`).join("")}
+ <h2>Выручка по источнику заказа</h2><div class="card">${SRC.map(s=>`<div class="hb"><span>${s}</span><div class="t"><b style="width:${Math.round(src[s]/mx*100)}%"></b></div><b>${M(src[s])}</b></div>`).join("")}<p class="mut" style="margin:10px 0 0;font-size:13px">Считается по полю «Источник» в заказах, поэтому работает и без подключённых каналов.</p></div>`}
+function chBadgeHtml(k){const c=CHN[k];return `<span class="chb" style="background:${c.c}">${c.s}</span>`}
+
+function chSetup(){const D={wa:"По QR-коду (как WhatsApp Web, через Evolution API) — номер остаётся в телефоне. Или официально через Meta (Cloud API). Подключает владелец: Профиль → «Каналы связи».",ig:"Instagram Messaging API: бизнес-аккаунт, привязанный к странице Facebook, и проверка приложения в Meta.",tg:"Бот через @BotFather. Самый простой канал для старта: токен и webhook, без проверок.",gis:"Официального API для чатов и ответов нет. Только мониторинг и ручная запись ответов."};
+ return Object.keys(CHN).map(k=>`<div class="card"><div class="row"><b>${chBadgeHtml(k)} ${CHN[k].n}</b><span class="pill ${chOn(k)?"ok":""}">${chOn(k)?"Подключён":k==="gis"?"Вручную":"Не подключён"}</span></div><p class="mut" style="margin:8px 0 0">${D[k]}</p></div>`).join("")+
+ `<div class="card"><b>Как подключаются каналы</b><p class="mut">Сервер (webhook) принимает сообщения из WhatsApp, Instagram и Telegram и записывает их в <b>chats</b> и <b>chats/…/msgs</b>. Ответы из этого окна попадают туда же со статусом «pending», сервер отправляет их в канал. Пока сервера нет, можно проверять интерфейс через тестовые сообщения.</p><div class="acts"><button class="btn" data-a="ch_new">＋ Тестовое сообщение</button></div></div>`}
+
+function chNewForm(){modal(hd("Тестовое сообщение")+`<form id="chf2"><p class="mut">Имитирует входящее сообщение клиента. Так же будет работать реальный канал.</p><label>Канал</label><select name="ch">${Object.keys(CHN).map(k=>`<option value="${k}">${CHN[k].n}</option>`).join("")}</select><label>Имя клиента *</label><input name="name" required><label>Телефон</label><input name="phone" type="tel" value="+7"><label>Ник (для Instagram/Telegram)</label><input name="handle"><label>Текст *</label><textarea name="t" required>Здравствуйте! Хочу заказать букет на завтра</textarea>${btns("Отправить")}</form>`);
+ $("chf2").onsubmit=e=>{e.preventDefault();const f=new FormData($("chf2")),g=k=>f.get(k).toString().trim(),p=g("phone");if(!g("name")||!g("t"))return;if(!g("handle")&&!(p&&dg(p).length>5))return toast("Укажите телефон или ник");
+  run(async()=>{const id=await chIn({ch:g("ch"),name:g("name"),phone:dg(p).length>5?p:"",handle:g("handle"),t:g("t")});modal("");tab="chats";chV="list";chStart(id);toast("Сообщение получено")})}}
+
+document.addEventListener("click",e=>{const x=e.target.closest(".chmenu .chmi:not(.chmu),.chatt button");if(x){CHMORE="";CHATT=0}},true);
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a^="ch_"]');if(!b||!S)return;const a=b.dataset.a,id=b.dataset.id,c=CHS.find(x=>x.id===chOpen),R=()=>c&&db.collection("chats").doc(c.id);
+ if(a==="ch_v"){chV=id;draw()}else if(a==="ch_f"){chF=id;draw()}else if(a==="ch_c"){chC=id;draw()}else if(a==="ch_p"){chPer=id;draw()}
+ else if(a==="ch_open"){CHMORE="";CHATT=0;CHSEL="";chStart(id)}else if(a==="ch_play"){const el=b.closest(".vce");if(el)vcPlay(id,el.dataset.src)}else if(a==="ch_att"){CHATT=CHATT?0:1;CHMORE="";draw()}else if(a==="ch_msel"){if(e.target.closest("audio,video,a,button,img,input"))return;CHSEL=CHSEL===id?"":id;draw()}else if(a==="ch_mcp"){const m=chMsgs.find(x=>x.id===id);try{navigator.clipboard.writeText((m&&m.t)||"");toast("Скопировано")}catch(x){toast("Не удалось скопировать")}CHSEL="";draw()}else if(a==="ch_mf"){b.disabled=true;b.textContent="Загружаю…";const mm0=chMsgs.find(x=>x.id===id),isF=/^Файл: /.test((mm0&&mm0.t)||"");FNC("chMediaFetch")({cid:b.dataset.c,mid:id}).then(r=>{const u=(r&&r.data&&r.data.url)||"";if(isF&&u)fileView(u,String(mm0.t).replace(/^Файл: /,"").replace(/ ?\(откройте в WhatsApp\)/,"").split("\n")[0]);else toast("Загружено")}).catch(x=>{b.disabled=false;b.textContent="Загрузить файл";toast(er(x))})}else if(a==="ch_more"){CHMORE=CHMORE===chOpen?"":chOpen;CHATT=0;draw()}else if(a==="ch_home"){const u=CHS.filter(c=>chUnr(c)&&(!c.grp||c.grp===c.id)).sort((p,q)=>(q.lastTs||0)-(p.lastTs||0));tab="chats";chV="list";chStop();if(u.length===1){draw();chStart(u[0].id)}else{chF=u.length?"new":"all";draw()}scrollTo(0,0)}else if(a==="ch_back"){chStop();draw()}else if(a==="ch_new")chNewForm();else if(a==="ch_send")chSendUi();
+ else if(a==="ch_tpl"){chDraft=(TPL()[+id]||{}).t||"";modal("");draw();const i=$("chin");if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}}
+ else if(a==="ch_me"&&c)run(async()=>{await R().update({resp:U.uid})});
+ else if(a==="ch_cl"&&c)run(async()=>{await R().update({st:c.st==="closed"?"open":"closed"})});
+ else if(a==="ch_ph"&&c){const p=prompt("Телефон клиента",c.phone||"+7");if(p!==null&&dg(p).length>5)run(async()=>{await R().update({phone:p.trim()})});else if(p!==null)toast("Проверьте номер телефона")}
+ else if(a==="ch_lead"&&c)run(async()=>{const r=await db.collection("leads").add({loc:c.loc||myLoc(),src:(CHN[c.ch]||{}).src||"Другое",name:c.name||"Клиент",phone:c.phone||"",want:"",budget:0,note:"Из чата"+(c.handle?" (@"+String(c.handle).replace(/^@/,"")+")":"")+": "+(c.last||""),st:"new",resp:c.resp||"",by:U.uid,ts:Date.now(),chat:c.id});await R().update({leadId:r.id,resp:c.resp||U.uid});toast("Заявка создана")});
+ else if(a==="ch_ord"&&c){const ld=LD.find(x=>x.id===c.leadId);if(ld&&c.phone)PL={id:ld.id,phone:c.phone};form({loc:c.loc,client:c.name,phone:c.phone||"",src:(CHN[c.ch]||{}).src||"Другое"})}
+ else if(a==="ch_sim"&&c){const t=prompt("Текст сообщения от клиента","Спасибо, а можно с доставкой к 18:00?");if(t&&t.trim())run(async()=>{await chIn({ch:c.ch,name:c.name,phone:c.phone,handle:c.handle,t:t.trim()})})}});
+
+/* ===== Приёмка заказов, фото клиенту, командный чат, уведомления как на iPhone ===== */
+const FXD={rvOn:true,photoDef:true,photoAuto:true,linkSend:false,payOne:true,teamChat:true,clientChat:true,deals:true},
+FXL={rvOn:"Приёмка: готовый букет флориста проверяет оператор или другой флорист",photoDef:"Фото клиенту включено по умолчанию в новом заказе",photoAuto:"Автоматически отправлять клиенту фото готового букета",linkSend:"Автоматически отправлять клиенту ссылку на статус заказа после создания",payOne:"Оплата одним нажатием, без подтверждения",teamChat:"Командный чат сотрудников",clientChat:"Вкладка «Чаты» с клиентами (WhatsApp, Instagram…)",deals:"Раздел «Сделки» (воронка для крупных заказов)"},
+FXH={rvOn:"Включено: флорист не закрывает заказ сам. Готовый букет проверяет оператор или другой флорист (свой принять нельзя) и только после этого он считается готовым. Выключено: «Готов» ставится сразу, без проверки.",photoDef:"Включено: в новом заказе галочка «отправить клиенту фото» уже стоит. Выключено: её нужно ставить вручную каждый раз.",photoAuto:"Включено: когда букет готов, клиенту уходит фото с текстом из поля ниже. Выключено: фото отправляют вручную.",linkSend:"Включено: сразу после создания заказа клиенту уходит ссылка на страницу статуса, и сайт предлагает отправить её в WhatsApp. Выключено: ссылку берут вручную кнопкой «Ссылка клиенту».",payOne:"Включено: кнопка «Оплачен» сразу отмечает оплату. Выключено: перед отметкой оплаты сайт переспросит.",teamChat:"Включено: у всех сотрудников есть вкладка «Чат» для переписки внутри команды. Выключено: вкладка скрыта, сообщения не пропадают.",clientChat:"Включено: показывается вкладка «Чаты» с перепиской клиентов. Выключено: вкладка скрыта. Сами каналы WhatsApp и Instagram пока не подключены.",deals:"Включено: в меню есть «Сделки»: воронка для крупных и корпоративных заказов, пока они не стали обычным заказом. Если так не работаете, выключите: раздел исчезнет, а данные останутся."},
+PHOTO_MSG="Ваш заказ «{букет}» готов.",
+FX=k=>{const f=SH.fx||{};return f[k]===undefined?FXD[k]:!!f[k]},
+isFl=()=>!!S&&["florist","assistant","operator"].includes(S.role),
+isOp=()=>!!S&&(["admin","operator","florist","assistant"].includes(S.role)||own()),canTpl=()=>!!S&&S.role!=="courier",isDirect=()=>!!S&&(["admin","operator"].includes(S.role)||own()),isAsmr=()=>isFl()||!!S&&S.role==="operator",
+fvInc=n=>firebase.firestore.FieldValue.increment(n),
+fvUn=x=>firebase.firestore.FieldValue.arrayUnion(x);
+
+/* ---------- Уведомления в стиле iPhone ---------- */
+const NFT={ord:"Новые заказы и доставки",rv:"Готово к приёмке",redo:"Заказ нужно переделать",cm:"Комментарии к заказам",chat:"Сообщения клиентов",team:"Чат команды",pay:"Оплата заказов"};
+let NP=null;
+const npKey=()=>"np_"+(U?U.uid:"x");
+function npGet(){if(NP)return NP;let v={};try{v=JSON.parse(STO.get(npKey())||"{}")}catch(e){eLog(e)}NP={on:v.on!==false,sound:v.sound!==false,sys:!!v.sys,until:+v.until||0,types:v.types||{}};return NP}
+function npSave(){STO.set(npKey(),JSON.stringify(NP))}
+function nfSound(){if(!npGet().sound)return;try{const a=new(window.AudioContext||window.webkitAudioContext)(),t=a.currentTime;[[880,0],[1175,.13]].forEach(([f,d])=>{const o=a.createOscillator(),g=a.createGain();o.type="sine";o.frequency.value=f;g.gain.setValueAtTime(.0001,t+d);g.gain.exponentialRampToValueAtTime(.1,t+d+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d+.26);o.connect(g);g.connect(a.destination);o.start(t+d);o.stop(t+d+.3)});setTimeout(()=>{try{a.close()}catch(e){eLog(e)}},800)}catch(e){eLog(e)}}
+function nfBanner(o){let box=$("nfs");if(!box){box=document.createElement("div");box.id="nfs";document.body.appendChild(box)}
+ const el=document.createElement("div");el.className="nfb";el.setAttribute("role","status");el.dataset.tag=o.tag||"";
+ el.innerHTML=`<div class="nfi">${ix("show")}</div><div class="nfx"><div class="nfr"><b>${esc(unemo(o.title||"Mirflowers"))}</b><span>сейчас</span></div><div class="nfd">${esc(unemo(o.body||""))}</div></div>`;
+ if(o.tag)[...box.children].forEach(x=>{if(x.dataset.tag===o.tag)x.remove()});
+ box.prepend(el);while(box.children.length>3)box.lastChild.remove();
+ let y0=null,mv=0,tm;const close=()=>{clearTimeout(tm);el.classList.add("out");setTimeout(()=>el.remove(),280)};
+ el.addEventListener("pointerdown",e=>{y0=e.clientY;mv=0;try{el.setPointerCapture(e.pointerId)}catch(x){eLog(x)}});
+ el.addEventListener("pointermove",e=>{if(y0===null)return;mv=e.clientY-y0;el.style.transition="none";el.style.transform=`translateY(${Math.min(0,mv)}px)`});
+ el.addEventListener("pointerup",()=>{if(y0===null)return;y0=null;el.style.transition="";if(mv<-24)return close();el.style.transform="";if(Math.abs(mv)<8){if(o.go)try{o.go()}catch(x){eLog(x)}close()}});
+ tm=setTimeout(close,6500);nfSound();
+ const p=npGet();if(p.sys&&document.hidden&&window.Notification&&Notification.permission==="granted")try{new Notification(o.title||"Mirflowers",{body:o.body||""})}catch(e){eLog(e)}
+ try{navigator.vibrate&&navigator.vibrate(60)}catch(e){eLog(e)}}
+function nf(o){try{nfLog(o)}catch(e){eLog(e)}if(S&&own()&&!o.imp)return;/* владельцу всплывает только важное, остальное — в колокольчике */if(S&&!own()&&SH.pushShiftOnly!==false&&!SHF()&&!(typeof SLG!=="undefined"&&SLG.some(x=>x.uid===U.uid&&!x.end&&Date.now()-(+x.start||0)<20*36e5)))return;/* сотрудник не на смене — уведомлений нет (в колокольчике событие остаётся) */const p=npGet();if(!p.on||p.until>Date.now()||p.types[o.type]===false)return;nfBanner(o)}
+const nfTime=t=>new Date(t).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
+function nfCard(){const p=npGet(),mu=p.until>Date.now(),sw=(k,l,on)=>`<label class="row" style="color:var(--ink);margin:10px 0 0">${l}<input type="checkbox" data-np="${k}" ${on?"checked":""} style="width:26px;min-height:26px"></label>`,
+ perm=window.Notification?Notification.permission:"none";
+ return `<h2>Уведомления на сайте</h2>${own()?`<div class="card"><label class="row" style="color:var(--ink);margin:0">Сотрудникам — только во время смены<input type="checkbox" data-a="np_shift" ${SH.pushShiftOnly!==false?"checked":""} style="width:26px;min-height:26px"></label><div class="mut" style="font-size:13px;margin-top:6px">Начал смену — уведомления и push приходят, закончил — перестают. Настройка для всего магазина.</div><div class="mut" style="font-size:13px;margin-top:6px"><b>Владельцам</b> — всегда, но только важное: плохой отзыв клиента, товар закончился, касса не сходится. Остальное видно в 🔔.</div></div>`:(SH.pushShiftOnly!==false?`<p class="mut" style="margin:0 2px 8px">Уведомления и push приходят, только пока вы на смене.</p>`:"")}<div class="card"><div class="mut">Всплывающие сообщения, пока сайт открыт (новый заказ, готов букет и т. д.). Настройка только для этого устройства. Когда сайт закрыт, работает блок «Push на телефон» ниже.</div>${sw("on","Показывать уведомления",p.on)}
+ <div class="mut" style="margin:14px 2px 6px">Отключить на время:</div><div class="chips" style="margin:0">${[[1,"1 час"],[3,"3 часа"],[24,"1 день"]].map(x=>`<button class="chip" data-a="np_sn" data-id="${x[0]}">${x[1]}</button>`).join("")}${mu?'<button class="chip on" data-a="np_sn" data-id="0">Включить сейчас</button>':""}</div>
+ ${mu?`<p class="pill warn" style="margin:10px 0 0">Отключены до ${nfTime(p.until)}${new Date(p.until).toDateString()!==new Date().toDateString()?" завтра":""}</p>`:""}
+ <h2 style="margin:18px 0 0">Что показывать</h2>${Object.keys(NFT).map(k=>sw("t:"+k,NFT[k],p.types[k]!==false)).join("")}
+ ${sw("sound","Звук",p.sound)}${window.Notification?`${sw("sys","Уведомления браузера, когда вкладка свёрнута",p.sys&&perm==="granted")}${perm==="denied"?'<p class="mut">Браузер запретил уведомления. Разрешите их в настройках сайта.</p>':""}`:""}
+ <div class="acts"><button class="btn g s" data-a="np_test">Показать пример</button></div><p class="mut" style="margin:8px 0 0;font-size:13px">Настройки сохраняются на этом устройстве.</p></div>`}
+document.addEventListener("change",e=>{const i=e.target.closest("[data-np]");if(!i||!S)return;const p=npGet(),k=i.dataset.np;
+ if(k==="on")p.on=i.checked;else if(k==="sound")p.sound=i.checked;else if(k.startsWith("t:"))p.types[k.slice(2)]=i.checked;
+ else if(k==="sys"){if(i.checked&&window.Notification){Notification.requestPermission().then(r=>{p.sys=r==="granted";npSave();draw()});return}p.sys=false}
+ npSave();draw()});
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a^="np_"]');if(!b||!S)return;const a=b.dataset.a,p=npGet();
+ if(a==="np_sn"){const h=+b.dataset.id;p.until=h?Date.now()+h*36e5:0;npSave();draw();toast(h?"Уведомления отключены на "+(h===24?"1 день":h+" ч"):"Уведомления включены")}
+ else if(a==="np_test")nfBanner({title:"Новый заказ",body:"Розы 25 · сегодня 18:00",go:()=>{}})});
+
+/* ---------- Заказы: счётчик, кто принял, приёмка, переделка, фото клиенту ---------- */
+const ordCnt=()=>{const t=today(),m=t.slice(0,7),b=x=>`<b style="color:var(--ink)">${x}</b>`;if(S&&S.role==="courier"){const my=O.filter(o=>o.dv&&o.courier===U.uid&&+o.st<4).length,fr=O.filter(dvFree).length;return `<p class="mut" style="margin:6px 0">Мои доставки: ${b(my)} · свободные: ${b(fr)}</p>`}return `<p class="mut" style="margin:6px 0">Всего заказов: ${b(O.length+(O.length>=300?"+":""))} · сегодня: ${b(O.filter(o=>o.date===t).length)} · в этом месяце: ${b(O.filter(o=>(o.date||"").startsWith(m)).length)}</p>`},
+whoLine=o=>{if(S.role==="courier")return"";const a=[];if(o.by)a.push("создал(а): "+nm(o.by));if(o.takenBy)a.push("принял(а): "+nm(o.takenBy));if(o.asm&&+o.st>=2)a.push("собрал(а): "+nm(o.asm));if(o.accBy)a.push("приёмка: "+nm(o.accBy));if(o.dv&&o.courier&&+o.st<4)a.push("курьер: "+nm(o.courier)+(o.cAcc?", принял(а) в "+chTs(o.cAcc):", ещё не подтвердил(а)"));if(o.dv&&!o.courier&&o.cRelAt&&+o.st<4)a.push("курьер "+nm(o.cRelBy)+" отказался"+(o.cRelNote?": "+o.cRelNote:""));return a.length?`<div class="mut" style="font-size:13px;margin-top:4px">${a.map(esc).join(" · ")}</div>`:""},
+noteLine=o=>{if(S.role==="courier")return"";let h="";
+ if(o.rv==="redo"&&+o.st===1)h+=`<div class="rdo">⚠ Нужно переделать${o.redoNote?": "+esc(o.redoNote):""}<br><small>${esc(nm(o.redoBy))} · ${chTs(o.redoAt)}</small></div>`;
+ if(isAsmr()&&+o.st<3){if(o.comp)h+=`<div style="margin-top:6px;font-size:14px"><span class="mut">Состав:</span> ${esc(o.comp)}</div>`;if(o.note)h+=`<div style="font-size:14px"><span class="mut">Комментарий клиента:</span> ${esc(o.note)}</div>`}
+ (o.cm||[]).filter(c=>c.k!=="redo").slice(-2).forEach(c=>{h+=`<div class="cmt"><b>${esc(c.byName||"")}:</b> ${esc(c.t)}</div>`});
+ const t=[];if(o.needPhoto&&+o.st<2)t.push('<span class="pill">📷 нужно фото клиенту</span>');if(o.photoSent&&+o.st===2)t.push('<span class="pill ok">Фото отправлено клиенту</span>');if(+o.st===2&&o.rv==="wait")t.push('<span class="pill warn">Ждёт приёмки</span>');if(+o.st===1&&xfPend(o))t.push(`<span class="pill warn">Ожидает подтверждения передачи · ${esc(nm(o.xfFrom))} → ${esc(nm(o.xfTo))}</span>`);
+ return h+(t.length?`<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${t.join("")}</div>`:"")},
+waLink=o=>"https://wa.me/"+dg(o.phone)+"?text="+encodeURIComponent(photoText(o)),
+photoBase=()=>{const m=SH.photoMsg;return m&&!/^Здравствуйте/.test(m)?m:PHOTO_MSG},photoText=o=>photoBase().replace(/\{имя\}/g,o.client||"").replace(/\{букет\}/g,o.bn||"букет"),
+rvBtns=o=>{let h="";if(isOp()&&+o.st===2&&o.rv==="wait"&&(adm()||own()||o.asm!==U.uid))h+=`<button class="btn s" data-a="rv_ok" data-id="${o.id}">Принять</button><button class="btn r s" data-a="rv_redo" data-id="${o.id}">На переделку</button>`;
+ if(mgr()&&+o.st<4)h+=`<button class="btn g s" data-a="cm_add" data-id="${o.id}">Комментарий</button>`;return h+xfBtn(o)},
+cmList=o=>(o.cm&&o.cm.length)?`<h2>Комментарии</h2><div class="card">${o.cm.slice().reverse().map((c,ri)=>`<div class="ln"><span>${esc(c.byName||"")}<br><span class="mut">${chTs(c.ts)}${c.k==="redo"?" · переделка":""}</span></span><span style="text-align:right">${esc(c.t)}${adm()?`<br><a href="#" data-a="x_cmdel" data-id="${o.id}" data-i="${o.cm.length-1-ri}" style="color:var(--bad)">удалить</a>`:""}</span></div>`).join("")}</div>`:"",
+detRv=o=>chkBtn(o)+(isOp()&&+o.st===2&&o.rv==="wait"&&(adm()||own()||o.asm!==U.uid)?`<button class="btn" data-a="rv_ok" data-id="${o.id}">Принять заказ</button><button class="btn r" data-a="rv_redo" data-id="${o.id}">Вернуть на переделку</button>`:"")+(mgr()&&+o.st<4?`<button class="btn g" data-a="cm_add" data-id="${o.id}">Комментарий</button>`:"")+xfBtn(o).replace("btn g s","btn g"),
+rvSec=()=>{if(!isOp())return"";const w=O.filter(o=>+o.st===2&&o.rv==="wait").sort(byDt),r=O.filter(o=>+o.st===1&&o.rv==="redo").sort(byDt);return(w.length?`<h2>На приёмке: ${w.length}</h2><div class="og">${w.map(card).join("")}</div>`:"")+(r.length?`<h2>На переделке у флориста: ${r.length}</h2><div class="og">${r.map(card).join("")}</div>`:"")};
+
+function homeFl(sub){const mine=O.filter(o=>+o.st===1),redo=mine.filter(o=>o.rv==="redo").sort(byMk),inw=mine.filter(o=>o.rv!=="redo").sort((a,b)=>(b.takenBy===U.uid)-(a.takenBy===U.uid)||byMk(a,b)),nw=O.filter(o=>+o.st===0&&soonOk(o)).sort(byMk),lat=O.filter(o=>+o.st===0&&!soonOk(o)).length,wt=O.filter(o=>+o.st===2&&o.rv==="wait").length,
+ sec=(t,l)=>l.length?`<h2>${t} · ${l.length}</h2><div class="og">${l.map(card).join("")}</div>`:"";
+ const shift=SHL.some(x=>x.date===today()&&x.t==="work");
+ return `${sub?"":`<div style="position:relative">${flr("branch","deco")}<h1>Заказы к сборке</h1></div>`}
+ <div class="rgs"><div class="tile" data-a="tf" data-id="0" style="cursor:pointer"><b>${nw.length}</b><span>Новые</span></div><div class="tile" data-a="tf" data-id="1" style="cursor:pointer"><b>${inw.length}</b><span>В сборке</span></div><div class="tile"><b>${redo.length}</b><span>Переделать</span></div></div>
+ ${sub?"":chatWait()}<div class="dg">${alerts()}${shift?todayStaff():""}</div>${sec("⚠ Нужно переделать",redo)}${sec("Собираются сейчас",inw)}${sec("Новые: принять на себя",nw)}${lat?`<p class="mut" data-a="al" data-id="orders|later" style="cursor:pointer">Ещё ${lat} ${pl(lat,"заказ","заказа","заказов")} позже — собирать можно за ${WINH} ч до срока. Посмотреть: «Заказы» → «Позже» ›</p>`:""}
+ ${redo.length||inw.length||nw.length?"":`<div class="card mut" style="text-align:center">${flr("tulip")}<br>Очередь пуста</div>`}${wt?`<p class="mut">На приёмке у оператора: ${wt}</p>`:""}`}
+
+/* «Начать сборку» без транзакции (ей обязательно нужен ответ сервера — при подвисшей связи кнопка висела).
+   Двойное взятие не пропустят правила: takenBy можно поставить себе только у нового или свободного заказа (orderMarksOk). */
+async function takeOrder(o){const cur=O.find(x=>x.id===o.id);if(!cur)return toast("Заказ удалён");
+ if(+cur.st!==0)return toast(cur.takenBy&&cur.takenBy!==U.uid?"Этот заказ уже взял(а) "+nm(cur.takenBy):"Заказ уже в работе");
+ const q=db.collection("orders").doc(o.id).update({st:1,updatedAt:TS(),statusBy:U.uid,takenBy:U.uid,takenAt:Date.now()});q.own=true;
+ q.server.then(()=>log("Принял(а) в работу",o)).catch(e=>{if(e&&e.code==="permission-denied"){const x=O.find(y=>y.id===o.id);toast(x&&x.takenBy&&x.takenBy!==U.uid?"Этот заказ уже взял(а) "+nm(x.takenBy):"Этот заказ уже взял другой сотрудник")}else toast(er(e))});
+ try{await q}catch(e){return}toast("Заказ взят в работу")}
+const imgBig=f=>new Promise(r=>{const im=new Image();im.onload=()=>{const k=Math.min(1,720/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);r(c.toDataURL("image/jpeg",.72))};im.src=URL.createObjectURL(f)});
+async function finishReady(o,img){const ri=img?await upImg(img,"orders"):"";const op=isDirect(),rv=FX("rvOn")&&!op?"wait":"ok";
+ await db.collection("orders").doc(o.id).update({st:2,updatedAt:TS(),statusBy:U.uid,asm:U.uid,readyAt:Date.now(),rv,...(op?{accBy:U.uid,accAt:Date.now()}:{}),...(ri?{rimg:ri}:{})});
+ log("Статус → Готов",o,rv==="wait"?"передан на приёмку":"");
+ await deductOrder(o);
+ if(img&&FX("photoAuto"))await sendClientPhoto(o,ri||img)}
+function readyFlow(o){if(!(o.needPhoto&&FX("photoAuto")))return run(()=>finishReady(o,""));let u="";
+ modal(hd(esc(o.bn||"Заказ"))+`<p class="mut">Сделайте фото или выберите готовое из галереи или файлов. Фото сразу уйдёт клиенту (${esc(o.client||"")}).</p><input id="rpf" type="file" accept="image/*"><img id="rpi" alt="" style="width:100%;border-radius:16px;margin-top:10px" hidden><p class="mut" id="rps"></p><div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button>${isOp()?'<button class="btn g" type="button" id="rpn">Без фото</button>':""}<button class="btn" id="rpb" disabled>Готов, отправить клиенту</button></div>`);
+ $("rpf").onchange=async e=>{const f=e.target.files[0];if(!f)return;$("rps").textContent="Обрабатываю фото…";u=await imgBig(f);$("rpi").src=u;$("rpi").hidden=false;$("rps").textContent="";$("rpb").disabled=false};
+ $("rpb").onclick=()=>{if(u)run(async()=>{await finishReady(o,u);modal("");toast(FX("rvOn")&&!isDirect()?"Готово. Фото отправлено клиенту, заказ ушёл на приёмку":"Готово. Фото отправлено клиенту")})};
+ const n=$("rpn");if(n)n.onclick=()=>run(async()=>{await finishReady(o,"");modal("");if(FX("rvOn")&&!isDirect())toast("Готово. Заказ ушёл на приёмку")})}
+async function sendClientPhoto(o,img){const d=dg(o.phone);if(!d)return;const id="wa_"+d,ref=db.collection("chats").doc(id),ts=Date.now(),old=CHS.find(x=>x.id===id),b=db.batch(),t=photoText(o),
+ u={last:"📷 "+t,lastDir:"out",lastTs:ts,unread:0,nOut:fvInc(1)};
+ if(old)b.update(ref,u);else b.set(ref,{...u,ch:"wa",wi:waFor(o.loc||myLoc()),name:o.client||"Клиент",phone:o.phone,handle:"",loc:o.loc||myLoc(),st:"open",resp:U.uid,nIn:0,firstTs:0,firstReplyTs:0,leadId:"",ts});
+ b.set(ref.collection("msgs").doc(),{dir:"out",t,img,ts,by:U.uid,byName:S.name||"",st:"pending",auto:"photo",oid:o.id});
+ b.update(db.collection("orders").doc(o.id),{photoSent:true,photoSentAt:ts});await b.commit()}
+const waFor=L=>{const ch=SH.channels||{},I=ch.waI||{};if(!L||(ch.wa||{}).loc===L)return"";const k=Object.keys(I).find(k=>I[k]&&!I[k].del&&I[k].on&&I[k].loc===L);return k||""},waOn=()=>{const ch=SH.channels||{};return chOn("wa")||Object.values(ch.waI||{}).some(x=>x&&x.on&&!x.del)};
+const statusText=(o,u)=>"Ваш заказ «"+(o.bn||"букет")+"» принят. Статус заказа: "+u;
+async function sendStatusLink(o,u){const d=dg(o.phone);if(!d)return;const id="wa_"+d,ref=db.collection("chats").doc(id),ts=Date.now(),old=CHS.find(x=>x.id===id),b=db.batch(),t=statusText(o,u),up={last:t,lastDir:"out",lastTs:ts,unread:0,nOut:fvInc(1)};
+ if(old)b.update(ref,up);else b.set(ref,{...up,ch:"wa",wi:waFor(o.loc||myLoc()),name:o.client||"Клиент",phone:o.phone,handle:"",loc:o.loc||myLoc(),st:"open",resp:U.uid,nIn:0,firstTs:0,firstReplyTs:0,leadId:"",ts});
+ b.set(ref.collection("msgs").doc(),{dir:"out",t,ts,by:U.uid,byName:S.name||"",st:"pending",auto:"link",oid:o.id});
+ b.update(db.collection("orders").doc(o.id),{linkSent:true,linkSentAt:ts});await b.commit()}
+let slOpen=null;
+function statusModal(o,u){const wa="https://wa.me/"+dg(o.phone)+"?text="+encodeURIComponent(statusText(o,u));modal(hd("Заказ создан")+`<div class="card"><div class="mut">${waOn()?"Ссылка на статус <b>отправлена клиенту в WhatsApp</b> автоматически — она видна в чате с клиентом. Кнопка ниже нужна, только если сообщение не дошло.":"Ссылка на статус добавлена в чат с клиентом. WhatsApp не подключён к серверу, поэтому сообщение само не уйдёт: отправьте его одной кнопкой."}</div><div style="margin-top:8px;word-break:break-all">${esc(u)}</div></div><div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button><a class="btn" href="${esc(wa)}" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">Отправить в WhatsApp</a></div>`)}
+function redoForm(o){modal(hd("Вернуть на переделку")+`<p class="mut">«${esc(o.bn||"")}». Флорист получит уведомление и увидит ваш комментарий.</p><form id="rdf"><label>Что нужно исправить *</label><textarea name="t" required placeholder="Например: клиент просит больше зелени и другую ленту"></textarea>${btns("Отправить флористу")}</form>`);
+ $("rdf").onsubmit=e=>{e.preventDefault();const t=new FormData($("rdf")).get("t").toString().trim();if(!t)return;
+  run(async()=>{const ts=Date.now();await db.collection("orders").doc(o.id).update({st:1,rv:"redo",rimg:"",photoSent:false,asm:"",accBy:"",redoN:fvInc(1),redoAt:ts,redoBy:U.uid,redoNote:t,cm:fvUn({k:"redo",t,by:U.uid,byName:S.name||"",ts}),updatedAt:TS(),statusBy:U.uid});log("Возврат на переделку",o,t);modal("");toast("Заказ вернулся флористу")})}}
+function cmForm(o){modal(hd("Комментарий к заказу")+`<p class="mut">«${esc(o.bn||"")}». Увидят все, кто работает с заказом.</p><form id="cmf"><label>Комментарий *</label><textarea name="t" required></textarea>${btns("Добавить")}</form>`);
+ $("cmf").onsubmit=e=>{e.preventDefault();const t=new FormData($("cmf")).get("t").toString().trim();if(!t)return;
+  run(async()=>{const ts=Date.now();await db.collection("orders").doc(o.id).update({cm:fvUn({k:"note",t,by:U.uid,byName:S.name||"",ts}),cmAt:ts,cmBy:U.uid,updatedAt:TS()});log("Комментарий к заказу",o,t);modal("");toast("Комментарий добавлен")})}}
+
+/* ---------- Флорист: подтверждение «Начать сборку» и передача заказа с двойным подтверждением ---------- */
+let SKEW=0;async function skewSync(){try{const t0=Date.now(),r=await fetch(location.href.split("#")[0].split("?")[0],{method:"HEAD",cache:"no-store"}),t1=Date.now(),d=Date.parse(r.headers.get("Date")||"");if(d)SKEW=d-(t0+t1)/2}catch(e){eLog(e)}}skewSync();setInterval(skewSync,300000);const NOW=()=>Date.now()+SKEW;
+const XF_MS=60000,
+xfNum=o=>String(o.id).slice(-5).toUpperCase(),
+xfPend=o=>!!o&&o.xfSt==="wait"&&!!o.xfTo&&NOW()-(+o.xfAt||0)<XF_MS,
+xfLeft=o=>Math.max(0,(+o.xfAt||0)+XF_MS-NOW()),
+xfMine=o=>!!U&&!!o&&+o.st===1&&o.takenBy===U.uid&&isFl(),
+xfBtn=o=>xfMine(o)&&!xfPend(o)?`<button class="btn g s" data-a="xf_start" data-id="${o.id}">Передать заказ</button>`:"",
+xfWho=()=>Object.keys(SF).filter(id=>id!==U.uid&&SF[id]&&SF[id].active===true&&["florist","assistant","operator"].includes(SF[id].role)&&!isOwnId(id)).sort((a,b)=>nm(a).localeCompare(nm(b)));
+function takeConfirm(o){
+ modal(hd(esc(o.bn||"Заказ"))+`<p style="font-size:17px">Точно берёшь этот заказ?</p><div class="acts"><button class="btn g" type="button" id="tcn">Отмена</button><button class="btn" type="button" id="tcy">Да</button></div>`);
+ $("tcn").onclick=()=>modal("");
+ $("tcy").onclick=()=>{$("tcy").disabled=true;modal("");run(()=>takeOrder(o))}}
+async function xfSend(o,to){const ref=db.collection("orders").doc(o.id);
+ const r=await db.runTransaction(async t=>{const sn=await t.get(ref);if(!sn.exists)return"gone";const d=sn.data();
+  if(+d.st!==1||d.takenBy!==U.uid)return"moved";if(xfPend(d))return"busy";
+  t.update(ref,{xfSt:"wait",xfTo:to,xfFrom:U.uid,xfAt:NOW(),updatedAt:TS(),statusBy:U.uid});return"ok"});
+ modal("");
+ if(r==="ok"){log("Передача заказа флористу",o,"→ "+nm(to));toast("Ждём подтверждения: "+nm(to))}
+ else toast(r==="gone"?"Заказ удалён":r==="busy"?"Ожидает подтверждения передачи":"Заказ уже изменился")}
+async function xfAnswer(o,yes){const ref=db.collection("orders").doc(o.id);
+ const r=await db.runTransaction(async t=>{const sn=await t.get(ref);if(!sn.exists)return{k:"gone"};const d=sn.data(),now=NOW();
+  if(d.xfSt!=="wait"||d.xfTo!==U.uid||+d.st!==1)return{k:"moved",by:d.takenBy};
+  const base={xfSt:"",xfTo:"",xfFrom:"",xfAt:0,xfResAt:now,xfResFrom:d.xfFrom,xfResTo:U.uid,updatedAt:TS(),statusBy:U.uid};
+  if(now-(+d.xfAt||0)>=XF_MS+5000){t.update(ref,{...base,xfRes:"to"});return{k:"late",from:d.xfFrom}}
+  if(!yes){t.update(ref,{...base,xfRes:"no"});return{k:"no"}}
+  t.update(ref,{...base,xfRes:"ok",takenBy:U.uid,takenAt:now});return{k:"ok",from:d.xfFrom}});
+ modal("");
+ if(r.k==="ok"){log("Принял(а) заказ от флориста",o,"от "+nm(r.from));toast("Заказ №"+xfNum(o)+" теперь твой")}
+ else if(r.k==="no"){log("Отказался(ась) от передачи",o);toast("Передача отменена")}
+ else if(r.k==="late")toast("Время вышло, заказ вернулся к "+nm(r.from));
+ else toast(r.k==="gone"?"Заказ удалён":"Заказ уже изменился")}
+const xfBusy=new Set();
+async function xfExpire(o){if(xfBusy.has(o.id+o.xfAt))return;xfBusy.add(o.id+o.xfAt);try{await db.runTransaction(async t=>{const ref=db.collection("orders").doc(o.id),sn=await t.get(ref);if(!sn.exists)return;const d=sn.data();
+  if(d.xfSt!=="wait"||NOW()-(+d.xfAt||0)<XF_MS)return;
+  t.update(ref,{xfSt:"",xfTo:"",xfFrom:"",xfAt:0,xfRes:"to",xfResAt:NOW(),xfResFrom:d.xfFrom,xfResTo:d.xfTo,updatedAt:TS(),statusBy:U.uid})})}catch(e){eLog(e)}}
+function xfPrompt(o){
+ modal(hd("Передача заказа")+`<div id="xfq"><p style="font-size:17px">${esc(nm(o.xfFrom))} передает тебе заказ №${esc(xfNum(o))}. Примешь?</p><p class="mut">«${esc(o.bn||"Заказ")}» · <b id="xfc"></b></p></div><div class="acts"><button class="btn g" type="button" id="xfn">Отмена</button><button class="btn" type="button" id="xfy">Да</button></div>`);
+ const go=y=>{$("xfy").disabled=$("xfn").disabled=true;run(()=>xfAnswer(o,y))};
+ $("xfy").onclick=()=>go(true);$("xfn").onclick=()=>go(false);xfTick()}
+let xfKey="";
+function xfTick(){if(!U||!S)return;
+ const c=$("xfc");if(c){const o=O.find(x=>x.id===xfKeyId());c.textContent=o?mmss(xfLeft(o)):""}
+ if(!isFl())return;
+ const o=O.find(x=>xfPend(x)&&x.xfTo===U.uid&&+x.st===1);
+ if(!o){if(xfKey){xfKey="";if($("xfq"))modal("")}}
+ else if(xfKey!==o.id+"|"+o.xfAt&&(!$("m").innerHTML||!$("m").querySelector("form,input,textarea"))){xfKey=o.id+"|"+o.xfAt;xfPrompt(o)}
+ const old=O.filter(x=>x.xfSt==="wait"&&!xfPend(x)&&(x.xfFrom===U.uid||x.xfTo===U.uid||adm()));
+ if(old.length){old.forEach(xfExpire);dq()}}
+const xfKeyId=()=>xfKey.split("|")[0];
+setInterval(xfTick,1000);setInterval(()=>{if(S&&(tab==="home"||tab==="orders"))dq()},60000);
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="xf_start"],[data-a="xf_to"]');if(!b||!S)return;e.stopImmediatePropagation();
+ const o=O.find(x=>x.id===b.dataset.id);if(!o)return toast("Заказ не найден");
+ if(b.dataset.a==="xf_start"){if(!xfMine(o))return toast("Заказ уже изменился");if(xfPend(o))return toast("Ожидает подтверждения передачи");
+  const l=xfWho();
+  modal(hd("Кому передать заказ?")+`<p class="mut">«${esc(o.bn||"Заказ")}»</p>${l.length?`<div class="acts" style="flex-direction:column">${l.map(id=>`<button class="btn g" type="button" data-a="xf_to" data-id="${o.id}" data-u="${id}">${esc(nm(id))}</button>`).join("")}</div>`:'<div class="card mut">Нет других флористов для передачи</div>'}<div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button></div>`);return}
+ const to=b.dataset.u;if(!to||!xfWho().includes(to))return toast("Заказ уже изменился");run(()=>xfSend(o,to))},true);
+
+/* перехватываем «Начать сборку» и «Готов» раньше основного обработчика */
+/* курьер: взять свободную доставку, подтвердить назначенную, отказаться */
+/* «Доставлено» курьер нажимает только рядом с адресом доставки (DVR м + точность GPS, не больше 150), вместо таймера */
+const DVR=300;async function dvNear(o){let dest=null;if(o.geo&&o.geo.lat)dest={lat:+o.geo.lat,lng:+o.geo.lng};else if(SH.gisKey&&String(o.addr||"").trim()){try{const c=await geocode(gq(o));if(c&&c.length===2)dest={lat:+c[1],lng:+c[0]}}catch(e){eLog(e)}}
+ if(!dest)return{ok:true,nogeo:true};let me;try{me=await geoGet()}catch(e){return{ok:false,why:e.code}}const d=geoDist(me,dest),lim=DVR+Math.min(me.acc||0,150);return{ok:d<=lim,d,lim,me}}
+async function dvDoneTry(o){toast("Проверяю, что вы у адреса…");const r=await dvNear(o);
+ if(r.ok){if(!r.nogeo)log("Курьер у адреса доставки",o,r.d+" м");proof(o.id);return}
+ if(r.why)return modal(hd("Нужна геолокация")+`<p>Чтобы отметить «Доставлено», телефон должен показать, что вы у адреса.</p><p class="mut">${r.why==="denied"?"Доступ к геолокации запрещён: Настройки iPhone → Safari (или Mirflowers) → Геопозиция → «При использовании».":"Не удалось определить место. Выйдите на улицу и нажмите ещё раз."}</p>${btns("")}`);
+ modal(hd("Вы ещё не у адреса")+`<p>До адреса доставки примерно <b>${r.d>=1000?(r.d/1000).toFixed(1)+" км":r.d+" м"}</b>.</p><p class="mut">«Доставлено» можно нажать, когда вы ближе ${DVR} м к адресу «${esc(o.addr||"")}». Если адрес на карте стоит неверно — позвоните оператору.</p><div class="acts"><button class="btn g" data-a="x">Закрыть</button>${gisBtnO(o)}</div>`)}
+const cwait=o=>(o.shipAt||o.cAcc)?Math.max(0,(+o.shipAt||+o.cAcc)+180000-Date.now()):0;
+function curRelForm(o){modal(hd("Отказаться от доставки")+`<p class="mut">«${esc(o.bn||"")}». Заказ вернётся в список свободных, оператор получит уведомление.${+o.st===3?" Букет уже передан вам: верните его флористу.":""}</p><form id="crf"><label>Причина (по желанию)</label><textarea name="t" placeholder="Например: не успею к сроку"></textarea><div class="acts"><button class="btn g" type="button" data-a="x">Назад</button><button class="btn r">Отказаться от доставки</button></div></form>`);
+ $("crf").onsubmit=e=>{e.preventDefault();const tx=new FormData($("crf")).get("t").toString().trim();
+  run(async()=>{const ref=db.collection("orders").doc(o.id);
+   const r=await db.runTransaction(async t=>{const s=await t.get(ref);if(!s.exists)return"gone";const d=s.data();if(d.courier!==U.uid||+d.st>3)return"moved";
+    t.update(ref,{courier:"",cAcc:0,cBy:"",cRelAt:Date.now(),cRelBy:U.uid,cRelNote:tx,updatedAt:TS(),statusBy:U.uid,...(+d.st===3?{st:2}:{})});return"ok"});
+   modal("");if(r==="ok"){log("Курьер отказался от доставки",o,tx);toast("Вы отказались от доставки")}else toast("Заказ уже изменился")})}}
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="cur_pick"]');if(!b||!S||S.role!=="courier")return;e.stopImmediatePropagation();const o=O.find(x=>x.id===b.dataset.id);if(!o)return;
+ run(async()=>{const ref=db.collection("orders").doc(o.id);const r=await db.runTransaction(async t=>{const s=await t.get(ref);if(!s.exists)return"gone";const d=s.data();if(d.courier!==U.uid||!d.cAcc||+d.st!==2)return"moved";t.update(ref,{st:3,shipAt:Date.now(),updatedAt:TS(),statusBy:U.uid});return"ok"});
+  modal("");if(r==="ok"){log("Курьер забрал букет, в пути",o);toast("В пути. «Доставлено» можно нажать у адреса доставки")}else toast("Заказ уже изменился")})},true);
+function dvViaForm(o){const v=o.dvVia||"indrive";modal(hd("Доставка через сервис")+`<p class="mut">«${esc(o.bn||"")}» · ${esc(o.addr||"")}${o.time?" · к "+esc(o.time):""}</p><form id="dvf"><label>Чем везём</label><div class="chips" id="dvs" style="flex-wrap:wrap;overflow:visible">${Object.keys(DVS).map(k=>`<button type="button" class="chip ${k===v?"on":""}" data-k="${k}">${DVS[k]}</button>`).join("")}</div><label>Стоимость доставки, ₸ (для учёта расходов)</label><input name="c" type="number" min="0" inputmode="numeric" value="${+o.cpay||""}" placeholder="например 1500"><label>Комментарий (номер машины, ссылка на заказ)</label><input name="n" value="${esc(o.dvViaNote||"")}"><p class="mut" style="font-size:13px">${+o.st===2?"Букет готов: после сохранения заказ станет «В пути».":"Букет ещё не готов: когда будет готов, нажмите «🚕 Отправлено»."} Курьерам этот заказ больше не показывается.</p><div class="acts">${o.dvVia?`<button type="button" class="btn g" data-a="dv_tocur" data-id="${o.id}">🚚 Своему курьеру</button>`:`<button type="button" class="btn g" data-a="x">Отмена</button>`}<button class="btn">Сохранить</button></div></form>`);
+ let k0=v;$("dvs").onclick=e=>{const c=e.target.closest("[data-k]");if(!c)return;k0=c.dataset.k;[...$("dvs").children].forEach(x=>x.classList.toggle("on",x===c))};
+ if($("dvx"))$("dvx").onclick=()=>run(async()=>{await db.collection("orders").doc(o.id).update({dvVia:"",dvViaNote:"",updatedAt:TS()});log("Доставка через сервис отменена",o);modal("");toast("Сервис убран")});
+ $("dvf").onsubmit=e=>{e.preventDefault();const f=new FormData($("dvf")),go=+o.st===2;
+  run(async()=>{const r=db.collection("orders").doc(o.id);const res=await db.runTransaction(async t=>{const s=await t.get(r);const d=s.data()||{};if(d.courier)return"cur";t.update(r,{dvVia:k0,cpay:+f.get("c")||0,dvViaNote:(f.get("n")||"").toString().trim(),dvPost:0,...(+d.st===2?{st:3,shipAt:Date.now(),statusBy:U.uid}:{}),updatedAt:TS()});return"ok"});
+   if(res==="cur")return toast("Доставку уже принял курьер. Пусть он откажется, или снимите его");log((go?"Отправлено через ":"Доставка будет через ")+DVS[k0],o,+f.get("c")?M(+f.get("c")):"");modal("");toast(go?"Отправлено через "+DVS[k0]+". Когда привезут — нажмите «Доставлено»":"Сохранено: доставка через "+DVS[k0])})}}
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="dv_tocur"]');if(!b||!S||!(mgr()||own()))return;e.stopImmediatePropagation();e.preventDefault();const o=O.find(x=>x.id===b.dataset.id);if(!o)return;
+ if(!confirm("Отдать доставку своему курьеру вместо "+dvVN(o)+"?"+(+o.st===3?"\nЗаказ вернётся в «Готов» — букет должен быть в магазине.":"")+(soonOk(o)?"\nКурьеры на линии получат уведомление.":"")))return;
+ run(async()=>{const now=soonOk(o);await db.collection("orders").doc(o.id).update({dvVia:"",dvViaNote:"",cpay:0,dvPost:now?Date.now():0,...(+o.st===3?{st:2,shipAt:0}:{}),updatedAt:TS(),statusBy:U.uid});log("Доставка: "+dvVN(o)+" → свой курьер",o);modal("");toast(now?"Выставлено курьерам":"Сохранено. Выставить курьеру можно будет с "+openAt(o))})},true);
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="dv_via"]');if(!b||!S||!(mgr()||own()))return;e.stopImmediatePropagation();e.preventDefault();const o=O.find(x=>x.id===b.dataset.id);if(o)dvViaForm(o)},true);
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="dv_post"],[data-a="dv_unpost"]');if(!b||!S||!(mgr()||own()))return;e.stopImmediatePropagation();e.preventDefault();const o=O.find(x=>x.id===b.dataset.id);if(!o)return;const on=b.dataset.a==="dv_post";
+ run(async()=>{await db.collection("orders").doc(o.id).update({dvPost:on?Date.now():0,updatedAt:TS()});log(on?"Выставлен на доставку":"Снят с доставки",o);toast(on?"Выставлено: курьеры получили уведомление":"Снято с доставки")})},true);
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="cur_take"],[data-a="cur_acc"],[data-a="cur_rel"]');if(!b||!S||S.role!=="courier")return;
+ e.stopImmediatePropagation();const a=b.dataset.a,o=O.find(x=>x.id===b.dataset.id);if(!o)return toast("Заказ не найден");
+ if(a==="cur_rel"){if(o.courier!==U.uid)return toast("Это не ваша доставка");return curRelForm(o)}
+ if(a==="cur_take"&&!confirm("Принять эту доставку? Она появится у вас в «Мои доставки»."))return;
+ run(async()=>{const ref=db.collection("orders").doc(o.id);
+  const r=await db.runTransaction(async t=>{const s=await t.get(ref);if(!s.exists)return"gone";const d=s.data();
+   if(a==="cur_take"){if(d.courier||+d.st>3)return"busy";t.update(ref,{courier:U.uid,cAcc:Date.now(),cBy:U.uid,updatedAt:TS(),statusBy:U.uid,...(+d.st===3&&!d.shipAt?{shipAt:Date.now()}:{})});return"ok"}
+   if(d.courier!==U.uid||+d.st>3)return"busy";if(d.cAcc)return"already";
+   t.update(ref,{cAcc:Date.now(),cBy:U.uid,updatedAt:TS(),statusBy:U.uid});return"ok"});
+  if(r==="ok"){log(a==="cur_take"?"Курьер принял доставку":"Курьер принял доставку в работу",o);toast(+o.st===3?"Принято. «Доставлено» можно нажать у адреса доставки":"Принято. Когда заберёте букет — нажмите «Забрал, еду»")}
+  else toast(r==="busy"?"Уже занято или изменено":r==="already"?"Вы уже приняли этот заказ":"Заказ удалён")})},true);
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="adv"]');if(!b||!S||S.role==="courier")return;const o=O.find(x=>x.id===b.dataset.id);if(!o)return;const n=next(o);if(!n||(n[0]!==1&&n[0]!==2))return;
+ e.stopImmediatePropagation();if(n[0]===1)takeConfirm(o);else if(xfPend(o))toast("Ожидает подтверждения передачи");else if(n[0]===2&&o.takenBy&&o.takenBy!==U.uid&&!adm())toast("Этот заказ собирает "+nm(o.takenBy)+". «Готов» может отметить только он(а) или администратор");else readyFlow(o)},true);
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a^="rv_"],[data-a^="cm_"],[data-a="unpay"]');if(!b||!S)return;const a=b.dataset.a,o=O.find(x=>x.id===b.dataset.id);if(!o)return;
+ if(a==="rv_ok"&&isOp()&&!adm()&&o.asm===U.uid)toast("Свой заказ принимает другой сотрудник");else if(a==="rv_ok"&&isOp())run(async()=>{await db.collection("orders").doc(o.id).update({rv:"ok",accBy:U.uid,accAt:Date.now(),updatedAt:TS()});log("Заказ принят (приёмка)",o);modal("");toast("Заказ принят")});
+ else if(a==="rv_redo"&&isOp())redoForm(o);else if(a==="cm_add"&&mgr())cmForm(o);
+ else if(a==="unpay"&&mgr()&&confirm("Снять отметку об оплате?"))run(async()=>{await db.collection("orders").doc(o.id).update({paid:false,paidAt:0,updatedAt:TS()});log("Оплата снята",o);modal("");toast("Отметка об оплате снята")})});
+
+/* уведомления о событиях в заказах */
+let ORD0=false;
+function ordDiff(nw){const first=!ORD0;ORD0=true;if(first)return;const mp={};O.forEach(x=>mp[x.id]=x);const me=U.uid;
+ nw.forEach(n=>{const p=mp[n.id],bn=n.bn||"Заказ",go=()=>{tab="orders";draw();detail(n.id)};if(S.role!=="courier"&&!inL(n))return;
+  if(p&&S.role==="courier"&&n.dv&&n.dvPost&&!p.dvPost&&!n.courier)nf({imp:1,type:"ord",title:"🚚 Новая доставка",body:bn+(n.time?" · к "+n.time:"")+(n.addr?" · "+n.addr:""),tag:"o"+n.id,go});
+  if(!p){if(n.by!==me&&(mgr()))nf({type:"ord",title:"Новый заказ",body:bn+(n.date?" · "+n.date:"")+(n.time?" "+n.time:""),tag:"o"+n.id,go});return}
+  if(n.rqK&&n.rqT&&n.rqT!==p.rqT&&n.rqBy!==me&&mgr())nf({type:"ord",title:n.rqK==="cx"?"Запрос на отмену заказа":"Запрос на скидку",body:bn+(n.rqK==="p"&&n.rqP?" · цена до "+M(n.rqP):"")+(n.rqWhy?" · "+n.rqWhy:"")+(n.rqN?" · "+n.rqN:""),tag:"q"+n.id,go});
+  if(n.rate&&+n.rate.s<=3&&!(p.rate&&p.rate.s)&&(adm()||own()))nf({imp:1,type:"ord",title:"Плохой отзыв: "+"★".repeat(+n.rate.s)+"☆".repeat(5-n.rate.s),body:bn+(n.rate.c?" · «"+n.rate.c+"»":""),tag:"s"+n.id,go});
+  if(n.redoAt&&n.redoAt!==p.redoAt&&n.redoBy!==me&&((isAsmr()&&(!n.takenBy||n.takenBy===me))||adm()))nf({type:"redo",title:"Нужно переделать",body:bn+(n.redoNote?": "+n.redoNote:""),tag:"r"+n.id,go});
+  if(n.cmAt&&n.cmAt!==p.cmAt&&n.cmBy!==me&&mgr()){const l=(n.cm||[]).slice(-1)[0]||{};nf({type:"cm",title:"Комментарий · "+(l.byName||""),body:bn+": "+(l.t||""),tag:"c"+n.id,go})}
+  if(p.rv!=="wait"&&n.rv==="wait"&&isOp()&&n.asm!==me)nf({type:"rv",title:"Готово к приёмке",body:bn+" · собрал(а) "+nm(n.asm),tag:"v"+n.id,go});
+  if(p.courier&&!n.courier&&n.cRelAt&&n.cRelAt!==p.cRelAt&&n.cRelBy!==me&&mgr())nf({type:"ord",title:"Курьер отказался от доставки",body:bn+(n.cRelNote?": "+n.cRelNote:""),tag:"cr"+n.id,go});
+   if(n.xfSt==="wait"&&p.xfSt!=="wait"&&n.xfTo===me)nf({type:"ord",title:"Передача заказа",body:nm(n.xfFrom)+" передает тебе: "+bn,tag:"xf"+n.id,go});
+   if(n.xfResAt&&n.xfResAt!==p.xfResAt&&n.xfResFrom===me&&n.xfResTo!==me)nf({type:"ord",title:n.xfRes==="ok"?"Передача принята":n.xfRes==="no"?"Передача отклонена":"Время вышло",body:bn+(n.xfRes==="ok"?" · теперь у "+nm(n.xfResTo):" · заказ снова у тебя"),tag:"xr"+n.id,go});
+   if(!p.paid&&n.paid&&n.paidBy!==me&&(own()||adm()))nf({type:"pay",title:"Оплата получена",body:bn+" · "+M((+n.p||0)+(+n.fee||0)),tag:"p"+n.id,go});
+  if(+p.st!==4&&+n.st===4&&n.proof&&n.statusBy!==me&&mgr())nf({type:"ord",title:"Заказ доставлен",body:bn+" · фото получено",tag:"d"+n.id,go})})}
+
+/* ---------- Командный чат и кто на сайте ---------- */
+let TCM=[],TCERR="",tcLast=0,tcDraft="";
+const tcRead=()=>+(STO.get("tcr_"+(U?U.uid:""))||0),tcSeen=()=>STO.set("tcr_"+U.uid,String(Date.now())),
+tcUn=()=>FX("teamChat")&&U?TCM.filter(m=>m.by!==U.uid&&m.ts>tcRead()).length:0,
+nbN=k=>k==="chats"?chNew():k==="tc"?tcUn():0,nbG=k=>(GP[k]||[k]).reduce((a,x)=>a+(+nbN(x)||0),0);
+function tcSubs(){if(!FX("teamChat"))return;
+ subs.push(db.collection("team").orderBy("ts").limitToLast(200).onSnapshot(s=>{const nw=s.docs.map(d=>({id:d.id,...d.data()}));
+  if(tcLast)nw.filter(m=>m.ts>tcLast&&m.by!==U.uid).forEach(m=>{if(!(tab==="tc"&&!document.hidden))nf({type:"team",title:(m.byName||"Чат команды"),body:m.t,tag:"team",go:()=>{tab="tc";draw()}})});
+  if(!STO.get("tcr_"+U.uid))tcSeen();tcLast=nw.length?nw[nw.length-1].ts:1;TCM=nw;TCERR="";dq()},e=>{TCERR=e.code||e.message;dq()}))}
+function tcList(){const now=Date.now(),pm={};PRS.forEach(p=>{if(p.uid)pm[p.uid]=p});
+ return Object.keys(SF).filter(i=>SF[i].active!==false).map(i=>({i,n:SF[i].name||"—",r:SF[i].role,ts:(pm[i]||{}).ts||0})).map(x=>({...x,on:now-x.ts<150000})).sort((a,b)=>b.on-a.on||b.ts-a.ts)}
+/* полоса «кто онлайн» над чатом: только люди в сети; владельцу — кнопка со всей командой */
+function tcPresHtml(){const l=tcList(),on=l.filter(x=>x.on);
+ return `<span class="tco"><i class="ond"></i><b>Онлайн: ${on.length}</b><span class="tcn">${on.map(x=>esc(String(x.n).split(" ")[0])+(x.i===U.uid?" (вы)":"")).join(", ")||"никого"}</span></span>${own()?`<button class="btn g s" type="button" data-a="tc_all">Команда: ${l.length} ›</button>`:""}`}
+function tcAllHtml(){const l=tcList();return `<div class="tcl">${l.map(x=>`<div class="tcr${x.on?" on":""}"><i></i><b>${esc(x.n)}</b><small>${esc(RL[x.r]||"")}</small><span>${x.on?"онлайн":x.ts?chTs(x.ts):"не заходил(а)"}</span></div>`).join("")}</div>`}
+document.addEventListener("click",e=>{if(!e.target.closest('[data-a="tc_all"]')||!S||!own())return;modal(hd("Команда на сайте")+tcAllHtml())});
+function tcPres(){const e=$("tcp");if(e)e.innerHTML=tcPresHtml()}
+function tc(){if(!FX("teamChat"))return `<h1>Чат команды</h1><div class="card mut">Командный чат выключен администратором.</div>`;
+ if(TCERR)return `<h1>Чат команды</h1><div class="card"><b>Нет доступа к чату</b><p class="mut">Код: ${esc(TCERR)}. Добавьте в Firestore Rules правило для коллекции <b>team</b> (сообщение: чтение для активных сотрудников, создание от своего имени).</p></div>`;
+ tcSeen();let cur="";
+ const th=TCM.map(m=>{const mine=m.by===U.uid,d=new Date(m.ts).toLocaleDateString("ru-RU",{day:"numeric",month:"long"});let s="";if(d!==cur){cur=d;s=`<div class="chd">${d}</div>`}
+  return s+`<div class="chm ${mine?"out":"in"}">${mine?"":`<b style="font-size:12px;display:block;margin-bottom:2px">${esc(m.byName||"")} <span style="font-weight:400;opacity:.7">${esc(RL[m.role]||"")}</span></b>`}<div><!--raw-->${esc(m.t).replace(/\n/g,"<br>")}<!--/raw--></div><span>${nfTime(m.ts)}${adm()?` · <a href="#" data-a="x_del" data-col="team" data-id="${m.id}" data-t="" style="color:inherit">удалить</a>`:""}</span></div>`}).join("");
+ return `<h1 class="tch">Чат команды</h1><div class="tcp" id="tcp">${tcPresHtml()}</div><div class="chc tcc"><div class="cht" id="cht">${th||'<div class="chd">Сообщений пока нет. Напишите первым.</div>'}</div><div class="chf"><textarea id="tcin" rows="1" placeholder="Сообщение команде…">${esc(tcDraft)}</textarea><button class="btn" data-a="tc_send">Отправить</button></div></div>`}
+function tcFit(){const c=document.querySelector(".tcc");if(!c)return;if(innerWidth>=900){c.style.height="";return}const n=document.querySelector("nav"),pl=n&&n.querySelector(".plus"),nb=n&&!n.hidden&&getComputedStyle(n).position==="fixed"?Math.min(n.getBoundingClientRect().top,pl?pl.getBoundingClientRect().top:innerHeight):innerHeight;c.style.height=Math.max(300,Math.round(nb-(c.getBoundingClientRect().top+scrollY)-10))+"px"}
+addEventListener("resize",()=>tcFit());
+function tcBind(){tcFit();const i=$("tcin");if(!i)return;i.oninput=()=>{tcDraft=i.value;i.style.height="auto";i.style.height=Math.min(i.scrollHeight,120)+"px"};i.onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey&&matchMedia("(pointer:fine)").matches){e.preventDefault();tcSend()}}}
+function tcSend(){const i=$("tcin"),t=(i?i.value:tcDraft).trim();if(!t)return;tcDraft="";if(i){i.value="";i.style.height="auto"}
+ run(async()=>{await db.collection("team").add({t,ts:Date.now(),by:U.uid,byName:S.name||"",role:own()?"owner":S.role})})}
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="tc_send"]');if(b&&S)tcSend()});
+
+/* ---------- Расширенные настройки возможностей (админ) ---------- */
+function fxCard(){return `<h2>Возможности</h2><form id="fxf" class="card"><div class="mut" style="margin-bottom:12px">Включайте и выключайте функции сайта для всей команды. Изменения вступают в силу после нажатия «Сохранить».</div>${Object.keys(FXD).map(k=>`<label class="row" style="color:var(--ink);margin:0 0 14px;align-items:flex-start;gap:12px"><span><b>${FXL[k]}</b><br><span class="mut" style="font-size:.86em;font-weight:400">${FXH[k]}</span></span><input type="checkbox" name="${k}" style="width:26px;min-height:26px;flex:none" ${FX(k)?"checked":""}></label>`).join("")}
+ <label>Сообщение клиенту с фото готового букета</label><textarea name="photoMsg" rows="4">${esc(photoBase())}</textarea><p class="mut" style="margin:4px 2px 0">Это текст, который уходит клиенту вместе с фото готового букета. Подставляются: {имя} — имя клиента, {букет} — название букета.</p><div class="acts"><button class="btn">Сохранить</button></div></form>`}
+document.addEventListener("submit",e=>{if(e.target.id!=="fxf"||!S||!own())return;e.preventDefault();const f=new FormData(e.target),fx={};Object.keys(FXD).forEach(k=>fx[k]=f.get(k)==="on");
+ run(async()=>{await db.collection("settings").doc("main").set({fx,photoMsg:(f.get("photoMsg")||"").toString().trim()||PHOTO_MSG,updatedAt:TS()},{merge:true});const was=Object.assign({},FXD,SH.fx||{}),on=[],off=[];Object.keys(FXD).forEach(k=>{if(!!was[k]!==fx[k])(fx[k]?on:off).push(FXL[k].split(":")[0].split(" (")[0])});log("Изменены возможности",{bn:"",x:(on.length?"включено: "+on.join(", "):"")+(off.length?(on.length?"; ":"")+"выключено: "+off.join(", "):"")});toast(on.length||off.length?"Сохранено."+(on.length?" Включено: "+on.join(", ")+".":"")+(off.length?" Выключено: "+off.join(", ")+".":""):"Сохранено, переключатели не менялись (изменён только текст сообщения)")})});
+
+function curV(){const q=O.filter(o=>o.dv&&+o.st>=1&&+o.st<4).sort(byDt);return `<h1>Курьеры</h1><p class="mut">Доставки в пути и ожидающие курьера</p><div class="og">${q.map(o=>`<div class="card"><div class="row">${th(o.img)}<b style="flex:1">${esc(o.bn||"Заказ")}</b><span class="pill">${stL(o)}</span></div><div class="mut">${esc(o.client)} · ${esc(o.phone)}<br>${hdt(o.date)} ${esc(o.time||"")} · ${esc(addrFull(o)||o.addr)} · ${o.courier?esc(nm(o.courier)):"свободен"}</div><div class="acts">${gisBtnO(o)}${+o.st===2&&o.courier&&o.cAcc?`<button class="btn s" data-a="adv" data-id="${o.id}">Передать курьеру</button>`:""}${dvBtn(o)}${+o.st===3?`<button class="btn s" data-a="cur_done" data-id="${o.id}">Доставлено</button>`:""}<button class="btn g s" data-a="det" data-id="${o.id}">Подробнее</button></div></div>`).join("")||'<div class="card mut" style="text-align:center">Доставок нет</div>'}</div>`}
+function tplV(){const a=TPL(),ed=canTpl();return `<h1>Шаблоны</h1><p class="mut">Быстрые ответы для чатов: коротко и понятно.${ed?"":" Редактируют все, кроме флориста и помощника флориста."}</p>${ed?'<div class="acts"><button class="btn" data-a="tp_add">Шаблон</button><button class="btn g" data-a="tp_def">Стандартные</button></div>':""}<div class="og">${a.map((t,i)=>`<div class="card"><b>${esc(t.n)}</b><div style="margin:6px 0;white-space:pre-wrap">${esc(t.t)}</div>${ed?`<div class="acts"><button class="btn g s" data-a="tp_ed" data-id="${i}">Изменить</button><button class="btn r s" data-a="tp_del" data-id="${i}">Удалить</button></div>`:""}</div>`).join("")}</div>`}
+const tpSave=a=>run(async()=>{await db.collection("settings").doc("main").set({tpls:a,updatedAt:TS()},{merge:true});toast("Сохранено")});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b||!S)return;const a=b.dataset.a,id=b.dataset.id;
+ if(a==="cur_done"&&adm())proof(id);
+ else if(a==="ch_tplm")modal(hd("Шаблоны")+TPL().map((t,i)=>`<button class="btn g" style="width:100%;margin:5px 0;text-align:left" data-a="ch_tpl" data-id="${i}">${esc(t.n)}<br><small class="mut">${esc(t.t)}</small></button>`).join("")+`<div class="acts"><button class="btn g" data-a="x">Закрыть</button></div>`);
+ else if(canTpl()&&(a==="tp_add"||a==="tp_ed")){const i=a==="tp_ed"?+id:-1,x=i<0?{n:"",t:""}:TPL()[i];modal(hd(i<0?"Новый шаблон":"Шаблон")+`<label>Название</label><input id="tpn" value="${esc(x.n)}"><label>Текст</label><textarea id="tpt" rows="5">${esc(x.t)}</textarea><div class="acts"><button class="btn g" data-a="x">Закрыть</button><button class="btn" id="tps">Сохранить</button></div>`);
+  $("tps").onclick=()=>{const n=$("tpn").value.trim(),t=$("tpt").value.trim();if(!n||!t)return toast("Заполните название и текст");const arr=TPL().slice();if(i<0)arr.push({n,t});else arr[i]={n,t};modal("");tpSave(arr)}}
+ else if(canTpl()&&a==="tp_del"){if(confirm("Удалить шаблон?")){const arr=TPL().slice();arr.splice(+id,1);tpSave(arr)}}
+ else if(canTpl()&&a==="tp_def"){if(confirm("Вернуть стандартные шаблоны?"))tpSave(DEFTPL.map(x=>({n:x[0],t:x[1]})))}});
+
+const chkOk=o=>(o.wk&&o.wkSt!=="ok"&&+o.st<5&&isOp())||((o.pay==="Наличные"||!o.paid)&&+o.st<5&&(isOp()||S.role==="assistant"||(S.role==="courier"&&o.courier===U.uid))),
+chkBtn=o=>chkOk(o)?`<button class="btn g" data-a="chk_add" data-id="${o.id}">🧾 ${o.chk?"Заменить чек":"Добавить чек"}</button>`:"",
+chkV1=(o,f,t)=>o[f]?`<h2>${t}${o[f+"By"]?" · "+esc(nm(o[f+"By"])):""}</h2>${o[f].startsWith("data:application/pdf")||o[f+"T"]==="pdf"?`<a class="btn g" href="${o[f]}" ${o[f].startsWith("data:")?'download="check.pdf"':'target="_blank" rel="noopener"'} style="text-decoration:none">Открыть чек (PDF)</a>`:`<img src="${o[f]}" alt="${t}" style="width:100%;border-radius:16px">`}`:"",
+chkView=o=>chkV1(o,"pchk","Чек предоплаты")+chkV1(o,"chk","Чек");
+
+/* ===== чеки из чатов сайта: не с телефона, а из переписки с клиентом ===== */
+const CHKF={pre:["pchk","Чек предоплаты"],pay:["chk","Чек оплаты"]};
+const isPdfF=f=>/\.pdf(\?|$)/i.test((f&&f.name)||"")||/\.pdf(\?|%|$)/i.test((f&&f.url)||"")||/pdf/i.test((f&&(f.type||f.mime))||"");
+async function chatPhotos(phone){const d=dg(phone);if(!d)return[];const g=new Set(CHS.filter(c=>dg(c.phone)===d).map(chG)),ids=[...new Set(CHS.filter(c=>g.has(chG(c))||dg(c.phone)===d).map(c=>c.id))],all=[];
+ await Promise.all(ids.map(async id=>{try{const q=await db.collection("chats").doc(id).collection("msgs").orderBy("ts","desc").limit(80).get();q.docs.forEach(x=>{const m=x.data();if(m.dir==="out")return;if(m.img&&!m.stk)all.push({u:m.img,ts:m.ts||0});else if(m.file&&m.file.url)all.push({u:m.file.url,ts:m.ts||0,pdf:isPdfF(m.file),name:m.file.name||"Файл"})})}catch(x){eLog(x)}}));
+ return all.sort((a,b)=>b.ts-a.ts).slice(0,60)}
+function ovl(html){const old=$("cpk");if(old)old.remove();const el=document.createElement("div");el.id="cpk";el.style.cssText="position:fixed;inset:0;z-index:90;background:var(--bg);overflow-y:auto;padding:max(16px,env(safe-area-inset-top)) 16px 40px";el.innerHTML=`<div style="max-width:560px;margin:auto">${html}</div>`;document.body.appendChild(el);return el}
+function chkOv(o){const el=ovl(`<h1 style="font-size:22px;margin:0 0 6px">${esc(o.title)}</h1><p class="mut" style="margin:0 0 10px">${esc(o.sub||"")}</p><div id="cpg" class="mut">Загружаю фото и файлы из чата…</div><div class="acts" style="margin-top:14px">${o.skipText?`<button type="button" class="btn g" id="cps">${esc(o.skipText)}</button>`:""}<label class="btn g" style="cursor:pointer">С телефона<input id="cpf" type="file" accept="image/*" hidden></label><button type="button" class="btn g" id="cpx">Закрыть</button></div>`),pick=(u,it)=>{el.remove();o.onPick(u,it)};
+ $("cpx").onclick=()=>el.remove();if($("cps"))$("cps").onclick=()=>{el.remove();o.onSkip()};
+ $("cpf").onchange=async ev=>{const f=ev.target.files[0];if(!f)return;try{pick(await imgBig(f))}catch(x){toast("Не удалось открыть файл")}};
+ chatPhotos(o.phone).then(list=>{const g=$("cpg");if(!g)return;if(!list.length){g.innerHTML="В чате этого клиента пока нет фото и файлов. Попросите клиента прислать чек в чат (или добавьте с телефона).";return}
+  g.className="";g.style.cssText="display:grid;grid-template-columns:repeat(3,1fr);gap:8px";g.innerHTML=list.map((x,i)=>`<button type="button" data-i="${i}" style="padding:0;border:0;border-radius:12px;overflow:hidden;aspect-ratio:1;background:var(--c2);position:relative">${x.name?`<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:6px;font-size:12px;word-break:break-all;text-align:center"><b style="font-size:20px">${x.pdf?"PDF":"📄"}</b>${esc(String(x.name).slice(0,28))}</span>`:`<img class="nolb" src="${esc(x.u)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">`}<small style="position:absolute;left:0;right:0;bottom:0;padding:2px 4px;background:rgba(0,0,0,.55);color:#fff;font-size:11px">${new Date(x.ts).toLocaleString("ru-RU",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</small></button>`).join("");
+  g.onclick=ev=>{const b=ev.target.closest("[data-i]");if(b){const it=list[+b.dataset.i];pick(it.u,it)}}})}
+const chkSave=(o,kind,url,pdf)=>{const[f,t]=CHKF[kind];return run(async()=>{const u=await upImg(url,"orders");await db.collection("orders").doc(o.id).update({[f]:u,[f+"By"]:U.uid,[f+"At"]:Date.now(),[f+"T"]:pdf?"pdf":"",...(kind==="pay"?lvUp(o):{}),updatedAt:TS()});log("Добавлен "+t.toLowerCase(),o);toast(t+" сохранён")})},
+payDo=(o,id,u,pdf)=>run(async()=>{const x=u?await upImg(u,"orders"):"";await db.collection("orders").doc(id).update({paid:true,paidAt:Date.now(),paidBy:U.uid,...(x?{chk:x,chkBy:U.uid,chkAt:Date.now(),chkT:pdf?"pdf":""}:{}),updatedAt:TS()});log("Принята оплата",o,M(rest(o))+(x?" · с чеком":""));modal("")});
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="ch_chk"]');if(!b||!S)return;const m=chMsgs.find(x=>x.id===b.dataset.id),it=m&&(m.img&&!m.stk?{u:m.img}:m.file&&m.file.url?{u:m.file.url,pdf:isPdfF(m.file),name:m.file.name||"Файл"}:null);if(!it)return;
+ const c=CHS.find(x=>x.id===chOpen)||{},ph=c.phone||(chMem(chOpen).find(x=>x.phone)||{}).phone,d=dg(ph);if(!d)return toast("Сначала укажите телефон клиента: меню ⋯ → «Указать телефон»");
+ const os=O.filter(o=>dg(o.phone)===d&&+o.st<5).sort((a,b)=>(b.ts||0)-(a.ts||0));if(!os.length)return toast("У этого клиента нет открытых заказов");
+ const el=ovl(`<h1 style="font-size:22px;margin:0 0 6px">Чек к заказу</h1>${it.name?`<div class="card"><b>${it.pdf?"📄 PDF":"📄"}</b> ${esc(it.name)}</div>`:`<img class="nolb" src="${esc(it.u)}" alt="" style="width:100%;max-height:34vh;object-fit:contain;border-radius:12px;background:var(--c2)">`}<p class="mut">К какому заказу и что это за чек?</p>${os.map(o=>`<div class="card"><b>${esc(o.bn)}</b><div class="mut" style="font-size:13px">${esc(((o.date||"")+" "+(o.time||"")).trim())} · ${M((+o.p||0)+(+o.fee||0))}${o.paid?" · оплачен":""}${o.pchk?" · есть чек предоплаты":""}${o.chk?" · есть чек оплаты":""}</div><div class="acts"><button type="button" class="btn s" data-o="${esc(o.id)}" data-k="pre">Чек предоплаты</button><button type="button" class="btn s" data-o="${esc(o.id)}" data-k="pay">Чек оплаты</button></div></div>`).join("")}<div class="acts"><button type="button" class="btn g" id="cox">Закрыть</button></div>`);
+ $("cox").onclick=()=>el.remove();el.onclick=ev=>{const t=ev.target.closest("[data-o]");if(!t)return;const o=O.find(x=>x.id===t.dataset.o);if(!o)return;el.remove();chkSave(o,t.dataset.k,it.u,it.pdf)}});
+function chkForm(o){modal(hd("Чек")+`<p class="mut">Оплата наличными или при получении: добавьте фото или файл чека (фото, PDF).</p><button class="btn" type="button" id="ckc" style="width:100%;margin-bottom:10px">Выбрать из чата клиента</button><input id="ckf" type="file" accept="image/*,application/pdf"><p class="mut" id="cks"></p><div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button></div>`);
+ $("ckc").onclick=()=>chkOv({title:"Чек оплаты",sub:"Фото из переписки с клиентом.",phone:o.phone,onPick:(u,x)=>{chkSave(o,"pay",u,x&&x.pdf).then(()=>modal(""))}});
+ $("ckf").onchange=async e=>{const f=e.target.files[0];if(!f)return;$("cks").textContent="Обрабатываю…";let u="";try{if(f.type==="application/pdf"){if(f.size>600000){$("cks").textContent="PDF больше 600 КБ, сожмите или сфотографируйте чек";return}u=await new Promise((r,j)=>{const x=new FileReader();x.onload=()=>r(x.result);x.onerror=j;x.readAsDataURL(f)})}else u=await imgBig(f)}catch(x){$("cks").textContent="Не удалось открыть файл";return}
+  run(async()=>{u=await upImg(u,"orders");await db.collection("orders").doc(o.id).update({chk:u,chkBy:U.uid,chkAt:Date.now(),...lvUp(o),updatedAt:TS()});log("Добавлен чек",o);modal("");toast("Чек сохранён")})}}
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="chk_add"]');if(!b||!S)return;const o=O.find(x=>x.id===b.dataset.id);if(o&&chkOk(o))chkForm(o)});
+/* ===== Живой клиент: купил, оплатил, забрал (без имени и телефона) =====
+   Заказ создаётся сразу «Выдан» и «Оплачен», состав списывается со склада сразу.
+   Есть чек — проверка не нужна. Нет чека — продажа ждёт админа (wkSt: wait → ok | bad). */
+const lvNeed=o=>!!o&&o.wk&&(o.wkSt==="wait"||o.wkSt==="bad")&&+o.st!==5,
+lvUp=o=>o&&o.wk&&o.wkSt!=="ok"?{wkSt:"ok",wkBy:U.uid,wkAt:Date.now(),wkNote:""}:{};
+function newPick(){modal(hd("Новый заказ")+`<div class="lvpk"><button type="button" class="btn big" data-a="lv_new">Живой клиент<small>пришёл, оплатил и сразу забрал</small></button><button type="button" class="btn g big" data-a="new2">Заказ<small>с именем и телефоном: на потом или с доставкой</small></button></div>`)}
+function lvRow(o){const bad=o.wkSt==="bad",hm=o.ts?new Date(o.ts).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}):"";
+ return `<div class="aprq"><div data-a="det" data-id="${o.id}"><span class="rqt">${bad?"Не сходится":"Без чека"} · ${M(o.p)}</span><div class="mut">${esc(o.bn||"")} · ${esc(o.pay||"")} · ${esc(nm(o.by))}${hm?" · "+hm:""}${bad&&o.wkNote?" — «"+esc(o.wkNote)+"»":""}</div></div><div class="rqb"><button class="btn s" type="button" data-a="lv_ok" data-id="${o.id}">Подтвердить</button><button class="btn s g" type="button" data-a="chk_add" data-id="${o.id}">Чек</button>${bad?"":`<button class="btn s g" type="button" data-a="lv_bad" data-id="${o.id}">Не сходится</button>`}</div></div>`}
+function lvBlock(){if(!(adm()||own()))return"";const l=oH().filter(lvNeed).sort((a,b)=>(a.ts||0)-(b.ts||0));return l.length?`<h2>Продажи без чека · ${l.length}</h2><div class="card">${l.map(lvRow).join("")}</div>`:""}
+function lvQueue(){const l=oH().filter(lvNeed).sort((a,b)=>(a.ts||0)-(b.ts||0));modal(hd("Продажи без чека")+`<div id="lvq">${l.map(lvRow).join("")||'<p class="mut">Всё проверено</p>'}</div><div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button></div>`)}
+function lvForm(){const L=myLoc(),bqs=BQ.slice().sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""),"ru")),adminOk=adm()||own();let pay=STO.get("wkpay");if(!PAY.includes(pay))pay=PAY[0];let chkU="",chkPdf=false,it={},pMan=false;
+ modal(hd("Живой клиент")+`<form id="lvf"><label>Букет</label><select name="bq"><option value="">— ввести вручную —</option>${bqs.map(b=>`<option value="${esc(b.id)}">${esc(b.name)} · ${M(b.price)}</option>`).join("")}</select><div id="lvn"><input name="bn" placeholder="Название букета (можно не писать)" autocomplete="off"></div>
+ <label>Цветы со склада</label><div id="lvsel"></div><div class="chips" id="lvch" style="flex-wrap:wrap;overflow-x:hidden;overflow-y:auto;max-height:132px;margin:6px 0 0"></div>
  <div class="g2"><div><label>Цена букета, ₸</label><input name="p" type="number" min="1" inputmode="numeric" required></div><div><label>Сколько букетов</label><div class="row" style="gap:6px"><button type="button" class="btn g s" data-wq="-1" style="flex:none;min-width:42px">−</button><input name="q" type="number" min="1" step="1" inputmode="numeric" value="1" style="text-align:center"><button type="button" class="btn g s" data-wq="1" style="flex:none;min-width:42px">+</button></div></div></div>
- <div id="wkt" class="mut" style="margin:6px 2px 0"></div><label>Оплата</label><div class="chips" id="wkp">${PAY.map(x=>`<button type="button" class="chip${x===pay?" on":""}" data-pay="${esc(x)}">${esc(x)}</button>`).join("")}</div>
- <label>Чек</label><input id="wkc" type="file" accept="image/*,application/pdf"><p class="mut" id="wks" style="margin:4px 2px 0"></p><div id="wkh" class="mut"></div>
+ <div id="lvt" class="mut" style="margin:6px 2px 0"></div><label>Оплата</label><div class="chips" id="lvp">${PAY.map(x=>`<button type="button" class="chip${x===pay?" on":""}" data-pay="${esc(x)}">${esc(x)}</button>`).join("")}</div>
+ <label>Чек</label><input id="lvc" type="file" accept="image/*,application/pdf"><p class="mut" id="lvs" style="margin:4px 2px 0"></p><div id="lvh" class="mut"></div>
  <div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button><button class="btn">Оплачено, выдано</button></div></form>`);
- const f=$("wkf"),el=f.elements,Q=()=>Math.max(1,Math.round(+el.q.value)||1),
+ const f=$("lvf"),el=f.elements,Q=()=>Math.max(1,Math.round(+el.q.value)||1),
  sum=()=>Object.keys(it).reduce((t,k)=>t+((inv(k)||{}).sell||0)*it[k],0),
  draw=()=>{const q=Q(),ks=Object.keys(it);
-  $("wksel").innerHTML=ks.map(k=>{const t=inv(k)||{name:"?"},have=lq(t,L),need=it[k]*q;return `<div class="row" style="gap:8px;margin:8px 0;align-items:center"><span style="flex:1;min-width:0"><b>${esc(t.name)}</b><br><small class="mut"${need>have?' style="color:var(--bad)"':""}>на складе ${have} ${esc(t.unit||"")}${need>have?" · не хватает":""}</small></span><button type="button" class="btn g s" data-bd="${esc(k)}" data-s="-1" style="flex:none;min-width:42px">−</button><input type="number" min="0" step="1" inputmode="numeric" data-bi="${esc(k)}" value="${it[k]}" style="width:76px;flex:none;text-align:center"><button type="button" class="btn g s" data-bd="${esc(k)}" data-s="1" style="flex:none;min-width:42px">+</button></div>`}).join("");
-  $("wkch").innerHTML=INV.filter(i=>lq(i,L)>0&&!(i.id in it)).sort((x,y)=>String(x.cat||"").localeCompare(String(y.cat||""))||String(x.name).localeCompare(String(y.name))).map(i=>`<button type="button" class="chip" data-bc="${esc(i.id)}">${esc(i.name)} <small style="opacity:.6">${lq(i,L)}</small></button>`).join("")||`<span class="mut" style="font-size:13px">${ks.length?"Всё со склада уже добавлено":"На складе этой точки пусто"}</span>`},
+  $("lvsel").innerHTML=ks.map(k=>{const t=inv(k)||{name:"?"},have=lq(t,L),need=it[k]*q;return `<div class="row" style="gap:8px;margin:8px 0;align-items:center"><span style="flex:1;min-width:0"><b>${esc(t.name)}</b><br><small class="mut"${need>have?' style="color:var(--bad)"':""}>на складе ${have} ${esc(t.unit||"")}${need>have?" · не хватает":""}</small></span><button type="button" class="btn g s" data-bd="${esc(k)}" data-s="-1" style="flex:none;min-width:42px">−</button><input type="number" min="0" step="1" inputmode="numeric" data-bi="${esc(k)}" value="${it[k]}" style="width:76px;flex:none;text-align:center"><button type="button" class="btn g s" data-bd="${esc(k)}" data-s="1" style="flex:none;min-width:42px">+</button></div>`}).join("");
+  $("lvch").innerHTML=INV.filter(i=>lq(i,L)>0&&!(i.id in it)).sort((x,y)=>String(x.cat||"").localeCompare(String(y.cat||""))||String(x.name).localeCompare(String(y.name))).map(i=>`<button type="button" class="chip" data-bc="${esc(i.id)}">${esc(i.name)} <small style="opacity:.6">${lq(i,L)}</small></button>`).join("")||`<span class="mut" style="font-size:13px">${ks.length?"Всё со склада уже добавлено":"На складе этой точки пусто"}</span>`},
  upd=()=>{const q=Q(),sm=sum();if(!pMan&&sm>0)el.p.value=sm;const pr=Math.round(+el.p.value)||0;
-  $("wkt").innerHTML=pr>0?"Итого: <b>"+M(pr*q)+"</b>"+(sm>0&&pr!==sm?` · по составу ${M(sm)} <button type="button" class="btn s" id="wkap">Применить</button>`:""):"";const ap=$("wkap");if(ap)ap.onclick=()=>{pMan=false;upd()};
-  $("wkh").textContent=Object.keys(it).length?"":"Цветы не выбраны — со склада ничего не спишется.";
-  $("wks").textContent=chkU?"Чек добавлен — админу на проверку не пойдёт.":adminOk?"Вы админ — проверка не нужна.":"Без чека продажа уйдёт админу на проверку."};
+  $("lvt").innerHTML=pr>0?"Итого: <b>"+M(pr*q)+"</b>"+(sm>0&&pr!==sm?` · по составу ${M(sm)} <button type="button" class="btn s" id="lvap">Применить</button>`:""):"";const ap=$("lvap");if(ap)ap.onclick=()=>{pMan=false;upd()};
+  $("lvh").textContent=Object.keys(it).length?"":"Цветы не выбраны — со склада ничего не спишется.";
+  $("lvs").textContent=chkU?"Чек добавлен — админу на проверку не пойдёт.":adminOk?"Вы админ — проверка не нужна.":"Без чека продажа уйдёт админу на проверку."};
  const all=()=>{draw();upd()};
  f.addEventListener("click",ev=>{const w=ev.target.closest("[data-wq]"),pb=ev.target.closest("[data-pay]"),bc=ev.target.closest("[data-bc]"),bd=ev.target.closest("[data-bd]");
   if(w){el.q.value=Math.max(1,Q()+(+w.dataset.wq));all()}
@@ -1793,8 +2381,8 @@ function wkForm(){const L=myLoc(),bqs=BQ.slice().sort((a,b)=>String(a.name||"").
   else if(bd){const k=bd.dataset.bd,n=Math.round((it[k]||0)+(+bd.dataset.s));if(n<=0)delete it[k];else it[k]=n;all()}});
  f.addEventListener("input",ev=>{const t=ev.target;if(t.dataset&&t.dataset.bi){const n=Math.round(+t.value);if(n>0)it[t.dataset.bi]=n;upd()}else if(t===el.p){pMan=el.p.value!=="";upd()}else if(t===el.q){upd()}});
  f.addEventListener("change",ev=>{const t=ev.target;if(t.dataset&&t.dataset.bi){const n=Math.round(+t.value);if(n>0)it[t.dataset.bi]=n;else delete it[t.dataset.bi];all()}else if(t===el.q){el.q.value=Q();all()}});
- el.bq.onchange=()=>{const b=BQ.find(x=>x.id===el.bq.value);it={};if(b){(b.items||[]).forEach(i=>{if(i.iid&&+i.q>0)it[i.iid]=+i.q});el.p.value=b.price||"";pMan=true}else{el.p.value="";pMan=false}$("wkn").hidden=!!b;all()};
- $("wkc").onchange=async ev=>{const fl=ev.target.files[0];if(!fl)return;$("wks").textContent="Обрабатываю…";try{if(fl.type==="application/pdf"){if(fl.size>600000){chkU="";$("wks").textContent="PDF больше 600 КБ, сфотографируйте чек";return}chkU=await new Promise((r,j)=>{const x=new FileReader();x.onload=()=>r(x.result);x.onerror=j;x.readAsDataURL(fl)});chkPdf=true}else{chkU=await imgBig(fl);chkPdf=false}}catch(x){chkU="";$("wks").textContent="Не удалось открыть файл";return}upd()};
+ el.bq.onchange=()=>{const b=BQ.find(x=>x.id===el.bq.value);it={};if(b){(b.items||[]).forEach(i=>{if(i.iid&&+i.q>0)it[i.iid]=+i.q});el.p.value=b.price||"";pMan=true}else{el.p.value="";pMan=false}$("lvn").hidden=!!b;all()};
+ $("lvc").onchange=async ev=>{const fl=ev.target.files[0];if(!fl)return;$("lvs").textContent="Обрабатываю…";try{if(fl.type==="application/pdf"){if(fl.size>600000){chkU="";$("lvs").textContent="PDF больше 600 КБ, сфотографируйте чек";return}chkU=await new Promise((r,j)=>{const x=new FileReader();x.onload=()=>r(x.result);x.onerror=j;x.readAsDataURL(fl)});chkPdf=true}else{chkU=await imgBig(fl);chkPdf=false}}catch(x){chkU="";$("lvs").textContent="Не удалось открыть файл";return}upd()};
  all();
  f.onsubmit=ev=>{ev.preventDefault();const q=Q(),pr=Math.round(+el.p.value)||0,bq=BQ.find(x=>x.id===el.bq.value),ks=Object.keys(it),
   nmk=ks.slice(0,2).map(k=>(inv(k)||{name:"?"}).name).join(", "),bn=(bq?bq.name:el.bn.value.trim())||nmk||"Букет";
@@ -1807,13 +2395,13 @@ function wkForm(){const L=myLoc(),bqs=BQ.slice().sort((a,b)=>String(a.name||"").
    STO.set("wkpay",pay);log("Живая продажа",{id:r.id,bn:d.bn},M(d.p)+" · "+pay+(u?" · с чеком":adminOk?"":" · БЕЗ ЧЕКА"));
    modal("");toast(ok?"Продажа записана":"Продажа записана. Без чека: проверит админ");
    if(its.length){try{const rr=await ordTake(r.id,{items:its},L,"Живая продажа: "+d.bn);if(rr&&rr.short.length)toast("На складе не хватило: "+rr.short.join(", "))}catch(x){toast("Продажа записана, но склад не списан: "+er(x))}}})}}
-document.addEventListener("click",e=>{const b=e.target.closest('[data-a="wk_new"],[data-a="new2"],[data-a="wkq"],[data-a="wk_ok"],[data-a="wk_bad"]');if(!b||!S)return;const a=b.dataset.a;
- if(a==="wk_new"){if(!mgr())return;return wkForm()}
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="lv_new"],[data-a="new2"],[data-a="lvq"],[data-a="lv_ok"],[data-a="lv_bad"]');if(!b||!S)return;const a=b.dataset.a;
+ if(a==="lv_new"){if(!mgr())return;return lvForm()}
  if(a==="new2"){if(!mgr())return;return form()}
- if(a==="wkq"){if(adm()||own())wkQueue();return}
+ if(a==="lvq"){if(adm()||own())lvQueue();return}
  e.preventDefault();if(!(adm()||own()))return toast("Проверяет администратор");const o=O.find(x=>x.id===b.dataset.id)||oH().find(x=>x.id===b.dataset.id);if(!o)return;
- const row=b.closest(".aprq"),done=()=>{if(row)row.remove();const q=$("wkq");if(q&&!q.querySelector(".aprq")){q.innerHTML='<p class="mut">Всё проверено</p>'}};
- if(a==="wk_ok")run(async()=>{await db.collection("orders").doc(o.id).update({wkSt:"ok",wkBy:U.uid,wkAt:Date.now(),wkNote:"",updatedAt:TS()});log("Живая продажа проверена",o,M(o.p)+" · "+(o.pay||"")+" · "+nm(o.by));toast("Подтверждено");done()});
+ const row=b.closest(".aprq"),done=()=>{if(row)row.remove();const q=$("lvq");if(q&&!q.querySelector(".aprq")){q.innerHTML='<p class="mut">Всё проверено</p>'}};
+ if(a==="lv_ok")run(async()=>{await db.collection("orders").doc(o.id).update({wkSt:"ok",wkBy:U.uid,wkAt:Date.now(),wkNote:"",updatedAt:TS()});log("Живая продажа проверена",o,M(o.p)+" · "+(o.pay||"")+" · "+nm(o.by));toast("Подтверждено");done()});
  else{const w=prompt("Что не сходится? Например: нет оплаты на Kaspi");if(w===null)return;run(async()=>{await db.collection("orders").doc(o.id).update({wkSt:"bad",wkNote:String(w).trim(),wkBy:U.uid,wkAt:Date.now(),updatedAt:TS()});log("Живая продажа: не сходится",o,(w||"")+" · "+M(o.p)+" · "+nm(o.by));toast("Отмечено: не сходится")})}});
 
 
@@ -2137,7 +2725,7 @@ function todoTop(){if(!S)return"";const now=Date.now(),t=today(),r=S.role,L=[],a
   }
   if(own()){try{add(dbIssues().filter(x=>x.sev==="bad").reduce((a,x)=>a+x.n,0),["ошибка в базе","ошибки в базе","ошибок в базе"],"проверить и исправить","warn","#EF4444","dbchk","")}catch(e){eLog(e)}}
   if(mgr()||own())add(O.filter(o=>o.rqK&&+o.st!==5&&rqCan(o)).length,["запрос на отмену или скидку","запроса на отмену или скидку","запросов на отмену или скидку"],"решить","warn","#EF4444","tab","home");
-   if(adm()||own())add(oH().filter(wkNeed).length,["продажа без чека","продажи без чека","продаж без чека"],"проверить","card","#F59E0B","wkq","");
+   if(adm()||own())add(oH().filter(lvNeed).length,["продажа без чека","продажи без чека","продаж без чека"],"проверить","card","#F59E0B","lvq","");
   if(["admin","operator","florist","assistant"].includes(r))add(INVL().filter(isLow).length,["позиция на складе заканчивается","позиции на складе заканчиваются","позиций на складе заканчивается"],"заказать","stock","#F59E0B","al","stock|low");
   if(["admin","operator","florist","assistant"].includes(r)){const fw=INVL().filter(i=>{const f=fresh(i);return f.w||f.b}).length;add(fw,["позиция скоро завянет","позиции скоро завянут","позиций скоро завянут"],"использовать первыми","stock","#EA580C","tab","stock")}
   if(mgr()&&typeof rpTypes==="function"&&rpWin()){add(rpTypes().filter(x=>x!=="wo"&&!rpDone(x)).length,["отчёт за день не сдан","отчёта за день не сдано","отчётов за день не сдано"],"сдать","clip","#64748B","tab","rep")}
@@ -2530,8 +3118,8 @@ const WBS={a5:["A5","@page{size:A5;margin:10mm}body{font-size:14px}.q,.q svg{wid
 function wbDoc(o,u,qr,sz){const row=(a,v)=>v||v===0?`<tr><td>${a}</td><td>${v}</td></tr>`:"";
  return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><style>${WBS[sz][1]}body{font-family:-apple-system,Arial,sans-serif;color:#000;margin:0;line-height:1.35}h1{font-size:20px;margin:0}h2{font-size:15px;margin:2px 0 8px;font-weight:400}table{width:100%;border-collapse:collapse}td{padding:4px 0;border-bottom:1px solid #bbb;vertical-align:top}td:first-child{width:34%;color:#444}.t{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}.q{text-align:center;font-size:9px}.s{font-size:20px;font-weight:700;margin-top:8px}.b{margin-top:10px;display:flex;justify-content:space-between;font-size:11px;color:#444}
 /* живой клиент: выбор при нажатии «＋» и проверка продаж без чека */
-.npk{display:grid;gap:10px;margin-top:8px}.npk .btn{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;min-height:64px}.npk .btn small{font-weight:400;opacity:.75;font-size:13px;white-space:normal}
-#wkf .chips{flex-wrap:wrap}#wkh{margin:6px 2px 0;font-size:13px}
+.lvpk{display:grid;gap:10px;margin-top:8px}.lvpk .btn{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;min-height:64px}.lvpk .btn small{font-weight:400;opacity:.75;font-size:13px;white-space:normal}
+#lvf .chips{flex-wrap:wrap}#lvh{margin:6px 2px 0;font-size:13px}
 </style></head><body><div class="t"><div><h1>${esc(SH.name||"Mirflowers")}</h1><h2>Накладная · заказ №${esc(String(o.id).slice(-5).toUpperCase())}</h2></div><div class="q">${qr||""}<div>Статус заказа</div></div></div><table>${row("Букет",esc(o.bn))}${row("Состав",esc(o.comp))}${row("Клиент",esc(o.client))}${row("Телефон",esc(o.phone))}${row("Получение",esc(((o.date||"")+" "+(o.time||"")).trim()))}${row("Способ",o.dv?"Доставка: "+esc(o.addr):"Самовывоз")}${row("Открытка",esc(o.card))}${row("Комментарий",esc(o.note))}${row("Цена",M(o.p))}${row("Доставка",o.fee?M(o.fee):"")}${row("Предоплата",o.pre?M(o.pre):"")}</table><div class="s">${o.paid?"Оплачено":"К оплате: "+M(rest(o))}</div><div class="b"><span>${esc(SH.phone||"")}</span></div></body></html>`}
 function wbOpen(o,u){const qr=qrSvg(u);let sz=STO.get("wbsz");if(!WBS[sz])sz="a5";const el=document.createElement("div");el.id="wb";
  el.innerHTML=`<div class="wbt"><button class="btn g s" data-wb="x">✕ Закрыть</button><button class="btn s" data-wb="p">Печать</button></div><div class="chips">${Object.keys(WBS).map(k=>`<button class="chip" data-sz="${k}">${WBS[k][0]}</button>`).join("")}</div><iframe title="Накладная"></iframe>`;
