@@ -2361,6 +2361,7 @@ function lvForm(){const L=myLoc(),bqs=BQ.slice().sort((a,b)=>String(a.name||"").
  modal(hd("Живой клиент")+`<form id="lvf"><label>Букет</label><select name="bq"><option value="">— ввести вручную —</option>${bqs.map(b=>`<option value="${esc(b.id)}">${esc(b.name)} · ${M(b.price)}</option>`).join("")}</select><div id="lvn"><input name="bn" placeholder="Название букета (можно не писать)" autocomplete="off"></div>
  <label>Цветы со склада</label><div id="lvsel"></div><div class="chips" id="lvch" style="flex-wrap:wrap;overflow-x:hidden;overflow-y:auto;max-height:132px;margin:6px 0 0"></div>
  <div class="g2"><div><label>Цена букета, ₸</label><input name="p" type="number" min="1" inputmode="numeric" required></div><div><label>Сколько букетов</label><div class="row" style="gap:6px"><button type="button" class="btn g s" data-wq="-1" style="flex:none;min-width:42px">−</button><input name="q" type="number" min="1" step="1" inputmode="numeric" value="1" style="text-align:center"><button type="button" class="btn g s" data-wq="1" style="flex:none;min-width:42px">+</button></div></div></div>
+ <label>Оформление, ₸</label><input name="wrap" type="number" min="0" inputmode="numeric" placeholder="Без оформления">${qch("wrap",[["3000",3000],["2000",2000],["1500",1500]])}
  <div id="lvt" class="mut" style="margin:6px 2px 0"></div><label>Оплата</label><div class="chips" id="lvp">${PAY.map(x=>`<button type="button" class="chip${x===pay?" on":""}" data-pay="${esc(x)}">${esc(x)}</button>`).join("")}</div>
  <label>Чек</label><input id="lvc" type="file" accept="image/*,application/pdf"><p class="mut" id="lvs" style="margin:4px 2px 0"></p><div id="lvh" class="mut"></div>
  <div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button><button class="btn">Оплачено, выдано</button></div></form>`);
@@ -2370,26 +2371,26 @@ function lvForm(){const L=myLoc(),bqs=BQ.slice().sort((a,b)=>String(a.name||"").
   $("lvsel").innerHTML=ks.map(k=>{const t=inv(k)||{name:"?"},have=lq(t,L),need=it[k]*q;return `<div class="row" style="gap:8px;margin:8px 0;align-items:center"><span style="flex:1;min-width:0"><b>${esc(t.name)}</b><br><small class="mut"${need>have?' style="color:var(--bad)"':""}>на складе ${have} ${esc(t.unit||"")}${need>have?" · не хватает":""}</small></span><button type="button" class="btn g s" data-bd="${esc(k)}" data-s="-1" style="flex:none;min-width:42px">−</button><input type="number" min="0" step="1" inputmode="numeric" data-bi="${esc(k)}" value="${it[k]}" style="width:76px;flex:none;text-align:center"><button type="button" class="btn g s" data-bd="${esc(k)}" data-s="1" style="flex:none;min-width:42px">+</button></div>`}).join("");
   $("lvch").innerHTML=INV.filter(i=>lq(i,L)>0&&!(i.id in it)).sort((x,y)=>String(x.cat||"").localeCompare(String(y.cat||""))||String(x.name).localeCompare(String(y.name))).map(i=>`<button type="button" class="chip" data-bc="${esc(i.id)}">${esc(i.name)} <small style="opacity:.6">${lq(i,L)}</small></button>`).join("")||`<span class="mut" style="font-size:13px">${ks.length?"Всё со склада уже добавлено":"На складе этой точки пусто"}</span>`},
  upd=()=>{const q=Q(),sm=sum();if(!pMan&&sm>0)el.p.value=sm;const pr=Math.round(+el.p.value)||0;
-  $("lvt").innerHTML=pr>0?"Итого: <b>"+M(pr*q)+"</b>"+(sm>0&&pr!==sm?` · по составу ${M(sm)} <button type="button" class="btn s" id="lvap">Применить</button>`:""):"";const ap=$("lvap");if(ap)ap.onclick=()=>{pMan=false;upd()};
+  const wr=Math.max(0,Math.round(+el.wrap.value)||0);$("lvt").innerHTML=pr>0?"Итого: <b>"+M(pr*q+wr)+"</b>"+(wr>0?" · с оформлением "+M(wr):"")+(sm>0&&pr!==sm?` · по составу ${M(sm)} <button type="button" class="btn s" id="lvap">Применить</button>`:""):"";const ap=$("lvap");if(ap)ap.onclick=()=>{pMan=false;upd()};
   $("lvh").textContent=Object.keys(it).length?"":"Цветы не выбраны — со склада ничего не спишется.";
   $("lvs").textContent=chkU?"Чек добавлен — админу на проверку не пойдёт.":adminOk?"Вы админ — проверка не нужна.":"Без чека продажа уйдёт админу на проверку."};
  const all=()=>{draw();upd()};
- f.addEventListener("click",ev=>{const w=ev.target.closest("[data-wq]"),pb=ev.target.closest("[data-pay]"),bc=ev.target.closest("[data-bc]"),bd=ev.target.closest("[data-bd]");
+ f.addEventListener("click",ev=>{if(ev.target.closest("[data-qf]"))setTimeout(upd,0);const w=ev.target.closest("[data-wq]"),pb=ev.target.closest("[data-pay]"),bc=ev.target.closest("[data-bc]"),bd=ev.target.closest("[data-bd]");
   if(w){el.q.value=Math.max(1,Q()+(+w.dataset.wq));all()}
   else if(pb){pay=pb.dataset.pay;f.querySelectorAll("[data-pay]").forEach(x=>x.classList.toggle("on",x===pb))}
   else if(bc){it[bc.dataset.bc]=1;all()}
   else if(bd){const k=bd.dataset.bd,n=Math.round((it[k]||0)+(+bd.dataset.s));if(n<=0)delete it[k];else it[k]=n;all()}});
- f.addEventListener("input",ev=>{const t=ev.target;if(t.dataset&&t.dataset.bi){const n=Math.round(+t.value);if(n>0)it[t.dataset.bi]=n;upd()}else if(t===el.p){pMan=el.p.value!=="";upd()}else if(t===el.q){upd()}});
+ f.addEventListener("input",ev=>{const t=ev.target;if(t.dataset&&t.dataset.bi){const n=Math.round(+t.value);if(n>0)it[t.dataset.bi]=n;upd()}else if(t===el.p){pMan=el.p.value!=="";upd()}else if(t===el.wrap){upd()}else if(t===el.q){upd()}});
  f.addEventListener("change",ev=>{const t=ev.target;if(t.dataset&&t.dataset.bi){const n=Math.round(+t.value);if(n>0)it[t.dataset.bi]=n;else delete it[t.dataset.bi];all()}else if(t===el.q){el.q.value=Q();all()}});
  el.bq.onchange=()=>{const b=BQ.find(x=>x.id===el.bq.value);it={};if(b){(b.items||[]).forEach(i=>{if(i.iid&&+i.q>0)it[i.iid]=+i.q});el.p.value=b.price||"";pMan=true}else{el.p.value="";pMan=false}$("lvn").hidden=!!b;all()};
  $("lvc").onchange=async ev=>{const fl=ev.target.files[0];if(!fl)return;$("lvs").textContent="Обрабатываю…";try{if(fl.type==="application/pdf"){if(fl.size>600000){chkU="";$("lvs").textContent="PDF больше 600 КБ, сфотографируйте чек";return}chkU=await new Promise((r,j)=>{const x=new FileReader();x.onload=()=>r(x.result);x.onerror=j;x.readAsDataURL(fl)});chkPdf=true}else{chkU=await imgBig(fl);chkPdf=false}}catch(x){chkU="";$("lvs").textContent="Не удалось открыть файл";return}upd()};
  all();
- f.onsubmit=ev=>{ev.preventDefault();const q=Q(),pr=Math.round(+el.p.value)||0,bq=BQ.find(x=>x.id===el.bq.value),ks=Object.keys(it),
+ f.onsubmit=ev=>{ev.preventDefault();const q=Q(),pr=Math.round(+el.p.value)||0,wr=Math.max(0,Math.round(+el.wrap.value)||0),bq=BQ.find(x=>x.id===el.bq.value),ks=Object.keys(it),
   nmk=ks.slice(0,2).map(k=>(inv(k)||{name:"?"}).name).join(", "),bn=(bq?bq.name:el.bn.value.trim())||nmk||"Букет";
   if(pr<=0)return toast("Укажите цену");
   const its=ks.map(k=>({iid:k,q:it[k]*q})),comp=ks.map(k=>((inv(k)||{name:"?"}).name)+" ×"+it[k]).join(", "),
   now=Date.now(),ok=!!chkU||adminOk,hm=new Date().toTimeString().slice(0,5),
-  d={client:"Живой клиент",phone:"",pk:"",bn:bn+(q>1?" ×"+q:""),comp,loc:L,p:pr*q,wrap:0,pre:0,fee:0,cpay:0,dv:false,addr:"",courier:"",date:today(),time:hm,mk:"",src:"Живой клиент",pay,paid:true,paidAt:now,paidBy:U.uid,needPhoto:false,card:"",note:"",wk:true,wkSt:ok?"ok":"wait",...(ok?{wkBy:U.uid,wkAt:now}:{}),st:4,statusBy:U.uid,doneAt:now,by:U.uid,ts:now,createdAt:TS(),updatedAt:TS()};
+  d={client:"Живой клиент",phone:"",pk:"",bn:bn+(q>1?" ×"+q:""),comp,loc:L,p:pr*q+wr,wrap:wr,pre:0,fee:0,cpay:0,dv:false,addr:"",courier:"",date:today(),time:hm,mk:"",src:"Живой клиент",pay,paid:true,paidAt:now,paidBy:U.uid,needPhoto:false,card:"",note:"",wk:true,wkSt:ok?"ok":"wait",...(ok?{wkBy:U.uid,wkAt:now}:{}),st:4,statusBy:U.uid,doneAt:now,by:U.uid,ts:now,createdAt:TS(),updatedAt:TS()};
   run(async()=>{let u="";if(chkU)u=await upImg(chkU,"orders");
    const r=await db.collection("orders").add({...d,...(u?{chk:u,chkBy:U.uid,chkAt:now,chkT:chkPdf?"pdf":""}:{})});
    STO.set("wkpay",pay);log("Живая продажа",{id:r.id,bn:d.bn},M(d.p)+" · "+pay+(u?" · с чеком":adminOk?"":" · БЕЗ ЧЕКА"));
