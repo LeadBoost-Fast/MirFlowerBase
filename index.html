@@ -321,7 +321,10 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
 #lvf .qrow{align-items:stretch!important}#lvf .qrow .btn{align-self:stretch;min-height:46px;padding:0 16px}
 #lvf .g2,#vaf .g2{align-items:start}
 .fpick{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 0}.fpick .btn{flex:none}.fpick .mut{flex:1;min-width:140px;font-size:13px;margin:0}
-#lvt,#vtt{margin:8px 2px 0;font-size:14px}
+#lvt,#vtt{margin:10px 2px 0;font-size:16px}#lvt b,#vtt b{font-size:19px}
+#lvf input,#lvf select,#vaf input,#vaf select{font-size:16px}
+#lvf .chip,#vaf .chip{min-height:40px}#lvf [data-bd],#vaf [data-bd]{min-height:42px;min-width:46px}
+#lvf .acts,#vaf .acts{margin-top:14px}
 #lvsel .row,#vsel .row{align-items:center}
 </style></head><body>
 <main id="v"><p class="mut">Подключение…</p></main>
@@ -1008,7 +1011,7 @@ function homeAs(){const a=SC.filter(x=>x.st==="in"&&inL(x)).sort((p,q)=>vleft(p)
  vs=SC.filter(x=>x.st==="sold"&&new Date(x.at||0).toLocaleDateString("sv-SE")===t),chk=x=>x.chkAt&&new Date(x.chkAt).toLocaleDateString("sv-SE")===t;
  const it=x=>{const d=vleft(x);return `<div class="card vsc"><div class="row">${th(x.img)}<b style="flex:1">${esc(x.name)}</b><span class="pill ${d<=0?"bad":d<=1?"warn":"ok"}">${d<=0?"убрать":d===1?"проверить":"свежий"}</span></div>
   <div class="mut">Собран ${esc(x.made||"")}${x.byName?" · "+esc(x.byName):""} · ${M(x.price)}${chk(x)?` · <span style="color:var(--ok,#22c55e)">проверен сегодня</span>`:""}</div>
-  <div class="acts">${chk(x)?"":`<button class="btn s" data-a="v_chk" data-id="${x.id}">${ix("check")}Свежий</button>`}<button class="btn g s" data-a="v_sell" data-id="${x.id}">Продан</button><button class="btn r s" data-a="v_wo" data-id="${x.id}">Списать</button></div></div>`};
+  <div class="acts">${chk(x)?"":`<button class="btn s" data-a="v_chk" data-id="${x.id}">${ix("check")}Свежий</button>`}<button class="btn g s" data-a="v_sell" data-id="${x.id}">Продать</button><button class="btn r s" data-a="v_wo" data-id="${x.id}">Списать</button></div></div>`};
  return `<div style="position:relative">${flr("branch","deco")}<h1>Витрина</h1><p class="mut">${esc(S.name||"")} · ${RL[S.role]} · свежесть и качество букетов</p></div>
  <div class="rgs"><div class="tile"><b>${a.length}</b><span>На витрине</span></div><div class="tile" style="${bad.length?"color:var(--bad,#e5484d)":""}"><b>${bad.length+warn.length}</b><span>Проверить</span></div><div class="tile"><b>${vs.length}</b><span>Продано сегодня</span></div></div>
  <div class="acts"><button class="btn" data-a="rp_new" data-id="show">${ix("camera")}Отчёт: фото витрины</button><button class="btn g" data-a="v_add">${ix("show")}Добавить букет</button></div>
@@ -1806,7 +1809,7 @@ function wkForm(){if(!adm())return;const m=/(\d{1,2}:\d{2})\D+(\d{1,2}:\d{2})/.e
 function quickOpts(ns){const s=ns?[]:SC.filter(x=>x.st==="in"),g=(t,a)=>a.length?`<optgroup label="${t}">${a.join("")}</optgroup>`:"";
  return g("Готовые на витрине",s.map(x=>`<option value="s:${x.id}">${esc(x.name)} · ${M(x.price)}</option>`))+g("Каталог букетов",BQ.map(b=>`<option value="b:${b.id}">${esc(b.name)} · ${M(b.price)}</option>`))}
 function catCard(b){const n=bmake(b),lim=blim(b);return `<div class="card"><div class="row">${th(b.img)}<b style="flex:1">${esc(b.name)}</b><b>${M(b.price)}</b></div><div class="mut">${esc(bcomp(b))}</div><div style="margin-top:8px">${n?`<span class="pill ok">Можно собрать: ${n} ${pl(n,"букет","букета","букетов")}</span>`:`<span class="pill bad">Не хватает: ${esc(lim)}</span>`}</div>${mgr()?`<div class="acts"><button class="btn s" data-a="q_bo" data-id="${b.id}">Оформить заказ</button></div>`:""}${adm()?`<div class="acts">${delBtn("bouquets",b.id,b.name)}</div>`:""}</div>`}
-function vit(){const a=SC.filter(x=>x.st==="in"),h=SC.filter(x=>x.st!=="in").sort((p,q)=>(q.at||0)-(p.at||0)).slice(0,10),T={sold:"Продан",wo:"Списан",order:"В заказе"},
+function vit(){const a=SC.filter(x=>x.st==="in").sort((p,q)=>vleft(p)-vleft(q)),h=SC.filter(x=>x.st!=="in").sort((p,q)=>(q.at||0)-(p.at||0)).slice(0,10),T={sold:"Продан",wo:"Списан",order:"В заказе"},
  vs=SC.filter(x=>(x.st==="sold"||x.st==="order")&&new Date(x.at||0).toLocaleDateString("sv-SE")===today()),soon=a.filter(x=>vleft(x)<=1),
  top=`<h1>Витрина</h1><div class="tiles"><div class="tile"><b>${a.length}</b><span>Готовых букетов</span></div><div class="tile"><b>${soon.length}</b><span>Срок на исходе</span></div><div class="tile"><b>${vs.length}</b><span>Продано сегодня</span>${vs.length?`<span class="mut" style="display:block;font-size:11px">${M(vs.reduce((q,x)=>q+(+x.price||0),0))}</span>`:""}</div></div><div class="acts"><button class="btn" data-a="v_add">＋ Добавить букет</button></div>`;
  if(vv==="c")return top+`<p class="mut">Рецепты букетов. «Оформить заказ» откроет форму заказа, уже заполненную названием, составом и ценой.</p>`+(BQ.map(catCard).join("")||'<div class="card mut">Каталог пуст. Рецепты создаются в разделе Склад → Букеты.</div>');
@@ -2407,7 +2410,7 @@ function lvForm(scId){const L=myLoc(),bqs=BQ.slice().sort((a,b)=>String(a.name||
    const od={...d,...(u?{chk:u,chkBy:U.uid,chkAt:now,chkT:chkPdf?"pdf":""}:{})};let r;
    if(sx){const rf=db.collection("orders").doc();await db.runTransaction(async t=>{const sr=db.collection("showcase").doc(sx.id),sn=await t.get(sr);if(!sn.exists||sn.data().st!=="in")throw{message:"букет уже убран с витрины"};const sw=await scTakeT(t,sn.data());t.update(sr,{st:"order",oid:rf.id,at:now,opBy:U.uid,opName:S.name,...(sw?sw():{})});t.set(rf,od)});r=rf}else r=await db.collection("orders").add(od);
    STO.set("wkpay",pay);log("Живая продажа",{id:r.id,bn:d.bn},M(d.p)+" · "+pay+(sx?" · с витрины":"")+(u?" · с чеком":adminOk?"":" · БЕЗ ЧЕКА"));
-   modal("");toast(ok?"Продажа записана":"Продажа записана. Без чека: проверит админ");
+   modal("");toast((sx?"Продано с витрины":"Продажа записана")+(ok?"":". Без чека: проверит админ"));
    if(its.length){try{const rr=await ordTake(r.id,{items:its},L,"Живая продажа: "+d.bn);if(rr&&rr.short.length)toast("На складе не хватило: "+rr.short.join(", "))}catch(x){toast("Продажа записана, но склад не списан: "+er(x))}}})}}
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="lv_new"],[data-a="new2"],[data-a="lvq"],[data-a="lv_ok"],[data-a="lv_bad"]');if(!b||!S)return;const a=b.dataset.a;
  if(a==="lv_new"){if(!mgr())return;return lvForm()}
