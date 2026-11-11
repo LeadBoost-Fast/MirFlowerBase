@@ -498,7 +498,7 @@ const FSREADY=(()=>{let rs="";try{rs=localStorage.getItem("fsReset")||"";if(rs)l
 try{auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){eLog(e)}
 const $=i=>document.getElementById(i),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),NFR=new Intl.NumberFormat("ru-RU"),M=n=>NFR.format(Math.round(+n||0))+" ₸";
 const ST=["Новый","Собирается","Готов","В пути","Выдан","Отменён"],stL=o=>+o.st===4&&o.dv?"Доставлен":(ST[+o.st]||"?"),RL={owner:"Владелец",admin:"Администратор",operator:"Оператор",florist:"Флорист",assistant:"Помощник флориста",courier:"Курьер"},SRC=["Instagram","WhatsApp","2ГИС","Телефон","Сайт","Другое"],PAY=["Kaspi","Наличные","Перевод"];
-let U=null,S=null,O=[],SF={},tab="home",fs="fresh",fz2="",fq="",subs=[],lock=0;
+let TH=[];let U=null,S=null,O=[],SF={},tab="home",fs="fresh",fz2="",fq="",subs=[],lock=0;
 const today=()=>new Date().toLocaleDateString("sv-SE"),nm=id=>(SF[id]&&SF[id].name)||"Не назначен",mgr=()=>S&&["admin","operator","florist","assistant"].includes(S.role),adm=()=>S&&S.role==="admin",own=()=>S&&S.own===true,OWN_EM="tilegen615@gmail.com",HEAD_EM="nash0082008@icloud.com",isOwnEm=m=>{m=String(m||"").toLowerCase();return m===OWN_EM||m===HEAD_EM},myRL=()=>own()?(S.head?"Главный администратор":RL.owner):RL[S.role],isOwnId=id=>{const e=SF[id];return !!e&&(e.role==="owner"||isOwnEm(e.email))},canMng=id=>!!SF[id]&&!isOwnId(id)&&(own()||SF[id].role!=="admin"),rl=id=>isOwnId(id)?(String((SF[id]||{}).email||"").toLowerCase()===HEAD_EM?"Главный администратор":RL.owner):(RL[(SF[id]||{}).role]||""),shipT=o=>+o.shipAt||(o.updatedAt&&o.updatedAt.toMillis?o.updatedAt.toMillis():0),wait=o=>o.dv&&+o.st===3&&!o.dvVia?Math.max(0,shipT(o)+180000-Date.now()):0,mmss=ms=>{const s=Math.ceil(ms/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
 let pdn=0,dqPend=0,pdnT=0;
 const dqT=(...t)=>{if(t.includes(tab)||tab==="home")dq()};const dq=()=>{clearTimeout(dq.t);dq.t=setTimeout(()=>{if(document.hidden||pdn){dqPend=1;return}dqPend=0;draw()},150)};
@@ -894,13 +894,14 @@ function uiKey(){return"ui_"+(U?U.uid:"x")}
 function uiLoad(){tab="home";fs="fresh";fdt="";try{const v=JSON.parse(STO.get(uiKey())||"{}");if(typeof v.tab==="string")tab=v.tab;if(typeof v.fs==="string")fs=v.fs;if(typeof v.fdt==="string")fdt=v.fdt}catch(e){eLog(e)}}
 function uiSave(){if(U&&S)STO.set(uiKey(),JSON.stringify({tab,fs,fdt}))}
 function draw(){if(!S)return;if(tab==="tc"&&U&&typeof tcSeen==="function")tcSeen();if(!bu.c)bu.c=new Map();alerts.d=0;locGate();const T=[["home","⌂","Главная"],["orders","☰","Заказы"]];if(mgr()||S.role==="courier")T.push(["map","◎","Карта"]);if(["admin","operator","florist","assistant"].includes(S.role))T.push(["stock","▦","Склад"]);if(["admin","operator","florist","assistant"].includes(S.role))T.push(["show","▤","Витрина"],["gal","🖼","Галерея"]);T.push(["sched","◷","График"]);if(mgr())T.push(["rep","📋","Отчёты"],["st","📊","Статистика"]);if(mgr())T.push(["crm","♥","Клиенты"],...(isOp()&&FX("clientChat")?[["chats","✆","Чаты"]]:[]),...(canTpl()?[["tpl","💬","Шаблоны"]]:[]),...(FX("deals")?[["deals","◫","Сделки"]]:[]),["leads","✉","Заявки"]);if(!mgr()&&canTpl())T.push(["tpl","💬","Шаблоны"]);if(own())T.push(["fin","₸","Финансы"],["an","◔","Аналитика"]);if(adm())T.push(["ctrl","🛡","Контроль"],["cur","🚚","Курьер"],["fl","✿","Сборка"],["team","☺","Команда"],["jr","✎","Журнал"]);if(tab==="deals"&&!FX("deals"))tab="home";if(FX("teamChat"))T.push(["tc","☷","Чат"]);T.push(["help","?","Справка"],["me","⚙","Профиль"]);{const ci=T.findIndex(t=>t[0]==="chats"),oi=T.findIndex(t=>t[0]==="orders");if(ci>oi+1&&oi>=0){const c=T.splice(ci,1)[0];T.splice(oi+1,0,c)}}if(!T.some(x=>x[0]===tab)&&tab!=="more")tab="home";uiSave();
+ if(draw.tab&&draw.tab!==tab&&!draw.bk){if(TH[TH.length-1]!==draw.tab)TH.push(draw.tab);if(TH.length>20)TH.shift()}draw.bk=0;if(tab==="home")TH=[];
  /* Похожие разделы собраны в группы: в меню одна кнопка, внутри — переключатель (gtab) */
  const has=k=>T.some(t=>t[0]===k);GP={};(S.role==="assistant"?GRA:GR).forEach(g=>{const p=g.filter(has);p.forEach(k=>GP[k]=p)});
  const T2=T.filter(t=>hd0(t[0])===t[0]).map(t=>{const p=GP[t[0]];return p&&p.length>1?[t[0],t[1],GHN[t[0]]||t[2]]:t});
  const n=$("nav");n.hidden=false;n.dataset.brand=SH.name||"Mirflowers";const wide=matchMedia("(min-width:900px)").matches,pf0=({admin:["home","orders","chats","show","stock"],operator:["home","orders","chats","show","stock"],florist:["home","orders","chats","show","stock"],assistant:["home","orders","chats","show","stock"],courier:["home","orders","map","sched"]})[S.role]||["home","orders"],pf=[...new Set(pf0.map(hd0))].filter(k=>T2.some(t=>t[0]===k)),PR=wide?T2:pf.map(k=>T2.find(t=>t[0]===k)).filter(Boolean);MORE=wide?[]:T2.filter(t=>!pf.includes(t[0]));if(MORE.length===1){PR.push(MORE[0]);MORE=[]}
  const NV=PR/* «Ещё» — кнопка ☰ слева вверху */,inMore=tab==="more"||MORE.some(t=>t[0]===hd0(tab)),moreN=MORE.reduce((a,t)=>a+(+nbG(t[0])||0),0),plus=!wide&&mgr();document.body.classList.toggle("hasplus",plus);const nbt=NV.map(t=>`<button class="${t[0]===hd0(tab)||(t[0]==="more"&&inMore)?"on":""}" data-t="${t[0]}"><i>${ic(t[0])}</i>${t[2]}${(t[0]==="more"?moreN:nbG(t[0]))?`<b class="nb">${t[0]==="more"?moreN:nbG(t[0])}</b>`:""}</button>`);if(plus)nbt.splice(Math.min(3,nbt.length),0,`<button class="plus" type="button" data-a="new" aria-label="Новый заказ"><i>${ic("plus")}</i></button>`);morph(n,nbt.join(""));tbDraw(MORE.length>0,moreN);
  n.onclick=e=>{const b=e.target.closest("button");if(b&&b.dataset.t){tab=b.dataset.t;draw();scrollTo(0,0)}};
- const cf=chFocus();if(LOC&&!locs().some(x=>x.id===LOC))LOC="";const vh=locBar()+scoped(()=>gtab()+({home,orders,team,me,rep:repV,st:stV,ctrl:ctrlV,cur:curV,fl:homeFl,tpl:tplV,stock,show:vit,gal:galV,crm,chats,tc,leads,fin:own()?fin:home,sched,jr:logv,help:helpV,more:moreV,map:mapV,deals:dealsV,an:own()?anV:home})[tab]())+(mgr()&&(tab==="home"||tab==="orders")?`<button class="btn fab" data-a="new">＋ Заказ</button>`:"");const ve=$("v");if(tab==="map"||draw.tab!==tab){ve.innerHTML=deco(vh);ve.__h=vh}else morph(ve,vh);draw.tab=tab;chFit();bind();if(tab==="map")mapAfter();if(tab==="chats")chBind();if(tab==="tc")tcBind();chAfter(cf)}
+ const cf=chFocus();if(LOC&&!locs().some(x=>x.id===LOC))LOC="";const vh=locBar()+backBar()+scoped(()=>gtab()+({home,orders,team,me,rep:repV,st:stV,ctrl:ctrlV,cur:curV,fl:homeFl,tpl:tplV,stock,show:vit,gal:galV,crm,chats,tc,leads,fin:own()?fin:home,sched,jr:logv,help:helpV,more:moreV,map:mapV,deals:dealsV,an:own()?anV:home})[tab]())+(mgr()&&(tab==="home"||tab==="orders")?`<button class="btn fab" data-a="new">＋ Заказ</button>`:"");const ve=$("v");if(tab==="map"||draw.tab!==tab){ve.innerHTML=deco(vh);ve.__h=vh}else morph(ve,vh);draw.tab=tab;chFit();bind();if(tab==="map")mapAfter();if(tab==="chats")chBind();if(tab==="tc")tcBind();chAfter(cf)}
 
 /* доставка: сотрудник выставляет заказ (dvPost) → любой курьер принимает → забирает («Забрал, еду», st 3) → «Доставлено» */
 /* Окно работы: собирать и отдавать курьеру можно не раньше чем за WINH часов до срока («Сделать до» или время клиента) */
@@ -1045,20 +1046,56 @@ function rqList(){return O.filter(o=>o.rqK&&+o.st!==5&&rqCan(o)).map(o=>`<div cl
 function rqHome(){if(adm()||own()||!mgr())return"";const h=rqList();return h?`<h2>Запросы на подтверждение</h2><div class="card">${h}</div>`:""}
 
 /* ===== Раздел «Контроль» (только админ): всё, что требует внимания, на одном экране ===== */
+/* «Просмотрено»: нажатие на плитку гасит уведомление до завтра или до изменения числа (подпись = день + число) */
+const ctrlSig=(k,n)=>(k==="miss"||k==="rw"?rpDay():today())+":"+n,
+ ctrlDKey=()=>"cd_"+(U?U.uid:"x"),
+ ctrlDis=()=>{try{return JSON.parse(STO.get(ctrlDKey())||"{}")||{}}catch(e){return{}}},
+ ctrlDisSet=(k,n)=>{const d=ctrlDis();d[k]=ctrlSig(k,n);STO.set(ctrlDKey(),JSON.stringify(d))};
 function ctrlStat(){const now=Date.now(),O2=oH(),act=O2.filter(o=>+o.st<4&&+o.st!==5);
  const late=act.filter(o=>(o.date&&new Date(o.date+"T"+(o.time||"23:59")).getTime()<now)||(+o.st<2&&mkOf(o)&&new Date(mkOf(o)).getTime()<now)).length,
   unpaid=O2.filter(o=>+o.st>=2&&+o.st<5&&!o.paid).length,nobody=O2.filter(o=>+o.st===0).length,
   noChk=O2.filter(lvNeed).length,rw=RP.filter(r=>r.date===rpDay()&&!r.rv).length,rbad=RP.filter(r=>r.date===rpDay()&&r.rv==="bad").length,
   miss=rpWin()?rpMissLoc().length:0,low=INVL().filter(isLow).length,fresh=SC.filter(x=>x.st==="in"&&vleft(x)<=1).length,rq=typeof rqList==="function"&&rqList()?1:0;
- return{late,unpaid,nobody,noChk,rw,rbad,miss,low,fresh,rq}}
+ const c={late,unpaid,nobody,noChk,rw,rbad,miss,low,fresh,rq,h:{}},ds=ctrlDis();
+ ["late","unpaid","nobody","noChk","rw","miss","low","fresh"].forEach(k=>{if(c[k]&&ds[k]===ctrlSig(k,c[k])){c.h[k]=c[k];c[k]=0}});
+ return c}
 function ctrlCnt(){if(!adm())return 0;try{const c=ctrlStat();return c.late+c.unpaid+c.nobody+c.noChk+c.rw+c.miss+c.low+c.fresh+c.rq}catch(e){return 0}}
 function ctrlV(){if(!adm())return home();const c=ctrlStat(),
- tl=(n,t,a,id,bad)=>`<button type="button" class="tile" data-a="${a}" data-id="${id}" style="text-align:left;cursor:pointer"><b style="${n&&bad?"color:var(--bad,#e5484d)":""}">${n}</b><span>${t}</span></button>`,
- tiles=[tl(c.late,"Просрочено","al","orders|late",1),tl(c.unpaid,"Готово, не оплачено","al","orders|unpaid",1),tl(c.nobody,"Новых, никто не взял","al","orders|0"),tl(c.noChk,"Продаж без чека","lvq","",1),
-  tl(c.rw,"Отчётов к проверке","go2","rep|"),tl(c.miss,"Точек не сдали отчёт","go2","rep|",1),tl(c.low,"Заканчивается на складе","al","stock|low"),tl(c.fresh,"Витрина: срок на исходе","go2","show|")].join(""),
+ tl=(n,t,a,id,bad,dk)=>`<button type="button" class="tile" data-a="${a}" data-id="${id}"${dk?` data-dk="${dk}" data-dn="${n||c.h[dk]||0}"`:""} style="text-align:left;cursor:pointer"><b style="${n&&bad?"color:var(--bad,#e5484d)":""}">${n}</b><span>${t}</span>${dk&&c.h[dk]?`<small class="mut" style="display:block;font-size:11px;margin-top:2px">✓ просмотрено · было ${c.h[dk]}</small>`:""}</button>`,
+ tiles=[tl(c.late,"Просрочено","al","orders|late",1,"late"),tl(c.unpaid,"Готово, не оплачено","al","orders|unpaid",1,"unpaid"),tl(c.nobody,"Новых, никто не взял","al","orders|0",0,"nobody"),tl(c.noChk,"Продаж без чека","lvq","",1,"noChk"),
+  tl(c.rw,"Отчётов к проверке","go2","rep|",0,"rw"),tl(c.miss,"Точек не сдали отчёт","cmiss","",1,"miss"),tl(c.low,"Заканчивается на складе","al","stock|low",0,"low"),tl(c.fresh,"Витрина: срок на исходе","go2","show|",0,"fresh")].join(""),
+ hid=Object.keys(c.h).length,
  total=c.late+c.unpaid+c.nobody+c.noChk+c.rw+c.miss+c.low+c.fresh+c.rq,
  quick=[["rep","Отчёты"],["jr","Журнал"],["team","Команда"],["sched","График"],["st","Статистика"],["cur","Курьеры"]].map(x=>`<button type="button" class="chip" data-a="go2" data-id="${x[0]}|">${x[1]}</button>`).join("");
- return `<h1>Контроль</h1><p class="mut" style="margin:2px 2px 8px">${total?"Требует внимания: "+total+". Нажмите на плитку, чтобы перейти к списку.":"Всё в порядке: срочных дел нет."}</p><div class="tiles ctl" style="grid-template-columns:repeat(2,minmax(0,1fr))">${tiles}</div><div class="chips" style="margin:10px 0 0;flex-wrap:wrap">${quick}</div>${ctrlBlock().replace(/<h2[^>]*>Контроль[^<]*<\/h2>/,"")}`}
+ return `<h1>Контроль</h1><p class="mut" style="margin:2px 2px 8px">${total?"Требует внимания: "+total+". Нажмите на плитку: откроется список, а уведомление скроется до завтра или до новых случаев.":hid?"Всё просмотрено. Скрытые уведомления вернутся завтра или при новых случаях.":"Всё в порядке: срочных дел нет."}</p><div class="tiles ctl" style="grid-template-columns:repeat(2,minmax(0,1fr))">${tiles}</div>${hid?`<div class="chips" style="margin:8px 0 0"><button type="button" class="chip" data-a="cdisreset">↺ Вернуть скрытые (${hid})</button></div>`:""}<div class="chips" style="margin:10px 0 0;flex-wrap:wrap">${quick}</div>${ctrlBlock().replace(/<h2[^>]*>Контроль[^<]*<\/h2>/,"")}`}
+/* Окно «Не сданы отчёты»: по каждой точке видно, какие именно отчёты и за какой день */
+function cmissShow(){const m=rpMissLoc(),d=rpDay(),t=today(),dl=(d===t?"сегодня, ":wdn(d)+", ")+dm(d);
+ modal(hd("Не сданы отчёты")+`<p class="mut">Рабочий день: <b>${dl}</b>. Список считается только за этот день и каждый день начинается заново. Для админа показывается с ${rpAt()}.</p>`
+  +(m.length?m.map(([l,ks])=>`<div class="card"><b>${esc(l.name)}</b>${ks.map(k=>`<div class="ln"><span>${RPT[k].ic} ${RPT[k].n}</span><span class="pill bad">не сдан</span></div>`).join("")}</div>`).join(""):'<div class="card"><span class="pill ok">Все отчёты за день сданы</span></div>')
+  +`<p class="mut">Уведомление скрыто: оно вернётся завтра или если появятся новые несданные отчёты.</p><div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button><button class="btn" type="button" data-a="go2" data-id="rep|">Открыть отчёты</button></div>`)}
+document.addEventListener("click",e=>{if(!S||!adm())return;const r=e.target.closest('[data-a="cdisreset"]');
+ if(r){e.preventDefault();e.stopPropagation();STO.set(ctrlDKey(),"{}");draw();return}
+ const b=e.target.closest("[data-dk]");if(!b)return;const n=+b.dataset.dn||0;if(n)ctrlDisSet(b.dataset.dk,n);
+ if(b.dataset.a==="cmiss"){e.preventDefault();e.stopPropagation();draw();cmissShow()}else setTimeout(draw,0)},true);
+/* Кнопка «Назад»: возвращает на предыдущий раздел */
+const backBar=()=>tab!=="home"&&tab!=="map"?`<button type="button" class="chip" data-a="back" style="margin:0 0 8px">‹ Назад</button>`:"";
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="back"]');if(!b||!S)return;e.preventDefault();e.stopPropagation();modal("");
+ while(TH.length&&TH[TH.length-1]===tab)TH.pop();tab=TH.pop()||"home";draw.bk=1;draw();scrollTo(0,0)},true);
+/* Админу: сотрудник должен был сдать отчёты (окно открывается за час до конца смены), прошло ещё 30 минут, а отчётов нет */
+function rpAdmNf(o){try{nfLog(o)}catch(e){eLog(e)}const p=npGet();if(!p.on||p.until>Date.now()||p.types[o.type]===false)return;nfBanner(o)}
+function rpAdmWatch(){try{if(!S||!adm()||own()||typeof SHL==="undefined")return;const now=Date.now(),t=today(),go=()=>{modal("");tab="rep";draw();scrollTo(0,0)},
+  sent=k=>STO.get(k),mark=k=>STO.set(k,"1"),
+  done=(d,k,L)=>RPD.some(r=>r.date===d&&r.type===k&&(r.loc||"main")===L)||RP.some(r=>r.date===d&&r.type===k&&(r.loc||"main")===L),
+  works=SHL.filter(z=>z.t==="work"&&z.from&&z.to&&(z.date===t||z.date===addD(t,-1)));
+ works.forEach(x=>{const p=SF[x.uid];if(!p||p.active===false||!RPW[p.role])return;const keys=RPW[p.role].filter(k=>k!=="wo");if(!keys.length)return;
+  const st=new Date(x.date+"T"+x.from),en=new Date(x.date+"T"+x.to);if(en<=st)en.setDate(en.getDate()+1);const e=en.getTime();
+  if(now<e-30*6e4||now>e+3*36e5)return;const L=x.loc||p.loc||"main",miss=keys.filter(k=>!done(x.date,k,L)),key="rpm_"+x.date+"_"+x.uid;if(!miss.length||sent(key))return;mark(key);
+  rpAdmNf({type:"rep",title:"Отчёты не сданы",body:(p.name||"Сотрудник")+(locs().length>1?" · "+lname(L):"")+": "+miss.map(k=>RPT[k].n).join(", "),tag:key,go})});
+ /* если на сегодня нет смен по графику — ориентируемся на общее время «Не сдано» + 30 минут */
+ if(!works.some(z=>z.date===t)){const [h,m]=rpAt().split(":").map(Number),at=h*60+m+30,n=new Date(),mins=n.getHours()*60+n.getMinutes(),key="rpm_g_"+rpDay(),ml=rpMissLoc();
+  if(at<1440&&mins>=at&&mins<at+180&&ml.length&&!sent(key)){mark(key);rpAdmNf({type:"rep",title:"Отчёты не сданы",body:ml.map(([l,ks])=>(l.name||"")+": "+ks.map(k=>RPT[k].n).join(", ")).join(" · "),tag:key,go})}}
+}catch(e){eLog(e)}}
+setInterval(rpAdmWatch,60000);setTimeout(rpAdmWatch,8000);
 function ctrlBlock(){if(!adm())return"";const now=Date.now(),t=today(),day0=new Date(t+"T00:00:00").getTime(),L=(a,b)=>`<div class="ln"><span>${a}</span><b>${b}</b></div>`;
  const on=PRS.filter(p=>now-(+p.ts||0)<150000&&SF[p.uid]&&SF[p.uid].active!==false);
  const work=on.map(p=>{const r=SF[p.uid].role,asm=O.filter(o=>+o.st===1&&o.takenBy===p.uid).length,dl=O.filter(o=>o.dv&&+o.st===3&&o.courier===p.uid).length;
