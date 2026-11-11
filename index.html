@@ -1070,7 +1070,7 @@ function ctrlStat(){const now=Date.now(),O2=oH(),act=O2.filter(o=>+o.st<4&&+o.st
  const c={late,unpaid,nobody,noChk,rw,rbad,miss,low,fresh,rq,h:{}},ds=ctrlDis();
  ["late","unpaid","nobody","noChk","rw","miss","low","fresh"].forEach(k=>{if(c[k]&&ds[k]===ctrlSig(k,c[k])){c.h[k]=c[k];c[k]=0}});
  return c}
-function ctrlCnt(){if(!adm())return 0;try{const c=ctrlStat();return c.late+c.unpaid+c.nobody+c.noChk+c.rw+c.miss+c.low+c.fresh+c.rq}catch(e){return 0}}
+function ctrlCnt(){if(!adm())return 0;try{const c=scoped(ctrlStat);return c.late+c.unpaid+c.nobody+c.noChk+c.rw+c.miss+c.low+c.fresh+c.rq}catch(e){return 0}}
 function ctrlV(){if(!adm())return home();const c=ctrlStat(),
  tl=(n,t,a,id,bad,dk)=>`<button type="button" class="tile" data-a="${a}" data-id="${id}"${dk?` data-dk="${dk}" data-dn="${n||c.h[dk]||0}"`:""} style="text-align:left;cursor:pointer"><b style="${n&&bad?"color:var(--bad,#e5484d)":""}">${n}</b><span>${t}</span>${dk&&c.h[dk]?`<small class="mut" style="display:block;font-size:11px;margin-top:2px">✓ просмотрено · было ${c.h[dk]}</small>`:""}</button>`,
  tiles=[tl(c.late,"Просрочено","al","orders|late",1,"late"),tl(c.unpaid,"Готово, не оплачено","al","orders|unpaid",1,"unpaid"),tl(c.nobody,"Новых, никто не взял","al","orders|0",0,"nobody"),tl(c.noChk,"Продаж без чека","lvq","",1,"noChk"),
