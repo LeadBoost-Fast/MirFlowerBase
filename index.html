@@ -878,7 +878,7 @@ auth.onAuthStateChanged(async u=>{await FSREADY;__authDone=1;U=u;S=null;O=[];ON=
   subs.push(db.collection("showcase").where("at",">=",Date.now()-370*864e5).onSnapshot(s=>{B=s.docs.map(d=>({id:d.id,...d.data()}));mg()},E))}
  if(["admin","operator","florist","assistant"].includes(S.role))subs.push(db.collection("visits").where("date",">=",addD(today(),-365)).onSnapshot(s=>{VS=s.docs.map(d=>({id:d.id,...d.data()}));if(tab==="show")dq()},e=>toast("Посетители: "+er(e))));
  if(own())subs.push(db.collection("invcost").onSnapshot(s=>{CST={};s.forEach(d=>CST[d.id]=d.data());INV=invM();dqT("stock","fin","an")},e=>toast("Цены: "+er(e))));
- chSubs();tcSubs();subs.push(db.collection("presence").onSnapshot(s=>{PRS=s.docs.map(d=>d.data());pbU()},e=>{}));beat();
+ chSubs();tcSubs();subs.push(db.collection("presence").onSnapshot(s=>{PRS=s.docs.map(d=>d.data());pbU();dq()},e=>{toast("Онлайн сотрудников: "+er(e))}));beat();
  if(mgr())subs.push(db.collection("deals").onSnapshot(s=>{DL=s.docs.map(d=>({id:d.id,...d.data()}));dqT("deals")},e=>toast("Сделки: "+er(e))));
  if(mgr())subs.push(db.collection("leads").onSnapshot(s=>{LD=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>toast("Заявки: "+er(e))));
  if(adm())subs.push(db.collection("activityLogs").orderBy("ts","desc").limit(500).onSnapshot(s=>{LG=s.docs.map(d=>({...d.data(),_id:d.id}));if(tab==="jr")dq()},e=>toast("Журнал: "+er(e))));
@@ -1097,9 +1097,11 @@ function rpAdmWatch(){try{if(!S||!adm()||own()||typeof SHL==="undefined")return;
 }catch(e){eLog(e)}}
 setInterval(rpAdmWatch,60000);setTimeout(rpAdmWatch,8000);
 function ctrlBlock(){if(!adm())return"";const now=Date.now(),t=today(),day0=new Date(t+"T00:00:00").getTime(),L=(a,b)=>`<div class="ln"><span>${a}</span><b>${b}</b></div>`;
- const on=PRS.filter(p=>now-(+p.ts||0)<150000&&SF[p.uid]&&SF[p.uid].active!==false);
+ const on0=PRS.filter(p=>now-(+p.ts||0)<150000&&SF[p.uid]&&SF[p.uid].active!==false),op={};
+ SLG.forEach(x=>{if(!x.end&&+x.start&&now-x.start<20*36e5&&SF[x.uid]&&SF[x.uid].active!==false&&(!op[x.uid]||x.start>op[x.uid]))op[x.uid]=+x.start});
+ const seen=new Set(on0.map(p=>p.uid)),on=[...on0.map(p=>({...p,sh:p.sh||op[p.uid]||0})),...Object.keys(op).filter(u=>!seen.has(u)).map(u=>({uid:u,sh:op[u],off:1}))];
  const work=on.map(p=>{const r=SF[p.uid].role,asm=O.filter(o=>+o.st===1&&o.takenBy===p.uid).length,dl=O.filter(o=>o.dv&&+o.st===3&&o.courier===p.uid).length;
-  const what=(p.sh?`смена с ${new Date(p.sh).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"})} · `:"не на смене · ")+(r==="courier"?(dl?`в пути: ${dl}`:"свободен"):(asm?`собирает: ${asm}`:"свободен"));return `<div class="ln"><span>${esc(nm(p.uid))} <span class="mut">· ${esc(RL[r]||r)}</span></span><span class="mut">${what}</span></div>`}).join("");
+  const what=(p.sh?`смена с ${new Date(p.sh).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"})}${p.off?" (не в сети)":""} · `:"не на смене · ")+(r==="courier"?(dl?`в пути: ${dl}`:"свободен"):(asm?`собирает: ${asm}`:"свободен"));return `<div class="ln"><span>${esc(nm(p.uid))} <span class="mut">· ${esc(RL[r]||r)}</span></span><span class="mut">${what}</span></div>`}).join("");
  const late=O.filter(o=>+o.st<4&&+o.st!==5&&((o.date&&new Date(o.date+"T"+(o.time||"23:59")).getTime()<now)||(+o.st<2&&mkOf(o)&&new Date(mkOf(o)).getTime()<now))).length,
   unpaid=O.filter(o=>+o.st>=2&&+o.st<5&&!o.paid).length,redo=O.filter(o=>+o.redoAt>=day0).length,nobody=O.filter(o=>+o.st===0).length;
  const att=[[late,"просрочено","orders|late"],[unpaid,"готово, но не оплачено","orders|unpaid"],[nobody,"новых, никто не взял","orders|0"],[redo,"переделок сегодня","orders|"]].filter(x=>x[0]).map(x=>`<div class="ln" ${x[2]?`data-a="al" data-id="${x[2]}" style="cursor:pointer"`:""}><span>${x[1]}</span><b style="color:${x[2]==="orders|late"?"var(--bad,#e5484d)":"var(--ink)"}">${x[0]}</b></div>`).join("");
