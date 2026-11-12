@@ -2231,11 +2231,13 @@ detRv=o=>chkBtn(o)+(isOp()&&+o.st===2&&o.rv==="wait"&&(adm()||own()||o.asm!==U.u
 rvSec=()=>{if(!isOp())return"";const w=O.filter(o=>+o.st===2&&o.rv==="wait").sort(byDt),r=O.filter(o=>+o.st===1&&o.rv==="redo").sort(byDt);return(w.length?`<h2>На приёмке: ${w.length}</h2><div class="og">${w.map(card).join("")}</div>`:"")+(r.length?`<h2>На переделке у флориста: ${r.length}</h2><div class="og">${r.map(card).join("")}</div>`:"")};
 
 /* ===== Главная администратора ===== */
-function teamNow(){const now=Date.now(),op={};SLG.forEach(x=>{if(!x.end&&+x.start&&now-x.start<20*36e5&&SF[x.uid]&&SF[x.uid].active!==false&&(!op[x.uid]||x.start>op[x.uid]))op[x.uid]=+x.start});
+function teamNow(){const now=Date.now(),op={},lc={};SLG.forEach(x=>{if(!x.end&&+x.start&&now-x.start<20*36e5&&SF[x.uid]&&SF[x.uid].active!==false&&(!op[x.uid]||x.start>op[x.uid])){op[x.uid]=+x.start;lc[x.uid]=x.loc||SF[x.uid].loc||"main"}});
  const hm=t=>new Date(t).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}),
   row=u=>{const r=SF[u].role,w=O.filter(o=>+o.st===1&&o.takenBy===u).length,dl=O.filter(o=>o.courier===u&&+o.st>=2&&+o.st<4).length,a=r==="florist"||r==="assistant"?(w?"собирает "+w:"с "+hm(op[u])):r==="courier"?(dl?"везёт "+dl:"на линии с "+hm(op[u])):"с "+hm(op[u]);
-   return `<div class="ln"><span style="color:var(--ink)">${esc(nm(u))} <span class="mut">· ${rl(u)}</span></span><b>${a}</b></div>`},ids=Object.keys(op);
- return card2("Сейчас на смене",ids.length?ids.map(row).join(""):`<span class="mut">Никто не начал смену</span>`)}
+   return `<div class="ln"><span style="color:var(--ink)">${esc(nm(u))} <span class="mut">· ${rl(u)}</span></span><b>${a}</b></div>`},ids=Object.keys(op).sort((a,b)=>op[a]-op[b]),LS=locs(),hd=n=>`<div class="mut" style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin:12px 0 2px">${esc(n)}</div>`,
+  gl=[...new Set([...LS.map(l=>l.id),...ids.map(u=>lc[u]||"main")])],
+  body=gl.length>1?gl.map(id=>{const g=ids.filter(u=>(lc[u]||"main")===id);return g.length?hd(lname(id))+g.map(row).join(""):""}).join(""):ids.map(row).join("");/* по точкам, внутри точки — кто раньше зашёл */
+ return card2("Сейчас на смене",ids.length?body:`<span class="mut">Никто не начал смену</span>`)}
 function homeAd(){const t=today(),live=O.filter(o=>+o.st!==5),td=live.filter(o=>o.date===t),money=td.reduce((a,o)=>a+tot(o),0),pd=td.filter(o=>o.paid).reduce((a,o)=>a+tot(o),0),ur=live.filter(o=>+o.st<5&&!o.paid).reduce((a,o)=>a+rest(o),0),c=i=>O.filter(o=>+o.st===i).length,
  act=O.filter(o=>+o.st<4).filter(isFresh),up=act.slice().sort((a,b)=>(dueMs(a)||9e15)-(dueMs(b)||9e15)).slice(0,4);
  let k={};try{k=scoped(ctrlStat)}catch(e){}
