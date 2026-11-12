@@ -1621,8 +1621,8 @@ document.addEventListener("input",e=>{const q=e.target.closest&&e.target.closest
 document.addEventListener("change",e=>{const c=e.target.closest(".gsort");if(!c||!S)return;GSRT=c.value;if(c.dataset.s==="2"){const m=$("galm2");if(m)m.innerHTML=galGrid(2)}else if(c.dataset.s==="1"){const m=$("galm");if(m)m.innerHTML=galGrid(1)}else draw()});
 /* ===== Центр уведомлений (колокольчик) и поиск по всему сайту (лупа) ===== */
 let NFH=null;const nfhKey=()=>"nfh_"+(U?U.uid:""),nfSeenK=()=>"nfs_"+(U?U.uid:"");
-function nfhLoad(){if(NFH)return NFH;try{NFH=JSON.parse(STO.get(nfhKey())||"[]")}catch(e){NFH=[]}return NFH}
-function nfLog(o){nfhLoad();const x={ts:Date.now(),title:String(o.title||""),body:String(o.body||""),type:o.type||"",tag:o.tag||""};if(o.tag)NFH=NFH.filter(y=>y.tag!==o.tag);NFH.unshift(x);NFH=NFH.slice(0,40);x.go=o.go;try{STO.set(nfhKey(),JSON.stringify(NFH.map(({go,...r})=>r)))}catch(e){eLog(e)}nfBadge()}
+function nfhLoad(){if(NFH)return NFH;try{NFH=JSON.parse(STO.get(nfhKey())||"[]")}catch(e){NFH=[]}NFH=NFH.filter(x=>x.type!=="chat");return NFH}
+function nfLog(o){if(o&&o.type==="chat")return;nfhLoad();const x={ts:Date.now(),title:String(o.title||""),body:String(o.body||""),type:o.type||"",tag:o.tag||""};if(o.tag)NFH=NFH.filter(y=>y.tag!==o.tag);NFH.unshift(x);NFH=NFH.slice(0,40);x.go=o.go;try{STO.set(nfhKey(),JSON.stringify(NFH.map(({go,...r})=>r)))}catch(e){eLog(e)}nfBadge()}
 const nfUnread=()=>{const s=+(STO.get(nfSeenK())||0);return nfhLoad().filter(x=>x.ts>s).length};
 function nfBadge(){const b=document.querySelector("#tb .tbbell");if(!b)return;let e=b.querySelector(".tbn");const n=nfUnread();if(!n){if(e)e.remove();return}if(!e){e=document.createElement("b");e.className="tbn";b.appendChild(e)}e.textContent=n>99?"99+":n}
 function nfGo(x){const m=String(x.tag||"").match(/^(cr|xf|o|r|c|v|p|d|q|s)(.+)$/);if(x.type==="team"){tab="tc";draw();return}
