@@ -27,7 +27,7 @@ const EXT={"image/jpeg":"jpg","image/png":"png","image/webp":"webp","application
 async function saveBuf(buf,ct,dir){
   const bucket=admin.storage().bucket(),token=crypto.randomUUID();
   const path=`chmedia/${safe(dir)}/${Date.now()}_${crypto.randomBytes(3).toString("hex")}.${EXT[ct]||"bin"}`;
-  await bucket.file(path).save(buf,{contentType:ct,metadata:{metadata:{firebaseStorageDownloadTokens:token}}});
+  await bucket.file(path).save(buf,{contentType:ct,metadata:{cacheControl:"public, max-age=31536000",metadata:{firebaseStorageDownloadTokens:token}}});
   return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(path)}?alt=media&token=${token}`;
 }
 async function saveDataUrl(u,dir){
@@ -143,7 +143,7 @@ async function eCall(c,method,path,body){
 }
 const EST={open:"authorized",close:"notAuthorized",connecting:"starting"};
 async function eState(c,i){try{const j=await eCall(c,"GET","/instance/connectionState/"+eNm(c,i));const st=(j.instance&&j.instance.state)||j.state||"";return EST[st]||st||"notAuthorized"}catch(e){if(e.status===404)return"stopped";throw e}}
-const EVENTS=["MESSAGES_UPSERT","CONNECTION_UPDATE"];
+const EVENTS=["MESSAGES_UPSERT","MESSAGES_UPDATE","CONNECTION_UPDATE"];
 // Исходящее, отправленное с самого телефона: тоже показываем в CRM
 async function ingestOut(o){
   const ref=db().collection("chats").doc(o.ch+"_"+o.key),mref=ref.collection("msgs").doc("m_"+safe(o.mid||Date.now()+"_"+Math.random()));
@@ -180,6 +180,16 @@ exports.waEvoHook=onRequest({...OPT,maxInstances:10,minInstances:1,invoker:"publ
   {const inst=String(b.instance||"").trim();if(inst&&c.einst!==inst){c.einst=inst;try{await db().doc("secrets/channels").set(wi?{waI:{[wi]:{einst:inst}}}:{wa:{einst:inst}},{merge:true})}catch(e){console.error("evo einst",e)}}}
   try{
     if(ev==="connection.update"){const st=d.state||"";await waState(EST[st]||st,wi);return res.sendStatus(200)}
+    if(ev==="messages.update"){ // статусы доставки/прочтения наших сообщений
+      for(const u of (Array.isArray(d)?d:[d])){
+        const kid=String(u.keyId||u.messageId||(u.key&&u.key.id)||""),fm=u.fromMe!==undefined?!!u.fromMe:!!(u.key&&u.key.fromMe),jid0=String(u.remoteJid||(u.key&&u.key.remoteJid)||""),stt=String(u.status||(u.update&&u.update.status)||"").toUpperCase();
+        const rs=/READ|PLAYED/.test(stt)?"read":/DELIVERY/.test(stt)?"delivered":"",d0=jid0.replace(/@.*/,"").replace(/\D/g,"");
+        if(!kid||!fm||!rs||!d0)continue;
+        const q=await db().collection("chats").doc("wa_"+(/@lid$/.test(jid0)?"lid"+d0:d0)).collection("msgs").where("wid","==",kid).limit(1).get();
+        for(const x of q.docs){if(rs==="delivered"&&x.data().rs==="read")continue;await x.ref.update({rs})}
+      }
+      return res.sendStatus(200);
+    }
     if(ev!=="messages.upsert")return res.sendStatus(200);
     const ws=await setOf(wi);if(!ws.on)return res.sendStatus(200);
     const list=Array.isArray(d)?d:(Array.isArray(d.messages)?d.messages:[d]);
@@ -279,6 +289,7 @@ exports.waGreenQr=onCall(OPT,async req=>{
   if(c.mode==="evo"){
     try{
       const st=await eState(c,wi);if(st==="authorized"){await waState(st,wi);return{state:st}}
+      if(req.data&&req.data.st)return{state:st}; // ждём привязку по коду: QR не перезапускаем
       const j=await eCall(c,"GET","/instance/connect/"+eNm(c,wi));const b=String(j.base64||(j.qrcode&&j.qrcode.base64)||"").replace(/^data:image\/\w+;base64,/,"");
       return{state:st,qr:b,msg:b?"":"QR-код ещё не готов, подождите"};
     }catch(e){throw new HttpsError("internal",String(e.message||e))}
@@ -292,7 +303,7 @@ exports.waGreenCode=onCall(OPT,async req=>{
   if(!/^\d{10,15}$/.test(ph))throw new HttpsError("invalid-argument","Введите номер магазина полностью, например 77011234567");
   try{
     let code="";
-    {const r=await eCall(c,"GET","/instance/connect/"+eNm(c,iidOf(req.data&&req.data.i))+"?number="+ph);code=String(r.pairingCode||r.code&&String(r.code).length<=12&&r.code||"")}
+    for(let i=0;i<3&&!code;i++){if(i)await new Promise(r=>setTimeout(r,3000));const r=await eCall(c,"GET","/instance/connect/"+eNm(c,iidOf(req.data&&req.data.i))+"?number="+ph);code=String(r.pairingCode||r.code&&String(r.code).length<=12&&r.code||"")}
     if(!code)throw new Error("Код не получен, попробуйте ещё раз через минуту");
     return{code};
   }catch(e){throw new HttpsError("internal",String(e.message||e))}
@@ -386,10 +397,9 @@ const SEND={
     if(c.mode==="evo"){
       if(!c.evurl)throw new Error("Не задан адрес сервера Evolution API");
       const ext=String((chat&&chat.ext)||""),number=/@lid$/.test(ext)?ext:String(to).replace(/\D/g,""),inst=eNm(c,iidOf(chat&&chat.wi));
-      const remember=async r=>{const id=String((r&&r.key&&r.key.id)||"");if(id)await db().doc("waSent/"+safe(id)).set({ts:Date.now(),t:String(t||"").slice(0,300),img:img||""})}; // t/img — чтобы показать цитату, если клиент ответит на это сообщение
-      if(img)await remember(await eCall(c,"POST","/message/sendMedia/"+inst,{number,mediatype:"image",mimetype:"image/jpeg",media:img,fileName:"photo.jpg",...(t?{caption:t.slice(0,1000)}:{})}));
-      else await remember(await eCall(c,"POST","/message/sendText/"+inst,{number,text:t.slice(0,4000)}));
-      return;
+      const remember=async r=>{const id=String((r&&r.key&&r.key.id)||"");if(id)await db().doc("waSent/"+safe(id)).set({ts:Date.now(),t:String(t||"").slice(0,300),img:img||""});return id}; // t/img — чтобы показать цитату, если клиент ответит на это сообщение
+      if(img)return await remember(await eCall(c,"POST","/message/sendMedia/"+inst,{number,mediatype:"image",mimetype:"image/jpeg",media:img,fileName:"photo.jpg",...(t?{caption:t.slice(0,1000)}:{})}));
+      else return await remember(await eCall(c,"POST","/message/sendText/"+inst,{number,text:t.slice(0,4000)}));
     }
     // отвечаем с того же номера, на который написал клиент (у точки может быть свой номер)
     const pid=(chat&&chat.biz)||c.phoneId;
@@ -433,8 +443,8 @@ exports.sendChannelMsg=onDocumentCreated({...OPT,minInstances:1,document:"chats/
     const text=String(got.t||"");
     if(!text&&!img)throw new Error("Пустое сообщение");
     const to=k==="wa"?((c.phone||"").replace(/\D/g,"")||cid.slice(3)):String(c.ext||cid.slice(k.length+1));
-    await SEND[k](await secretsOf(k),to,text,img,c);
-    await ref.update({st:"sent",sentAt:Date.now()});
+    const wid=await SEND[k](await secretsOf(k),to,text,img,c);
+    await ref.update({st:"sent",sentAt:Date.now(),...(wid?{wid:String(wid)}:{})});
   }catch(err){
     console.error("sendChannelMsg",k,err);
     await ref.update({st:"failed",err:String(err.message||err).slice(0,300)});

@@ -56,8 +56,10 @@ const IC={0:'<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 
 const svg=p=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
 const MON=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
 const hd=(d,t)=>{if(!d)return"";const td=new Date().toLocaleDateString("sv-SE"),tm=new Date(Date.now()+864e5).toLocaleDateString("sv-SE");const w=d===td?"сегодня":d===tm?"завтра":(+d.slice(8))+" "+MON[+d.slice(5,7)-1];return w+(t?" в "+t.slice(0,5):"")};
+const RV=new URLSearchParams(location.search).get("r")==="1";/* r=1 — ссылка на оценку, её шлют только после выдачи */
 let RS=0,RD=null;
-async function rateUi(d){const box=$("rate");if(d.st!==4){box.innerHTML="";return}if(RD)return;RD=d;
+async function rateUi(d){const box=$("rate");if(!RV||d.st===5){box.innerHTML="";return}
+ if(d.st!==4){RD=null;box.innerHTML='<div class="card rate"><h2>Оценка будет доступна позже</h2><p>Поставить оценку можно после того, как вы получите заказ.</p></div>';return}if(RD)return;RD=d;
  let r=null;try{const x=await fdb.collection("reviews").doc(k).get();if(x.exists)r=x.data()}catch(e){}
  if(r)return rateDone(r.s,d);
  box.innerHTML='<div class="card rate"><h2>Как вам букет?</h2><p>Поставьте оценку — нам важно ваше мнение</p><div class="stars">'+[1,2,3,4,5].map(i=>'<button type="button" data-s="'+i+'" aria-label="'+i+'">★</button>').join("")+'</div><textarea id="rc" maxlength="500" placeholder="Комментарий (необязательно)"></textarea><button class="rbtn" id="rsend" disabled>Отправить</button></div>';
