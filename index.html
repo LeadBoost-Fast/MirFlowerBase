@@ -424,6 +424,37 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
 :root[data-ly=h] .gtab button{border-radius:0!important;font-family:var(--fm);text-transform:uppercase;letter-spacing:.1em;font-size:12px}
 :root[data-ly=h] .gtab button.on{background:var(--ink)!important;color:var(--bg)!important;box-shadow:none!important}
 :root[data-ly=h] #reader *:not(img):not(video):not(.nb){border-radius:0!important}
+/* сцены: положение ядра и подписи */
+.cs-field[data-sc=eh] .cs-core{top:calc(var(--s)*.45);height:calc(var(--s)*.13)}
+.cs-field[data-sc=sp] .cs-core,.cs-field[data-sc=neb] .cs-core{background:color-mix(in srgb,var(--bg) 72%,transparent);border:1px solid var(--line)}
+.cs-field[data-sc=neb] .cs-b{filter:drop-shadow(0 0 4px var(--ink))}
+.cs-field[data-sc=sp] .cs-rl,.cs-field[data-sc=neb] .cs-rl{top:calc(50% + var(--s)*.5);transform:translate(-50%,8px)}
+/* «Сборка системы» */
+:root[data-ly=h] .ov .sh:has(.cs-bld){position:fixed;inset:0;max-width:none;width:auto;height:100dvh;max-height:none;margin:0;border:0!important;padding:calc(8px + env(safe-area-inset-top)) 14px calc(16px + env(safe-area-inset-bottom));overflow:auto;background:var(--glass)!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:csFly .34s var(--e) both}
+.cs-bld{max-width:980px;margin:0 auto}
+.cs-bh{display:flex;align-items:center;gap:12px;padding:6px 44px 10px 0;border-bottom:1px solid var(--line)}
+.cs-bh b{font:500 22px/1.1 var(--fh);flex:1}
+.cs-sys{--s:min(calc(100vw - 28px),560px);position:relative;width:var(--s);height:var(--s);margin:18px auto 8px;color:var(--line)}
+.cs-sys .cs-orb{position:absolute;inset:0;width:100%;height:100%}
+.cs-nd{position:absolute;left:calc(var(--s)*var(--x));top:calc(var(--s)*var(--y));transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--ink);animation:csIn .4s var(--e) both}
+.cs-nb{position:relative;width:52px;height:52px;border-radius:50%!important;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0;min-height:0;display:grid;place-items:center;overflow:visible;cursor:pointer;font:500 18px var(--fh)}
+.cs-nb img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+.cs-nd.on .cs-nb{border:2px solid var(--ink);box-shadow:0 0 0 3px var(--bg),0 0 0 4px var(--ink)}
+.cs-nd.big .cs-nb{width:96px;height:96px;font-size:30px}
+.cs-n0{border-style:dashed!important;color:var(--mut)}.cs-n0 svg{width:28px;height:28px}
+.cs-ni{font-style:normal}
+.cs-nb .nb{position:absolute;top:-6px;right:-6px}
+.cs-nl{font:500 10px/12px var(--fm);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis;color:var(--mut)}
+.cs-nd.on .cs-nl{color:var(--ink)}
+.cs-nm{position:absolute;top:-8px;left:-10px;width:26px;height:26px;min-height:0;border-radius:50%!important;border:1px solid var(--ink);background:var(--bg);color:var(--ink);padding:0;font:500 16px/1 var(--fm);cursor:pointer}
+.cs-ex .cs-nb{width:44px;height:44px;font:500 18px var(--fm);border-style:dashed}
+.cs-ex.on .cs-nb{border-style:solid;background:var(--ink);color:var(--bg)}
+.cs-strip{position:relative;margin-top:8px;padding:12px;border:1px solid var(--line);background:var(--bg)}
+.cs-dvs{display:flex;gap:6px;margin:10px 0 0}
+.cs-tot{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:12px 0 10px;font:500 11px var(--fm);letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.cs-tot em{font-style:normal}.cs-tot b{font:500 28px/1 var(--fh);color:var(--ink);letter-spacing:0}
+@media(max-width:899px){.cs-nb{width:44px;height:44px;font-size:16px}.cs-nd.big .cs-nb{width:76px;height:76px;font-size:24px}.cs-ex .cs-nb{width:40px;height:40px}.cs-nl{max-width:72px;font-size:9px}}
+@media(min-width:900px){.cs-bld{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}.cs-bh{grid-column:1/-1}.cs-sys{--s:min(calc(100vw - 420px),calc(100dvh - 140px),620px)}.cs-strip{position:sticky;top:12px;margin-top:18px}}
 @media(prefers-reduced-motion:reduce){:root[data-ly=h] *{animation:none!important;transition:none!important}}
 
 /* миниатюра в выборе дизайна */
@@ -775,7 +806,7 @@ themeCard=()=>{const t=thGet(),cur=PALS[t.p]?t.p:"Тинт",dk=document.document
  rg=(l,k,mn,mx,d)=>`<label>${l}</label><input type="range" min="${mn}" max="${mx}" value="${t[k]==null?d:t[k]}" oninput="thSet('${k}',+this.value)">`,
  dz=`<div class="dzr">${DESIGNS.map((d,i)=>`<button type="button" class="dzb ${ui===d[0]?"on":""}" onclick="setDesign(${i})" title="${d[2]}">${miniPv(d[0])}<b>${d[1]}</b></button>`).join("")}${DSOON.map(d=>`<button type="button" class="dzb dzs" disabled title="${d[2]}">${miniPv(d[0])}<b>${d[1]}</b><small>скоро</small></button>`).join("")}</div><div class="mut" style="font-size:13px;margin:6px 2px 0">${(DESIGNS.find(d=>d[0]===ui)||DESIGNS[0])[2]}</div>`,
  sw=`<div class="pzr">${Object.keys(PALS).map(n=>{const q=PALS[n][dk];return `<button type="button" class="pzb ${cur===n&&!t["ac"+dk]?"on":""}" onclick="setPal('${n}')" title="${n}" aria-label="${n}" style="--a:${q[4]};--b:${q[1]}"><i></i></button>`}).join("")}<label class="pzb pzc ${t["ac"+dk]?"on":""}" title="Свой цвет" style="--a:${t["ac"+dk]||P[4]}"><i></i><input type="color" value="${t["ac"+dk]||P[4]}" oninput="thSet('ac',this.value)" onchange="draw()"></label></div>`;
- return `<h2>Оформление</h2><div class="card"><label style="margin-top:0">Дизайн</label>${dz}${hh?`<label>Сцена</label><div class="chips" style="flex-wrap:wrap"><button type="button" class="chip on">Чёрная дыра</button>${["Туманность","Спиральная галактика","Горизонт событий"].map(n=>`<button type="button" class="chip" disabled title="скоро">${n} · скоро</button>`).join("")}</div><div class="mut" style="font-size:13px;margin:10px 2px 0">В этом дизайне строгий монохром: только чёрный и белый, цветные — только фото. Светлая тема — «Негатив». Выбранные раньше палитра и акцент сохранены и вернутся в Bento.</div>${rg("Яркость свечения","hb",20,100,70)}${rg("Плотность звёзд","hd",20,100,60)}${rg("Скорость вращения (0 — выкл)","hs",0,100,40)}`:`<label>Цвет</label>${sw}<label class="row" style="color:var(--ink);margin:12px 2px 0;justify-content:space-between;font-size:15px">Разноцветные карточки<input type="checkbox" style="width:auto;min-height:0" ${t.mc?"checked":""} onchange="thSet('mc',this.checked?1:0,1)"></label>`}${themeChips()}
+ return `<h2>Оформление</h2><div class="card"><label style="margin-top:0">Дизайн</label>${dz}${hh?`<label>Сцена</label><div class="chips" style="flex-wrap:wrap">${CSC.map(c=>`<button type="button" class="chip ${csScene()===c[0]?"on":""}" onclick="setScene('${c[0]}')">${c[1]}</button>`).join("")}</div><div class="mut" style="font-size:13px;margin:10px 2px 0">В этом дизайне строгий монохром: только чёрный и белый, цветные — только фото. Светлая тема — «Негатив». Выбранные раньше палитра и акцент сохранены и вернутся в Bento.</div>${rg("Яркость свечения","hb",20,100,70)}${rg("Плотность звёзд","hd",20,100,60)}${rg("Скорость вращения (0 — выкл)","hs",0,100,40)}`:`<label>Цвет</label>${sw}<label class="row" style="color:var(--ink);margin:12px 2px 0;justify-content:space-between;font-size:15px">Разноцветные карточки<input type="checkbox" style="width:auto;min-height:0" ${t.mc?"checked":""} onchange="thSet('mc',this.checked?1:0,1)"></label>`}${themeChips()}
  <details class="imore" style="margin-top:10px"><summary>Ещё настройки</summary>${rg("Размер текста","fz",13,21,16)}${hh?"":rg("Скругление карточек","rd",6,30,20)}${rg("Контраст текста","ct",0,100,50)}${hh?"":`<label>`}Цвет текста</label><input type="color" value="${t["ink"+dk]||P[3]}" oninput="thSet('ink',this.value)"><div class="mut" style="font-size:13px;margin-top:8px">Видно только вам и только на этом устройстве.</div><div class="acts"><button class="btn g s" type="button" onclick="thSet('reset');toast('Оформление сброшено')">Сбросить</button></div></details></div>`}
 applyTheme();if(sysDark.addEventListener)sysDark.addEventListener("change",()=>{if((STO.get("t")||"auto")==="auto")applyTheme()});
 function toast(m){const e=$("toast");if(typeof unemo==="function")m=unemo(m);e.textContent=(typeof tr==="function"?tr(m):m);e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,3500)}
@@ -974,6 +1005,7 @@ if(LANG==="kk")Object.assign(KZ,{
 });
 if(LANG==="kk")Object.assign(KZ,{"Мой экран":"Менің экраным","Имя и роль":"Аты мен рөлі","Подсказка дня":"Күн кеңесі","Точки без адреса на карте":"Картада мекенжайы жоқ нүктелер","Смена":"Ауысым","Запросы":"Сұраулар","Рабочая сводка":"Жұмыс жиынтығы","Мои показатели":"Менің көрсеткіштерім","Мой заработок":"Менің табысым","Отчёты за день":"Күндік есептер","Итог смены":"Ауысым қорытындысы","Закреплённые разделы":"Бекітілген бөлімдер","Смотреть как":"Басқаша көру","Вернуть как было":"Бұрынғыдай қайтару","Вернули как было":"Бұрынғыдай қайтарылды","Только просмотр. Данные — ваши, состав и порядок — как у этой роли.":"Тек көру. Деректер — сіздікі, құрамы мен реті — осы рөлдегідей.","Главная глазами сотрудника. Только просмотр, нажать ничего нельзя.":"Қызметкердің басты беті. Тек көру, ештеңе басуға болмайды.","Нижнее меню на телефоне: Главная и ещё 2–4 раздела.":"Телефондағы төменгі мәзір: Басты бет және тағы 2–4 бөлім.","Что стоит на главной и в каком порядке. Видно только вам и только на этом устройстве.":"Басты бетте не тұр және қандай ретпен. Тек сізге және тек осы құрылғыда көрінеді.","Можно закрепить до 4 разделов, кроме Главной":"Басты беттен басқа 4 бөлімге дейін бекітуге болады","Нужно хотя бы 2 раздела, кроме Главной":"Басты беттен басқа кемінде 2 бөлім керек","скоро":"жақында","Ретро-HUD":"Ретро-HUD","Окна-терминалы и командная строка":"Терминал терезелері және пәрмен жолы","Атлас":"Атлас","Ботанический журнал: оглавление и развороты":"Ботаникалық журнал: мазмұны мен беттері","Мастерская":"Шеберхана","Станции для работы руками":"Қолмен жұмыс істеуге арналған станциялар","Выше":"Жоғары","Ниже":"Төмен","Пусто":"Бос","Закрыть":"Жабу"});
 if(LANG==="kk")Object.assign(KZ,{"Космос":"Ғарыш","Чёрная дыра: заказы на орбитах, планеты-разделы, радар дня, считыватель":"Қара құрдым: тапсырыстар орбитада, бөлімдер-планеталар, күн радары, оқығыш","Сцена":"Көрініс","Чёрная дыра":"Қара құрдым","Туманность":"Тұмандық","Спиральная галактика":"Спираль галактика","Горизонт событий":"Оқиға көкжиегі","К дыре":"Құрдымға","Радар дня":"Күн радары","Радар":"Радар","Список":"Тізім","Сводка":"Жиынтық","Дальний пояс":"Алыс белдеу","Сегодня":"Бүгін","Мои доставки":"Менің жеткізулерім","К сборке":"Жинауға","в работе":"жұмыста","позже":"кейін","Поиск":"Іздеу","Сигналы":"Сигналдар","Телеметрия":"Телеметрия","Сейчас":"Қазір","не оплачен / просрочен":"төленбеген / кешіккен","Срок":"Мерзімі","Клиент":"Клиент","Букет":"Гүл шоғы","Сумма":"Сома","Ничего не найдено":"Ештеңе табылмады","Разделы":"Бөлімдер","Пульт":"Пульт","На орбитах пусто — активных заказов нет":"Орбиталар бос — белсенді тапсырыс жоқ","Угол — время, кольцо — статус: от центра «Выдан», «В пути», «Готов», «Собирается», снаружи «Новый»":"Бұрыш — уақыт, сақина — күйі: ортадан «Берілді», «Жолда», «Дайын», «Жиналуда», сыртта «Жаңа»","В этом дизайне строгий монохром: только чёрный и белый, цветные — только фото. Светлая тема — «Негатив». Выбранные раньше палитра и акцент сохранены и вернутся в Bento.":"Бұл дизайн тек ақ пен қара: түрлі түсті тек фото. Ашық тақырып — «Негатив». Бұрын таңдалған түстер сақталады және Bento-ға қайтады."});
+if(LANG==="kk")Object.assign(KZ,{"Сборка системы":"Жүйені жинау","Классическая форма":"Классикалық форма","Выберите цветы":"Гүлдерді таңдаңыз","Упаковка":"Орама","Адрес":"Мекенжай","Итог":"Барлығы","пусто":"бос","Оформить":"Рәсімдеу","Добавьте хотя бы один цветок":"Кем дегенде бір гүл қосыңыз","Откроется привычная форма с уже заполненными данными: проверьте срок, оплату и сохраните.":"Толтырылған әдеттегі форма ашылады: мерзімін, төлемін тексеріп, сақтаңыз.","На складе этой точки нет позиций — используйте классическую форму":"Бұл нүктенің қоймасында тауар жоқ — классикалық форманы пайдаланыңыз","к ядру — срочнее":"ядроға жақын — шұғылырақ","ярче в центре — срочнее":"ортада жарқын — шұғылырақ"});
 if(LANG==="kk")Object.assign(KZ,{"букет готов": "букет дайын", "букета готово": "букет дайын", "букетов готово": "букет дайын", "забрать и нажать «Забрал, еду»": "алып, «Алдым, кеттім» бас", "букет ждёт приёмки": "букет қабылдауды күтіп тұр", "букета ждут приёмки": "букет қабылдауды күтіп тұр", "букетов ждут приёмки": "букет қабылдауды күтіп тұр", "проверить": "тексер", "букет коллеги ждёт приёмки": "әріптестің букеті қабылдауды күтіп тұр", "букета коллег ждут приёмки": "әріптестің букеті қабылдауды күтіп тұр", "букетов коллег ждут приёмки": "әріптестің букеті қабылдауды күтіп тұр", "ваш заказ просрочен": "заказың кешікті", "ваших заказа просрочено": "заказың кешікті", "ваших заказов просрочено": "заказың кешікті", "доделать": "бітір", "доставка в пути": "доставка жолда", "доставки в пути": "доставка жолда", "доставок в пути": "доставка жолда", "отметить «Доставлено»": "«Жеткізілді» деп белгіле", "доставка готова к отправке": "доставка жіберуге дайын", "доставки готовы к отправке": "доставка жіберуге дайын", "доставок готово к отправке": "доставка жіберуге дайын", "вызвать такси и нажать «Отправлено»": "такси шақырып, «Жіберілді» бас", "доставка едет через сервис": "доставка сервис арқылы бара жатыр", "доставки едут через сервис": "доставка сервис арқылы бара жатыр", "доставок едут через сервис": "доставка сервис арқылы бара жатыр", "доставка ждёт курьера": "доставка курьерді күтіп тұр", "доставки ждут курьера": "доставка курьерді күтіп тұр", "доставок ждут курьера": "доставка курьерді күтіп тұр", "доставка просрочена": "доставка кешікті", "доставки просрочено": "доставка кешікті", "доставок просрочено": "доставка кешікті", "доставку нужно отправить": "доставканы жіберу керек", "доставки нужно отправить": "доставканы жіберу керек", "доставок нужно отправить": "доставканы жіберу керек", "курьеру или через inDrive / Яндекс": "курьерге не inDrive / Яндекс арқылы", "заказ готов к выдаче": "заказ беруге дайын", "заказа готовы к выдаче": "заказ беруге дайын", "заказов готовы к выдаче": "заказ беруге дайын", "выдать клиенту": "клиентке бер", "заказ на переделку": "заказ қайта жасауға", "заказа на переделку": "заказ қайта жасауға", "заказов на переделку": "заказ қайта жасауға", "исправить": "түзет", "заказ не оплачен": "заказ төленбеген", "заказа не оплачено": "заказ төленбеген", "заказов не оплачено": "заказ төленбеген", "получить оплату": "төлемді ал", "запрос на отмену или скидку": "отмена не жеңілдік сұрауы", "запроса на отмену или скидку": "отмена не жеңілдік сұрауы", "запросов на отмену или скидку": "отмена не жеңілдік сұрауы", "решить": "шеш", "новый заказ": "жаңа заказ", "новых заказа": "жаңа заказ", "новых заказов": "жаңа заказ", "взять в работу": "жұмысқа ал", "отчёт за день не сдан": "күндік есеп тапсырылмаған", "отчёта за день не сдано": "күндік есеп тапсырылмаған", "отчётов за день не сдано": "күндік есеп тапсырылмаған", "сдать": "тапсыр", "позиция на складе заканчивается": "складта позиция бітіп барады", "позиции на складе заканчиваются": "складта позиция бітіп барады", "позиций на складе заканчивается": "складта позиция бітіп барады", "заказать": "заказ бер", "позиция скоро завянет": "позиция жақында солады", "позиции скоро завянут": "позиция жақында солады", "позиций скоро завянут": "позиция жақында солады", "использовать первыми": "бірінші соларды қолдан", "свободная доставка": "бос доставка", "свободные доставки": "бос доставка", "свободных доставок": "бос доставка", "можно принять": "алуға болады", "чат ждёт ответа": "чат жауап күтіп тұр", "непрочитанный чат": "оқылмаған чат", "непрочитанных чата": "оқылмаған чат", "непрочитанных чатов": "оқылмаған чат", "чата ждут ответа": "чат жауап күтіп тұр", "чатов ждут ответа": "чат жауап күтіп тұр", "Отправлено": "Жіберілді"});
 KZR.push(
 [/^(сегодня|завтра|вчера) (\d{1,2}:\d{2})$/,m=>({сегодня:"бүгін",завтра:"ертең",вчера:"кеше"})[m[1]]+" "+m[2]],
@@ -1269,27 +1301,78 @@ function csBody(o,x,y,z,d,full,nol){const now=Date.now(),late=!!dueMs(o)&&dueMs(
 const csTop=()=>`<div class="cs-top"><span class="cs-brand">${esc(SH.name||"Mirflowers")}</span>${typeof ptBtn==="function"?ptBtn():""}</div>`;
 function csPult(){const nf=typeof nfUnread==="function"?+nfUnread()||0:0,m=mgr();
  return `<div class="cs-pult" role="toolbar" aria-label="Пульт"><button type="button" data-a="gso" aria-label="Поиск">${TBI.search}<span>Поиск</span></button><button type="button" class="cs-plus" ${m?'data-a="new" aria-label="Новый заказ"':'data-a="goto" data-id="orders" aria-label="Заказы"'}>${ic(m?"plus":"orders")}</button><button type="button" data-a="nfc" aria-label="Сигналы">${TBI.bell}<span>Сигналы</span>${nf?`<b class="nb">${nf>99?"99+":nf}</b>`:""}</button></div>`}
+/* сцены «Космоса»: меняются фон и форма главной, конструкция экранов общая */
+const CSC=[["bh","Чёрная дыра"],["neb","Туманность"],["sp","Спиральная галактика"],["eh","Горизонт событий"]],
+ csScene=()=>{const k=(thGet().sc||"bh");return CSC.some(x=>x[0]===k)?k:"bh"},
+ csHash=s=>{let h=2166136261;for(const c of String(s))h=Math.imul(h^c.charCodeAt(0),16777619);h^=h>>>16;h=Math.imul(h,2246822507);h^=h>>>13;h=Math.imul(h,3266489909);h^=h>>>16;return (h>>>0)/4294967295};
+function setScene(k){if(!CSC.some(x=>x[0]===k))return;const th=thGet();th.sc=k;STO.set("th",JSON.stringify(th));SKY.st=null;SKY.disk=null;if(S)draw()}
+/* где стоит заказ-тело в каждой сцене: доля от размера поля + масштаб */
+function csPos(sc,o,i,n,oi,j,gl){const t=n>1?i/(n-1):0;
+ if(sc==="sp"){const rf=.18+.29*t,arm=i%2?Math.PI:0,th=arm+Math.log(rf/.135)*2.4;return[.5+rf*Math.cos(th),.5+rf*Math.sin(th),1]}
+ if(sc==="eh"){const rf=[.31,.40,.49][oi],a=(-70+j/gl*360+oi*41)*Math.PI/180,y=.45+rf*Math.sin(a)*.45;return[.5+rf*Math.cos(a),y,.7+.75*Math.max(0,(y-.25)/.45)]}
+ if(sc==="neb"){const a=(i*137.508+csHash(o.id)*40)*Math.PI/180,rf=.16+.30*t+(csHash(o.id+"r")-.5)*.05;return[.5+rf*Math.cos(a)*1.02,.5+rf*Math.sin(a)*.86,1]}
+ const R=[.25,.355,.46],a=(-70+j/gl*360+oi*37)*Math.PI/180;return[.5+R[oi]*Math.cos(a),.5+R[oi]*Math.sin(a),1]}
+function csOrbSvg(sc){const ring=(r,ds)=>`<circle cx="500" cy="500" r="${r}" fill="none" stroke="currentColor" stroke-width="1" ${ds?'stroke-dasharray="2 8"':""} vector-effect="non-scaling-stroke"/>`,
+  ticks=Array.from({length:72},(_,i)=>{const a=i*5*Math.PI/180,r1=486,r2=i%6?478:466;return `<line x1="${Math.round(500+r1*Math.sin(a))}" y1="${Math.round(500-r1*Math.cos(a))}" x2="${Math.round(500+r2*Math.sin(a))}" y2="${Math.round(500-r2*Math.cos(a))}" stroke="currentColor" stroke-width="1" vector-effect="non-scaling-stroke"/>`}).join("");
+ if(sc==="eh")return [310,400,490].map(r=>`<ellipse cx="500" cy="450" rx="${r}" ry="${Math.round(r*.45)}" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 8" vector-effect="non-scaling-stroke"/>`).join("");
+ if(sc==="sp"){const arm=k=>{let d="";for(let q=0;q<=40;q++){const rf=.15+.33*q/40,th=k*Math.PI+Math.log(rf/.135)*2.4;d+=(q?"L":"M")+Math.round(500+rf*1000*Math.cos(th))+" "+Math.round(500+rf*1000*Math.sin(th))}return `<path d="${d}" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 8" vector-effect="non-scaling-stroke"/>`};return arm(0)+arm(1)+ring(460,0)+ticks}
+ if(sc==="neb")return ticks;
+ return ring(250,1)+ring(355,1)+ring(460,0)+ticks}
 /* главная: центр — сумма за сегодня (у кого нет доступа к деньгам — своё число), заказы-тела: расстояние = срок, размер = сумма, форма = статус */
-function csHome(){const L=csList(),ph=csPh(),V=L.slice(0,ph?12:18),far=L.length-V.length,now=Date.now(),t=today(),
+function csHome(){const sc=csScene(),L=csList(),ph=csPh(),V=L.slice(0,ph?12:18),far=L.length-V.length,now=Date.now(),t=today(),
   G=[[],[],[]];V.forEach(o=>{const d=dueMs(o),m=d?(d-now)/6e4:9e9;G[m<=120?0:m<=360?1:2].push(o)});
- const R=[.25,.355,.46],mx=Math.max(1,...V.map(o=>+tot(o)||0));let B="";
- G.forEach((g,oi)=>g.forEach((o,j)=>{const a=(-70+j/g.length*360+oi*37)*Math.PI/180,z=Math.round(22+12*Math.sqrt((+tot(o)||0)/mx));
-  B+=csBody(o,.5+R[oi]*Math.cos(a),.5+R[oi]*Math.sin(a),z,j*45+oi*110,!ph)}));
+ const mx=Math.max(1,...V.map(o=>+tot(o)||0)),ord=[];G.forEach((g,oi)=>g.forEach((o,j)=>ord.push([o,oi,j,g.length])));
+ const B=ord.map(([o,oi,j,gl],i)=>{const p=csPos(sc,o,i,ord.length,oi,j,gl),z=Math.round((22+12*Math.sqrt((+tot(o)||0)/mx))*p[2]);return csBody(o,p[0],p[1],z,j*45+oi*110,!ph)}).join("");
  const live=O.filter(o=>+o.st!==5&&o.date===t);let cl,cv;
  if(csMoney()){cl="Сегодня";cv=M(live.reduce((a,o)=>a+(+tot(o)||0),0))}
  else if(S.role==="courier"){cl="Мои доставки";cv=String(L.filter(o=>o.courier===U.uid).length)}
  else{cl="К сборке";cv=String(L.filter(o=>+o.st<=1&&isFresh(o)).length)}
  const P=(window.HPL||[]).filter(x=>x[0]!=="home"&&x[0]!=="more"),tn=typeof FX==="function"&&FX("teamChat")&&typeof tcUn==="function"?(+tcUn()||0):-1,
-  ring=(r,ds)=>`<circle cx="500" cy="500" r="${r}" fill="none" stroke="currentColor" stroke-width="1" ${ds?'stroke-dasharray="2 8"':""} vector-effect="non-scaling-stroke"/>`,
-  ticks=Array.from({length:72},(_,i)=>{const a=i*5*Math.PI/180,r1=486,r2=i%6?478:466;return `<line x1="${Math.round(500+r1*Math.sin(a))}" y1="${Math.round(500-r1*Math.cos(a))}" x2="${Math.round(500+r2*Math.sin(a))}" y2="${Math.round(500-r2*Math.cos(a))}" stroke="currentColor" stroke-width="1" vector-effect="non-scaling-stroke"/>`}).join("");
- return `<div id="bh-root" class="cs-home">${csTop()}
+  rl=sc==="bh"?`<span class="cs-rl" style="--r:.25">≤ 2 ч</span><span class="cs-rl" style="--r:.355">≤ 6 ч</span><span class="cs-rl" style="--r:.46">позже</span>`:sc==="sp"?`<span class="cs-rl" style="--r:.46">к ядру — срочнее</span>`:sc==="neb"?`<span class="cs-rl" style="--r:.46">ярче в центре — срочнее</span>`:"";
+ return `<div id="bh-root" class="cs-home" data-sc="${sc}">${csTop()}
  <div class="cs-pl" role="navigation" aria-label="Разделы"><div class="cs-plr">${P.map((x,i)=>{const n=+nbG(x[0])||0;return `<button type="button" class="cs-p" data-a="goto" data-id="${x[0]}"><i class="cs-pg"><i>${ic(x[0])}</i></i><span><em>${String(i+1).padStart(2,"0")}</em> ${esc(x[2])}</span>${n?`<b class="nb">${n>99?"99+":n}</b>`:""}</button>`}).join("")}</div></div>
- <div class="cs-field"><svg class="cs-orb" viewBox="0 0 1000 1000" shape-rendering="geometricPrecision" aria-hidden="true">${ring(250,1)}${ring(355,1)}${ring(460,0)}${ticks}</svg>
-  <span class="cs-rl" style="--r:.25">≤ 2 ч</span><span class="cs-rl" style="--r:.355">≤ 6 ч</span><span class="cs-rl" style="--r:.46">позже</span>
+ <div class="cs-field" data-sc="${sc}"><svg class="cs-orb" viewBox="0 0 1000 1000" shape-rendering="geometricPrecision" aria-hidden="true">${csOrbSvg(sc)}</svg>${rl}
   ${B}<button type="button" class="cs-core" data-a="goto" data-id="orders" aria-label="${cl}: ${cv}"><span>${cl}</span><b>${cv}</b><em>${L.length} в работе</em></button>
   ${tn>=0?`<div class="cs-sat"><button type="button" data-a="goto" data-id="tc" aria-label="Чат команды">${ic("tc")}${tn?`<b class="nb">${tn}</b>`:""}</button></div>`:""}</div>
  <div class="cs-under">${far>0?`<button type="button" class="cs-far" data-a="goto" data-id="orders">Дальний пояс · ${far}</button>`:L.length?"":`<p class="cs-far0">На орбитах пусто — активных заказов нет</p>`}${csLegend()}</div>
  <section class="cs-tele"><h2 class="cs-h"><em>N° 00</em> Сводка</h2>${roleHome()}</section></div>${csPult()}`}
+/* ===== «Сборка системы» — новый заказ: в центре главный цветок, по кольцу сорта (цветные фото), снаружи добавки; внизу клиент, доставка и итог.
+ «Оформить» открывает привычную форму уже заполненной — сохранение, списание склада и проверки остаются прежними. ===== */
+const CB={it:{},nt:0,rb:0,wrap:0,dv:0};
+function csbInv(){const L=myLoc(),I=INVL().filter(i=>lq(i,L)>0||CB.it[i.id]),fl=I.filter(i=>!i.cat||/цвет/i.test(i.cat)),ad=I.filter(i=>!fl.includes(i));return{L,fl,ad}}
+function csbSum(){let s=0;Object.keys(CB.it).forEach(k=>{s+=(+(inv(k)||{}).sell||0)*CB.it[k]});return s}
+function csbTot(){return csbSum()+(+CB.wrap||0)+(CB.nt?300:0)+(CB.rb?500:0)}
+function csbNode(i,x,y,big){const q=CB.it[i.id]||0,img=i.img&&/^(https?:|data:image\/)/.test(i.img)?`<img src="${esc(i.img)}" alt="" loading="lazy">`:`<i class="cs-ni">${esc(String(i.name||"?").charAt(0).toUpperCase())}</i>`;
+ return `<div class="cs-nd${q?" on":""}${big?" big":""}" style="--x:${x.toFixed(4)};--y:${y.toFixed(4)}"><button type="button" class="cs-nb" onclick="csbAdd('${esc(i.id)}',1)" aria-label="Добавить ${esc(i.name)}">${img}${q?`<b class="nb">${q}</b>`:""}</button><span class="cs-nl">${esc(String(i.name||"").slice(0,14))}</span>${q?`<button type="button" class="cs-nm" onclick="csbAdd('${esc(i.id)}',-1)" aria-label="Убрать ${esc(i.name)}">−</button>`:""}</div>`}
+function csbSys(){const {L,fl,ad}=csbInv(),main=Object.keys(CB.it).filter(k=>fl.some(i=>i.id===k)).sort((a,b)=>CB.it[b]-CB.it[a])[0],F=fl.filter(i=>i.id!==main).slice(0,14),A=ad.slice(0,8),
+  ex=[["wrap","Упаковка",CB.wrap?M(CB.wrap):"",!!CB.wrap],["nt","Открытка","+300 ₸",!!CB.nt],["rb","Лента","+500 ₸",!!CB.rb]],
+  ring=(r)=>`<circle cx="500" cy="500" r="${r}" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 8" vector-effect="non-scaling-stroke"/>`;
+ let h=`<svg class="cs-orb" viewBox="0 0 1000 1000" aria-hidden="true">${ring(300)}${ring(450)}</svg>`;
+ const mi=main?inv(main):null;
+ h+=`<div class="cs-ctr">${mi?csbNode(mi,.5,.5,1):`<div class="cs-nd big" style="--x:.5;--y:.5"><span class="cs-nb cs-n0">${ic("plus")}</span><span class="cs-nl">Выберите цветы</span></div>`}</div>`;
+ F.forEach((i,k)=>{const a=(-90+k/Math.max(1,F.length)*360)*Math.PI/180;h+=csbNode(i,.5+.30*Math.cos(a),.5+.30*Math.sin(a))});
+ const outer=[...A.map(i=>["i",i]),...ex.map(e=>["x",e])];
+ outer.forEach((it,k)=>{const a=(-90+18+k/Math.max(1,outer.length)*360)*Math.PI/180,x=.5+.45*Math.cos(a),y=.5+.45*Math.sin(a);
+  if(it[0]==="i")h+=csbNode(it[1],x,y);else{const e=it[1];h+=`<div class="cs-nd cs-ex${e[3]?" on":""}" style="--x:${x.toFixed(4)};--y:${y.toFixed(4)}"><button type="button" class="cs-nb" onclick="csbEx('${e[0]}')" aria-pressed="${e[3]}">${e[3]?"✓":"+"}</button><span class="cs-nl">${e[1]}${e[2]?" · "+e[2]:""}</span></div>`}});
+ if(!fl.length&&!ad.length)h+=`<p class="cs-cap" style="position:absolute;left:0;right:0;top:62%">На складе этой точки нет позиций — используйте классическую форму</p>`;
+ return h}
+function csbRef(){const s=document.querySelector(".cs-sys");if(s)s.innerHTML=csbSys();const t=document.getElementById("csbt");if(t)t.textContent=M(csbTot());const c=document.getElementById("csbc");if(c){const n=Object.values(CB.it).reduce((a,b)=>a+b,0);c.textContent=n?n+" "+pl(n,"позиция","позиции","позиций"):"пусто"}}
+function csbAdd(id,d){const i=inv(id);if(!i)return;const L=myLoc(),q=Math.max(0,(CB.it[id]||0)+d);if(d>0&&q>lq(i,L)){toast("На складе больше нет: "+(i.name||""));return}if(q)CB.it[id]=q;else delete CB.it[id];csbRef()}
+function csbEx(k){if(k==="wrap"){CB.wrap=CB.wrap?0:2000}else CB[k]=CB[k]?0:1;csbRef()}
+function csbDv(on){CB.dv=on?1:0;const w=document.getElementById("csbaw");if(w)w.hidden=!on;document.querySelectorAll(".cs-dvs button").forEach(b=>b.classList.toggle("on",(b.dataset.v==="1")===!!on))}
+function csBuild(){if(!mgr())return newPick();CB.it={};CB.nt=0;CB.rb=0;CB.wrap=0;CB.dv=0;
+ modal(`<div class="cs-bld"><div class="cs-bh"><span class="cs-no">N° +</span><b>Сборка системы</b><button type="button" class="cs-back" onclick="modal('');newPick()">Классическая форма</button></div>
+ <div class="cs-sys">${csbSys()}</div>
+ <div class="cs-strip"><div class="g2"><div><label>Клиент</label><input id="csbn" autocomplete="off" placeholder="Имя"></div><div><label>Телефон *</label><input id="csbp" type="tel" value="+7"></div></div>
+ <div class="cs-dvs" role="group" aria-label="Получение"><button type="button" class="chip on" data-v="0" onclick="csbDv(0)">Самовывоз</button><button type="button" class="chip" data-v="1" onclick="csbDv(1)">Доставка</button></div>
+ <div id="csbaw" hidden><label>Адрес</label><input id="csba" autocomplete="off" placeholder="мкр, дом, квартира"></div>
+ <div class="cs-tot"><span>Итог · <em id="csbc">пусто</em></span><b id="csbt">${M(0)}</b></div>
+ <button type="button" class="btn" style="width:100%" onclick="csbGo()">Оформить</button><p class="mut" style="font-size:12px;margin:6px 2px 0">Откроется привычная форма с уже заполненными данными: проверьте срок, оплату и сохраните.</p></div></div>`)}
+function csbGo(){const ids=Object.keys(CB.it);if(!ids.length&&!CB.wrap){toast("Добавьте хотя бы один цветок");return}
+ const n=($("csbn")||{}).value||"",p=($("csbp")||{}).value||"+7",a=($("csba")||{}).value||"",fs=csbSum(),fl=ids.filter(k=>{const i=inv(k);return i&&(!i.cat||/цвет/i.test(i.cat))}).sort((x,y)=>CB.it[y]-CB.it[x]),
+  bn=fl.length?(inv(fl[0]).name||"Букет")+(ids.length>1?" и ещё "+(ids.length-1):""):"Букет",
+  v={client:n.trim(),phone:p.trim()||"+7",bn,comp:ids.map(k=>(inv(k).name||"")+" ×"+CB.it[k]).join(", "),it:{...CB.it},bp:fs,p:csbTot(),wrap:+CB.wrap||0,nt:CB.nt?300:0,rb:CB.rb?500:0,dv:CB.dv?true:false,addr:CB.dv?a.trim():""};
+ modal("");setTimeout(()=>form(v),30)}
 /* «Радар дня»: угол = время, радиус = статус */
 function csRadar(l){const ph=csPh(),V=l.slice(0,ph?40:80),RS=[.44,.37,.30,.23,.16,.47],now=new Date(),na=(now.getHours()*60+now.getMinutes())/1440*360,
   hm=o=>{const m=String(o.time||"").match(/^(\d{1,2}):(\d{2})/);if(m)return +m[1]*60+ +m[2];const d=new Date(+o.ts||Date.now());return d.getHours()*60+d.getMinutes()},
@@ -1312,7 +1395,7 @@ function csHead(t){const P=(window.HPL||[]).filter(x=>x[0]!=="home"&&x[0]!=="mor
  return `<header class="cs-dh"><button type="button" class="cs-back" data-a="goto" data-id="home" aria-label="К дыре">← <span>К дыре</span></button><span class="cs-no">N° ${String(i<0?0:i+1).padStart(2,"0")}</span><b>${esc(nm)}</b>${typeof ptBtn==="function"?`<span class="cs-hp">${ptBtn()}</span>`:""}</header>`}
 function csDense(t,h){if(t==="chats"||t==="tc"||t==="map")return `<div id="bh-root" class="cs-full"><button type="button" class="cs-back cs-bfix" data-a="goto" data-id="home" aria-label="К дыре">← <span>К дыре</span></button>${h}</div>`;
  return `<section id="bh-root" class="cs-dense">${csHead(t)}<div class="cs-frame">${h}</div></section>${csPult()}`}
-const CosmosShell={...BentoShell,id:"h",nav:()=>"",home:()=>csHome(),orders:()=>orders()+csPult(),dense:(t,h)=>csDense(t,h),
+const CosmosShell={...BentoShell,id:"h",nav:()=>"",newOrder:()=>csBuild(),home:()=>csHome(),orders:()=>orders()+csPult(),dense:(t,h)=>csDense(t,h),
  openOrder:id=>{document.querySelectorAll(".cs-b.lock").forEach(e=>e.classList.remove("lock"));document.querySelectorAll(`.cs-b[data-id="${CSS.escape(String(id))}"]`).forEach(e=>e.classList.add("lock"));return detail(id)},
  destroy(){document.querySelectorAll(".cs-b.lock").forEach(e=>e.classList.remove("lock"));skySync()}};
 SHELL.h=CosmosShell;
@@ -1343,29 +1426,53 @@ function skyDisk(r,dpr,cf){const R=Math.ceil(r*4.2),o=document.createElement("ca
  for(let i=0;i<Math.round(n*.14);i++){const th=skyR()*6.2832,rr=r*(1.04+Math.abs(skyG())*.12);Bk[3].push(R+rr*Math.cos(th),R+rr*Math.sin(th)*.92,dpr)}
  for(let i=0;i<Math.round(n*.25);i++){const th=skyR()*6.2832,rr=r*1.1+(R-r*1.1)*Math.pow(skyR(),.8);Bk[0].push(R+rr*Math.cos(th),R+rr*Math.sin(th)*.92,dpr)}
  Bk.forEach((L,k)=>{q.fillStyle="rgba("+ink+","+A[k]+")";for(let j=0;j<L.length;j+=3)q.fillRect(L[j],L[j+1],L[j+2],L[j+2])});return o}
+/* спиральная галактика: яркое ядро и логарифмические рукава с пылевыми прожилками (та же формула, что у заказов на рукавах) */
+function skyGal(r,dpr,cf){const R=Math.ceil(r*4.4),o=document.createElement("canvas");o.width=o.height=2*R;const q=o.getContext("2d"),ink=cf.neg?"0,0,0":"255,255,255",
+  n=Math.round((csPh()?17000:26000)*(.45+.55*cf.d)),A=[.3,.55,.8,1],Bk=[[],[],[],[]],ps=dpr*(dpr<1.5?1.5:1);
+ for(let i=0;i<n;i++){const u=skyR(),rr=r*.9+(R-r*.9)*Math.pow(u,1.5),arm=skyR()<.5?0:Math.PI,sp=(.12+u*.22)*(skyR()<.8?1:2.4),g=skyG(),th=arm+Math.log(rr/r)*2.4+g*sp,
+  x=R+rr*Math.cos(th),y=R+rr*Math.sin(th),lum=Math.pow(1-u,.6)*(.6+.4*skyR())*(g>0&&g<.08?.3:1);Bk[lum>.7?3:lum>.42?2:lum>.2?1:0].push(x,y)}
+ for(let i=0;i<Math.round(n*.35);i++){const g=Math.abs(skyG()),a=skyR()*6.2832,rr=r*g*1.35;Bk[g<.35?3:2].push(R+rr*Math.cos(a),R+rr*Math.sin(a))}
+ for(let i=0;i<Math.round(n*.2);i++){const a=skyR()*6.2832,rr=r+(R-r)*Math.sqrt(skyR());Bk[0].push(R+rr*Math.cos(a),R+rr*Math.sin(a))}
+ Bk.forEach((L,k)=>{q.fillStyle="rgba("+ink+","+A[k]+")";for(let j=0;j<L.length;j+=2)q.fillRect(L[j],L[j+1],ps,ps)});return o}
+/* туманность: клубы из точек по шуму (рисуются один раз), в кадре — медленный дрейф */
+function skyNeb(w,h,dpr,cf){const W=Math.round(w*1.1),H=Math.round(h*1.1),o=document.createElement("canvas");o.width=W;o.height=H;const q=o.getContext("2d"),ink=cf.neg?"0,0,0":"255,255,255",
+  G=4,grid=[];for(let k=0;k<5;k++){const g=[],m=(G<<k)+2;for(let i=0;i<m;i++){const row=[];for(let j=0;j<m;j++)row.push(skyR());g.push(row)}grid.push(g)}
+ const sm=t=>t*t*(3-2*t),val=(g,x,y)=>{const i=Math.floor(x),j=Math.floor(y),fx=sm(x-i),fy=sm(y-j),a=g[i][j],b=g[i+1][j],c=g[i][j+1],d=g[i+1][j+1];return a+(b-a)*fx+(c-a)*fy+(a-b-c+d)*fx*fy},
+  fbm=(u,v)=>{let s=0,amp=.5;for(let k=0;k<5;k++){const n=G<<k;s+=amp*val(grid[k],u*n*.999,v*n*.999);amp*=.5}return s},
+  band=(u,v)=>{const d=v-(.62-.34*u+.08*Math.sin(u*7));return Math.exp(-d*d/.05)},
+  n=Math.round((csPh()?60000:90000)*(.45+.55*cf.d)),A=[.22,.42,.68,.95],Bk=[[],[],[],[]],ps=dpr*(dpr<1.5?1.4:1);
+ for(let i=0;i<n;i++){const u=skyR(),v=skyR(),f=fbm(u,v)*(.35+.65*band(u,v)),p=Math.max(0,(f-.26)*2.9);if(skyR()>p*p)continue;const l=Math.min(1,p*(.6+.5*skyR()));Bk[l>.75?3:l>.5?2:l>.28?1:0].push(u*W,v*H)}
+ Bk.forEach((L,k)=>{q.fillStyle="rgba("+ink+","+A[k]+")";for(let j=0;j<L.length;j+=2)q.fillRect(L[j],L[j+1],ps,ps)});return o}
 /* дальние звёзды и пара точечных планет по краям */
 function skyField(w,h,dpr,cf){const o=document.createElement("canvas");o.width=w;o.height=h;const q=o.getContext("2d"),ink=cf.neg?"0,0,0":"255,255,255",n=Math.round((w*h)/(dpr*dpr)/(csPh()?1500:1900)*(.4+.9*cf.d));
  for(let i=0;i<n;i++){const z=skyR();q.fillStyle="rgba("+ink+","+(.15+z*.6).toFixed(2)+")";const s=(z>.93?1.8:z>.7?1.2:.8)*dpr;q.fillRect(skyR()*w,skyR()*h,s,s)}
  const planet=(px,py,pr,ring)=>{const m=Math.round(pr*pr*.9/(dpr*dpr)*(.5+.5*cf.d));for(let i=0;i<m;i++){const a=skyR()*6.2832,d=Math.sqrt(skyR())*pr,x=px+d*Math.cos(a),y=py+d*Math.sin(a),lit=Math.max(0,1-Math.hypot(x-(px-pr*.45),y-(py-pr*.45))/(pr*1.7));if(skyR()<lit*.9){q.fillStyle="rgba("+ink+","+(.25+lit*.6).toFixed(2)+")";q.fillRect(x,y,dpr,dpr)}}
   if(ring){q.strokeStyle="rgba("+ink+",.35)";q.lineWidth=dpr;q.beginPath();q.ellipse(px,py,pr*1.9,pr*.45,-.35,0,6.2832);q.stroke()}};
- const mn=Math.min(w,h);planet(-mn*.02,h*.7,mn*.09,0);planet(w+mn*.015,h*.3,mn*.075,1);planet(w*.12,h*.12,mn*.02,0);
+ const mn=Math.min(w,h),sc=csScene();if(sc==="bh"){planet(-mn*.02,h*.7,mn*.09,0);planet(w+mn*.015,h*.3,mn*.075,1);planet(w*.12,h*.12,mn*.02,0)}else if(sc==="sp"){planet(w+mn*.02,h*.78,mn*.06,0)}
  const tw=[];for(let i=0;i<42;i++)tw.push([skyR()*w,skyR()*h,skyR()*6.28,.6+skyR()*1.6]);SKY.tw=tw;return o}
 function skyTarget(){const w=innerWidth,h=innerHeight,el=tab==="home"||tab==="orders"?document.querySelector(".cs-core"):null;
  if(el){const b=el.getBoundingClientRect();if(b.width>0&&b.bottom>-b.height*3&&b.top<h+b.height*3){SKY.tg={x:b.left+b.width/2,y:b.top+b.height/2,r:b.width/2,o:1};return}}
  SKY.tg={x:w-(csPh()?44:70),y:csPh()?54:70,r:csPh()?14:20,o:.55}}
-function skyPaint(){const c=SKY.cv,x=SKY.x;if(!c||!x)return;const dpr=Math.min(2,devicePixelRatio||1),w=Math.round(innerWidth*dpr),h=Math.round(innerHeight*dpr),cf=skyCfg(),key=[w,h,cf.neg,Math.round(cf.d*20)].join();
+function skyPaint(){const c=SKY.cv,x=SKY.x;if(!c||!x)return;const dpr=Math.min(2,devicePixelRatio||1),w=Math.round(innerWidth*dpr),h=Math.round(innerHeight*dpr),cf=skyCfg(),sc=csScene(),key=[w,h,cf.neg,Math.round(cf.d*20),sc].join();
  if(c.width!==w||c.height!==h){c.width=w;c.height=h}
- if(!SKY.st||SKY.key!==key){SKY.key=key;SKY.st=skyField(w,h,dpr,cf);SKY.disk=null}
+ if(!SKY.st||SKY.key!==key){SKY.key=key;SKY.st=skyField(w,h,dpr,cf);SKY.disk=null;SKY.neb=sc==="neb"?skyNeb(w,h,dpr,cf):null}
  const tg=SKY.tg;if(!SKY.c)SKY.c={...tg};const k=.16,C=SKY.c;C.x+=(tg.x-C.x)*k;C.y+=(tg.y-C.y)*k;C.r+=(tg.r-C.r)*k;C.o+=(tg.o-C.o)*k;
- const r0=Math.max(40,Math.round(Math.min(innerWidth,innerHeight)*.12))*dpr;if(!SKY.disk||SKY.dr!==r0){SKY.disk=skyDisk(r0,dpr,cf);SKY.dr=r0}
+ const r0=Math.max(40,Math.round(Math.min(innerWidth,innerHeight)*.12))*dpr;if(sc!=="neb"&&(!SKY.disk||SKY.dr!==r0)){SKY.disk=sc==="sp"?skyGal(r0,dpr,cf):skyDisk(r0,dpr,cf);SKY.dr=r0}
  const ink=cf.neg?"0,0,0":"255,255,255",t=performance.now()/1000;
  x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,w,h);x.globalAlpha=.35+.65*cf.b;x.drawImage(SKY.st,0,0);x.globalAlpha=1;
  if(SKY.tw)for(const s of SKY.tw){const a=(.5+.5*Math.sin(t*s[3]+s[2]))*cf.b;x.fillStyle="rgba("+ink+","+a.toFixed(2)+")";x.fillRect(s[0],s[1],1.4*dpr,1.4*dpr)}
- const cx=C.x*dpr,cy=C.y*dpr,cr=C.r*dpr,s=cr/(r0/1.0),D=SKY.disk.width;
- x.save();x.translate(cx,cy);x.rotate(SKY.a);x.globalAlpha=Math.min(1,(.25+.75*cf.b)*C.o);x.drawImage(SKY.disk,-D/2*s,-D/2*s,D*s,D*s);x.restore();x.globalAlpha=1;
- x.fillStyle=cf.neg?"#fff":"#000";x.beginPath();x.arc(cx,cy,cr*1.01,0,6.2832);x.fill();
+ const cx=C.x*dpr,cy=C.y*dpr,cr=C.r*dpr,s=cr/r0,ga=Math.min(1,(.25+.75*cf.b)*C.o),bg=cf.neg?"#fff":"#000";
+ if(sc==="neb"){if(SKY.neb){const dx=Math.sin(t*.05)*w*.03,dy=Math.cos(t*.04)*h*.02;x.globalAlpha=Math.min(1,.3+.7*cf.b);x.drawImage(SKY.neb,-w*.05+dx,-h*.05+dy);x.globalAlpha=1}
+  x.fillStyle="rgba("+ink+",1)";for(let k=0;k<3;k++){x.globalAlpha=.45/(k+1)*C.o;x.beginPath();x.arc(cx,cy,cr*(.1+k*.07),0,6.2832);x.fill()}x.globalAlpha=1;return}
+ const D=SKY.disk.width;
+ if(sc==="sp"){x.save();x.translate(cx,cy);x.globalAlpha=ga;x.drawImage(SKY.disk,-D/2*s,-D/2*s,D*s,D*s);x.restore();x.globalAlpha=1;return}
+ if(sc==="eh"){const k2=1.5;x.save();x.translate(cx,cy);x.scale(1,.45);x.rotate(SKY.a);x.globalAlpha=ga;x.drawImage(SKY.disk,-D/2*s*k2,-D/2*s*k2,D*s*k2,D*s*k2);x.restore();x.globalAlpha=1;
+  x.fillStyle=bg;x.beginPath();x.ellipse(cx,cy,cr*1.05,cr*.47,0,0,6.2832);x.fill();
+  for(let k=1;k<=4;k++){x.strokeStyle="rgba("+ink+","+(.12*k*C.o).toFixed(2)+")";x.lineWidth=dpr;x.beginPath();x.ellipse(cx,cy+cr*.04*k,cr*(1.05-k*.2),cr*(.47-k*.09),0,0,6.2832);x.stroke()}return}
+ x.save();x.translate(cx,cy);x.rotate(SKY.a);x.globalAlpha=ga;x.drawImage(SKY.disk,-D/2*s,-D/2*s,D*s,D*s);x.restore();x.globalAlpha=1;
+ x.fillStyle=bg;x.beginPath();x.arc(cx,cy,cr*1.01,0,6.2832);x.fill();
  x.strokeStyle="rgba("+ink+","+(.35*C.o).toFixed(2)+")";x.lineWidth=dpr;x.beginPath();x.arc(cx,cy,cr*1.06,0,6.2832);x.stroke()}
-function skyFrame(ts){SKY.raf=0;if(!SKY.on||document.hidden)return;const dt=SKY.last?Math.min(.1,(ts-SKY.last)/1000):0;SKY.last=ts;const cf=skyCfg();if(!SKY.still)SKY.a-=dt*cf.s*.3;
+function skyFrame(ts){SKY.raf=0;if(!SKY.on||document.hidden)return;const dt=SKY.last?Math.min(.1,(ts-SKY.last)/1000):0;SKY.last=ts;const cf=skyCfg();if(!SKY.still&&csScene()!=="sp")SKY.a-=dt*cf.s*.3;
  skyTarget();skyPaint();if((!SKY.still&&cf.s>0)||performance.now()<SKY.until)SKY.raf=requestAnimationFrame(skyFrame);else SKY.last=0}
 function skyKick(){if(SKY.on&&!SKY.raf&&!document.hidden)SKY.raf=requestAnimationFrame(skyFrame)}
 function skySync(){const on=typeof S!=="undefined"&&!!S&&LY()==="h";
@@ -1680,7 +1787,7 @@ function form(o,lnk){const e=o&&o.id,v=o||{},qpo=!e?quickOpts():"",cs=Object.key
    el.innerHTML=`<div class="row"><b class="bqt"></b><button type="button" class="btn g s bqx" style="flex:none" aria-label="Убрать букет">✕</button></div>${(first?qo0:qo1)?`<label>Готовый букет или из каталога</label><select class="bqs0"><option value="">— ввести вручную —</option>${first?qo0:qo1}</select><p class="mut bqh" hidden style="margin:4px 2px 0">Букет с витрины: статус «Готов».</p>`:""}<input class="bqn" type="hidden"><label>Цветы со склада</label><div class="bqsel"></div><div class="chips bqch" style="flex-wrap:wrap;overflow-x:hidden;overflow-y:auto;max-height:132px;margin:6px 0 0"></div><textarea class="bqc" hidden></textarea><div class="g2"><div><label>Цена букета, ₸</label><input class="bqp" type="number" min="0" inputmode="numeric"></div><div><label>Сколько букетов</label><div class="row" style="gap:6px"><button type="button" class="btn g s bqm" style="flex:none;min-width:42px">−</button><input class="bqq" type="number" min="1" step="1" inputmode="numeric" value="1" style="text-align:center"><button type="button" class="btn g s bqpl" style="flex:none;min-width:42px">+</button></div></div></div>`;
    const b={el,it:{},man:false,auto:false,lnkId:null,nm:el.querySelector(".bqn"),tx:el.querySelector(".bqc"),pr:el.querySelector(".bqp"),q:el.querySelector(".bqq"),sel:el.querySelector(".bqsel"),ch:el.querySelector(".bqch")};
    BL.push(b);root.appendChild(el);
-   if(init){b.nm.value=init.bn||"";b.tx.value=init.comp||"";if(init.p){b.pr.value=init.p;b.man=true}}
+   if(init){b.nm.value=init.bn||"";b.tx.value=init.comp||"";if(init.p){b.pr.value=init.p;b.man=true}if(init.it)Object.keys(init.it).forEach(k=>{if(+init.it[k]>0)b.it[k]=+init.it[k]})}
    el.addEventListener("click",ev=>{const t=ev.target.closest("button");if(!t||!el.contains(t))return;
     if(t.dataset.bc){b.it[t.dataset.bc]=1;draw(b);calc();return}
     if(t.dataset.bd){const k=t.dataset.bd,n=Math.round((b.it[k]||0)+(+t.dataset.s));if(n<=0)delete b.it[k];else b.it[k]=n;draw(b);calc();return}
@@ -1695,7 +1802,7 @@ function form(o,lnk){const e=o&&o.id,v=o||{},qpo=!e?quickOpts():"",cs=Object.key
     if(x){b.tx.value=q?bcomp(q):"";lnk=id;b.lnkId=id;b.q.value=1;b.q.disabled=true;h.hidden=false}else(q.items||[]).forEach(i=>{if(i.iid&&+i.q>0)b.it[i.iid]=+i.q});
     draw(b);calc();nums()};
    draw(b);nums();calc();return b};
-  add({bn:v.bn,comp:v.comp,p:v.p});addB.onclick=()=>{if(BL.some(b=>b.lnkId))return;add();BL[BL.length-1].nm.focus()};
+  add({bn:v.bn,comp:v.comp,p:v.bp!=null?v.bp:v.p,it:v.it});addB.onclick=()=>{if(BL.some(b=>b.lnkId))return;add();BL[BL.length-1].nm.focus()};
   if(lnk){BL[0].lnkId=lnk;BL[0].q.disabled=true;const h=BL[0].el.querySelector(".bqh");if(h)h.hidden=false;nums()}
   pf.addEventListener("input",()=>{pMan=pf.value!=="";calc()});
   if(ofm.elements.loc)ofm.elements.loc.addEventListener("change",()=>{BL.forEach(b=>{b.it={};draw(b)});calc()});
