@@ -560,45 +560,96 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
 .dzb.on{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 12%,transparent)}
 .dzb b{font-size:12px;font-weight:700;text-align:center;max-width:110px;line-height:1.2}
 
-/* ===== Командный центр (m) — рельса + очередь + сводка ===== */
-:root[data-ly=m] .m-head h1{margin:0 0 2px}:root[data-ly=m] .m-head .mut{margin:0 0 12px}
-:root[data-ly=m] .m-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 14px}
-:root[data-ly=m] .m-kpi .tile{padding:12px 10px;text-align:left;cursor:pointer;border-radius:14px;background:var(--card);border:1px solid var(--line)}
-:root[data-ly=m] .m-kpi .tile span{display:block;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
-:root[data-ly=m] .m-kpi .tile b{font-size:20px;display:block;margin:4px 0 2px}
-:root[data-ly=m] .m-kpi .tile em{font-style:normal;font-size:12px;color:var(--mut)}
-:root[data-ly=m] .m-shell{display:grid;grid-template-columns:1fr minmax(240px,34%);gap:14px;align-items:start}
-:root[data-ly=m] .m-detail{position:sticky;top:12px;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:14px}
-:root[data-ly=m] .m-stline{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
-:root[data-ly=m] .m-stline i{width:10px;height:10px;border-radius:50%;background:var(--ac)}
-:root[data-ly=m] .m-stline i.k0{background:var(--s0)}:root[data-ly=m] .m-stline i.k1{background:var(--s1)}:root[data-ly=m] .m-stline i.k2{background:var(--s2)}:root[data-ly=m] .m-stline i.k3{background:var(--s3)}
-:root[data-ly=m] .m-stline span{flex:1}:root[data-ly=m] .m-stline b{font-variant-numeric:tabular-nums}
-:root[data-ly=m] .m-list,.m-list{display:flex;flex-direction:column;gap:0}
-:root[data-ly=m] .m-row{display:grid;grid-template-columns:8px 1fr auto;gap:12px;align-items:center;padding:12px 10px;border-bottom:1px solid var(--line);cursor:pointer}
-:root[data-ly=m] .m-st{width:8px;height:36px;border-radius:4px;background:var(--ac)}
-:root[data-ly=m] .m-st.k0{background:var(--s0)}:root[data-ly=m] .m-st.k1{background:var(--s1)}:root[data-ly=m] .m-st.k2{background:var(--s2)}:root[data-ly=m] .m-st.k3{background:var(--s3)}
-:root[data-ly=m] .m-body{min-width:0}:root[data-ly=m] .m-body b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-:root[data-ly=m] .m-body span{font-size:13px;color:var(--mut)}
-:root[data-ly=m] .m-right{text-align:right}:root[data-ly=m] .m-right em{display:block;font-size:12px;color:var(--mut);font-style:normal}
-@media(max-width:899px){:root[data-ly=m] .m-kpi{grid-template-columns:repeat(2,1fr)}:root[data-ly=m] .m-shell{display:block}:root[data-ly=m] .m-detail{margin-top:14px;position:static}}
-@media(min-width:900px){
-:root[data-ly=m]{--rail:220px}:root[data-ly=m] #tb{display:none!important}
-:root[data-ly=m] body{padding:0 0 0 var(--rail)!important}
-:root[data-ly=m] nav{top:0;bottom:0;left:0;right:auto;width:var(--rail);flex-direction:column;justify-content:flex-start;padding:18px 10px;border-radius:0;border:0;border-right:1px solid var(--line);box-shadow:none;overflow-y:auto;background:var(--card)}
-:root[data-ly=m] nav::before{content:attr(data-brand);display:block;font-weight:700;font-size:18px;padding:4px 10px 16px;color:var(--ac)}
-:root[data-ly=m] nav button{text-align:left;padding:11px 12px;font-size:14px;flex:none;border-radius:10px;min-height:44px}
-:root[data-ly=m] nav button.on{background:color-mix(in srgb,var(--ac) 16%,transparent);color:var(--ac)}
-}
-
-/* ===== Доска (k) — горизонтальные колонки ===== */
-:root[data-ly=k] .k-head h1{margin:0 0 4px}
-:root[data-ly=k] .kb{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(240px,80%);gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 20px;margin:0 -2px;-webkit-overflow-scrolling:touch}
-:root[data-ly=k] .kbc{scroll-snap-align:start;border-radius:18px;padding:12px;background:color-mix(in srgb,var(--c,var(--ac)) 16%,var(--card));min-height:200px;border:1px solid var(--line)}
-:root[data-ly=k] .kbh{display:flex;justify-content:space-between;align-items:center;padding:2px 4px 10px}
-:root[data-ly=k] .kbh span{background:var(--card);border-radius:99px;padding:2px 10px;font-weight:700;font-size:13px}
-:root[data-ly=k] .kbi{background:var(--card);border-radius:14px;padding:12px;margin-bottom:8px;display:flex;flex-direction:column;gap:4px;cursor:pointer;border:1px solid var(--line);touch-action:manipulation}
-:root[data-ly=k] .kbi>span,:root[data-ly=k] .kbi>em{font-size:13px;color:var(--mut);font-style:normal}
-:root[data-ly=k] .kbe{color:var(--mut);font-size:13px;text-align:center;padding:16px}
+/* ================= «Командный центр» (data-ly=m), корень #cc-root — разд. 138, Фаза 5 ================= */
+:root[data-ly=m] #tb,:root[data-ly=m] nav#nav,:root[data-ly=m] .fab,:root[data-ly=m] #v>.chip[data-a=back],:root[data-ly=k] #tb,:root[data-ly=k] nav#nav,:root[data-ly=k] .fab,:root[data-ly=k] #v>.chip[data-a=back]{display:none!important}
+:root[data-ly=m] body,:root[data-ly=k] body{padding:env(safe-area-inset-top) 0 0!important}
+:root[data-ly=m] main#v,:root[data-ly=k] main#v{display:block!important;max-width:none!important;margin:0!important;padding:0!important}
+.cc-root{display:grid;grid-template-columns:72px minmax(0,1fr) 440px;height:100dvh;overflow:hidden}
+.cc-rail{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;border-right:1px solid var(--line);background:var(--card);overflow-y:auto;scrollbar-width:none}
+.cc-rail::-webkit-scrollbar{display:none}
+.cc-logo{width:40px;height:40px;border-radius:12px;background:var(--ac);color:var(--on);display:grid;place-items:center;font-weight:800;font-size:18px;margin-bottom:6px;flex:none}
+.cc-r{position:relative;flex:none;width:52px;height:48px;border:0;border-radius:12px;background:transparent;color:var(--mut);display:grid;place-items:center;cursor:pointer;padding:0;min-height:0}
+.cc-r svg{width:22px;height:22px}.cc-r>span{position:absolute;left:58px;top:50%;transform:translateY(-50%);background:var(--ink);color:var(--bg);font-size:12px;padding:4px 8px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:20}
+.cc-r:hover>span,.cc-r:focus-visible>span{opacity:1}
+.cc-r:hover{background:var(--c2);color:var(--ink)}.cc-r.on{background:color-mix(in srgb,var(--ac) 16%,transparent);color:var(--ac)}
+.cc-r .nb{position:absolute;top:2px;right:2px}
+.cc-add{background:var(--ac);color:var(--on)}.cc-add:hover{background:var(--ac);color:var(--on);filter:brightness(1.08)}
+.cc-sep{width:32px;height:1px;background:var(--line);margin:6px 0;flex:none}
+.cc-c{overflow-y:auto;padding:0 22px 40px;min-width:0}
+.cc-top{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;background:color-mix(in srgb,var(--bg) 92%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font-size:13px;color:var(--mut)}
+.cc-top b{color:var(--ink);font-size:15px}
+.cc-h1{font-size:26px;margin:4px 0 12px}
+.cc-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:0 0 16px}
+.cc-k{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);cursor:pointer;text-align:left;font:inherit;min-height:0}
+.cc-k span{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}.cc-k b{font-size:24px;font-variant-numeric:tabular-nums}.cc-k em{font-style:normal;font-size:12px;color:var(--mut)}
+.cc-k.al{border-color:var(--bad,#d33);box-shadow:inset 3px 0 0 var(--bad,#d33)}
+.cc-sec{margin:0 0 18px}.cc-two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.cc-tw{border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden}
+.cc-tbl{width:100%;border-collapse:collapse;font-size:14px}
+.cc-tbl th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-weight:600}
+.cc-tbl td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}.cc-tbl tr:last-child td{border-bottom:0}
+.cc-tbl td small{display:block;color:var(--mut);font-size:12px;margin-top:2px}.cc-tbl small.al,.cc-t.al{color:var(--bad,#d33)}
+.cc-tbl tr[data-a]{cursor:pointer}.cc-tbl tbody tr:hover{background:var(--c2)}.cc-tbl tr.on{background:color-mix(in srgb,var(--ac) 14%,transparent)}
+.cc-tbl .r{text-align:right;white-space:nowrap}.cc-t{white-space:nowrap;font-variant-numeric:tabular-nums}
+.cc-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--s0)}.cc-dot.k1{background:var(--s1)}.cc-dot.k2{background:var(--s2)}.cc-dot.k3{background:var(--s3)}.cc-dot.k4{background:var(--mut)}.cc-dot.k5{background:transparent;border:1px solid var(--mut)}
+.cc-s{font-size:12px;padding:3px 8px;border-radius:99px;background:color-mix(in srgb,var(--s0) 16%,transparent);white-space:nowrap}.cc-s.k1{background:color-mix(in srgb,var(--s1) 16%,transparent)}.cc-s.k2{background:color-mix(in srgb,var(--s2) 16%,transparent)}.cc-s.k3{background:color-mix(in srgb,var(--s3) 16%,transparent)}.cc-s.k4,.cc-s.k5{background:var(--c2);color:var(--mut)}
+.cc-e{text-align:center;color:var(--mut);padding:22px!important}
+.cc-feed{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.cc-feed li{display:grid;grid-template-columns:48px 1fr;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer;font-size:14px}.cc-feed li:last-child{border-bottom:0}
+.cc-feed time{color:var(--mut);font-size:12px;font-variant-numeric:tabular-nums;padding-top:2px}
+.cc-i{border-left:1px solid var(--line);background:var(--card);overflow-y:auto;padding:12px 16px 30px}
+.cc-ih{position:sticky;top:-12px;z-index:3;display:flex;gap:6px;padding:12px 0 10px;margin-top:-12px;background:var(--card);border-bottom:1px solid var(--line);margin-bottom:10px}
+.cc-ih .btn{flex:1}.cc-ih .btn:first-child{flex:none;min-width:44px}
+.cc-ie b{font-size:18px}.cc-ie h2{margin-top:18px}
+:root[data-ly=m] #v>.gtab,:root[data-ly=k] #v>.gtab{display:none}.cc-c .gtab,.kb-gt .gtab{margin:0 0 12px}.kb-gt{padding:8px 16px 0}
+.cc-flt{margin-bottom:12px}
+.cc-allg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cc-allg .btn{justify-content:flex-start;gap:8px}.cc-allg svg{width:18px;height:18px}
+/* телефон */
+.cc-root.ph{display:block;height:auto;overflow:visible;padding:0 12px calc(78px + env(safe-area-inset-bottom))}
+.cc-root.ph .cc-kpi{display:flex;overflow-x:auto;scrollbar-width:none;gap:8px}.cc-root.ph .cc-kpi::-webkit-scrollbar{display:none}.cc-root.ph .cc-k{flex:none;min-width:116px;padding:10px 12px}.cc-root.ph .cc-k b{font-size:20px}
+.cc-root.ph .cc-two{grid-template-columns:1fr}
+.cc-root.ph.ins{padding-top:0}.cc-root.ph.ins .cc-ih{top:0;margin-top:0}
+.cc-ph{display:flex;align-items:center;justify-content:space-between;padding:12px 0;font-weight:700}
+.cc-root.ph .cc-tbl th:nth-child(4),.cc-root.ph .cc-tbl td:nth-child(4){display:none}
+.cc-bar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;border-top:1px solid var(--line);background:var(--glass);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);padding-bottom:env(safe-area-inset-bottom)}
+.cc-bar button{position:relative;flex:1;min-height:58px;border:0;background:transparent;color:var(--mut);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;cursor:pointer;padding:0}
+.cc-bar button svg{width:22px;height:22px}.cc-bar button.on{color:var(--ac)}.cc-bar .nb{position:absolute;top:4px;right:calc(50% - 22px)}
+.cc-bar .cc-bplus{flex:none;width:58px;height:46px;margin:6px 4px;min-height:0;border-radius:14px;background:var(--ac);color:var(--on)}
+@media(min-width:900px){.cc-bar{display:none}}
+@media(max-width:1180px) and (min-width:900px){.cc-root{grid-template-columns:72px minmax(0,1fr) 380px}.cc-two{grid-template-columns:1fr}}
+/* ================= «Доска» (data-ly=k), корень #kb-root ================= */
+.kb-root{padding:0 0 30px}
+.kb-top{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.kb-brand{font-size:17px}.kb-act{margin-left:auto;display:flex;gap:6px;align-items:center}
+.kb-act button{position:relative;height:44px;min-width:44px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;cursor:pointer;min-height:0}
+.kb-act svg{width:20px;height:20px}.kb-act .nb{position:absolute;top:-5px;right:-5px}
+.kb-add{background:var(--ac)!important;color:var(--on)!important;border-color:var(--ac)!important;font-weight:600}
+.kb-nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:8px 12px;border-bottom:1px solid var(--line)}.kb-nav::-webkit-scrollbar{display:none}
+.kb-nav button{flex:none;border:0;background:transparent;color:var(--mut);padding:8px 12px;border-radius:10px;font-size:14px;cursor:pointer;min-height:40px}
+.kb-nav button.on{background:var(--ink);color:var(--bg)}
+.kb-sum{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:14px 16px 6px}.kb-sum h1{margin:0;font-size:24px}
+.kb-sw{display:flex;gap:6px;margin-left:auto}
+.kb-flt{margin:4px 16px 8px}.kb-flt summary{cursor:pointer;color:var(--mut);font-size:14px;padding:6px 0}
+.kb-tabs{display:none;gap:6px;overflow-x:auto;scrollbar-width:none;padding:6px 16px}.kb-tabs::-webkit-scrollbar{display:none}
+.kb-tabs button{flex:none;display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:6px 12px;font-size:13px;min-height:36px;cursor:pointer}
+.kb-cols{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(260px,1fr);gap:12px;padding:8px 16px;overflow-x:auto}
+.kb-col{display:flex;flex-direction:column;min-width:0;border-radius:16px;background:color-mix(in srgb,var(--ink) 4%,var(--bg));border-top:4px solid var(--s0);max-height:calc(100dvh - 210px)}
+.kb-col.k1{border-top-color:var(--s1)}.kb-col.k2{border-top-color:var(--s2)}.kb-col.k3{border-top-color:var(--s3)}.kb-col.k4,.kb-col.k5{border-top-color:var(--mut)}
+.kb-h{display:flex;align-items:baseline;gap:8px;padding:12px 14px 8px}.kb-h b{font-size:15px}.kb-h span{font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:0 8px}.kb-h em{margin-left:auto;font-style:normal;font-size:13px;color:var(--mut);font-variant-numeric:tabular-nums}
+.kb-list{overflow-y:auto;padding:0 10px 10px;display:flex;flex-direction:column;gap:8px}
+.kb-c{position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.kb-c:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.kb-c.al{box-shadow:inset 3px 0 0 var(--bad,#d33)}
+.kb-c header{display:flex;justify-content:space-between;gap:8px}.kb-c header time{color:var(--mut);font-variant-numeric:tabular-nums;font-size:13px}
+.kb-c p{margin:4px 0 8px;color:var(--mut);font-size:13px}
+.kb-c footer{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:13px;font-variant-numeric:tabular-nums}
+.kb-f em{font-style:normal;font-size:11px;padding:2px 6px;border-radius:6px;background:var(--c2);margin-left:4px}.kb-f em.al{background:color-mix(in srgb,var(--bad,#d33) 15%,transparent);color:var(--bad,#d33)}
+.kb-open{display:block;margin-top:8px;font-size:12px;color:var(--ac)}
+.kb-e{color:var(--mut);text-align:center;font-size:13px;padding:18px 0}
+.kb-more{border:1px dashed var(--line);background:transparent;color:var(--mut);border-radius:10px;padding:8px;cursor:pointer}
+.kb-day,.kb-dense{padding:10px 16px;max-width:1100px}
+.kb-dense h1{font-size:24px}
+@media(max-width:899px){.kb-tabs{display:flex}.kb-cols{grid-auto-columns:86%;scroll-snap-type:x mandatory;gap:10px}.kb-col{scroll-snap-align:start;max-height:none}.kb-list{overflow:visible}.kb-sw{margin-left:0}.kb-add span{display:none}}
 
 /* ===== День (d) — шкала часов ===== */
 :root[data-ly=d] .d-head h1{margin:0 0 4px}
@@ -867,14 +918,14 @@ const thGet=()=>{try{return JSON.parse(STO.get("th")||"{}")||{}}catch(e){return{
 function applyTheme(){try{const t0=thGet();if(!t0.g1){t0.ui="g";t0.g1=1;STO.set("th",JSON.stringify(t0))}}catch(e){eLog(e)}/* один раз: всем новый дизайн Bento (вернуть старый — Профиль → Оформление) */const m=STO.get("t")||"auto",e=m==="auto"?(sysDark.matches?"dark":"light"):m,th=thGet(),pn=PALS[th.p]?th.p:"Тинт",P=PALS[pn][e==="dark"?"d":"l"],k=th.ct==null?50:+th.ct,sx=e==="dark"?"d":"l",ci=th["ink"+sx],ca=th["ac"+sx],ink=ci&&/^#[0-9a-f]{6}$/i.test(ci)&&Math.abs(lum(ci)-lum(P[0]))>.25?ci:P[3],ac=ca&&/^#[0-9a-f]{6}$/i.test(ca)?ca:P[4],on=ac!==P[4]?(lum(ac)>.45?"#1a140e":"#ffffff"):P[5],rd=th.rd==null?20:+th.rd,hi=Math.max(0,k-50)*1.6,tc=document.querySelector('meta[name=theme-color]');document.documentElement.dataset.t=e;document.documentElement.dataset.pal=pn;document.documentElement.dataset.ui="a";document.documentElement.dataset.ly=(UIS.includes(th.ui)?th.ui:"g");document.documentElement.dataset.acl=Math.abs(lum(ac)-lum(P[0]))<.12?"1":"";document.documentElement.dataset.mc=th.mc?"1":"0";
 let st=$("thc");if(!st){st=document.createElement("style");st.id="thc";document.head.appendChild(st)}
 st.textContent=`:root[data-t=${e}]{--bg:${P[0]};--card:${P[1]};--c2:${P[2]};--ink:color-mix(in srgb,${ink} ${100-hi}%,${e==="dark"?"#fff":"#000"});--ac:${ac};--on:${on};--mut:color-mix(in srgb,${ink} ${35+k*.5}%,${P[0]});--line:color-mix(in srgb,${ink} ${10+k*.22}%,${P[0]});--glass:color-mix(in srgb,${P[1]} 86%,transparent)}body{font-size:${+th.fz||16}px}.card{border-radius:${rd}px}.tile{border-radius:${Math.max(8,rd-2)}px}`;
-if(tc)tc.content=P[0];try{skySync();csAfter();hxAfter()}catch(e){}}
+if(tc)tc.content=P[0];try{skySync();csAfter();hxAfter();ccAfter()}catch(e){}}
 const UIS=["g","h","x","m","k","d"];/* у каждого — своя архитектура экранов */
 const DESIGNS=[
  ["g","Bento","Блочная сетка, крупные цифры, матовое стекло"],
  ["h","Космос","Чёрная дыра: заказы на орбитах, планеты-разделы, радар дня, считыватель"],
  ["x","Ретро-HUD","Окна-терминалы плиткой, командная строка, один акцентный цвет"],
- ["m","Командный центр","Рельса KPI · очередь · боковая сводка"],
- ["k","Доска","Колонки по статусам, не список"],
+ ["m","Командный центр","Рельса разделов · KPI и таблица · постоянный инспектор заказа"],
+ ["k","Доска","Колонки по статусам со счётчиком и суммой, заказ — боковой панелью"],
  ["d","День","Вертикальная шкала по часам"]
 ],/* будущие дизайны: превью видно, включить пока нельзя (UIS их не знает — applyTheme откатит на "g") */
 DSOON=[["p","Атлас","Ботанический журнал: оглавление и развороты"],["f","Мастерская","Станции для работы руками"]];
@@ -926,11 +977,13 @@ if(window.visualViewport){visualViewport.addEventListener("resize",kbFit);visual
 document.addEventListener("focusin",e=>{if(e.target.id==="chin"||e.target.id==="tcin"){kbFit();setTimeout(kbFit,350)}});document.addEventListener("focusout",()=>setTimeout(kbFit,200));
 function modal(h,opt){if(h&&typeof deco==="function")h=deco(h);
  const y=typeof LY==="function"?LY():"g",
-  asPanel=!!h&&(y==="h"||y==="m"||y==="x")&&(!!(opt&&opt.panel)||/data-det=/.test(String(h)));
+  asPanel=!!h&&(y==="h"||y==="m"||y==="x"||y==="k")&&(!!(opt&&opt.panel)||/data-det=/.test(String(h)));
  if(!h&&y==="x"&&!$("m").innerHTML&&typeof HX!=="undefined"&&HX.sel){hxClose();return}
+ if(!h&&y==="m"&&!$("m").innerHTML&&typeof CC!=="undefined"&&CC.sel){ccClose();return}
  if(!h){$("m").innerHTML="";document.querySelectorAll(".cs-b.lock").forEach(e=>e.classList.remove("lock"));setTimeout(()=>{try{skySync()}catch(e){}},0);const p=document.getElementById("reader");
   if(p){if(p.classList.contains("out"))return;p.classList.add("out");const done=()=>{p.remove();document.body.classList.remove("reader-open")};
    p.addEventListener("animationend",done,{once:true});setTimeout(done,280)}else document.body.classList.remove("reader-open");return}
+ if(asPanel&&y==="m"){const mm=String(h).match(/data-det="([^"]+)"/);CC.sel=mm?mm[1]:CC.sel;CC.detH=h;const d=$("ccins");$("m").innerHTML="";if(d){d.innerHTML=h;return}draw();return}
  if(asPanel&&y==="x"){const mm=String(h).match(/data-det="([^"]+)"/);HX.sel=mm?mm[1]:HX.sel;HX.detH=h;const d=$("hxdet");$("m").innerHTML="";if(d){d.innerHTML=h;return}if(tab!=="home"&&tab!=="orders")tab="orders";if(csPh())HX.win=1;draw();return}
  if(asPanel){
   let p=document.getElementById("reader");const was=!!p&&!p.classList.contains("out");if(!p){p=document.createElement("div");p.id="reader";document.body.appendChild(p)}
@@ -1102,6 +1155,7 @@ if(LANG==="kk")Object.assign(KZ,{"Мой экран":"Менің экраным"
 if(LANG==="kk")Object.assign(KZ,{"Космос":"Ғарыш","Чёрная дыра: заказы на орбитах, планеты-разделы, радар дня, считыватель":"Қара құрдым: тапсырыстар орбитада, бөлімдер-планеталар, күн радары, оқығыш","Сцена":"Көрініс","Чёрная дыра":"Қара құрдым","Туманность":"Тұмандық","Спиральная галактика":"Спираль галактика","Горизонт событий":"Оқиға көкжиегі","К дыре":"Құрдымға","Радар дня":"Күн радары","Радар":"Радар","Список":"Тізім","Сводка":"Жиынтық","Дальний пояс":"Алыс белдеу","Сегодня":"Бүгін","Мои доставки":"Менің жеткізулерім","К сборке":"Жинауға","в работе":"жұмыста","позже":"кейін","Поиск":"Іздеу","Сигналы":"Сигналдар","Телеметрия":"Телеметрия","Сейчас":"Қазір","не оплачен / просрочен":"төленбеген / кешіккен","Срок":"Мерзімі","Клиент":"Клиент","Букет":"Гүл шоғы","Сумма":"Сома","Ничего не найдено":"Ештеңе табылмады","Разделы":"Бөлімдер","Пульт":"Пульт","На орбитах пусто — активных заказов нет":"Орбиталар бос — белсенді тапсырыс жоқ","Угол — время, кольцо — статус: от центра «Выдан», «В пути», «Готов», «Собирается», снаружи «Новый»":"Бұрыш — уақыт, сақина — күйі: ортадан «Берілді», «Жолда», «Дайын», «Жиналуда», сыртта «Жаңа»","В этом дизайне строгий монохром: только чёрный и белый, цветные — только фото. Светлая тема — «Негатив». Выбранные раньше палитра и акцент сохранены и вернутся в Bento.":"Бұл дизайн тек ақ пен қара: түрлі түсті тек фото. Ашық тақырып — «Негатив». Бұрын таңдалған түстер сақталады және Bento-ға қайтады."});
 if(LANG==="kk")Object.assign(KZ,{"Сборка системы":"Жүйені жинау","Классическая форма":"Классикалық форма","Выберите цветы":"Гүлдерді таңдаңыз","Упаковка":"Орама","Адрес":"Мекенжай","Итог":"Барлығы","пусто":"бос","Оформить":"Рәсімдеу","Добавьте хотя бы один цветок":"Кем дегенде бір гүл қосыңыз","Откроется привычная форма с уже заполненными данными: проверьте срок, оплату и сохраните.":"Толтырылған әдеттегі форма ашылады: мерзімін, төлемін тексеріп, сақтаңыз.","На складе этой точки нет позиций — используйте классическую форму":"Бұл нүктенің қоймасында тауар жоқ — классикалық форманы пайдаланыңыз","к ядру — срочнее":"ядроға жақын — шұғылырақ","ярче в центре — срочнее":"ортада жарқын — шұғылырақ"});
 if(LANG==="kk")Object.assign(KZ,{"Окна-терминалы плиткой, командная строка, один акцентный цвет":"Терминал терезелері, пәрмен жолы, бір екпін түсі","Командная строка":"Пәрмен жолы","Закрыть окно":"Терезені жабу","Окна":"Терезелер","Новый заказ  [N]":"Жаңа тапсырыс  [N]","Заказы на сегодня":"Бүгінгі тапсырыстар","Заказы на завтра":"Ертеңгі тапсырыстар","Неоплаченные":"Төленбегендер","Все заказы, без фильтров":"Барлық тапсырыстар, сүзгісіз","Поиск по всему":"Барлығы бойынша іздеу","Уведомления":"Хабарламалар"});
+if(LANG==="kk")Object.assign(KZ,{"Рельса разделов · KPI и таблица · постоянный инспектор заказа":"Бөлімдер жолағы · KPI және кесте · тұрақты тапсырыс инспекторы","Колонки по статусам со счётчиком и суммой, заказ — боковой панелью":"Күйлер бойынша бағандар, саны мен сомасы, тапсырыс — бүйір панельде","Выручка":"Түсім","Просрочено":"Кешіккен","Горящие заказы":"Шұғыл тапсырыстар","Горящих нет — всё по плану":"Шұғыл жоқ — бәрі жоспар бойынша","Лента событий и чатов":"Оқиғалар мен чаттар лентасы","По вашей роли":"Сіздің рөліңіз бойынша","Инспектор":"Инспектор","Выберите заказ в таблице — он откроется здесь, без окон поверх.":"Кестеден тапсырысты таңдаңыз — ол осында ашылады.","Лента":"Лента","Предыдущий":"Алдыңғы","Следующий":"Келесі","Событий пока нет":"Әзірге оқиға жоқ","Мини-доска":"Шағын тақта","по 3 самых срочных в каждой колонке":"әр бағанда ең шұғыл 3-еуі","Сводка дня":"Күн жиынтығы","Доска заказов":"Тапсырыстар тақтасы","В работе":"Жұмыста","Архив: выдан / отменён":"Мұрағат: берілді / болдырылмады","Поиск и фильтры":"Іздеу және сүзгілер","Открыть":"Ашу","просрочен":"кешікті","не оплачен":"төленбеген","оплачен":"төленген"});
 if(LANG==="kk")Object.assign(KZ,{"букет готов": "букет дайын", "букета готово": "букет дайын", "букетов готово": "букет дайын", "забрать и нажать «Забрал, еду»": "алып, «Алдым, кеттім» бас", "букет ждёт приёмки": "букет қабылдауды күтіп тұр", "букета ждут приёмки": "букет қабылдауды күтіп тұр", "букетов ждут приёмки": "букет қабылдауды күтіп тұр", "проверить": "тексер", "букет коллеги ждёт приёмки": "әріптестің букеті қабылдауды күтіп тұр", "букета коллег ждут приёмки": "әріптестің букеті қабылдауды күтіп тұр", "букетов коллег ждут приёмки": "әріптестің букеті қабылдауды күтіп тұр", "ваш заказ просрочен": "заказың кешікті", "ваших заказа просрочено": "заказың кешікті", "ваших заказов просрочено": "заказың кешікті", "доделать": "бітір", "доставка в пути": "доставка жолда", "доставки в пути": "доставка жолда", "доставок в пути": "доставка жолда", "отметить «Доставлено»": "«Жеткізілді» деп белгіле", "доставка готова к отправке": "доставка жіберуге дайын", "доставки готовы к отправке": "доставка жіберуге дайын", "доставок готово к отправке": "доставка жіберуге дайын", "вызвать такси и нажать «Отправлено»": "такси шақырып, «Жіберілді» бас", "доставка едет через сервис": "доставка сервис арқылы бара жатыр", "доставки едут через сервис": "доставка сервис арқылы бара жатыр", "доставок едут через сервис": "доставка сервис арқылы бара жатыр", "доставка ждёт курьера": "доставка курьерді күтіп тұр", "доставки ждут курьера": "доставка курьерді күтіп тұр", "доставок ждут курьера": "доставка курьерді күтіп тұр", "доставка просрочена": "доставка кешікті", "доставки просрочено": "доставка кешікті", "доставок просрочено": "доставка кешікті", "доставку нужно отправить": "доставканы жіберу керек", "доставки нужно отправить": "доставканы жіберу керек", "доставок нужно отправить": "доставканы жіберу керек", "курьеру или через inDrive / Яндекс": "курьерге не inDrive / Яндекс арқылы", "заказ готов к выдаче": "заказ беруге дайын", "заказа готовы к выдаче": "заказ беруге дайын", "заказов готовы к выдаче": "заказ беруге дайын", "выдать клиенту": "клиентке бер", "заказ на переделку": "заказ қайта жасауға", "заказа на переделку": "заказ қайта жасауға", "заказов на переделку": "заказ қайта жасауға", "исправить": "түзет", "заказ не оплачен": "заказ төленбеген", "заказа не оплачено": "заказ төленбеген", "заказов не оплачено": "заказ төленбеген", "получить оплату": "төлемді ал", "запрос на отмену или скидку": "отмена не жеңілдік сұрауы", "запроса на отмену или скидку": "отмена не жеңілдік сұрауы", "запросов на отмену или скидку": "отмена не жеңілдік сұрауы", "решить": "шеш", "новый заказ": "жаңа заказ", "новых заказа": "жаңа заказ", "новых заказов": "жаңа заказ", "взять в работу": "жұмысқа ал", "отчёт за день не сдан": "күндік есеп тапсырылмаған", "отчёта за день не сдано": "күндік есеп тапсырылмаған", "отчётов за день не сдано": "күндік есеп тапсырылмаған", "сдать": "тапсыр", "позиция на складе заканчивается": "складта позиция бітіп барады", "позиции на складе заканчиваются": "складта позиция бітіп барады", "позиций на складе заканчивается": "складта позиция бітіп барады", "заказать": "заказ бер", "позиция скоро завянет": "позиция жақында солады", "позиции скоро завянут": "позиция жақында солады", "позиций скоро завянут": "позиция жақында солады", "использовать первыми": "бірінші соларды қолдан", "свободная доставка": "бос доставка", "свободные доставки": "бос доставка", "свободных доставок": "бос доставка", "можно принять": "алуға болады", "чат ждёт ответа": "чат жауап күтіп тұр", "непрочитанный чат": "оқылмаған чат", "непрочитанных чата": "оқылмаған чат", "непрочитанных чатов": "оқылмаған чат", "чата ждут ответа": "чат жауап күтіп тұр", "чатов ждут ответа": "чат жауап күтіп тұр", "Отправлено": "Жіберілді"});
 KZR.push(
 [/^(сегодня|завтра|вчера) (\d{1,2}:\d{2})$/,m=>({сегодня:"бүгін",завтра:"ертең",вчера:"кеше"})[m[1]]+" "+m[2]],
@@ -1244,7 +1298,7 @@ function draw(){if(!S)return;if(window.__ctrlWas&&tab!=="ctrl"&&adm())ctrlSeenAl
  const n=$("nav");n.hidden=false;n.dataset.brand=SH.name||"Mirflowers";const wide=matchMedia("(min-width:900px)").matches,pf0=rolePins(),pf=[...new Set(pf0.map(hd0))].filter(k=>T2.some(t=>t[0]===k)),PR=wide?T2:pf.map(k=>T2.find(t=>t[0]===k)).filter(Boolean);MORE=wide?[]:T2.filter(t=>!pf.includes(t[0]));if(MORE.length===1){PR.push(MORE[0]);MORE=[]}
  const NV=PR/* «Ещё» — кнопка ☰ слева вверху */,inMore=tab==="more"||MORE.some(t=>t[0]===hd0(tab)),moreN=MORE.reduce((a,t)=>a+(+nbG(t[0])||0),0),plus=!wide&&mgr();document.body.classList.toggle("hasplus",plus);const nbt=NV.map((t,ix)=>`<button class="${t[0]===hd0(tab)||(t[0]==="more"&&inMore)?"on":""}" data-t="${t[0]}"><i>${ic(t[0])}</i>${t[2]}${(t[0]==="more"?moreN:nbG(t[0]))?`<b class="nb">${t[0]==="more"?moreN:nbG(t[0])}</b>`:""}</button>`);if(plus)nbt.splice(Math.min(3,nbt.length),0,`<button class="plus" type="button" data-a="new" aria-label="Новый заказ"><i>${ic("plus")}</i></button>`);morph(n,shl().nav(NV,nbt.join("")));tbDraw(MORE.length>0,moreN);
  n.onclick=e=>{const b=e.target.closest("button");if(b&&b.dataset.t){tab=b.dataset.t;draw();scrollTo(0,0)}};
- const cf=chFocus();if(LOC&&!locs().some(x=>x.id===LOC))LOC="";const vh=locBar()+backBar()+scoped(()=>gtab()+(f=>tab==="home"||tab==="orders"?f():shl().dense(tab,f()))(({home,orders:()=>shl().orders(),team,me,rep:repV,st:stV,ctrl:ctrlV,cur:curV,fl:homeFl,tpl:tplV,stock,show:vit,gal:galV,crm,chats,tc,leads,fin:own()?fin:home,sched,jr:logv,help:helpV,more:moreV,map:mapV,deals:dealsV,an:own()?anV:home})[tab]))+(mgr()&&(tab==="home"||tab==="orders")?`<button class="btn fab" data-a="new">＋ Заказ</button>`:"");const ve=$("v");if(tab==="map"||draw.tab!==tab){ve.innerHTML=deco(vh);ve.__h=vh}else morph(ve,vh);draw.tab=tab;chFit();bind();if(tab==="map")mapAfter();if(tab==="chats")chBind();if(tab==="tc")tcBind();chAfter(cf);try{skySync();csAfter();hxAfter()}catch(e){}}
+ const cf=chFocus();if(LOC&&!locs().some(x=>x.id===LOC))LOC="";const vh=locBar()+backBar()+scoped(()=>gtab()+(f=>tab==="home"||tab==="orders"?f():shl().dense(tab,f()))(({home,orders:()=>shl().orders(),team,me,rep:repV,st:stV,ctrl:ctrlV,cur:curV,fl:homeFl,tpl:tplV,stock,show:vit,gal:galV,crm,chats,tc,leads,fin:own()?fin:home,sched,jr:logv,help:helpV,more:moreV,map:mapV,deals:dealsV,an:own()?anV:home})[tab]))+(mgr()&&(tab==="home"||tab==="orders")?`<button class="btn fab" data-a="new">＋ Заказ</button>`:"");const ve=$("v");if(tab==="map"||draw.tab!==tab){ve.innerHTML=deco(vh);ve.__h=vh}else morph(ve,vh);draw.tab=tab;chFit();bind();if(tab==="map")mapAfter();if(tab==="chats")chBind();if(tab==="tc")tcBind();chAfter(cf);try{skySync();csAfter();hxAfter();ccAfter()}catch(e){}}
 
 /* доставка: сотрудник выставляет заказ (dvPost) → любой курьер принимает → забирает («Забрал, еду», st 3) → «Доставлено» */
 /* Окно работы: собирать и отдавать курьеру можно не раньше чем за WINH часов до срока («Сделать до» или время клиента) */
@@ -1315,8 +1369,6 @@ const LY=()=>document.documentElement.dataset.ly||"g",SLB=["Новые","В сб
 function oRender(l){if(!l.length)return"";const y=LY();
  /* у каждого дизайна своя конструкция списка — не общий card */
 
- if(y==="m")return `<div class="m-list">${l.map(o=>`<div class="m-row" data-a="det" data-id="${esc(o.id)}"><span class="m-st k${Math.min(3,+o.st||0)}"></span><div class="m-body"><b>${esc(o.bn||"Заказ")}</b><span>${esc(o.client||"")} · ${esc(o.date||"")} ${esc(String(o.time||"").slice(0,5))}</span></div><div class="m-right"><b>${M(tot(o))}</b><em>${stL(o)}${o.paid?"":" · не опл."}</em></div></div>`).join("")}</div>`;
- if(y==="k")return "";/* доска собирается в orders() */
  if(y==="d")return "";/* шкала в orders() */
  return l.map(card).join("")}
 function stBlock(c){const y=LY(),act=[0,1,2,3].reduce((a,i)=>a+c(i),0)||1,A=i=>`data-a="tf" data-id="${i}"`;
@@ -1656,6 +1708,60 @@ function hxAfter(){if(LY()!=="x")return;const d=$("hxdet");
  const g=document.querySelector(".hx-grid.ph");if(g&&!g.__sw){g.__sw=1;let x0=0,y0=0;g.addEventListener("touchstart",e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY},{passive:true});
   g.addEventListener("touchend",e=>{const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;if(Math.abs(dx)<70||Math.abs(dy)>Math.abs(dx)*.7)return;if(e.target.closest("input,textarea,select,.hx-tbl,.chips"))return;const n=g.querySelectorAll(".hx-win").length;hxTab((HX.win+(dx<0?1:-1)+n)%n)},{passive:true})}
  if(!document.getElementById("csfont")){const l=document.createElement("link");l.id="csfont";l.rel="stylesheet";l.href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap&subset=cyrillic,cyrillic-ext";document.head.appendChild(l)}}
+/* ===== «Командный центр» (m): оболочка CommandShell, корень #cc-root (разд. 138, Фаза 5) =====
+ Ноутбук — 3 колонки 72px | 1fr | 440px на 100dvh: рельса разделов · центр (KPI дня + таблица) · постоянный инспектор заказа (без модалок).
+ Телефон — строка KPI + стек, заказ — полноэкранный инспектор с «‹ предыдущий / следующий ›». */
+const CC={sel:"",detH:"",detK:"",ids:[]},ccMoney=()=>own()||adm()||S.role==="operator",ccLate=o=>o.dv&&+o.st<4&&o.date&&new Date(o.date+"T"+(o.time||"23:59")).getTime()<Date.now();
+function ccKpi(){const t=today(),live=O.filter(o=>+o.st!==5),td=live.filter(o=>o.date===t),c=i=>O.filter(o=>+o.st===i&&!(i===0&&ntLater(o))).length,late=O.filter(ccLate).length,
+  K=[...(ccMoney()?[["Выручка",M(td.reduce((a,o)=>a+(+tot(o)||0),0)),td.length+" "+pl(td.length,"заказ","заказа","заказов"),"orders|today",0]]:[]),["Новые",c(0),"","orders|st0",0],["В сборке",c(1),"","orders|st1",0],["В пути",c(3),"","orders|st3",0],["Просрочено",late,"доставки","orders|late",late>0]];
+ return `<div class="cc-kpi">${K.map(k=>`<button type="button" class="cc-k${k[4]?" al":""}" data-a="go2" data-id="${k[3]}"><span>${k[0]}</span><b>${k[1]}</b>${k[2]?`<em>${k[2]}</em>`:""}</button>`).join("")}</div>`}
+function ccTable(l,lim,cap){const sm=ccMoney()||mgr()&&S.role!=="assistant",V=l.slice(0,lim);CC.ids=V.map(o=>o.id);
+ return `<div class="cc-tw"><table class="cc-tbl"><thead><tr><th></th><th>Срок</th><th>Клиент · букет</th>${sm?"<th class=r>Сумма</th>":""}<th>Статус</th></tr></thead><tbody>${V.map(o=>{const st=Math.max(0,Math.min(5,+o.st||0)),late=!!dueMs(o)&&dueMs(o)<Date.now()&&st<4,unp=ccMoney()&&!o.paid&&st>=2&&st!==5;
+  return `<tr data-a="det" data-id="${esc(o.id)}" class="${o.id===CC.sel?"on":""}"><td><i class="cc-dot k${st}"></i></td><td class="cc-t${late?" al":""}">${esc(String(o.time||"").slice(0,5)||"—")}<small>${esc(dm(o.date||today()))}</small></td><td><b>${esc(o.client||"—")}</b><small>${esc(o.bn||"")}${o.dv?" · доставка":""}</small></td>${sm?`<td class="r">${M(tot(o))}${unp?'<small class="al">не оплачен</small>':""}</td>`:""}<td><span class="cc-s k${st}">${esc(stL(o))}</span>${late?'<small class="al">просрочен</small>':""}</td></tr>`}).join("")||`<tr><td colspan="5" class="cc-e">${cap||"Ничего нет"}</td></tr>`}</tbody></table></div>`}
+function ccFeed(){const L=O.slice().sort((a,b)=>(+b.ts||0)-(+a.ts||0)).slice(0,8).map(o=>[+o.ts||0,`<b>${esc(o.client||"Заказ")}</b> · ${esc(stL(o))}`,`data-a="det" data-id="${esc(o.id)}"`]);
+ try{if(isOp()&&FX("clientChat")&&typeof CHS!=="undefined")CHS.slice().sort((a,b)=>(+b.lastTs||0)-(+a.lastTs||0)).slice(0,5).forEach(c=>L.push([+c.lastTs||0,`<b>${esc(c.name||c.phone||"Чат")}</b> · ${esc(String(c.last||"").slice(0,40))}`,`data-a="goto" data-id="chats"`]))}catch(e){}
+ L.sort((a,b)=>b[0]-a[0]);const tm=x=>x?new Date(x).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}):"";
+ return `<ul class="cc-feed">${L.slice(0,10).map(x=>`<li ${x[2]}><time>${tm(x[0])}</time><span>${x[1]}</span></li>`).join("")||'<li class="mut">Событий пока нет</li>'}</ul>`}
+function ccRail(){const P=(window.HPL||[]).filter(x=>x[0]!=="more"),k=hd0(tab),nf=typeof nfUnread==="function"?+nfUnread()||0:0;
+ return `<aside class="cc-rail" aria-label="Разделы"><span class="cc-logo">${esc(String(SH.name||"M").charAt(0))}</span>${mgr()?`<button type="button" class="cc-r cc-add" data-a="new" title="Новый заказ" aria-label="Новый заказ">${ic("plus")}</button>`:""}<button type="button" class="cc-r" data-a="gso" title="Поиск" aria-label="Поиск">${TBI.search}</button><button type="button" class="cc-r" data-a="nfc" title="Уведомления" aria-label="Уведомления">${TBI.bell}${nf?`<b class="nb">${nf>99?"99+":nf}</b>`:""}</button><i class="cc-sep"></i>${P.map(x=>{const n=+nbG(x[0])||0;return `<button type="button" class="cc-r${x[0]===k?" on":""}" data-a="goto" data-id="${x[0]}" title="${esc(x[2])}" aria-label="${esc(x[2])}">${ic(x[0])}<span>${esc(x[2])}</span>${n?`<b class="nb">${n>99?"99+":n}</b>`:""}</button>`}).join("")}</aside>`}
+function ccBar(){const P=(window.HPL||[]),pins=rolePins().map(k=>P.find(x=>x[0]===k)).filter(Boolean),k=hd0(tab);
+ return `<div class="cc-bar" role="navigation" aria-label="Разделы">${pins.map(x=>`<button type="button" class="${x[0]===k?"on":""}" data-a="goto" data-id="${x[0]}">${ic(x[0])}<span>${esc(x[2])}</span>${+nbG(x[0])?`<b class="nb">${nbG(x[0])}</b>`:""}</button>`).join("")}${mgr()?`<button type="button" class="cc-bplus" data-a="new" aria-label="Новый заказ">${ic("plus")}</button>`:""}<button type="button" onclick="ccAll()">${ic("more")}<span>Все</span></button></div>`}
+function ccAll(){const P=(window.HPL||[]).filter(x=>x[0]!=="more");modal(`<h1 style="font-size:22px">Разделы</h1><div class="cc-allg">${P.map(x=>`<button type="button" class="btn g" data-a="goto" data-id="${x[0]}" onclick="modal('')">${ic(x[0])} ${esc(x[2])}${+nbG(x[0])?` <b class="nb">${nbG(x[0])}</b>`:""}</button>`).join("")}</div>`)}
+function ccIns(){if(!CC.sel)return `<div class="cc-ie"><b>Инспектор</b><p class="mut">Выберите заказ в таблице — он откроется здесь, без окон поверх.</p><h2>Лента</h2>${ccFeed()}</div>`;
+ const i=CC.ids.indexOf(CC.sel),pv=i>0?CC.ids[i-1]:"",nx=i>=0&&i<CC.ids.length-1?CC.ids[i+1]:"";
+ return `<div class="cc-ih"><button type="button" class="btn g s" onclick="ccClose()" aria-label="Закрыть">✕</button><button type="button" class="btn g s" ${pv?`data-a="det" data-id="${esc(pv)}"`:"disabled"}>‹ Предыдущий</button><button type="button" class="btn g s" ${nx?`data-a="det" data-id="${esc(nx)}"`:"disabled"}>Следующий ›</button></div><div id="ccins">${CC.detH||'<p class="mut">Загрузка…</p>'}</div>`}
+function ccFrame(center){const ph=csPh();
+ if(ph&&CC.sel)return `<div id="cc-root" class="cc-root ph ins">${ccIns()}</div>${ccBar()}`;
+ if(ph)return `<div id="cc-root" class="cc-root ph"><header class="cc-ph">${esc(SH.name||"Mirflowers")}${typeof ptBtn==="function"?ptBtn():""}</header>${gtab()}${center}</div>${ccBar()}`;
+ return `<div id="cc-root" class="cc-root">${ccRail()}<main class="cc-c"><header class="cc-top"><b>${esc(SH.name||"Mirflowers")}</b>${typeof ptBtn==="function"?ptBtn():""}</header>${gtab()}${center}</main><aside class="cc-i" aria-label="Инспектор">${ccIns()}</aside></div>`}
+function ccHome(){const now=Date.now(),hot=O.filter(o=>+o.st<4&&(S.role!=="courier"||o.dv&&(o.courier===U.uid||dvFree(o)))&&dueMs(o)&&dueMs(o)-now<=2*36e5).sort((a,b)=>dueMs(a)-dueMs(b));
+ return ccFrame(`<h1 class="cc-h1">Сводка</h1>${ccKpi()}<section class="cc-sec"><h2>Горящие заказы · ${hot.length}</h2>${ccTable(hot,12,"Горящих нет — всё по плану")}</section><div class="cc-two"><section class="cc-sec"><h2>Лента событий и чатов</h2>${ccFeed()}</section><section class="cc-sec cc-role"><h2>По вашей роли</h2>${roleHome()}</section></div>`)}
+function ccOrders(l,filt){return ccFrame(`<h1 class="cc-h1">Заказы</h1>${ccKpi()}<div class="cc-flt">${filt}<div class="chips">${[["","Все"],...ST.map((s,i)=>[String(i),s])].map(c=>`<button class="chip ${fs===c[0]?"on":""}" data-a="f" data-id="${c[0]}">${c[1]}</button>`).join("")}</div></div>${ccTable(l,ordLim())}${l.length>ordLim()?`<div class="acts"><button class="btn g" data-a="o_more">Ещё (${l.length-ordLim()})</button></div>`:""}`)}
+function ccDense(t,h){const P=(window.HPL||[]),k=hd0(t),nm=(P.find(x=>x[0]===k)||[])[2]||(GHN&&GHN[k])||"";return ccFrame(`<div class="cc-dense"><h1 class="cc-h1">${esc(nm)}</h1>${h}</div>`)}
+function ccClose(){CC.sel="";CC.detH="";CC.detK="";draw()}
+const CommandShell={...BentoShell,id:"m",nav:()=>"",home:()=>ccHome(),orders:()=>orders(),dense:(t,h)=>t==="chats"||t==="tc"||t==="map"?ccFrame(h):ccDense(t,h),
+ openOrder:id=>{if(!O.find(x=>x.id===id))return;CC.sel=id;CC.detH="";CC.detK="";draw()},destroy(){CC.sel="";CC.detH=""}};
+SHELL.m=CommandShell;
+function ccAfter(){if(LY()!=="m"||!CC.sel)return;const o=O.find(x=>x.id===CC.sel);if(!o){CC.sel="";return}const k=JSON.stringify(o,(n,v)=>n==="_pend"?undefined:v);if($("ccins")&&(k!==CC.detK||!CC.detH)){CC.detK=k;detail(CC.sel)}}
+document.addEventListener("keydown",e=>{if(!S||LY()!=="m"||e.key!=="Escape"||$("m").innerHTML)return;const t=e.target;if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"))return;if(CC.sel)ccClose()});
+
+/* ===== «Доска» (k): оболочка BoardShell, корень #kb-root =====
+ Колонки по статусам со счётчиком и суммой; перетаскивания нет — статус меняется только кнопками в карточке заказа (там все проверки rv и ролей).
+ Ноутбук — колонки рядом с независимым скроллом; телефон — горизонтальный свайп со snap и табами-индикаторами. Заказ — боковая панель, колонка не теряется. */
+const KB={arch:0};
+function kbCard(o,sm){const st=+o.st||0,late=!!dueMs(o)&&dueMs(o)<Date.now()&&st<4,unp=ccMoney()&&!o.paid&&st>=2&&st!==5;
+ return `<article class="kb-c${late?" al":""}" data-a="det" data-id="${esc(o.id)}" tabindex="0"><header><b>${esc(o.client||"—")}</b><time>${esc(String(o.time||"").slice(0,5)||"—")}</time></header><p>${esc(o.bn||"Заказ")}${o.dv?" · доставка":""}</p><footer>${sm?`<span>${M(tot(o))}</span>`:"<span></span>"}<span class="kb-f">${late?'<em class="al">просрочен</em>':""}${unp?'<em class="al">не оплачен</em>':o.paid&&sm?"<em>оплачен</em>":""}</span></footer><span class="kb-open">Открыть ›</span></article>`}
+function kbBoard(l,lim){const sm=ccMoney()||mgr()&&S.role!=="assistant",cols=KB.arch?[4,5]:[0,1,2,3],cn=["Новый","Собирается","Готов","В пути","Выдан","Отменён"];
+ const C=cols.map(st=>{const it=l.filter(o=>+o.st===st),sum=it.reduce((a,o)=>a+(+tot(o)||0),0);return `<section class="kb-col k${st}" id="kbc${st}"><header class="kb-h"><b>${cn[st]}</b><span>${it.length}</span>${sm?`<em>${M(sum)}</em>`:""}</header><div class="kb-list">${it.slice(0,lim).map(o=>kbCard(o,sm)).join("")||'<p class="kb-e">Пусто</p>'}${it.length>lim?`<button type="button" class="kb-more" data-a="go2" data-id="orders|st${st}">Ещё ${it.length-lim} ›</button>`:""}</div></section>`}).join("");
+ return `<div class="kb-tabs" role="tablist">${cols.map(st=>`<button type="button" role="tab" onclick="document.getElementById('kbc${st}').scrollIntoView({behavior:'smooth',inline:'start',block:'nearest'})"><i class="cc-dot k${st}"></i>${cn[st]} <b>${l.filter(o=>+o.st===st).length}</b></button>`).join("")}</div><div class="kb-cols">${C}</div>`}
+function kbHead(){const gt=gtab();const P=(window.HPL||[]).filter(x=>x[0]!=="more"),k=hd0(tab),nf=typeof nfUnread==="function"?+nfUnread()||0:0;
+ return `<header class="kb-top"><b class="kb-brand">${esc(SH.name||"Mirflowers")}</b>${typeof ptBtn==="function"?ptBtn():""}<span class="kb-act"><button type="button" data-a="gso" aria-label="Поиск">${TBI.search}</button><button type="button" data-a="nfc" aria-label="Уведомления">${TBI.bell}${nf?`<b class="nb">${nf}</b>`:""}</button>${mgr()?`<button type="button" class="kb-add" data-a="new">${ic("plus")}<span>Заказ</span></button>`:""}</span></header><div class="kb-nav" role="navigation" aria-label="Разделы">${P.map(x=>`<button type="button" class="${x[0]===k?"on":""}" data-a="goto" data-id="${x[0]}">${esc(x[2])}${+nbG(x[0])?` <b class="nb">${nbG(x[0])}</b>`:""}</button>`).join("")}</div>${gt?`<div class="kb-gt">${gt}</div>`:""}`}
+function kbHome(){const l=O.filter(o=>+o.st<4&&!ntLater(o)).filter(o=>S.role!=="courier"||o.dv&&(o.courier===U.uid||dvFree(o))).sort((a,b)=>(dueMs(a)||9e15)-(dueMs(b)||9e15)),k0=KB.arch;KB.arch=0;const b=kbBoard(l,3);KB.arch=k0;
+ return `<div id="kb-root" class="kb-root">${kbHead()}<div class="kb-sum"><h1>Мини-доска</h1><span class="mut">по 3 самых срочных в каждой колонке</span></div>${b}<section class="kb-day"><h2>Сводка дня</h2>${ccKpi()}${roleHome()}</section></div>`}
+function kbOrders(l,filt){return `<div id="kb-root" class="kb-root">${kbHead()}<div class="kb-sum"><h1>Доска заказов</h1><span class="kb-sw"><button type="button" class="chip ${KB.arch?"":"on"}" onclick="KB.arch=0;draw()">В работе</button><button type="button" class="chip ${KB.arch?"on":""}" onclick="KB.arch=1;draw()">Архив: выдан / отменён</button></span></div><details class="kb-flt" ${KB.fo?"open":""} ontoggle="KB.fo=this.open"><summary>Поиск и фильтры</summary>${filt}</details>${kbBoard(l,40)}</div>`}
+function kbDense(t,h){const P=(window.HPL||[]),k=hd0(t),nm=(P.find(x=>x[0]===k)||[])[2]||(GHN&&GHN[k])||"";return `<div id="kb-root" class="kb-root">${kbHead()}<section class="kb-dense"><h1>${esc(nm)}</h1>${h}</section></div>`}
+const BoardShell={...BentoShell,id:"k",nav:()=>"",home:()=>kbHome(),orders:()=>orders(),dense:(t,h)=>t==="chats"||t==="tc"||t==="map"?`<div id="kb-root" class="kb-root">${kbHead()}${h}</div>`:kbDense(t,h)};
+SHELL.k=BoardShell;
 /* ---- Профиль → Мой экран ---- */
 function msMove(k,d){const def=roleOf().home,p=hbP(),o=(p.o||[]).filter(x=>def.includes(x));def.forEach(x=>{if(!o.includes(x))o.push(x)});const i=o.indexOf(k),j=i+d;if(i<0||j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];p.o=o;hbS(p);draw()}
 function msTog(k,on){const p=hbP(),f=new Set(p.off||[]);on?f.delete(k):f.add(k);p.off=[...f];hbS(p);draw()}
@@ -1831,22 +1937,6 @@ function homeOp(){const vsold=scSoldDay(today()),act=O.filter(o=>+o.st<4),c=i=>O
    <h2>Заказы сейчас</h2><div class="bento">${[0,1,2,3].map(i=>K("b-st",SLB[i],c(i),"","orders|st"+i,"",`var(--s${i})`)).join("")}</div>`;
   const d30=addD(t,-29),LT=locs().length>1?`<h2>Точки · 30 дней</h2><div class="dtw"><table class="dt"><thead><tr><th>Точка</th><th style="text-align:right">Заказов</th><th style="text-align:right">Сумма</th><th style="text-align:right">Ср. чек</th></tr></thead><tbody>${locs().map(l=>{const r=RAW[0].filter(o=>+o.st!==5&&(o.loc||"main")===l.id&&(o.date||"")>=d30&&(o.date||"")<=t),sm=r.reduce((a,o)=>a+tot(o),0);return `<tr><td><b>${esc(l.name)}</b></td><td class="n">${r.length}</td><td class="n">${M(sm)}</td><td class="n">${r.length?M(sm/r.length):"—"}</td></tr>`}).join("")}</tbody></table></div>`:"";
   return G+BG+`<h2>Ближайшие заказы</h2>${gTable(actF)}${latN?`<p class="mut" data-a="al" data-id="orders|later" style="cursor:pointer">Позже: ${latN} ${pl(latN,"заказ","заказа","заказов")} на другие дни — «Заказы» → «Позже» ›</p>`:""}`+CT+AL+RV+`<div class="dg" style="margin-top:6px">${todayStaff()}</div>`+LT}
- /* ===== Командный центр: рельса KPI + очередь + боковая сводка ===== */
- if(y==="m"){const ur=unpaid.reduce((a,o)=>a+rest(o),0);
-  return G+`<div class="m-head"><h1>Командный центр</h1><p class="mut">Оперативная сводка · ${esc(t)}</p></div>
-  <div class="m-kpi">
-   <div class="tile" data-a="go2" data-id="orders|today"><span>Сегодня</span><b>${M(money)}</b><em>${td.length} зак.</em></div>
-   <div class="tile" data-a="go2" data-id="orders|unpaid"><span>Долг</span><b>${M(ur)}</b><em>${unpaid.length} не опл.</em></div>
-   <div class="tile" data-a="go2" data-id="orders|st0"><span>Новые</span><b>${c(0)}</b></div>
-   <div class="tile" data-a="go2" data-id="orders|st1"><span>Сборка</span><b>${c(1)}</b></div>
-  </div>
-  <div class="m-shell">
-   <div class="m-main"><h2>Очередь</h2><div class="m-list-wrap">${oRender(up)||`<div class="card mut">Ближайших нет</div>`}</div>${actF.length>6?`<button class="btn g" data-a="al" data-id="orders|fresh">Все свежие (${actF.length})</button>`:""}</div>
-   <aside class="m-detail"><h2>Статусы</h2>${[0,1,2,3].map(i=>`<div class="m-stline" data-a="tf" data-id="${i}"><i class="k${i}"></i><span>${SLB[i]}</span><b>${c(i)}</b></div>`).join("")}${AL}${CT}</aside>
-  </div>`+WG}
- /* ===== Доска: колонки по статусам — как kanban, не список ===== */
- if(y==="k"){const cols=[0,1,2,3].map(st=>{const items=actF.filter(o=>+o.st===st).slice(0,8);return `<section class="kbc" style="--c:var(--s${st})"><header class="kbh"><b>${SLB[st]}</b><span>${c(st)}</span></header><div class="kbi-wrap">${items.map(o=>`<article class="kbi" data-a="det" data-id="${esc(o.id)}"><b>${esc(o.bn||"Заказ")}</b><span>${esc(o.client||"")} · ${esc(String(o.time||"").slice(0,5)||"—")}</span><em>${M(tot(o))}${o.paid?"":" · не опл."}</em></article>`).join("")||`<p class="kbe">Пусто</p>`}</div><button type="button" class="btn g s" data-a="go2" data-id="orders|st${st}">Все ›</button></section>`}).join("");
-  return G+`<div class="k-head"><h1>Доска</h1><p class="mut">Колонки = статусы · тяните взгляд, не список</p></div><div class="kb">${cols}</div>`+AL+CT}
  /* ===== День: вертикальная шкала по часам ===== */
  if(y==="d"){const byH={};up.forEach(o=>{const h=parseInt(String(o.time||"12").slice(0,2),10);if(!isNaN(h))(byH[h]=byH[h]||[]).push(o)});
   const hours=[...Array(15)].map((_,i)=>i+8);/* 8–22 */
@@ -1861,16 +1951,13 @@ function orders(){const q=fq.toLowerCase(),dd=fdt==="t"?today():fdt==="n"?addD(t
   return (fs===""||(fs==="fresh"?+o.st<4&&isFresh(o):fs==="later"?+o.st<4&&!isFresh(o):String(o.st)===fs&&!(fs==="0"&&ntLater(o))))/* «Свежие» — на сегодня (и незавершённые прошлые), «Позже» — будущие */&&(!fz2||(fz2==="late"?(o.dv&&+o.st<4&&o.date&&new Date(o.date+"T"+(o.time||"23:59")).getTime()<Date.now()):fz2==="dvsend"?(+o.st<=2&&o.dv&&!o.courier&&!o.dvPost&&!o.dvVia&&soonOk(o)):fz2==="dvpost"?(o.dv&&o.dvPost&&!o.courier&&+o.st<=2&&soonOk(o)):(+o.st>=2&&+o.st<5&&!o.paid)))&&(!dd||o.date===dd)&&(`${o.client} ${o.phone} ${o.bn} ${o.comp||""} ${o.addr||""} ${o.card||""} ${o.note||""} ${o.date||""}`).toLowerCase().includes(q)});
  l.sort((a,b)=>(+b.ts||0)-(+a.ts||0));/* все заказы: новые сверху, дальше вниз по времени создания */
  const y=LY(),filt=`${ordCnt()}<input id="q" placeholder="Поиск: имя, телефон, букет, адрес" value="${esc(fq)}"><div class="chips">${[["","Все даты"],["t","Сегодня"],["n","Завтра"]].map(c=>`<button class="chip ${fdt===c[0]?"on":""}" data-a="fdt" data-id="${c[0]}">${c[1]}</button>`).join("")}</div><p class="mut">Найдено: ${l.length}${fz2?` · <a href="#" data-a="f2" data-id="">сбросить фильтр</a>`:""}</p>`;
- /* Доска — колонки, не список */
- if(y==="k"){const cols=[0,1,2,3,4].map(st=>{const items=l.filter(o=>+o.st===st).slice(0,40);return `<section class="kbc" style="--c:var(--s${Math.min(st,3)})"><header class="kbh"><b>${SLB[st]||"·"}</b><span>${items.length}</span></header><div class="kbi-wrap">${items.map(o=>`<article class="kbi" data-a="det" data-id="${esc(o.id)}"><b>${esc(o.bn||"Заказ")}</b><span>${esc(o.client||"")} · ${esc(o.date||"")} ${esc(String(o.time||"").slice(0,5))}</span><em>${M(tot(o))}${o.paid?"":" · не опл."}</em></article>`).join("")||`<p class="kbe">Пусто</p>`}</div></section>`}).join("");
-  return `<div class="k-head"><h1>Доска заказов</h1></div>${filt}<div class="kb">${cols}</div>`}
+ if(y==="k")return kbOrders(l,filt);
+ if(y==="m")return ccOrders(l,filt);
  /* День — шкала по времени */
  if(y==="d"){const byH={};l.forEach(o=>{const h=parseInt(String(o.time||"12").slice(0,2),10);const key=isNaN(h)?99:h;(byH[key]=byH[key]||[]).push(o)});
   const hours=[...new Set([...Array(15)].map((_,i)=>i+8).concat(Object.keys(byH).map(Number)))].filter(h=>h>=0&&h<=23).sort((a,b)=>a-b);
   const lane=(hours.length?hours:[12]).map(h=>{const items=byH[h]||[];return `<div class="day-h"><div class="day-t">${h===99?"—":String(h).padStart(2,"0")+":00"}</div><div class="day-lane">${items.map(o=>`<button type="button" class="day-o k${Math.min(3,+o.st||0)}" data-a="det" data-id="${esc(o.id)}"><b>${esc(o.bn||"")}</b><span>${esc(o.client||"")}</span><em>${M(tot(o))}</em></button>`).join("")||`<span class="day-empty">—</span>`}</div></div>`}).join("");
   return `<div class="d-head"><h1>Заказы · день</h1></div>${filt}<div class="day-scale">${lane}</div>`}
- /* Командный центр — плотный журнал */
- if(y==="m")return `<div class="m-head"><h1>Журнал заказов</h1></div>${filt}<div class="m-list-wrap">${oRender(l.slice(0,ordLim()))||'<div class="card mut">Ничего не найдено.</div>'}</div>${l.length>ordLim()?`<div class="acts"><button class="btn g" data-a="o_more">Ещё (${l.length-ordLim()})</button></div>`:""}`;
  /* Чёрная дыра — радар-строки */
  if(y==="h")return csOrders(l,filt);
  if(y==="x")return hxOrders(l,filt);
