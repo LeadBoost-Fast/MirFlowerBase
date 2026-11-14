@@ -651,19 +651,56 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
 .kb-dense h1{font-size:24px}
 @media(max-width:899px){.kb-tabs{display:flex}.kb-cols{grid-auto-columns:86%;scroll-snap-type:x mandatory;gap:10px}.kb-col{scroll-snap-align:start;max-height:none}.kb-list{overflow:visible}.kb-sw{margin-left:0}.kb-add span{display:none}}
 
-/* ===== День (d) — шкала часов ===== */
-:root[data-ly=d] .d-head h1{margin:0 0 4px}
-:root[data-ly=d] .d-sum{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0 14px;font-size:14px}
-:root[data-ly=d] .d-sum b{font-size:18px;margin-right:4px}
-:root[data-ly=d] .day-scale{display:flex;flex-direction:column;gap:0;border-left:2px solid var(--line);margin-left:8px}
-:root[data-ly=d] .day-h{display:grid;grid-template-columns:52px 1fr;gap:10px;min-height:56px;padding:6px 0}
-:root[data-ly=d] .day-t{font-size:12px;font-weight:700;color:var(--mut);padding-top:8px;font-variant-numeric:tabular-nums}
-:root[data-ly=d] .day-lane{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
-:root[data-ly=d] .day-o{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px 12px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:140px;max-width:220px;color:var(--ink);font:inherit}
-:root[data-ly=d] .day-o.k0{border-left:4px solid var(--s0)}:root[data-ly=d] .day-o.k1{border-left:4px solid var(--s1)}
-:root[data-ly=d] .day-o.k2{border-left:4px solid var(--s2)}:root[data-ly=d] .day-o.k3{border-left:4px solid var(--s3)}
-:root[data-ly=d] .day-o span,:root[data-ly=d] .day-o em{font-size:12px;color:var(--mut);font-style:normal}
-:root[data-ly=d] .day-empty{color:var(--mut);font-size:13px;padding:8px 0}
+/* ================= «День» (data-ly=d), корень #tl-root — разд. 138, Фаза 6 ================= */
+:root[data-ly=d] #tb,:root[data-ly=d] nav#nav,:root[data-ly=d] .fab,:root[data-ly=d] #v>.chip[data-a=back],:root[data-ly=d] #v>.gtab{display:none!important}
+:root[data-ly=d] body{padding:env(safe-area-inset-top) 0 0!important}
+:root[data-ly=d] main#v{display:block!important;max-width:none!important;margin:0!important;padding:0!important}
+.tl-root{padding-bottom:40px}
+.tl-top{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid var(--line)}
+.tl-date{display:flex;flex-direction:column;line-height:1.15}.tl-date b{font-size:20px;text-transform:capitalize}.tl-date span{color:var(--mut);font-size:13px}
+.tl-act{margin-left:auto;display:flex;gap:6px}
+.tl-act button{position:relative;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:var(--card);color:var(--ink);display:grid;place-items:center;padding:0;min-height:0;cursor:pointer}
+.tl-act svg{width:20px;height:20px}.tl-act .nb{position:absolute;top:-4px;right:-4px}
+.tl-add{background:var(--ac)!important;color:var(--on)!important;border-color:var(--ac)!important}
+.tl-nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;padding:6px 12px;border-bottom:1px solid var(--line)}.tl-nav::-webkit-scrollbar{display:none}
+.tl-nav button{position:relative;flex:none;display:flex;align-items:center;gap:6px;border:0;background:transparent;color:var(--mut);padding:8px 12px;border-radius:99px;font-size:14px;cursor:pointer;min-height:40px}
+.tl-nav button svg{width:18px;height:18px}.tl-nav button.on{color:var(--ac);background:color-mix(in srgb,var(--ac) 12%,transparent);font-weight:600}
+.tl-gt{padding:10px 18px 0}
+.tl-wrap{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:22px;padding:14px 18px;max-width:1300px;margin:0 auto}
+.tl-wrap.one{grid-template-columns:minmax(0,1fr);max-width:980px}
+.tl-sh{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}.tl-sh h1{margin:0;font-size:24px}.tl-sh h1::first-letter{text-transform:uppercase}
+.tl-dsw{display:flex;gap:6px}.tl-dsw .btn.on{background:var(--ac);color:var(--on);border-color:var(--ac)}
+.tl-sum{display:flex;gap:18px;flex-wrap:wrap;color:var(--mut);font-size:14px;margin:0 0 10px}.tl-sum b{color:var(--ink);font-size:18px;margin-right:4px}
+.tl-flt{margin:0 0 12px}.tl-flt summary{cursor:pointer;color:var(--mut);padding:6px 0}
+.tl-allday{border:1px dashed var(--line);border-radius:14px;padding:10px 12px;margin-bottom:12px;background:var(--card)}
+.tl-allday h3{margin:0 0 8px;font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.tl-ad{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.tl-out{border-style:dotted}
+.tl-scale{position:relative;border-left:2px solid var(--line);margin-left:56px}
+.tl-row{position:relative;display:block;min-height:64px;border-top:1px solid var(--line)}
+.tl-row:first-child{border-top:0}
+.tl-h{position:absolute;left:-58px;top:-9px;width:50px;text-align:right;font-variant-numeric:tabular-nums}
+.tl-h b{font-size:13px;color:var(--mut);font-weight:600}.tl-h em{display:block;font-style:normal;font-size:10px;line-height:1.1;color:var(--bad,#d33);font-weight:700;margin-top:2px}
+.tl-row.cur .tl-h b{color:var(--ac)}.tl-row.past{opacity:.6}
+.tl-row.pk .tl-slot{background:color-mix(in srgb,var(--bad,#d33) 6%,transparent)}
+.tl-slot{position:relative;display:flex;flex-wrap:wrap;gap:8px;padding:8px 10px;align-content:flex-start}
+.tl-now{position:absolute;left:-7px;right:0;height:0;border-top:2px solid var(--ac);z-index:2;pointer-events:none}
+.tl-now::before{content:"";position:absolute;left:-5px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--ac)}
+.tl-now span{position:absolute;right:0;top:-18px;font-size:11px;font-weight:700;color:var(--ac);background:var(--bg);padding:0 4px}
+.tl-o{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"t b" "t s" "t e";column-gap:10px;text-align:left;flex:1 1 240px;max-width:100%;padding:10px 12px;border:1px solid var(--line);border-left:4px solid var(--s0);border-radius:12px;background:var(--card);color:var(--ink);cursor:pointer;font:inherit;min-height:0}
+.tl-o.k1{border-left-color:var(--s1)}.tl-o.k2{border-left-color:var(--s2)}.tl-o.k3{border-left-color:var(--s3)}.tl-o.k4,.tl-o.k5{border-left-color:var(--mut);opacity:.75}
+.tl-o.al{box-shadow:0 0 0 1px var(--bad,#d33)}
+.tl-o time{grid-area:t;font-weight:700;font-variant-numeric:tabular-nums;font-size:15px}.tl-o b{grid-area:b}.tl-o span{grid-area:s;color:var(--mut);font-size:13px}.tl-o em{grid-area:e;font-style:normal;font-size:12px;color:var(--mut)}
+.tl-o.al em{color:var(--bad,#d33)}
+.tl-free{flex:1;border:1px dashed var(--line);background:transparent;color:var(--mut);border-radius:12px;padding:10px 12px;text-align:left;cursor:pointer;min-height:44px;font:inherit;font-size:13px}
+.tl-free:hover{border-color:var(--ac);color:var(--ac)}
+.tl-empty{color:var(--mut);font-size:13px;padding:10px 2px}
+.tl-side section{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:12px;margin-bottom:14px}
+.tl-hot{display:flex;flex-direction:column;gap:8px}.tl-hot h2,.tl-role h2{margin:0 0 4px}
+.tl-hot .tl-o{flex:none}
+.tl-dense{max-width:1100px;margin:0 auto;padding:14px 18px}
+.tl-dh{display:flex;align-items:baseline;gap:12px;border-bottom:2px solid var(--ink);margin-bottom:12px}.tl-dh h1{margin:0 0 8px;font-size:26px}
+@media(max-width:899px){.tl-wrap{grid-template-columns:1fr;padding:12px}.tl-scale{margin-left:50px}.tl-h{left:-52px;width:44px}.tl-nav button span{display:none}.tl-nav button.on span{display:inline}.tl-top{padding:10px 12px}}
 
 /* ===== Чёрная дыра: радар-строки заказов ===== */
 
@@ -926,7 +963,7 @@ const DESIGNS=[
  ["x","Ретро-HUD","Окна-терминалы плиткой, командная строка, один акцентный цвет"],
  ["m","Командный центр","Рельса разделов · KPI и таблица · постоянный инспектор заказа"],
  ["k","Доска","Колонки по статусам со счётчиком и суммой, заказ — боковой панелью"],
- ["d","День","Вертикальная шкала по часам"]
+ ["d","День","Почасовая шкала 08–23 с линией «Сейчас», свободные окна и пики нагрузки"]
 ],/* будущие дизайны: превью видно, включить пока нельзя (UIS их не знает — applyTheme откатит на "g") */
 DSOON=[["p","Атлас","Ботанический журнал: оглавление и развороты"],["f","Мастерская","Станции для работы руками"]];
 function setDesign(i){const d=DESIGNS[i];let th=thGet();th.ui=d[0];STO.set("th",JSON.stringify(th));applyTheme();if(S)draw()}
@@ -977,7 +1014,7 @@ if(window.visualViewport){visualViewport.addEventListener("resize",kbFit);visual
 document.addEventListener("focusin",e=>{if(e.target.id==="chin"||e.target.id==="tcin"){kbFit();setTimeout(kbFit,350)}});document.addEventListener("focusout",()=>setTimeout(kbFit,200));
 function modal(h,opt){if(h&&typeof deco==="function")h=deco(h);
  const y=typeof LY==="function"?LY():"g",
-  asPanel=!!h&&(y==="h"||y==="m"||y==="x"||y==="k")&&(!!(opt&&opt.panel)||/data-det=/.test(String(h)));
+  asPanel=!!h&&(y==="h"||y==="m"||y==="x"||y==="k"||y==="d")&&(!!(opt&&opt.panel)||/data-det=/.test(String(h)));
  if(!h&&y==="x"&&!$("m").innerHTML&&typeof HX!=="undefined"&&HX.sel){hxClose();return}
  if(!h&&y==="m"&&!$("m").innerHTML&&typeof CC!=="undefined"&&CC.sel){ccClose();return}
  if(!h){$("m").innerHTML="";document.querySelectorAll(".cs-b.lock").forEach(e=>e.classList.remove("lock"));setTimeout(()=>{try{skySync()}catch(e){}},0);const p=document.getElementById("reader");
@@ -1156,6 +1193,7 @@ if(LANG==="kk")Object.assign(KZ,{"Космос":"Ғарыш","Чёрная ды�
 if(LANG==="kk")Object.assign(KZ,{"Сборка системы":"Жүйені жинау","Классическая форма":"Классикалық форма","Выберите цветы":"Гүлдерді таңдаңыз","Упаковка":"Орама","Адрес":"Мекенжай","Итог":"Барлығы","пусто":"бос","Оформить":"Рәсімдеу","Добавьте хотя бы один цветок":"Кем дегенде бір гүл қосыңыз","Откроется привычная форма с уже заполненными данными: проверьте срок, оплату и сохраните.":"Толтырылған әдеттегі форма ашылады: мерзімін, төлемін тексеріп, сақтаңыз.","На складе этой точки нет позиций — используйте классическую форму":"Бұл нүктенің қоймасында тауар жоқ — классикалық форманы пайдаланыңыз","к ядру — срочнее":"ядроға жақын — шұғылырақ","ярче в центре — срочнее":"ортада жарқын — шұғылырақ"});
 if(LANG==="kk")Object.assign(KZ,{"Окна-терминалы плиткой, командная строка, один акцентный цвет":"Терминал терезелері, пәрмен жолы, бір екпін түсі","Командная строка":"Пәрмен жолы","Закрыть окно":"Терезені жабу","Окна":"Терезелер","Новый заказ  [N]":"Жаңа тапсырыс  [N]","Заказы на сегодня":"Бүгінгі тапсырыстар","Заказы на завтра":"Ертеңгі тапсырыстар","Неоплаченные":"Төленбегендер","Все заказы, без фильтров":"Барлық тапсырыстар, сүзгісіз","Поиск по всему":"Барлығы бойынша іздеу","Уведомления":"Хабарламалар"});
 if(LANG==="kk")Object.assign(KZ,{"Рельса разделов · KPI и таблица · постоянный инспектор заказа":"Бөлімдер жолағы · KPI және кесте · тұрақты тапсырыс инспекторы","Колонки по статусам со счётчиком и суммой, заказ — боковой панелью":"Күйлер бойынша бағандар, саны мен сомасы, тапсырыс — бүйір панельде","Выручка":"Түсім","Просрочено":"Кешіккен","Горящие заказы":"Шұғыл тапсырыстар","Горящих нет — всё по плану":"Шұғыл жоқ — бәрі жоспар бойынша","Лента событий и чатов":"Оқиғалар мен чаттар лентасы","По вашей роли":"Сіздің рөліңіз бойынша","Инспектор":"Инспектор","Выберите заказ в таблице — он откроется здесь, без окон поверх.":"Кестеден тапсырысты таңдаңыз — ол осында ашылады.","Лента":"Лента","Предыдущий":"Алдыңғы","Следующий":"Келесі","Событий пока нет":"Әзірге оқиға жоқ","Мини-доска":"Шағын тақта","по 3 самых срочных в каждой колонке":"әр бағанда ең шұғыл 3-еуі","Сводка дня":"Күн жиынтығы","Доска заказов":"Тапсырыстар тақтасы","В работе":"Жұмыста","Архив: выдан / отменён":"Мұрағат: берілді / болдырылмады","Поиск и фильтры":"Іздеу және сүзгілер","Открыть":"Ашу","просрочен":"кешікті","не оплачен":"төленбеген","оплачен":"төленген"});
+if(LANG==="kk")Object.assign(KZ,{"Почасовая шкала 08–23 с линией «Сейчас», свободные окна и пики нагрузки":"08–23 сағаттық шкала, «Қазір» сызығы, бос уақыт пен жүктеме шыңы","Пик нагрузки":"Жүктеме шыңы","Свободное окно":"Бос уақыт","В течение дня":"Күні бойы","Вне шкалы (ночью)":"Шкаладан тыс (түнде)","Ближайшие 4 часа":"Алдағы 4 сағат","Весь день":"Күні бойы","Что горит · просрочено":"Шұғыл · кешіккен","Просроченных нет":"Кешіккен жоқ","без времени":"уақытсыз","Предыдущий день":"Алдыңғы күн","Следующий день":"Келесі күн"});
 if(LANG==="kk")Object.assign(KZ,{"букет готов": "букет дайын", "букета готово": "букет дайын", "букетов готово": "букет дайын", "забрать и нажать «Забрал, еду»": "алып, «Алдым, кеттім» бас", "букет ждёт приёмки": "букет қабылдауды күтіп тұр", "букета ждут приёмки": "букет қабылдауды күтіп тұр", "букетов ждут приёмки": "букет қабылдауды күтіп тұр", "проверить": "тексер", "букет коллеги ждёт приёмки": "әріптестің букеті қабылдауды күтіп тұр", "букета коллег ждут приёмки": "әріптестің букеті қабылдауды күтіп тұр", "букетов коллег ждут приёмки": "әріптестің букеті қабылдауды күтіп тұр", "ваш заказ просрочен": "заказың кешікті", "ваших заказа просрочено": "заказың кешікті", "ваших заказов просрочено": "заказың кешікті", "доделать": "бітір", "доставка в пути": "доставка жолда", "доставки в пути": "доставка жолда", "доставок в пути": "доставка жолда", "отметить «Доставлено»": "«Жеткізілді» деп белгіле", "доставка готова к отправке": "доставка жіберуге дайын", "доставки готовы к отправке": "доставка жіберуге дайын", "доставок готово к отправке": "доставка жіберуге дайын", "вызвать такси и нажать «Отправлено»": "такси шақырып, «Жіберілді» бас", "доставка едет через сервис": "доставка сервис арқылы бара жатыр", "доставки едут через сервис": "доставка сервис арқылы бара жатыр", "доставок едут через сервис": "доставка сервис арқылы бара жатыр", "доставка ждёт курьера": "доставка курьерді күтіп тұр", "доставки ждут курьера": "доставка курьерді күтіп тұр", "доставок ждут курьера": "доставка курьерді күтіп тұр", "доставка просрочена": "доставка кешікті", "доставки просрочено": "доставка кешікті", "доставок просрочено": "доставка кешікті", "доставку нужно отправить": "доставканы жіберу керек", "доставки нужно отправить": "доставканы жіберу керек", "доставок нужно отправить": "доставканы жіберу керек", "курьеру или через inDrive / Яндекс": "курьерге не inDrive / Яндекс арқылы", "заказ готов к выдаче": "заказ беруге дайын", "заказа готовы к выдаче": "заказ беруге дайын", "заказов готовы к выдаче": "заказ беруге дайын", "выдать клиенту": "клиентке бер", "заказ на переделку": "заказ қайта жасауға", "заказа на переделку": "заказ қайта жасауға", "заказов на переделку": "заказ қайта жасауға", "исправить": "түзет", "заказ не оплачен": "заказ төленбеген", "заказа не оплачено": "заказ төленбеген", "заказов не оплачено": "заказ төленбеген", "получить оплату": "төлемді ал", "запрос на отмену или скидку": "отмена не жеңілдік сұрауы", "запроса на отмену или скидку": "отмена не жеңілдік сұрауы", "запросов на отмену или скидку": "отмена не жеңілдік сұрауы", "решить": "шеш", "новый заказ": "жаңа заказ", "новых заказа": "жаңа заказ", "новых заказов": "жаңа заказ", "взять в работу": "жұмысқа ал", "отчёт за день не сдан": "күндік есеп тапсырылмаған", "отчёта за день не сдано": "күндік есеп тапсырылмаған", "отчётов за день не сдано": "күндік есеп тапсырылмаған", "сдать": "тапсыр", "позиция на складе заканчивается": "складта позиция бітіп барады", "позиции на складе заканчиваются": "складта позиция бітіп барады", "позиций на складе заканчивается": "складта позиция бітіп барады", "заказать": "заказ бер", "позиция скоро завянет": "позиция жақында солады", "позиции скоро завянут": "позиция жақында солады", "позиций скоро завянут": "позиция жақында солады", "использовать первыми": "бірінші соларды қолдан", "свободная доставка": "бос доставка", "свободные доставки": "бос доставка", "свободных доставок": "бос доставка", "можно принять": "алуға болады", "чат ждёт ответа": "чат жауап күтіп тұр", "непрочитанный чат": "оқылмаған чат", "непрочитанных чата": "оқылмаған чат", "непрочитанных чатов": "оқылмаған чат", "чата ждут ответа": "чат жауап күтіп тұр", "чатов ждут ответа": "чат жауап күтіп тұр", "Отправлено": "Жіберілді"});
 KZR.push(
 [/^(сегодня|завтра|вчера) (\d{1,2}:\d{2})$/,m=>({сегодня:"бүгін",завтра:"ертең",вчера:"кеше"})[m[1]]+" "+m[2]],
@@ -1369,7 +1407,6 @@ const LY=()=>document.documentElement.dataset.ly||"g",SLB=["Новые","В сб
 function oRender(l){if(!l.length)return"";const y=LY();
  /* у каждого дизайна своя конструкция списка — не общий card */
 
- if(y==="d")return "";/* шкала в orders() */
  return l.map(card).join("")}
 function stBlock(c){const y=LY(),act=[0,1,2,3].reduce((a,i)=>a+c(i),0)||1,A=i=>`data-a="tf" data-id="${i}"`;
  
@@ -1762,6 +1799,37 @@ function kbOrders(l,filt){return `<div id="kb-root" class="kb-root">${kbHead()}<
 function kbDense(t,h){const P=(window.HPL||[]),k=hd0(t),nm=(P.find(x=>x[0]===k)||[])[2]||(GHN&&GHN[k])||"";return `<div id="kb-root" class="kb-root">${kbHead()}<section class="kb-dense"><h1>${esc(nm)}</h1>${h}</section></div>`}
 const BoardShell={...BentoShell,id:"k",nav:()=>"",home:()=>kbHome(),orders:()=>orders(),dense:(t,h)=>t==="chats"||t==="tc"||t==="map"?`<div id="kb-root" class="kb-root">${kbHead()}${h}</div>`:kbDense(t,h)};
 SHELL.k=BoardShell;
+/* ===== «День» (d): оболочка DayShell, корень #tl-root (разд. 138, Фаза 6) =====
+ Почасовая шкала 08:00–23:00 с линией «Сейчас»; заказы — в слотах своего времени. Пустой час — «Свободное окно» (создаёт заказ на этот час),
+ 3+ заказа — «Пик нагрузки». Без времени — плашка «В течение дня» сверху. Заказ открывается боковой панелью. */
+const TL={day:""},tlMoney=()=>own()||adm()||S.role==="operator",TLH=Array.from({length:16},(_,i)=>i+8);
+const tlHr=o=>{const m=String(o.time||"").match(/^(\d{1,2}):(\d{2})/);return m?+m[1]+ +m[2]/60:null};
+function tlItem(o,sm){const st=Math.max(0,Math.min(5,+o.st||0)),late=!!dueMs(o)&&dueMs(o)<Date.now()&&st<4,unp=tlMoney()&&!o.paid&&st>=2&&st!==5;
+ return `<button type="button" class="tl-o k${st}${late?" al":""}" data-a="det" data-id="${esc(o.id)}"><time>${esc(String(o.time||"").slice(0,5)||"—")}</time><b>${esc(o.client||"—")}</b><span>${esc(o.bn||"Заказ")}${o.dv?" · доставка":""}</span><em>${esc(stL(o))}${sm?" · "+M(tot(o)):""}${late?" · просрочен":""}${unp?" · не оплачен":""}</em></button>`}
+/* шкала дня: часы from..to, заказы по слотам */
+function tlScale(list,day,from,to,free){const sm=tlMoney()||mgr()&&S.role!=="assistant",now=new Date(),isT=day===today(),nh=now.getHours()+now.getMinutes()/60,by={},nt=[],out=[];
+ list.forEach(o=>{const h=tlHr(o);if(h==null)nt.push(o);else if(h<8||h>=24)out.push(o);else(by[Math.floor(h)]=by[Math.floor(h)]||[]).push(o)});
+ const rows=TLH.filter(h=>h>=from&&h<=to).map(h=>{const it=(by[h]||[]).sort((a,b)=>tlHr(a)-tlHr(b)),pk=it.length>=3,cur=isT&&Math.floor(nh)===h,past=isT&&h<Math.floor(nh);
+  return `<div class="tl-row${pk?" pk":""}${cur?" cur":""}${past?" past":""}"><div class="tl-h"><b>${String(h).padStart(2,"0")}:00</b>${pk?"<em>Пик нагрузки</em>":""}</div><div class="tl-slot">${cur?`<i class="tl-now" style="top:${Math.round((nh-h)*100)}%"><span>Сейчас ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}</span></i>`:""}${it.map(o=>tlItem(o,sm)).join("")||(free&&!past&&mgr()?`<button type="button" class="tl-free" onclick="tlNew('${day}',${h})">Свободное окно · создать заказ на ${String(h).padStart(2,"0")}:00</button>`:`<span class="tl-empty">${past?"—":"Свободное окно"}</span>`)}</div></div>`}).join("");
+ return `${nt.length?`<section class="tl-allday"><h3>В течение дня · ${nt.length}</h3><div class="tl-ad">${nt.map(o=>tlItem(o,sm)).join("")}</div></section>`:""}${out.length?`<section class="tl-allday tl-out"><h3>Вне шкалы (ночью) · ${out.length}</h3><div class="tl-ad">${out.sort((a,b)=>tlHr(a)-tlHr(b)).map(o=>tlItem(o,sm)).join("")}</div></section>`:""}<div class="tl-scale">${rows}</div>`}
+function tlNew(day,h){if(!mgr())return;form({date:day,time:String(h).padStart(2,"0")+":00"})}
+function tlHead(){const P=(window.HPL||[]).filter(x=>x[0]!=="more"),k=hd0(tab),nf=typeof nfUnread==="function"?+nfUnread()||0:0,d=new Date();
+ return `<header class="tl-top"><div class="tl-date"><b>${d.toLocaleDateString("ru-RU",{weekday:"long"})}</b><span>${d.toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}</span></div>${typeof ptBtn==="function"?ptBtn():""}<span class="tl-act"><button type="button" data-a="gso" aria-label="Поиск">${TBI.search}</button><button type="button" data-a="nfc" aria-label="Уведомления">${TBI.bell}${nf?`<b class="nb">${nf}</b>`:""}</button>${mgr()?`<button type="button" class="tl-add" data-a="new" aria-label="Новый заказ">${ic("plus")}</button>`:""}</span></header><div class="tl-nav" role="navigation" aria-label="Разделы">${P.map(x=>`<button type="button" class="${x[0]===k?"on":""}" data-a="goto" data-id="${x[0]}">${ic(x[0])}<span>${esc(x[2])}</span>${+nbG(x[0])?`<b class="nb">${nbG(x[0])}</b>`:""}</button>`).join("")}</div>${(()=>{const g=gtab();return g?`<div class="tl-gt">${g}</div>`:""})()}`}
+function tlMine(){return O.filter(o=>+o.st!==5).filter(o=>S.role!=="courier"||o.dv&&(o.courier===U.uid||dvFree(o)))}
+function tlHome(){const t=today(),h=new Date().getHours(),from=Math.max(8,Math.min(h,20)),L=tlMine().filter(o=>o.date===t),now=Date.now(),
+  late=O.filter(o=>+o.st<4&&dueMs(o)&&dueMs(o)<now).filter(o=>S.role!=="courier"||o.dv&&(o.courier===U.uid||dvFree(o))).sort((a,b)=>dueMs(a)-dueMs(b)),sm=tlMoney()||mgr()&&S.role!=="assistant";
+ return `<div id="tl-root" class="tl-root">${tlHead()}<div class="tl-wrap"><section class="tl-main"><div class="tl-sh"><h1>Ближайшие 4 часа</h1><button type="button" class="btn g s" data-a="goto" data-id="orders">Весь день ›</button></div>${tlScale(L.filter(o=>{const x=tlHr(o);return x!=null&&x>=8&&x<from+4}),t,from,from+3,1)}</section>
+ <aside class="tl-side"><section class="tl-hot"><h2>Что горит · просрочено ${late.length}</h2>${late.slice(0,8).map(o=>tlItem(o,sm)).join("")||'<p class="mut">Просроченных нет</p>'}</section><section class="tl-role"><h2>Сводка</h2>${roleHome()}</section></aside></div></div>`}
+function tlOrders(l,filt){if(!TL.day)TL.day=today();if(fdt==="t")TL.day=today();else if(fdt==="n")TL.day=addD(today(),1);const d=TL.day,L=l.filter(o=>o.date===d),dt=new Date(d+"T12:00:00");
+ return `<div id="tl-root" class="tl-root">${tlHead()}<div class="tl-wrap one"><section class="tl-main"><div class="tl-sh"><h1>${dt.toLocaleDateString("ru-RU",{weekday:"short",day:"numeric",month:"long"})}</h1><span class="tl-dsw"><button type="button" class="btn g s" onclick="tlDay(-1)" aria-label="Предыдущий день">‹</button><button type="button" class="btn g s ${d===today()?"on":""}" onclick="tlDay(0)">Сегодня</button><button type="button" class="btn g s" onclick="tlDay(1)" aria-label="Следующий день">›</button></span></div>
+ <div class="tl-sum"><span><b>${L.length}</b> ${pl(L.length,"заказ","заказа","заказов")}</span>${tlMoney()?`<span><b>${M(L.reduce((a,o)=>a+(+tot(o)||0),0))}</b></span>`:""}<span><b>${L.filter(o=>!tlHr(o)&&tlHr(o)!==0).length}</b> без времени</span></div>
+ <details class="tl-flt" ${TL.fo?"open":""} ontoggle="TL.fo=this.open"><summary>Поиск и фильтры</summary>${filt}<div class="chips">${[["","Все"],...ST.map((s,i)=>[String(i),s])].map(c=>`<button class="chip ${fs===c[0]?"on":""}" data-a="f" data-id="${c[0]}">${c[1]}</button>`).join("")}</div></details>
+ ${tlScale(L,d,8,23,1)}</section></div></div>`}
+function tlDay(n){fdt="";TL.day=n?addD(TL.day||today(),n):today();draw();scrollTo(0,0)}
+function tlDense(t,h){const P=(window.HPL||[]),k=hd0(t),nm=(P.find(x=>x[0]===k)||[])[2]||(GHN&&GHN[k])||"";
+ return `<div id="tl-root" class="tl-root">${tlHead()}<section class="tl-dense"><header class="tl-dh"><h1>${esc(nm)}</h1></header><div class="tl-list">${h}</div></section></div>`}
+const DayShell={...BentoShell,id:"d",nav:()=>"",home:()=>tlHome(),orders:()=>orders(),dense:(t,h)=>t==="chats"||t==="tc"||t==="map"?`<div id="tl-root" class="tl-root">${tlHead()}${h}</div>`:tlDense(t,h)};
+SHELL.d=DayShell;
 /* ---- Профиль → Мой экран ---- */
 function msMove(k,d){const def=roleOf().home,p=hbP(),o=(p.o||[]).filter(x=>def.includes(x));def.forEach(x=>{if(!o.includes(x))o.push(x)});const i=o.indexOf(k),j=i+d;if(i<0||j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];p.o=o;hbS(p);draw()}
 function msTog(k,on){const p=hbP(),f=new Set(p.off||[]);on?f.delete(k):f.add(k);p.off=[...f];hbS(p);draw()}
@@ -1937,14 +2005,7 @@ function homeOp(){const vsold=scSoldDay(today()),act=O.filter(o=>+o.st<4),c=i=>O
    <h2>Заказы сейчас</h2><div class="bento">${[0,1,2,3].map(i=>K("b-st",SLB[i],c(i),"","orders|st"+i,"",`var(--s${i})`)).join("")}</div>`;
   const d30=addD(t,-29),LT=locs().length>1?`<h2>Точки · 30 дней</h2><div class="dtw"><table class="dt"><thead><tr><th>Точка</th><th style="text-align:right">Заказов</th><th style="text-align:right">Сумма</th><th style="text-align:right">Ср. чек</th></tr></thead><tbody>${locs().map(l=>{const r=RAW[0].filter(o=>+o.st!==5&&(o.loc||"main")===l.id&&(o.date||"")>=d30&&(o.date||"")<=t),sm=r.reduce((a,o)=>a+tot(o),0);return `<tr><td><b>${esc(l.name)}</b></td><td class="n">${r.length}</td><td class="n">${M(sm)}</td><td class="n">${r.length?M(sm/r.length):"—"}</td></tr>`}).join("")}</tbody></table></div>`:"";
   return G+BG+`<h2>Ближайшие заказы</h2>${gTable(actF)}${latN?`<p class="mut" data-a="al" data-id="orders|later" style="cursor:pointer">Позже: ${latN} ${pl(latN,"заказ","заказа","заказов")} на другие дни — «Заказы» → «Позже» ›</p>`:""}`+CT+AL+RV+`<div class="dg" style="margin-top:6px">${todayStaff()}</div>`+LT}
- /* ===== День: вертикальная шкала по часам ===== */
- if(y==="d"){const byH={};up.forEach(o=>{const h=parseInt(String(o.time||"12").slice(0,2),10);if(!isNaN(h))(byH[h]=byH[h]||[]).push(o)});
-  const hours=[...Array(15)].map((_,i)=>i+8);/* 8–22 */
-  const lane=hours.map(h=>{const items=byH[h]||[];return `<div class="day-h"><div class="day-t">${String(h).padStart(2,"0")}:00</div><div class="day-lane">${items.map(o=>`<button type="button" class="day-o k${Math.min(3,+o.st||0)}" data-a="det" data-id="${esc(o.id)}"><b>${esc(o.bn||"")}</b><span>${esc(o.client||"")}</span><em>${M(tot(o))}</em></button>`).join("")||`<span class="day-empty">—</span>`}</div></div>`}).join("");
-  return G+`<div class="d-head"><h1>День</h1><p class="mut">Шкала по часам · сегодня ${esc(t)}</p>
-  <div class="d-sum"><span><b>${td.length}</b> заказов</span><span><b>${M(money)}</b></span><span><b>${unpaid.length}</b> не опл.</span></div></div>
-  <div class="day-scale">${lane}</div>`+AL}
-
+ 
  return G+ST+HR+CT+AL+OC+WG+RV+NE}
 function orders(){const q=fq.toLowerCase(),dd=fdt==="t"?today():fdt==="n"?addD(today(),1):"",l=(fz2==="unpaid"?oH():O).filter(o=>{
   if(S.role==="courier"){if(!o.dv||+o.st>=4||+o.st===5)return false;if(!(o.courier===U.uid||dvFree(o)))return false}/* курьеру: свои и свободные (выставленные) доставки */
@@ -1953,11 +2014,7 @@ function orders(){const q=fq.toLowerCase(),dd=fdt==="t"?today():fdt==="n"?addD(t
  const y=LY(),filt=`${ordCnt()}<input id="q" placeholder="Поиск: имя, телефон, букет, адрес" value="${esc(fq)}"><div class="chips">${[["","Все даты"],["t","Сегодня"],["n","Завтра"]].map(c=>`<button class="chip ${fdt===c[0]?"on":""}" data-a="fdt" data-id="${c[0]}">${c[1]}</button>`).join("")}</div><p class="mut">Найдено: ${l.length}${fz2?` · <a href="#" data-a="f2" data-id="">сбросить фильтр</a>`:""}</p>`;
  if(y==="k")return kbOrders(l,filt);
  if(y==="m")return ccOrders(l,filt);
- /* День — шкала по времени */
- if(y==="d"){const byH={};l.forEach(o=>{const h=parseInt(String(o.time||"12").slice(0,2),10);const key=isNaN(h)?99:h;(byH[key]=byH[key]||[]).push(o)});
-  const hours=[...new Set([...Array(15)].map((_,i)=>i+8).concat(Object.keys(byH).map(Number)))].filter(h=>h>=0&&h<=23).sort((a,b)=>a-b);
-  const lane=(hours.length?hours:[12]).map(h=>{const items=byH[h]||[];return `<div class="day-h"><div class="day-t">${h===99?"—":String(h).padStart(2,"0")+":00"}</div><div class="day-lane">${items.map(o=>`<button type="button" class="day-o k${Math.min(3,+o.st||0)}" data-a="det" data-id="${esc(o.id)}"><b>${esc(o.bn||"")}</b><span>${esc(o.client||"")}</span><em>${M(tot(o))}</em></button>`).join("")||`<span class="day-empty">—</span>`}</div></div>`}).join("");
-  return `<div class="d-head"><h1>Заказы · день</h1></div>${filt}<div class="day-scale">${lane}</div>`}
+ if(y==="d")return tlOrders(l,filt);
  /* Чёрная дыра — радар-строки */
  if(y==="h")return csOrders(l,filt);
  if(y==="x")return hxOrders(l,filt);
