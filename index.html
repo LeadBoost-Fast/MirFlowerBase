@@ -457,6 +457,98 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
 @media(min-width:900px){.cs-bld{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}.cs-bh{grid-column:1/-1}.cs-sys{--s:min(calc(100vw - 420px),calc(100dvh - 140px),620px)}.cs-strip{position:sticky;top:12px;margin-top:18px}}
 @media(prefers-reduced-motion:reduce){:root[data-ly=h] *{animation:none!important;transition:none!important}}
 
+/* ================= «Ретро-HUD» (data-ly=x), корень #hx-root — разд. 138, Фаза 4 =================
+   Тайловые окна без зазоров, командная строка, монохром + один акцент (--ac из палитры пользователя). Родные #tb и nav скрыты. */
+:root[data-ly=x]{--fm:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;--e:cubic-bezier(.2,.8,.2,1)}
+:root[data-ly=x][data-t=dark]{--bg:#0a0b0a;--card:#0e100e;--c2:#151715;--ink:#e6e6e2;--mut:#9a9e98;--line:rgba(230,230,226,.3);--glass:rgba(10,11,10,.92);--sh:none}
+:root[data-ly=x][data-t=light]{--bg:#efeee9;--card:#f8f7f3;--c2:#e6e5df;--ink:#121212;--mut:#55554f;--line:rgba(0,0,0,.32);--glass:rgba(239,238,233,.94);--sh:none}
+:root[data-ly=x] body{background:var(--bg);font-family:var(--fm);font-size:13px;padding:env(safe-area-inset-top) 0 calc(58px + env(safe-area-inset-bottom))!important;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+:root[data-ly=x] body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:30;background:repeating-linear-gradient(0deg,rgba(127,127,127,.06) 0 1px,transparent 1px 3px)}
+:root[data-ly=x] #tb,:root[data-ly=x] nav#nav,:root[data-ly=x] .fab,:root[data-ly=x] #v>.chip[data-a=back]{display:none!important}
+:root[data-ly=x] main#v{display:block!important;max-width:none!important;margin:0!important;padding:0!important}
+:root[data-ly=x] h1{font:500 20px/1.2 var(--fm);letter-spacing:.02em;text-transform:uppercase}
+:root[data-ly=x] h2{font:500 11px/14px var(--fm);letter-spacing:.14em;text-transform:uppercase;color:var(--mut);border-bottom:1px dashed var(--line);padding-bottom:5px}
+:root[data-ly=x] .card,:root[data-ly=x] .tile,:root[data-ly=x] .kpi,:root[data-ly=x] .todo{border-radius:0!important;box-shadow:none!important;border:1px solid var(--line);background:transparent}
+:root[data-ly=x] .btn{border-radius:0!important;border:1px solid var(--ink);background:var(--ink);color:var(--bg);font-family:var(--fm);text-transform:uppercase;letter-spacing:.06em;box-shadow:none!important;min-height:44px}
+:root[data-ly=x] .btn.g{background:transparent;color:var(--ink)}
+:root[data-ly=x] .chip{border-radius:0!important;border:1px solid var(--line);background:transparent;color:var(--ink);font:500 11px var(--fm);text-transform:uppercase;letter-spacing:.06em;min-height:40px}
+:root[data-ly=x] .chip.on{background:var(--ac);color:var(--on);border-color:var(--ac)}
+:root[data-ly=x] input:not([type=checkbox]):not([type=radio]):not([type=range]),:root[data-ly=x] select,:root[data-ly=x] textarea{border-radius:0!important;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-family:var(--fm)}
+:root[data-ly=x] .pill{border-radius:0!important;background:transparent!important;border:1px solid var(--ink);color:var(--ink)!important;font:500 10px var(--fm);text-transform:uppercase}
+:root[data-ly=x] .pill.bad,:root[data-ly=x] .pill.warn{border-color:var(--ac);color:var(--ac)!important}
+:root[data-ly=x] .nb{background:var(--ac)!important;color:var(--on)!important;border-radius:0!important;font-family:var(--fm)}
+:root[data-ly=x] .ti{background:transparent!important;color:var(--ink)!important;border:1px solid var(--line);border-radius:0!important}
+:root[data-ly=x] .gtab{border-radius:0!important;background:transparent!important;border-bottom:1px solid var(--line)}
+:root[data-ly=x] .gtab button{border-radius:0!important;font-family:var(--fm);text-transform:uppercase;font-size:11px}
+:root[data-ly=x] .gtab button.on{background:var(--ink)!important;color:var(--bg)!important;box-shadow:none!important}
+/* командная строка */
+.hx-cmd{position:sticky;top:0;z-index:8;display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--ink);background:var(--glass)}
+.hx-pr{font:500 16px var(--fm);color:var(--ac)}
+#hxq{flex:1;min-width:0;border:0!important;background:transparent!important;min-height:36px;padding:0;font:500 14px var(--fm);color:var(--ink);outline:none;caret-color:var(--ac)}
+#hxq::placeholder{color:var(--mut);text-transform:lowercase}
+.hx-cur{width:9px;height:16px;background:var(--ac);animation:hxBlink 1s steps(1) infinite}
+#hxq:focus+.hx-cur{display:none}
+@keyframes hxBlink{50%{opacity:0}}
+.hx-cl{font:500 10px var(--fm);letter-spacing:.12em;color:var(--mut);white-space:nowrap;display:flex;align-items:center;gap:6px}
+@media(max-width:600px){.hx-cl{display:none}}
+.hx-sug{position:absolute;left:12px;right:12px;top:100%;background:var(--bg);border:1px solid var(--ink);z-index:9}
+.hx-sug button{display:flex;justify-content:space-between;gap:10px;width:100%;padding:10px 12px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);font:500 13px var(--fm);text-align:left;cursor:pointer;min-height:44px;align-items:center}
+.hx-sug button.on,.hx-sug button:hover{background:var(--ac);color:var(--on)}
+.hx-sug button em{font-style:normal;color:inherit;opacity:.7;font-size:11px}
+.hx-sug p{margin:0;padding:10px 12px;color:var(--mut)}
+/* тайлы-окна */
+.hx-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-auto-flow:row dense;border-left:1px solid var(--ink);border-top:1px solid var(--ink);margin:10px 12px 0}
+.hx-win{grid-column:span 6;display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--ink);border-bottom:1px solid var(--ink);background:var(--card);animation:hxIn .22s var(--e) both}
+@keyframes hxIn{from{opacity:0;clip-path:inset(0 0 100% 0)}to{opacity:1;clip-path:inset(0 0 0 0)}}
+.hx-wt{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 0 0 10px;min-height:34px;border-bottom:1px solid var(--ink);background:var(--ink);color:var(--bg);font:500 11px var(--fm);letter-spacing:.14em;text-transform:uppercase}
+.hx-wt.hot{background:var(--ac);color:var(--on)}
+.hx-wb{display:flex;font-style:normal}
+.hx-wb b,.hx-wb button{display:grid;place-items:center;width:34px;height:34px;border:0;border-left:1px solid currentColor;background:transparent;color:inherit;font:500 13px var(--fm);padding:0;min-height:0;cursor:pointer}
+.hx-wb button{width:44px}
+.hx-wc{padding:10px;overflow:auto;min-height:0;flex:1}
+.w-ord{grid-column:span 7;grid-row:span 2}.w-det{grid-column:span 5;grid-row:span 3}.w-sig{grid-column:span 5}.w-osc{grid-column:span 5}.w-sum{grid-column:span 12}
+.hx-grid[data-n="4"] .w-sig,.hx-grid[data-n="4"] .w-osc{grid-column:span 5}
+.w-ordf{grid-column:span 12}.hx-grid:has(.w-det) .w-ordf{grid-column:span 7}
+.hx-grid.one .hx-win{grid-column:1/-1}
+.hx-full{min-height:100dvh}
+/* таблица заказов */
+.hx-tbl{width:100%;border-collapse:collapse;font:400 12px/1.35 var(--fm)}
+.hx-tbl th{font:500 10px var(--fm);letter-spacing:.12em;color:var(--mut);text-align:left;padding:6px 8px;border-bottom:1px solid var(--ink);white-space:nowrap}
+.hx-tbl td{padding:8px;border-bottom:1px dashed var(--line);vertical-align:top}
+.hx-tbl td small{display:block;color:var(--mut);font-size:11px}.hx-tbl td{white-space:nowrap}.hx-tbl td:nth-child(3){white-space:normal}
+:root[data-ly=x] #hxdet *:not(img):not(video):not(.nb){border-radius:0!important}
+.hx-tbl tr[data-a]{cursor:pointer}.hx-tbl tbody tr:hover{background:var(--c2)}
+.hx-tbl tr.on{background:var(--ac)!important;color:var(--on)}.hx-tbl tr.on td small,.hx-tbl tr.on .hx-n{color:var(--on)}
+.hx-n{color:var(--mut)}.hx-tg{white-space:nowrap}
+.hx-st{font-weight:500}.hx-st.s4,.hx-st.s5{color:var(--mut)}
+.hx-al{display:inline-block;margin-left:6px;padding:0 4px;background:var(--ac);color:var(--on);font:500 9px/16px var(--fm);letter-spacing:.06em}
+.hx-e{color:var(--mut);text-align:center;padding:18px!important}
+.hx-more{display:block;width:100%;margin-top:8px;padding:10px;border:1px dashed var(--line);background:transparent;color:var(--ink);font:500 12px var(--fm);text-align:left;cursor:pointer;min-height:44px}
+/* сигналы, осциллограмма, сфера */
+.hx-sig{list-style:none;margin:0;padding:0}
+.hx-sig li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 4px;border-bottom:1px dashed var(--line);cursor:pointer;min-height:44px}
+.hx-sig li b{font:500 11px var(--fm);letter-spacing:.1em}.hx-sig li span{color:var(--mut);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hx-sig li.al b{color:var(--ac)}.hx-sig li.ok{cursor:default}
+.hx-osc svg{display:block;width:100%;height:120px;color:var(--line)}
+.hx-line{color:var(--ink)}.hx-now{stroke:var(--ac)}
+.hx-scale{display:flex;justify-content:space-between;font:400 10px var(--fm);color:var(--mut);margin-top:2px}
+.hx-kv{display:flex;align-items:baseline;gap:12px;margin:8px 0 0;font:500 10px var(--fm);letter-spacing:.12em;color:var(--mut)}
+.hx-kv b{font:500 22px var(--fm);color:var(--ink);letter-spacing:0}
+.hx-glb{display:flex;align-items:center;gap:16px}.hx-glb svg{width:110px;height:110px;color:var(--ink);flex:none}
+.hx-spin{transform-origin:60px 60px;animation:hxSpin 24s linear infinite}
+@keyframes hxSpin{to{transform:rotate(360deg)}}
+/* вкладки окон / функциональные клавиши */
+.hx-fk{position:fixed;left:0;right:0;bottom:0;z-index:8;display:flex;overflow-x:auto;scrollbar-width:none;border-top:1px solid var(--ink);background:var(--glass);padding-bottom:env(safe-area-inset-bottom)}
+.hx-fk::-webkit-scrollbar{display:none}
+.hx-fk button{position:relative;flex:none;min-height:48px;padding:0 14px;border:0;border-right:1px solid var(--line);background:transparent;color:var(--ink);font:500 11px var(--fm);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:6px}
+.hx-fk button em{font-style:normal;color:var(--mut);font-size:10px}
+.hx-fk button.on{background:var(--ink);color:var(--bg)}.hx-fk button.on em{color:var(--bg)}
+.hx-fk .hx-new{margin-left:auto;min-width:56px;justify-content:center;background:var(--ac);color:var(--on);font-size:22px;border-left:1px solid var(--ink)}
+.hx-fk .nb{position:static}
+/* телефон: одно окно на весь экран */
+@media(max-width:899px){.hx-grid{display:block;margin:0;border-left:0;border-top:0}.hx-grid.ph .hx-win{display:none;min-height:calc(100dvh - 120px);border-right:0}.hx-grid.ph .hx-win.cur{display:flex}.hx-grid.one .hx-win{border-right:0;min-height:calc(100dvh - 120px)}}
+@media(min-width:900px){.hx-grid{min-height:calc(100dvh - 120px)}}
+@media(prefers-reduced-motion:reduce){:root[data-ly=x] *{animation:none!important}}
 /* миниатюра в выборе дизайна */
 .mq-bh{position:absolute;inset:0;background:#000;border:1px solid #fff;display:block;overflow:hidden}
 .mq-bh i{position:absolute;left:50%;top:50%;width:30%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:#000;border:1px solid #fff;box-shadow:0 0 0 5px #000,0 0 0 6px #888,0 0 0 16px #000,0 0 0 17px #555}
@@ -775,16 +867,17 @@ const thGet=()=>{try{return JSON.parse(STO.get("th")||"{}")||{}}catch(e){return{
 function applyTheme(){try{const t0=thGet();if(!t0.g1){t0.ui="g";t0.g1=1;STO.set("th",JSON.stringify(t0))}}catch(e){eLog(e)}/* один раз: всем новый дизайн Bento (вернуть старый — Профиль → Оформление) */const m=STO.get("t")||"auto",e=m==="auto"?(sysDark.matches?"dark":"light"):m,th=thGet(),pn=PALS[th.p]?th.p:"Тинт",P=PALS[pn][e==="dark"?"d":"l"],k=th.ct==null?50:+th.ct,sx=e==="dark"?"d":"l",ci=th["ink"+sx],ca=th["ac"+sx],ink=ci&&/^#[0-9a-f]{6}$/i.test(ci)&&Math.abs(lum(ci)-lum(P[0]))>.25?ci:P[3],ac=ca&&/^#[0-9a-f]{6}$/i.test(ca)?ca:P[4],on=ac!==P[4]?(lum(ac)>.45?"#1a140e":"#ffffff"):P[5],rd=th.rd==null?20:+th.rd,hi=Math.max(0,k-50)*1.6,tc=document.querySelector('meta[name=theme-color]');document.documentElement.dataset.t=e;document.documentElement.dataset.pal=pn;document.documentElement.dataset.ui="a";document.documentElement.dataset.ly=(UIS.includes(th.ui)?th.ui:"g");document.documentElement.dataset.acl=Math.abs(lum(ac)-lum(P[0]))<.12?"1":"";document.documentElement.dataset.mc=th.mc?"1":"0";
 let st=$("thc");if(!st){st=document.createElement("style");st.id="thc";document.head.appendChild(st)}
 st.textContent=`:root[data-t=${e}]{--bg:${P[0]};--card:${P[1]};--c2:${P[2]};--ink:color-mix(in srgb,${ink} ${100-hi}%,${e==="dark"?"#fff":"#000"});--ac:${ac};--on:${on};--mut:color-mix(in srgb,${ink} ${35+k*.5}%,${P[0]});--line:color-mix(in srgb,${ink} ${10+k*.22}%,${P[0]});--glass:color-mix(in srgb,${P[1]} 86%,transparent)}body{font-size:${+th.fz||16}px}.card{border-radius:${rd}px}.tile{border-radius:${Math.max(8,rd-2)}px}`;
-if(tc)tc.content=P[0];try{skySync();csAfter()}catch(e){}}
-const UIS=["g","h","m","k","d"];/* у каждого — своя архитектура экранов */
+if(tc)tc.content=P[0];try{skySync();csAfter();hxAfter()}catch(e){}}
+const UIS=["g","h","x","m","k","d"];/* у каждого — своя архитектура экранов */
 const DESIGNS=[
  ["g","Bento","Блочная сетка, крупные цифры, матовое стекло"],
  ["h","Космос","Чёрная дыра: заказы на орбитах, планеты-разделы, радар дня, считыватель"],
+ ["x","Ретро-HUD","Окна-терминалы плиткой, командная строка, один акцентный цвет"],
  ["m","Командный центр","Рельса KPI · очередь · боковая сводка"],
  ["k","Доска","Колонки по статусам, не список"],
  ["d","День","Вертикальная шкала по часам"]
 ],/* будущие дизайны: превью видно, включить пока нельзя (UIS их не знает — applyTheme откатит на "g") */
-DSOON=[["x","Ретро-HUD","Окна-терминалы и командная строка"],["p","Атлас","Ботанический журнал: оглавление и развороты"],["f","Мастерская","Станции для работы руками"]];
+DSOON=[["p","Атлас","Ботанический журнал: оглавление и развороты"],["f","Мастерская","Станции для работы руками"]];
 function setDesign(i){const d=DESIGNS[i];let th=thGet();th.ui=d[0];STO.set("th",JSON.stringify(th));applyTheme();if(S)draw()}
 function setPal(n){let th=thGet();th.p=n;delete th.acd;delete th.acl;delete th.inkd;delete th.inkl;STO.set("th",JSON.stringify(th));applyTheme();if(S)draw()}
 function thSet(k,v,r){let th=thGet();if(k==="reset")th={};else{if(k==="ac"||k==="ink")k+=(document.documentElement.dataset.t==="dark"?"d":"l");th[k]=v}STO.set("th",JSON.stringify(th));applyTheme();if(r||k==="reset")draw()}
@@ -833,10 +926,12 @@ if(window.visualViewport){visualViewport.addEventListener("resize",kbFit);visual
 document.addEventListener("focusin",e=>{if(e.target.id==="chin"||e.target.id==="tcin"){kbFit();setTimeout(kbFit,350)}});document.addEventListener("focusout",()=>setTimeout(kbFit,200));
 function modal(h,opt){if(h&&typeof deco==="function")h=deco(h);
  const y=typeof LY==="function"?LY():"g",
-  asPanel=!!h&&(y==="h"||y==="m")&&(!!(opt&&opt.panel)||/data-det=/.test(String(h)));
+  asPanel=!!h&&(y==="h"||y==="m"||y==="x")&&(!!(opt&&opt.panel)||/data-det=/.test(String(h)));
+ if(!h&&y==="x"&&!$("m").innerHTML&&typeof HX!=="undefined"&&HX.sel){hxClose();return}
  if(!h){$("m").innerHTML="";document.querySelectorAll(".cs-b.lock").forEach(e=>e.classList.remove("lock"));setTimeout(()=>{try{skySync()}catch(e){}},0);const p=document.getElementById("reader");
   if(p){if(p.classList.contains("out"))return;p.classList.add("out");const done=()=>{p.remove();document.body.classList.remove("reader-open")};
    p.addEventListener("animationend",done,{once:true});setTimeout(done,280)}else document.body.classList.remove("reader-open");return}
+ if(asPanel&&y==="x"){const mm=String(h).match(/data-det="([^"]+)"/);HX.sel=mm?mm[1]:HX.sel;HX.detH=h;const d=$("hxdet");$("m").innerHTML="";if(d){d.innerHTML=h;return}if(tab!=="home"&&tab!=="orders")tab="orders";if(csPh())HX.win=1;draw();return}
  if(asPanel){
   let p=document.getElementById("reader");const was=!!p&&!p.classList.contains("out");if(!p){p=document.createElement("div");p.id="reader";document.body.appendChild(p)}
   p.className="reader ly-"+y;p.classList.remove("out");
@@ -1006,6 +1101,7 @@ if(LANG==="kk")Object.assign(KZ,{
 if(LANG==="kk")Object.assign(KZ,{"Мой экран":"Менің экраным","Имя и роль":"Аты мен рөлі","Подсказка дня":"Күн кеңесі","Точки без адреса на карте":"Картада мекенжайы жоқ нүктелер","Смена":"Ауысым","Запросы":"Сұраулар","Рабочая сводка":"Жұмыс жиынтығы","Мои показатели":"Менің көрсеткіштерім","Мой заработок":"Менің табысым","Отчёты за день":"Күндік есептер","Итог смены":"Ауысым қорытындысы","Закреплённые разделы":"Бекітілген бөлімдер","Смотреть как":"Басқаша көру","Вернуть как было":"Бұрынғыдай қайтару","Вернули как было":"Бұрынғыдай қайтарылды","Только просмотр. Данные — ваши, состав и порядок — как у этой роли.":"Тек көру. Деректер — сіздікі, құрамы мен реті — осы рөлдегідей.","Главная глазами сотрудника. Только просмотр, нажать ничего нельзя.":"Қызметкердің басты беті. Тек көру, ештеңе басуға болмайды.","Нижнее меню на телефоне: Главная и ещё 2–4 раздела.":"Телефондағы төменгі мәзір: Басты бет және тағы 2–4 бөлім.","Что стоит на главной и в каком порядке. Видно только вам и только на этом устройстве.":"Басты бетте не тұр және қандай ретпен. Тек сізге және тек осы құрылғыда көрінеді.","Можно закрепить до 4 разделов, кроме Главной":"Басты беттен басқа 4 бөлімге дейін бекітуге болады","Нужно хотя бы 2 раздела, кроме Главной":"Басты беттен басқа кемінде 2 бөлім керек","скоро":"жақында","Ретро-HUD":"Ретро-HUD","Окна-терминалы и командная строка":"Терминал терезелері және пәрмен жолы","Атлас":"Атлас","Ботанический журнал: оглавление и развороты":"Ботаникалық журнал: мазмұны мен беттері","Мастерская":"Шеберхана","Станции для работы руками":"Қолмен жұмыс істеуге арналған станциялар","Выше":"Жоғары","Ниже":"Төмен","Пусто":"Бос","Закрыть":"Жабу"});
 if(LANG==="kk")Object.assign(KZ,{"Космос":"Ғарыш","Чёрная дыра: заказы на орбитах, планеты-разделы, радар дня, считыватель":"Қара құрдым: тапсырыстар орбитада, бөлімдер-планеталар, күн радары, оқығыш","Сцена":"Көрініс","Чёрная дыра":"Қара құрдым","Туманность":"Тұмандық","Спиральная галактика":"Спираль галактика","Горизонт событий":"Оқиға көкжиегі","К дыре":"Құрдымға","Радар дня":"Күн радары","Радар":"Радар","Список":"Тізім","Сводка":"Жиынтық","Дальний пояс":"Алыс белдеу","Сегодня":"Бүгін","Мои доставки":"Менің жеткізулерім","К сборке":"Жинауға","в работе":"жұмыста","позже":"кейін","Поиск":"Іздеу","Сигналы":"Сигналдар","Телеметрия":"Телеметрия","Сейчас":"Қазір","не оплачен / просрочен":"төленбеген / кешіккен","Срок":"Мерзімі","Клиент":"Клиент","Букет":"Гүл шоғы","Сумма":"Сома","Ничего не найдено":"Ештеңе табылмады","Разделы":"Бөлімдер","Пульт":"Пульт","На орбитах пусто — активных заказов нет":"Орбиталар бос — белсенді тапсырыс жоқ","Угол — время, кольцо — статус: от центра «Выдан», «В пути», «Готов», «Собирается», снаружи «Новый»":"Бұрыш — уақыт, сақина — күйі: ортадан «Берілді», «Жолда», «Дайын», «Жиналуда», сыртта «Жаңа»","В этом дизайне строгий монохром: только чёрный и белый, цветные — только фото. Светлая тема — «Негатив». Выбранные раньше палитра и акцент сохранены и вернутся в Bento.":"Бұл дизайн тек ақ пен қара: түрлі түсті тек фото. Ашық тақырып — «Негатив». Бұрын таңдалған түстер сақталады және Bento-ға қайтады."});
 if(LANG==="kk")Object.assign(KZ,{"Сборка системы":"Жүйені жинау","Классическая форма":"Классикалық форма","Выберите цветы":"Гүлдерді таңдаңыз","Упаковка":"Орама","Адрес":"Мекенжай","Итог":"Барлығы","пусто":"бос","Оформить":"Рәсімдеу","Добавьте хотя бы один цветок":"Кем дегенде бір гүл қосыңыз","Откроется привычная форма с уже заполненными данными: проверьте срок, оплату и сохраните.":"Толтырылған әдеттегі форма ашылады: мерзімін, төлемін тексеріп, сақтаңыз.","На складе этой точки нет позиций — используйте классическую форму":"Бұл нүктенің қоймасында тауар жоқ — классикалық форманы пайдаланыңыз","к ядру — срочнее":"ядроға жақын — шұғылырақ","ярче в центре — срочнее":"ортада жарқын — шұғылырақ"});
+if(LANG==="kk")Object.assign(KZ,{"Окна-терминалы плиткой, командная строка, один акцентный цвет":"Терминал терезелері, пәрмен жолы, бір екпін түсі","Командная строка":"Пәрмен жолы","Закрыть окно":"Терезені жабу","Окна":"Терезелер","Новый заказ  [N]":"Жаңа тапсырыс  [N]","Заказы на сегодня":"Бүгінгі тапсырыстар","Заказы на завтра":"Ертеңгі тапсырыстар","Неоплаченные":"Төленбегендер","Все заказы, без фильтров":"Барлық тапсырыстар, сүзгісіз","Поиск по всему":"Барлығы бойынша іздеу","Уведомления":"Хабарламалар"});
 if(LANG==="kk")Object.assign(KZ,{"букет готов": "букет дайын", "букета готово": "букет дайын", "букетов готово": "букет дайын", "забрать и нажать «Забрал, еду»": "алып, «Алдым, кеттім» бас", "букет ждёт приёмки": "букет қабылдауды күтіп тұр", "букета ждут приёмки": "букет қабылдауды күтіп тұр", "букетов ждут приёмки": "букет қабылдауды күтіп тұр", "проверить": "тексер", "букет коллеги ждёт приёмки": "әріптестің букеті қабылдауды күтіп тұр", "букета коллег ждут приёмки": "әріптестің букеті қабылдауды күтіп тұр", "букетов коллег ждут приёмки": "әріптестің букеті қабылдауды күтіп тұр", "ваш заказ просрочен": "заказың кешікті", "ваших заказа просрочено": "заказың кешікті", "ваших заказов просрочено": "заказың кешікті", "доделать": "бітір", "доставка в пути": "доставка жолда", "доставки в пути": "доставка жолда", "доставок в пути": "доставка жолда", "отметить «Доставлено»": "«Жеткізілді» деп белгіле", "доставка готова к отправке": "доставка жіберуге дайын", "доставки готовы к отправке": "доставка жіберуге дайын", "доставок готово к отправке": "доставка жіберуге дайын", "вызвать такси и нажать «Отправлено»": "такси шақырып, «Жіберілді» бас", "доставка едет через сервис": "доставка сервис арқылы бара жатыр", "доставки едут через сервис": "доставка сервис арқылы бара жатыр", "доставок едут через сервис": "доставка сервис арқылы бара жатыр", "доставка ждёт курьера": "доставка курьерді күтіп тұр", "доставки ждут курьера": "доставка курьерді күтіп тұр", "доставок ждут курьера": "доставка курьерді күтіп тұр", "доставка просрочена": "доставка кешікті", "доставки просрочено": "доставка кешікті", "доставок просрочено": "доставка кешікті", "доставку нужно отправить": "доставканы жіберу керек", "доставки нужно отправить": "доставканы жіберу керек", "доставок нужно отправить": "доставканы жіберу керек", "курьеру или через inDrive / Яндекс": "курьерге не inDrive / Яндекс арқылы", "заказ готов к выдаче": "заказ беруге дайын", "заказа готовы к выдаче": "заказ беруге дайын", "заказов готовы к выдаче": "заказ беруге дайын", "выдать клиенту": "клиентке бер", "заказ на переделку": "заказ қайта жасауға", "заказа на переделку": "заказ қайта жасауға", "заказов на переделку": "заказ қайта жасауға", "исправить": "түзет", "заказ не оплачен": "заказ төленбеген", "заказа не оплачено": "заказ төленбеген", "заказов не оплачено": "заказ төленбеген", "получить оплату": "төлемді ал", "запрос на отмену или скидку": "отмена не жеңілдік сұрауы", "запроса на отмену или скидку": "отмена не жеңілдік сұрауы", "запросов на отмену или скидку": "отмена не жеңілдік сұрауы", "решить": "шеш", "новый заказ": "жаңа заказ", "новых заказа": "жаңа заказ", "новых заказов": "жаңа заказ", "взять в работу": "жұмысқа ал", "отчёт за день не сдан": "күндік есеп тапсырылмаған", "отчёта за день не сдано": "күндік есеп тапсырылмаған", "отчётов за день не сдано": "күндік есеп тапсырылмаған", "сдать": "тапсыр", "позиция на складе заканчивается": "складта позиция бітіп барады", "позиции на складе заканчиваются": "складта позиция бітіп барады", "позиций на складе заканчивается": "складта позиция бітіп барады", "заказать": "заказ бер", "позиция скоро завянет": "позиция жақында солады", "позиции скоро завянут": "позиция жақында солады", "позиций скоро завянут": "позиция жақында солады", "использовать первыми": "бірінші соларды қолдан", "свободная доставка": "бос доставка", "свободные доставки": "бос доставка", "свободных доставок": "бос доставка", "можно принять": "алуға болады", "чат ждёт ответа": "чат жауап күтіп тұр", "непрочитанный чат": "оқылмаған чат", "непрочитанных чата": "оқылмаған чат", "непрочитанных чатов": "оқылмаған чат", "чата ждут ответа": "чат жауап күтіп тұр", "чатов ждут ответа": "чат жауап күтіп тұр", "Отправлено": "Жіберілді"});
 KZR.push(
 [/^(сегодня|завтра|вчера) (\d{1,2}:\d{2})$/,m=>({сегодня:"бүгін",завтра:"ертең",вчера:"кеше"})[m[1]]+" "+m[2]],
@@ -1148,7 +1244,7 @@ function draw(){if(!S)return;if(window.__ctrlWas&&tab!=="ctrl"&&adm())ctrlSeenAl
  const n=$("nav");n.hidden=false;n.dataset.brand=SH.name||"Mirflowers";const wide=matchMedia("(min-width:900px)").matches,pf0=rolePins(),pf=[...new Set(pf0.map(hd0))].filter(k=>T2.some(t=>t[0]===k)),PR=wide?T2:pf.map(k=>T2.find(t=>t[0]===k)).filter(Boolean);MORE=wide?[]:T2.filter(t=>!pf.includes(t[0]));if(MORE.length===1){PR.push(MORE[0]);MORE=[]}
  const NV=PR/* «Ещё» — кнопка ☰ слева вверху */,inMore=tab==="more"||MORE.some(t=>t[0]===hd0(tab)),moreN=MORE.reduce((a,t)=>a+(+nbG(t[0])||0),0),plus=!wide&&mgr();document.body.classList.toggle("hasplus",plus);const nbt=NV.map((t,ix)=>`<button class="${t[0]===hd0(tab)||(t[0]==="more"&&inMore)?"on":""}" data-t="${t[0]}"><i>${ic(t[0])}</i>${t[2]}${(t[0]==="more"?moreN:nbG(t[0]))?`<b class="nb">${t[0]==="more"?moreN:nbG(t[0])}</b>`:""}</button>`);if(plus)nbt.splice(Math.min(3,nbt.length),0,`<button class="plus" type="button" data-a="new" aria-label="Новый заказ"><i>${ic("plus")}</i></button>`);morph(n,shl().nav(NV,nbt.join("")));tbDraw(MORE.length>0,moreN);
  n.onclick=e=>{const b=e.target.closest("button");if(b&&b.dataset.t){tab=b.dataset.t;draw();scrollTo(0,0)}};
- const cf=chFocus();if(LOC&&!locs().some(x=>x.id===LOC))LOC="";const vh=locBar()+backBar()+scoped(()=>gtab()+(f=>tab==="home"||tab==="orders"?f():shl().dense(tab,f()))(({home,orders:()=>shl().orders(),team,me,rep:repV,st:stV,ctrl:ctrlV,cur:curV,fl:homeFl,tpl:tplV,stock,show:vit,gal:galV,crm,chats,tc,leads,fin:own()?fin:home,sched,jr:logv,help:helpV,more:moreV,map:mapV,deals:dealsV,an:own()?anV:home})[tab]))+(mgr()&&(tab==="home"||tab==="orders")?`<button class="btn fab" data-a="new">＋ Заказ</button>`:"");const ve=$("v");if(tab==="map"||draw.tab!==tab){ve.innerHTML=deco(vh);ve.__h=vh}else morph(ve,vh);draw.tab=tab;chFit();bind();if(tab==="map")mapAfter();if(tab==="chats")chBind();if(tab==="tc")tcBind();chAfter(cf);try{skySync();csAfter()}catch(e){}}
+ const cf=chFocus();if(LOC&&!locs().some(x=>x.id===LOC))LOC="";const vh=locBar()+backBar()+scoped(()=>gtab()+(f=>tab==="home"||tab==="orders"?f():shl().dense(tab,f()))(({home,orders:()=>shl().orders(),team,me,rep:repV,st:stV,ctrl:ctrlV,cur:curV,fl:homeFl,tpl:tplV,stock,show:vit,gal:galV,crm,chats,tc,leads,fin:own()?fin:home,sched,jr:logv,help:helpV,more:moreV,map:mapV,deals:dealsV,an:own()?anV:home})[tab]))+(mgr()&&(tab==="home"||tab==="orders")?`<button class="btn fab" data-a="new">＋ Заказ</button>`:"");const ve=$("v");if(tab==="map"||draw.tab!==tab){ve.innerHTML=deco(vh);ve.__h=vh}else morph(ve,vh);draw.tab=tab;chFit();bind();if(tab==="map")mapAfter();if(tab==="chats")chBind();if(tab==="tc")tcBind();chAfter(cf);try{skySync();csAfter();hxAfter()}catch(e){}}
 
 /* доставка: сотрудник выставляет заказ (dvPost) → любой курьер принимает → забирает («Забрал, еду», st 3) → «Доставлено» */
 /* Окно работы: собирать и отдавать курьеру можно не раньше чем за WINH часов до срока («Сделать до» или время клиента) */
@@ -1479,6 +1575,87 @@ function skySync(){const on=typeof S!=="undefined"&&!!S&&LY()==="h";
  if(!on){SKY.on=0;if(SKY.raf){cancelAnimationFrame(SKY.raf);SKY.raf=0}if(SKY.cv)SKY.cv.style.display="none";return}
  skyInit();SKY.cv.style.display="";SKY.on=1;SKY.still=["chats","tc","map"].includes(typeof tab==="string"?tab:"")||matchMedia("(prefers-reduced-motion: reduce)").matches;
  SKY.until=performance.now()+(SKY.still?60:700);skyTarget();if(!SKY.c)SKY.c={...SKY.tg};if(!document.hidden)skyKick()}
+/* ===== «Ретро-HUD» (x): оболочка HudShell, корень #hx-root (разд. 138, Фаза 4) =====
+ Тайловый оконный менеджер: окна с полоской-заголовком стыкуются без зазоров; на ноутбуке 3–5 окон сразу, на телефоне одно окно + вкладки снизу (и свайп).
+ Навигация — командная строка с автодополнением по разделам из T, горячие клавиши «/», «N», Esc. Монохром + один акцент из палитры пользователя.
+ Окно заказа — плитка рядом со списком (не поверх): modal() для карточки заказа пишет её в #hxdet. Действия — только существующие data-a. */
+const HX={sel:"",detH:"",detK:"",win:0},XST=["НОВ","СБР","ГОТ","ПУТЬ","ВЫД","ОТМ"],
+ hxMoney=()=>own()||adm()||S.role==="operator";
+function hxTag(o){const st=Math.max(0,Math.min(5,+o.st||0)),late=!!dueMs(o)&&dueMs(o)<Date.now()&&st<4,unp=hxMoney()&&!o.paid&&st>=2&&st!==5;
+ return `<span class="hx-st s${st}">[${XST[st]}]</span>${late?'<span class="hx-al">ПРОСР</span>':""}${unp?'<span class="hx-al">НЕОПЛ</span>':""}`}
+function hxWin(id,title,body,opt){opt=opt||{};return `<section class="hx-win ${opt.cls||""}" data-w="${id}"><header class="hx-wt${opt.hot?" hot":""}"><span>[ ${title} ]</span><i class="hx-wb">${opt.x?`<button type="button" ${opt.x==="home"?'data-a="goto" data-id="home"':'onclick="hxClose()"'} aria-label="Закрыть окно">✕</button>`:`<b aria-hidden="true">▢</b>`}</i></header><div class="hx-wc"${id==="det"?' id="hxdet"':""}>${body}</div></section>`}
+function hxCmd(){return `<div class="hx-cmd"><span class="hx-pr">&gt;</span><input id="hxq" autocomplete="off" spellcheck="false" enterkeyhint="go" placeholder="команда: заказы сегодня неоплач · склад · новый" aria-label="Командная строка"><i class="hx-cur" aria-hidden="true"></i><span class="hx-cl">${esc(SH.name||"Mirflowers").toUpperCase()} · ${typeof ptBtn==="function"?ptBtn():""}</span><div id="hxs" class="hx-sug" hidden></div></div>`}
+/* команды: разделы из T + быстрые фильтры заказов */
+function hxCmds(){const P=(window.HPL||[]).filter(x=>x[0]!=="more").map(x=>[String(x[2]).toLowerCase(),"go:"+x[0],x[2]]);
+ return [...(mgr()?[["новый","new","Новый заказ  [N]"]]:[]),["заказы сегодня","o:t","Заказы на сегодня"],["заказы завтра","o:n","Заказы на завтра"],["заказы неоплач","o:u","Неоплаченные"],["заказы все","o:a","Все заказы, без фильтров"],["поиск","gso","Поиск по всему"],["сигналы","nfc","Уведомления"],...P]}
+function hxSug(v){const b=$("hxs");if(!b)return;const q=String(v||"").trim().toLowerCase();if(!q){b.hidden=true;b.innerHTML="";return}
+ const L=hxCmds().filter(c=>c[0].includes(q)||q.split(/\s+/).every(w=>c[0].includes(w))).slice(0,7);
+ b.innerHTML=L.map((c,i)=>`<button type="button" class="${i?"":"on"}" onclick="hxRun('${c[1]}')"><span>&gt; ${esc(c[0])}</span><em>${esc(c[2])}</em></button>`).join("")||`<p>нет такой команды — Enter ищет по заказам</p>`;b.hidden=false}
+function hxRun(c){const q=$("hxq"),raw=String(c||"").trim();if(q)q.value="";const b=$("hxs");if(b){b.hidden=true;b.innerHTML=""}
+ if(!raw)return;const low=raw.toLowerCase();
+ if(raw==="new"||low==="новый"||low==="+"){shl().newOrder();return}
+ if(raw==="gso"){gsOpen();return}if(raw==="nfc"){nfCenter();return}
+ if(raw.startsWith("go:")){tab=raw.slice(3);draw();scrollTo(0,0);return}
+ if(raw.startsWith("o:")){const k=raw.slice(2);fq="";if(k==="t"){fdt="t";fz2=""}else if(k==="n"){fdt="n";fz2=""}else if(k==="u"){fz2="unpaid";fdt=""}else{fdt="";fz2="";fs=""}tab="orders";draw();scrollTo(0,0);return}
+ const m=hxCmds().find(x=>x[0]===low)||hxCmds().find(x=>x[0].startsWith(low));if(m){hxRun(m[1]);return}
+ const w=low.split(/\s+/);if(w[0]==="заказы"||w[0]==="заказ"){if(w.includes("сегодня"))fdt="t";if(w.includes("завтра"))fdt="n";if(w.some(x=>x.startsWith("неоплач")))fz2="unpaid";tab="orders";draw();return}
+ fq=raw;fdt="";fz2="";tab="orders";draw()}
+document.addEventListener("input",e=>{if(e.target&&e.target.id==="hxq")hxSug(e.target.value)});
+document.addEventListener("keydown",e=>{if(!S||LY()!=="x")return;const t=e.target,typing=t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.tagName==="SELECT"||t.isContentEditable);
+ if(t&&t.id==="hxq"){if(e.key==="Enter"){e.preventDefault();const f=document.querySelector("#hxs button.on");if(f)f.click();else hxRun(t.value)}else if(e.key==="Escape"){t.value="";hxSug("");t.blur()}
+  else if(e.key==="ArrowDown"||e.key==="ArrowUp"){const B=[...document.querySelectorAll("#hxs button")];if(!B.length)return;e.preventDefault();let i=B.findIndex(x=>x.classList.contains("on"));B.forEach(x=>x.classList.remove("on"));i=(i+(e.key==="ArrowDown"?1:-1)+B.length)%B.length;B[i].classList.add("on")}return}
+ if(typing)return;
+ if(e.key==="/"){const q=$("hxq");if(q){e.preventDefault();q.focus()}}
+ else if((e.key==="n"||e.key==="N"||e.key==="т"||e.key==="Т")&&!e.metaKey&&!e.ctrlKey&&mgr()&&!$("m").innerHTML){e.preventDefault();shl().newOrder()}
+ else if(e.key==="Escape"&&!$("m").innerHTML){if(HX.sel)hxClose();else if(tab!=="home"){tab="home";draw();scrollTo(0,0)}}});
+function hxClose(){HX.sel="";HX.detH="";HX.detK="";if(HX.win>0&&csPh())HX.win=0;draw()}
+/* окно списка заказов: компактная таблица */
+function hxTable(l,lim){const sm=hxMoney()||mgr()&&S.role!=="assistant",V=l.slice(0,lim);
+ return `<table class="hx-tbl"><thead><tr><th>N°</th><th>СРОК</th><th>КЛИЕНТ</th>${sm?"<th>СУММА</th>":""}<th>СТАТУС</th></tr></thead><tbody>${V.map((o,i)=>`<tr data-a="det" data-id="${esc(o.id)}" class="${o.id===HX.sel?"on":""}"><td class="hx-n">${String(i+1).padStart(3,"0")}</td><td>${esc((o.date||"").slice(8)+"."+(o.date||"").slice(5,7))} ${esc(String(o.time||"").slice(0,5))}</td><td>${esc(o.client||"—")}<small>${esc(o.bn||"")}</small></td>${sm?`<td>${M(tot(o))}</td>`:""}<td class="hx-tg">${hxTag(o)}</td></tr>`).join("")||`<tr><td colspan="5" class="hx-e">&gt; пусто_</td></tr>`}</tbody></table>`}
+/* осциллограмма выручки по часам (только тем, кому видны деньги) */
+function hxOsc(){const t=today(),H=Array(24).fill(0);O.filter(o=>+o.st!==5&&o.date===t).forEach(o=>{const m=String(o.time||"").match(/^(\d{1,2})/),h=m?Math.min(23,+m[1]):new Date(+o.ts||Date.now()).getHours();H[h]+=+tot(o)||0});
+ const mx=Math.max(1,...H),W=480,Hh=120,pts=H.map((v,i)=>`${Math.round(i*W/23)},${Math.round(Hh-8-v/mx*(Hh-20))}`).join(" "),sum=H.reduce((a,b)=>a+b,0),nh=new Date().getHours();
+ const grid=Array.from({length:25},(_,i)=>`<line x1="${Math.round(i*W/24)}" y1="${i%6?Hh-6:0}" x2="${Math.round(i*W/24)}" y2="${Hh}" stroke="currentColor" stroke-width="1" opacity="${i%6?.5:.25}"/>`).join("");
+ return `<div class="hx-osc"><svg viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="none" shape-rendering="geometricPrecision" aria-hidden="true">${grid}<line x1="0" y1="${Hh/2}" x2="${W}" y2="${Hh/2}" stroke="currentColor" stroke-dasharray="2 6" opacity=".35"/><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" class="hx-line"/><line x1="${Math.round(nh*W/23)}" y1="0" x2="${Math.round(nh*W/23)}" y2="${Hh}" class="hx-now" stroke-width="2"/></svg><div class="hx-scale"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div><p class="hx-kv"><span>СЕГОДНЯ</span><b>${M(sum)}</b><span>ПИК ${String(H.indexOf(mx)).padStart(2,"0")}:00</span></p></div>`}
+/* каркасная сфера */
+function hxGlobe(n,label){const mer=[0,20,40,60,80].map(rx=>`<ellipse cx="60" cy="60" rx="${rx||1}" ry="50" fill="none" stroke="currentColor" stroke-width="1" vector-effect="non-scaling-stroke"/>`).join(""),lat=[-30,-15,0,15,30].map(y=>{const r=Math.round(Math.sqrt(2500-(y/30*44)**2));return `<ellipse cx="60" cy="${60+Math.round(y/30*44)}" rx="${r}" ry="${Math.max(2,Math.round(r*.18))}" fill="none" stroke="currentColor" stroke-width="1" opacity=".7" vector-effect="non-scaling-stroke"/>`}).join("");
+ return `<div class="hx-glb"><svg viewBox="0 0 120 120" shape-rendering="geometricPrecision" aria-hidden="true"><circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" stroke-width="1.5" vector-effect="non-scaling-stroke"/><g class="hx-spin">${mer}</g>${lat}</svg><p class="hx-kv"><span>${label}</span><b>${n}</b></p></div>`}
+/* сигналы: что требует внимания — по правам роли */
+function hxSig(){const L=[],t=Date.now(),late=O.filter(o=>+o.st<4&&dueMs(o)&&dueMs(o)<t),unp=hxMoney()?O.filter(o=>+o.st>=2&&+o.st<5&&!o.paid):[];
+ if(late.length)L.push(["ПРОСРОЧЕНО",late.length+" "+pl(late.length,"заказ","заказа","заказов"),"orders",1]);
+ if(unp.length)L.push(["НЕ ОПЛАЧЕНО",unp.length+" "+pl(unp.length,"заказ","заказа","заказов"),"orders",1]);
+ try{if(mgr()&&S.role!=="assistant"||own()){const low=INVL().filter(isLow);if(low.length)L.push(["СКЛАД · МАЛО",low.slice(0,3).map(i=>i.name).join(", ")+(low.length>3?" +"+(low.length-3):""),"stock",1])}}catch(e){}
+ try{if(isOp()&&FX("clientChat")&&typeof chUn==="function"){const n=+chUn()||0;if(n)L.push(["ЧАТЫ",n+" непрочитанных","chats",1])}}catch(e){}
+ const nf=typeof nfUnread==="function"?+nfUnread()||0:0;if(nf)L.push(["УВЕДОМЛЕНИЯ",String(nf),"",0]);
+ return `<ul class="hx-sig">${L.map(x=>`<li${x[2]?` data-a="goto" data-id="${x[2]}"`:' data-a="nfc"'} class="${x[3]?"al":""}"><b>${x[0]}</b><span>${esc(x[1])}</span><i>›</i></li>`).join("")||`<li class="ok"><b>ВСЁ ШТАТНО</b><span>сигналов нет</span></li>`}</ul>`}
+/* вкладки окон (телефон) / функциональная полоса */
+function hxBar(W){const ph=csPh();if(tab==="home"||tab==="orders")if(ph)return `<div class="hx-fk" role="navigation" aria-label="Окна">${W.map((w,i)=>`<button type="button" class="${i===HX.win?"on":""}" onclick="hxTab(${i})">${w[1]}</button>`).join("")}${mgr()?`<button type="button" class="hx-new" data-a="new" aria-label="Новый заказ">+</button>`:""}</div>`;
+ const P=(window.HPL||[]).filter(x=>x[0]!=="more");return `<div class="hx-fk" role="navigation" aria-label="Разделы">${P.map((x,i)=>`<button type="button" class="${x[0]===hd0(tab)?"on":""}" data-a="goto" data-id="${x[0]}"><em>${i+1<10?"F"+(i+1):""}</em>${esc(x[2])}${+nbG(x[0])?`<b class="nb">${nbG(x[0])}</b>`:""}</button>`).join("")}${mgr()?`<button type="button" class="hx-new" data-a="new" aria-label="Новый заказ">+</button>`:""}</div>`}
+function hxTab(i){HX.win=i;document.querySelectorAll("#hx-root .hx-win").forEach((w,k)=>w.classList.toggle("cur",k===i));document.querySelectorAll(".hx-fk button").forEach((b,k)=>b.classList.toggle("on",k===i));scrollTo(0,0)}
+function hxLayout(W){const ph=csPh();if(HX.win>=W.length)HX.win=0;return `<div id="hx-root" class="hx-root">${hxCmd()}<div class="hx-grid${ph?" ph":""}" data-n="${W.length}">${W.map((w,i)=>w[2].replace('<section class="hx-win ','<section class="hx-win '+(i===HX.win?"cur ":"")+(w[3]||"")+" ")).join("")}</div>${hxBar(W)}</div>`}
+function hxHome(){const act=O.filter(o=>+o.st<4).filter(o=>S.role!=="courier"||o.dv&&(o.courier===U.uid||dvFree(o))).sort((a,b)=>(dueMs(a)||9e15)-(dueMs(b)||9e15)),W=[];
+ W.push(["ord","ЗАКАЗЫ",hxWin("ord","ЗАКАЗЫ · "+act.length,hxTable(act,14)+(act.length>14?`<button type="button" class="hx-more" data-a="goto" data-id="orders">&gt; все заказы (${act.length})_</button>`:"")),"w-ord"]);
+ if(HX.sel)W.push(["det","ЗАКАЗ",hxWin("det","ЗАКАЗ N° "+esc(String(HX.sel).slice(-4).toUpperCase()),HX.detH||'<p class="hx-e">&gt; загрузка_</p>',{x:1,hot:1}),"w-det"]);
+ W.push(["sig","СИГНАЛЫ",hxWin("sig","СИГНАЛЫ",hxSig()),"w-sig"]);
+ W.push(["osc",hxMoney()?"ВЫРУЧКА":"ОРБИТА",hxWin("osc",hxMoney()?"ВЫРУЧКА · ЧАСЫ":"ОРБИТА",hxMoney()?hxOsc():hxGlobe(act.length,"В РАБОТЕ")),"w-osc"]);
+ W.push(["sum","СВОДКА",hxWin("sum","СВОДКА",roleHome()),"w-sum"]);
+ return hxLayout(W)}
+function hxOrders(l,filt){const W=[["ord","ЗАКАЗЫ",hxWin("ord","ЗАКАЗЫ · ФИЛЬТР",`${filt}<div class="chips">${[["","Все"],...ST.map((s,i)=>[String(i),s])].map(c=>`<button class="chip ${fs===c[0]?"on":""}" data-a="f" data-id="${c[0]}">${c[1]}</button>`).join("")}</div>${hxTable(l,ordLim())}${l.length>ordLim()?`<button type="button" class="hx-more" data-a="o_more">&gt; ещё ${l.length-ordLim()}_</button>`:""}`),"w-ordf"]];
+ if(HX.sel)W.push(["det","ЗАКАЗ",hxWin("det","ЗАКАЗ N° "+esc(String(HX.sel).slice(-4).toUpperCase()),HX.detH||'<p class="hx-e">&gt; загрузка_</p>',{x:1,hot:1}),"w-det"]);
+ return hxLayout(W)}
+function hxDense(t,h){const P=(window.HPL||[]).filter(x=>x[0]!=="more"),k=hd0(t),nm=(P.find(x=>x[0]===k)||[])[2]||(GHN&&GHN[k])||"Раздел";
+ if(t==="chats"||t==="tc"||t==="map")return `<div id="hx-root" class="hx-root hx-full">${hxCmd()}${h}</div>`;
+ return `<div id="hx-root" class="hx-root">${hxCmd()}<div class="hx-grid one">${hxWin(k,esc(String(nm).toUpperCase()),h,{x:"home",cls:"cur"})}</div>${hxBar([])}</div>`}
+const HudShell={...BentoShell,id:"x",nav:()=>"",home:()=>hxHome(),orders:()=>orders(),dense:(t,h)=>hxDense(t,h),
+ openOrder:id=>{const o=O.find(x=>x.id===id);if(!o)return;HX.sel=id;HX.detH="";HX.detK="";if(tab!=="home"&&tab!=="orders")tab="orders";if(csPh())HX.win=1;draw()},
+ destroy(){HX.sel="";HX.detH=""}};
+SHELL.x=HudShell;
+/* после перерисовки: окно заказа заполняется карточкой (и обновляется при смене данных), свайп по окнам на телефоне */
+function hxAfter(){if(LY()!=="x")return;const d=$("hxdet");
+ if(HX.sel){const o=O.find(x=>x.id===HX.sel);if(!o){HX.sel="";return}const k=JSON.stringify(o,(n,v)=>n==="_pend"?undefined:v);if(d&&(k!==HX.detK||!HX.detH)){HX.detK=k;detail(HX.sel)}}
+ const g=document.querySelector(".hx-grid.ph");if(g&&!g.__sw){g.__sw=1;let x0=0,y0=0;g.addEventListener("touchstart",e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY},{passive:true});
+  g.addEventListener("touchend",e=>{const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;if(Math.abs(dx)<70||Math.abs(dy)>Math.abs(dx)*.7)return;if(e.target.closest("input,textarea,select,.hx-tbl,.chips"))return;const n=g.querySelectorAll(".hx-win").length;hxTab((HX.win+(dx<0?1:-1)+n)%n)},{passive:true})}
+ if(!document.getElementById("csfont")){const l=document.createElement("link");l.id="csfont";l.rel="stylesheet";l.href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap&subset=cyrillic,cyrillic-ext";document.head.appendChild(l)}}
 /* ---- Профиль → Мой экран ---- */
 function msMove(k,d){const def=roleOf().home,p=hbP(),o=(p.o||[]).filter(x=>def.includes(x));def.forEach(x=>{if(!o.includes(x))o.push(x)});const i=o.indexOf(k),j=i+d;if(i<0||j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];p.o=o;hbS(p);draw()}
 function msTog(k,on){const p=hbP(),f=new Set(p.off||[]);on?f.delete(k):f.add(k);p.off=[...f];hbS(p);draw()}
@@ -1696,6 +1873,7 @@ function orders(){const q=fq.toLowerCase(),dd=fdt==="t"?today():fdt==="n"?addD(t
  if(y==="m")return `<div class="m-head"><h1>Журнал заказов</h1></div>${filt}<div class="m-list-wrap">${oRender(l.slice(0,ordLim()))||'<div class="card mut">Ничего не найдено.</div>'}</div>${l.length>ordLim()?`<div class="acts"><button class="btn g" data-a="o_more">Ещё (${l.length-ordLim()})</button></div>`:""}`;
  /* Чёрная дыра — радар-строки */
  if(y==="h")return csOrders(l,filt);
+ if(y==="x")return hxOrders(l,filt);
  /* Bento — классика */
  return `<h1>Заказы</h1>${filt}<div class="pt">${(()=>{const P=[[0,"Новые"],[1,"В сборке"],[2,"Готовы"],[3,"В пути"]].map(x=>[...x,O.filter(o=>+o.st===x[0]&&!(x[0]===0&&ntLater(o))&&(S.role!=="courier"||(o.dv&&(o.courier===U.uid||dvFree(o))))).length]),mx=Math.max(1,...P.map(x=>x[2]));return P.map(x=>`<button type="button" class="k-${x[0]} ${fs===String(x[0])?"on":""}" data-a="f" data-id="${fs===String(x[0])?"":x[0]}"><b>${x[2]}</b><span>${x[1]}</span><i class="ptb"><em style="width:${Math.round(x[2]/mx*100)}%"></em></i></button>`).join("")})()}</div><div class="chips">${[["","Все"],...ST.map((s,i)=>[String(i),s])].map(c=>`<button class="chip ${fs===c[0]?"on":""}" data-a="f" data-id="${c[0]}">${c[1]}</button>`).join("")}</div><div class="og ly-g">${oRender(l.slice(0,ordLim()))||'<div class="card mut">Ничего не найдено.</div>'}</div>${l.length>ordLim()?`<div class="acts"><button class="btn g" data-a="o_more">Показать ещё (${l.length-ordLim()})</button></div>`:""}`}
 
@@ -1853,7 +2031,7 @@ function form(o,lnk){const e=o&&o.id,v=o||{},qpo=!e?quickOpts():"",cs=Object.key
    if(slOpen){const x=slOpen;slOpen=null;statusModal(x.o,x.u)}})();return}modal("");toast("Заказ сохранён")})}}
 
 /* открытое окно заказа обновляется само, когда заказ изменился (своё действие или чужое) */
-function detRefresh(prev){const d=document.querySelector("#m [data-det]");if(!d)return;const id=d.dataset.det,a=prev.find(x=>x.id===id),b=O.find(x=>x.id===id);if(!b)return;
+function detRefresh(prev){const d=document.querySelector("#m [data-det],#reader [data-det]");if(!d)return;const id=d.dataset.det,a=prev.find(x=>x.id===id),b=O.find(x=>x.id===id);if(!b)return;
  const k=o=>JSON.stringify(o,(n,v)=>n==="_pend"?undefined:v);if(!a||k(a)!==k(b)){const sc=d.closest(".sh");const top=sc?sc.scrollTop:0;Promise.resolve(detail(id)).then(()=>{const n=document.querySelector("#m .sh");if(n)n.scrollTop=top})}}
 async function detail(id){const o=O.find(x=>x.id===id);if(!o)return;let h="";
  if(mgr()){try{const s=await db.collection("activityLogs").where("oid","==",id).get();h=s.docs.map(d=>d.data()).sort((a,b)=>(b.ts?b.ts.seconds:9e9)-(a.ts?a.ts.seconds:9e9)).map(x=>`<div class="ln"><span>${esc(x.byName)}</span><span>${esc(x.act)}${x.x?": "+esc(x.x):""}</span></div>`).join("")}catch(e){eLog(e)}}
