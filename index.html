@@ -255,6 +255,49 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
 #tb .tbb{position:relative}#tb .tbn{position:absolute;top:1px;right:-2px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#ff3b30;color:#fff;font:700 11px/18px -apple-system,system-ui,sans-serif;text-align:center;box-shadow:0 0 0 2px var(--bg);pointer-events:none}
 .meln{display:flex;align-items:center;gap:10px;margin:2px 2px 12px;cursor:pointer}.meln .mav{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--ac) 18%,var(--card));color:var(--ink);font-weight:700;flex:none}.meln div{min-width:0;display:flex;flex-direction:column}.meln b{font-size:15px;line-height:1.2}.meln span{font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gmk{display:flex;flex-direction:column;align-items:center;line-height:1.15;padding:5px 10px 6px!important}.gmk b{font-size:14px}.gmk small{font:600 11px system-ui,sans-serif;opacity:.8;max-width:130px;overflow:hidden;text-overflow:ellipsis}.gmk.late{outline:3px solid #ff3b30;outline-offset:1px}
+.dpx{overflow-x:auto;padding:0!important}.dpx table{width:100%;border-collapse:collapse;font-size:13px}.dpx th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);padding:8px 10px;border-bottom:1px solid var(--ink)}.dpx td{padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}.dpx tr.late td{color:var(--bad,#d33);font-weight:600}.dpx tr.tot td{font-weight:800;border-bottom:0}
+.dpi{display:grid;grid-template-columns:12px 52px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}.dpi:last-child{border:0}.dpi i{width:10px;height:10px;border-radius:50%;background:var(--ac)}.dpi i.s2{background:#34c759}.dpi i.s3{background:#ff9f0a}.dpi b{font-variant-numeric:tabular-nums}.dpi span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dpi em{font-style:normal;font-size:12px;color:var(--mut)}
+/* ===== Новые образы дизайнов: у каждого свой характер (Bento не затронут) ===== */
+/* a · Аврора: светящиеся стеклянные карточки на градиентной сетке */
+:root[data-ly=a] body{background:radial-gradient(70% 45% at 0% 0%,color-mix(in srgb,var(--ac) 30%,transparent),transparent 70%),radial-gradient(60% 40% at 100% 30%,color-mix(in srgb,var(--s3,var(--ac)) 24%,transparent),transparent 70%),radial-gradient(80% 45% at 40% 100%,color-mix(in srgb,var(--s1,var(--ac)) 20%,transparent),transparent 70%),var(--bg);background-attachment:fixed}
+:root[data-ly=a] h1{font-weight:800;letter-spacing:-1px;background:linear-gradient(90deg,var(--ink),var(--ac));-webkit-background-clip:text;background-clip:text;color:transparent}
+:root[data-ly=a] .card,:root[data-ly=a] .tile{background:color-mix(in srgb,var(--card) 62%,transparent);backdrop-filter:blur(18px) saturate(170%);-webkit-backdrop-filter:blur(18px) saturate(170%);border:1px solid color-mix(in srgb,var(--ink) 11%,transparent);border-radius:26px;box-shadow:0 10px 34px -12px color-mix(in srgb,var(--ac) 55%,transparent)}
+:root[data-ly=a] .btn{border-radius:99px;box-shadow:0 8px 22px -8px var(--ac)}
+:root[data-ly=a] .chip.on{box-shadow:0 6px 18px -6px var(--ac)}
+/* i · iOS: чистые сгруппированные списки, тонкие линии, крупный заголовок */
+:root[data-ly=i] h1{font-size:34px;font-weight:700;letter-spacing:-.9px}
+:root[data-ly=i] h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:500;margin:26px 16px 7px}
+:root[data-ly=i] .card{border-radius:14px;box-shadow:none;padding:4px 16px;background:var(--card)}
+:root[data-ly=i] .ln{padding:12px 0;font-size:16px}
+:root[data-ly=i] .btn{border-radius:12px;font-weight:600}
+:root[data-ly=i] .chip{border-radius:9px;padding:7px 13px}
+:root[data-ly=i] nav{border-radius:0;left:0;right:0;bottom:0;padding:8px 8px calc(8px + env(safe-area-inset-bottom));backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);border-top:.5px solid var(--line)}
+/* t · Склад: индустриальный, моноширинные подписи, цветная полоса сверху */
+:root[data-ly=t] body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:14px}
+:root[data-ly=t] h1{font-family:ui-monospace,Menlo,monospace;font-size:24px;text-transform:uppercase;letter-spacing:.02em;font-weight:800}
+:root[data-ly=t] h2{font-size:11px;text-transform:uppercase;letter-spacing:.18em;border-bottom:2px solid var(--ink);padding-bottom:5px;margin:24px 2px 10px;color:var(--ink)}
+:root[data-ly=t] .card,:root[data-ly=t] .tile{border-radius:4px;box-shadow:none;border:1px solid var(--line);border-top:4px solid var(--ac);background:var(--card)}
+:root[data-ly=t] .btn,:root[data-ly=t] .chip{border-radius:3px;text-transform:uppercase;letter-spacing:.06em;font-size:12.5px;font-weight:700}
+:root[data-ly=t] .ln{border-bottom:1px dashed var(--line)}
+/* w · Планер: тёплые карточки, цветная полоса слева, мягкие тени */
+:root[data-ly=w] body{background:linear-gradient(180deg,color-mix(in srgb,var(--ac) 9%,var(--bg)),var(--bg) 320px) no-repeat,var(--bg)}
+:root[data-ly=w] h1{font-weight:800;letter-spacing:-.5px}
+:root[data-ly=w] .card,:root[data-ly=w] .tile{border-radius:28px;border-left:7px solid var(--sk,var(--ac));box-shadow:0 6px 0 -2px color-mix(in srgb,var(--ac) 14%,transparent),0 14px 30px -14px color-mix(in srgb,var(--ink) 30%,transparent)}
+:root[data-ly=w] .btn{border-radius:99px;font-weight:700;padding:12px 20px}
+:root[data-ly=w] .chip{border-radius:99px;padding:9px 16px;font-weight:600}
+:root[data-ly=w] .chip.on{transform:rotate(-1.5deg)}
+/* n · Таблица: редакторский стиль, засечки, тонкие линии, плотные строки */
+:root[data-ly=n] h1{font-family:Georgia,"New York","Times New Roman",serif;font-size:30px;font-weight:700;letter-spacing:-.3px;border-bottom:3px double var(--ink);padding-bottom:6px}
+:root[data-ly=n] h2{font-family:Georgia,"New York",serif;font-style:italic;font-weight:600;font-size:17px;color:var(--ink);margin:22px 2px 6px}
+:root[data-ly=n] .card,:root[data-ly=n] .tile{background:transparent;box-shadow:none;border-radius:0;border-top:1px solid var(--ink);border-bottom:1px solid var(--line);padding:10px 2px}
+:root[data-ly=n] .ln{padding:5px 0;font-size:14px}:root[data-ly=n] .ln:nth-child(odd){background:color-mix(in srgb,var(--ink) 4%,transparent)}
+:root[data-ly=n] .btn{border-radius:2px}:root[data-ly=n] .chip{border-radius:2px;border:1px solid var(--line);background:transparent}:root[data-ly=n] .chip.on{background:var(--ink);color:var(--bg)}
+/* b · Графики: неоновая подсветка, градиентные акценты */
+:root[data-ly=b] body{background:radial-gradient(60% 35% at 80% 0%,color-mix(in srgb,var(--ac) 26%,transparent),transparent 70%),var(--bg)}
+:root[data-ly=b] .card,:root[data-ly=b] .tile{border-radius:20px;border:1px solid color-mix(in srgb,var(--ac) 38%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--ac) 8%,transparent),0 0 26px -8px color-mix(in srgb,var(--ac) 60%,transparent) inset,0 12px 30px -16px color-mix(in srgb,var(--ac) 70%,transparent)}
+:root[data-ly=b] h1{font-weight:800;text-shadow:0 0 24px color-mix(in srgb,var(--ac) 55%,transparent)}
+:root[data-ly=b] .btn{background:linear-gradient(135deg,var(--ac),var(--s3,var(--ac)));border-radius:14px;box-shadow:0 0 22px -6px var(--ac)}
+:root[data-ly=b] .chip.on{background:linear-gradient(135deg,var(--ac),var(--s3,var(--ac)))}
 /* ===== Дизайн «Bento» (data-ly=g): блочная сетка, швейцарская типографика, матовое стекло, острая геометрия ===== */
 :root[data-ly=g]{--gr:6px;--gl:color-mix(in srgb,var(--card) 60%,transparent);--gb:color-mix(in srgb,var(--ink) 10%,transparent);--fh:"Unbounded","Manrope",-apple-system,system-ui,sans-serif}
 :root[data-ly=g] body{font-family:"Manrope",-apple-system,"SF Pro Text",system-ui,sans-serif;background:radial-gradient(60% 40% at 0% 0%,color-mix(in srgb,var(--ac) 22%,transparent),transparent 70%),radial-gradient(50% 35% at 100% 20%,color-mix(in srgb,var(--s3,var(--ac)) 16%,transparent),transparent 70%),radial-gradient(70% 40% at 50% 100%,color-mix(in srgb,var(--s1,var(--ac)) 12%,transparent),transparent 70%),var(--bg);background-attachment:fixed}
@@ -565,7 +608,7 @@ let st=$("thc");if(!st){st=document.createElement("style");st.id="thc";document.
 st.textContent=`:root[data-t=${e}]{--bg:${P[0]};--card:${P[1]};--c2:${P[2]};--ink:color-mix(in srgb,${ink} ${100-hi}%,${e==="dark"?"#fff":"#000"});--ac:${ac};--on:${on};--mut:color-mix(in srgb,${ink} ${35+k*.5}%,${P[0]});--line:color-mix(in srgb,${ink} ${10+k*.22}%,${P[0]});--glass:color-mix(in srgb,${P[1]} 86%,transparent)}body{font-size:${+th.fz||16}px}.card{border-radius:${rd}px}.tile{border-radius:${Math.max(8,rd-2)}px}`;
 if(tc)tc.content=P[0]}
 const UIS=["a","b","c","i","t","w","n","g"];
-const DESIGNS=[["g","Bento","Блочная сетка, крупные цифры, таблицы с фильтрами, матовое стекло"],["a","Дашборд","Кольца прогресса и график"],["i","iOS","Списки как в iPhone"],["t","Склад","Сетка и заказы по дням"],["w","Планер","Цветные карточки с прогрессом"],["n","Таблица","Заказы таблицей, как в CRM"],["b","Графики","Столбики и карточки"]];
+const DESIGNS=[["g","Bento","Блочная сетка, крупные цифры, матовое стекло"],["a","Аврора","Светящиеся стеклянные карточки, кольца прогресса и график"],["i","iOS","Чистые списки как в iPhone, тонкие линии"],["t","Склад","Индустриальный стиль: моноширинный шрифт, сетка и заказы по дням"],["w","Планер","Тёплые цветные карточки с полосой статуса и прогрессом"],["n","Таблица","Редакторский стиль: засечки, тонкие линии, заказы таблицей"],["b","Неон","Графики и столбики с неоновой подсветкой"]];
 function setDesign(i){const d=DESIGNS[i];let th=thGet();th.ui=d[0];STO.set("th",JSON.stringify(th));applyTheme();if(S)draw()}
 function setPal(n){let th=thGet();th.p=n;delete th.acd;delete th.acl;delete th.inkd;delete th.inkl;STO.set("th",JSON.stringify(th));applyTheme();if(S)draw()}
 function thSet(k,v,r){let th=thGet();if(k==="reset")th={};else{if(k==="ac"||k==="ink")k+=(document.documentElement.dataset.t==="dark"?"d":"l");th[k]=v}STO.set("th",JSON.stringify(th));applyTheme();if(r||k==="reset")draw()}
@@ -1005,8 +1048,20 @@ function stBlock(c){const y=LY(),act=[0,1,2,3].reduce((a,i)=>a+c(i),0)||1,A=i=>`
  return ""}
 function geoBanner(){if(!S||!own())return"";const L=locs().filter(l=>!(geoPts()[l.id]||{}).lat);if(!L.length)return"";return `<div class="card tdt" style="padding:10px 14px"><div class="tdi" data-a="geob_o" style="border:0;padding:4px 0">${tic("pin","#F59E0B")}<span class="tdx"><b>${L.length}</b> ${pl(L.length,"магазин","магазина","магазинов")} без места на карте — задать</span><span class="chev">›</span></div></div>`}
 function geoBannerFull(){const L=locs().filter(l=>!(geoPts()[l.id]||{}).lat);return `<div class="card geob"><b>Задайте место магазинов</b><p class="mut" style="margin:4px 0 10px;font-size:13px">Пока место не задано, сотрудники могут начать смену откуда угодно. Нажмите <b>«На карте»</b> и ткните в свой магазин на карте 2ГИС (или «По адресу» / «Я здесь», если вы внутри). После этого смену можно будет начать только в 50 м от него.</p>${L.map(l=>`<div class="lcr"><div style="color:var(--ink)"><b>${esc(l.name)}</b></div><div class="lcb"><button class="btn s" data-a="geo_map" data-id="${esc(l.id)}">🗺 На карте</button><button class="btn g s" data-a="geo_addr" data-id="${esc(l.id)}">По адресу</button><button class="btn g s" data-a="geo_set" data-id="${esc(l.id)}">📍 Я здесь</button></div></div>`).join("")}</div>`}
-function home(){return meLine()+wdHint()+geoBanner()+home0()+(mgr()&&!adm()?repHome():"")+shiftEndCard()}
+function home(){return meLine()+wdHint()+geoBanner()+home0()+(mgr()&&!adm()?repHome():"")+designPlus()+shiftEndCard()}
 /* Главная по профессиям (разд. 37): флорист и оператор — рабочая очередь без графиков; помощник — витрина и свежесть, затем очередь; админ и владельцы — сводка */
+/* --- дополнительные блоки главной: в каждом дизайне своя подача тех же данных --- */
+function designPlus(){try{if(!S||!(mgr()||own()))return"";const ly=LY(),t=today(),tm=o=>o.time||o.tm||"",key=o=>(o.date||"")+" "+tm(o),act=oH().filter(o=>+o.st<4),
+ st=o=>SLB[oK(o)]||"",row=o=>`<tr class="${(o.date||"")<t?"late":""}" data-a="goto" data-id="orders"><td>${(o.date||"").slice(8)+"."+(o.date||"").slice(5,7)} ${esc(tm(o))}</td><td>${esc(o.client||"")}</td><td>${esc(o.bn||"")}</td><td>${osum(o)}</td><td>${st(o)}${o.paid?" ✓":""}</td></tr>`;
+ if(ly==="n"){const r=act.filter(o=>(o.date||"")<=addD(t,7)).sort((a,b)=>key(a).localeCompare(key(b))).slice(0,15);if(!r.length)return"";
+  const sum=r.reduce((q,o)=>q+(+o.p||0)+(+o.fee||0),0),late=r.filter(o=>(o.date||"")<t).length;
+  return `<h2>Заказы на 7 дней</h2><div class="card dpx"><table><tr><th>Когда</th><th>Клиент</th><th>Букет</th><th>Сумма</th><th>Статус</th></tr>${r.map(row).join("")}<tr class="tot"><td colspan="3">Итого: ${r.length} заказ.${late?" · просрочено: "+late:""}</td><td colspan="2">${M(sum)}</td></tr></table></div>`}
+ if(ly==="w"){const r=act.filter(o=>o.date===t).sort((a,b)=>tm(a).localeCompare(tm(b)));if(!r.length)return"";
+  return `<h2>День по времени</h2><div class="card dpt">${r.map(o=>`<div class="dpi" data-a="goto" data-id="orders"><i class="s${oK(o)}"></i><b>${esc(tm(o)||"—")}</b><span>${esc(o.bn||"")} · ${esc(o.client||"")}</span><em>${st(o)}${o.paid?" ✓":""}</em></div>`).join("")}</div>`}
+ if(ly==="b"){const d=[...Array(7)].map((_,i)=>addD(t,i));return card2("Нагрузка на 7 дней: заказов и сумма",bars(d.map(s=>({l:wdn(s),v:act.filter(o=>o.date===s).length,hl:s===t})),String)+`<div class="ln"><span>Сумма за 7 дней</span><b>${M(act.filter(o=>o.date>=t&&o.date<=d[6]).reduce((q,o)=>q+(+o.p||0)+(+o.fee||0),0))}</b></div>`)}
+ if(ly==="t"){const lo=INV0.map(i=>({i,q:+lq(i,myLoc())||0})).filter(x=>+x.i.min>0&&x.q<=+x.i.min).sort((a,b)=>a.q-b.q).slice(0,10);if(!lo.length)return"";
+  return `<h2>Склад: пора докупить</h2><div class="card">${lo.map(x=>`<div class="ln"><span>${esc(x.i.name)}</span><b>${x.q} / мин ${+x.i.min} ${esc(x.i.unit||"шт")}</b></div>`).join("")}</div>`}
+ return""}catch(e){eLog(e);return""}}
 function meLine(){const n=String(S.name||"").trim()||"Сотрудник";return `<div class="meln" data-a="goto" data-id="me"><span class="mav">${esc(n.charAt(0).toUpperCase())}</span><div><b>${esc(n)}</b><span>${myRL()}${U&&U.email?" · "+esc(U.email):""}</span></div></div>`}
 function home0(){return shiftCard()+todoTop()+rqHome()+home00()}
 function home00(){if(S.role==="courier")return homeC();if(["assistant","florist","operator"].includes(S.role))return homeFl()+staffChips()+earnMini();/* флорист, оператор, помощник — одна компактная рабочая главная */if(own())return homeOw();/* владелец: деньги и поставка */return homeAd()/* администратор: кто на смене, проблемы, деньги, процесс */}
