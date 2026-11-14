@@ -603,12 +603,12 @@ const PALS={"Тинт":{l:["#f2f2f7","#ffffff","#e9e9ee","#0b0b0f","#6d3fe0","#f
 "Тёплый":{l:["#f1ede8","#ffffff","#e6e0d8","#1d1a18","#7b5bd6","#ffffff"],d:["#1b1a1c","#272529","#343136","#f3eee9","#b79cf0","#1b1230"]},
 "Синий CRM":{l:["#eef2f7","#ffffff","#dde4ee","#0f172a","#2563eb","#ffffff"],d:["#0f172a","#1e293b","#2b3a52","#e6ebf2","#3b82f6","#ffffff"]}};
 const thGet=()=>{try{return JSON.parse(STO.get("th")||"{}")||{}}catch(e){return{}}},lum=h=>{const n=parseInt(h.slice(1),16),f=v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(n>>16&255)+.7152*f(n>>8&255)+.0722*f(n&255)};
-function applyTheme(){try{const t0=thGet();if(!t0.g1){t0.ui="g";t0.g1=1;STO.set("th",JSON.stringify(t0))}}catch(e){eLog(e)}/* один раз: всем новый дизайн Bento (вернуть старый — Профиль → Оформление) */const m=STO.get("t")||"auto",e=m==="auto"?(sysDark.matches?"dark":"light"):m,th=thGet(),pn=PALS[th.p]?th.p:"Тинт",P=PALS[pn][e==="dark"?"d":"l"],k=th.ct==null?50:+th.ct,sx=e==="dark"?"d":"l",ci=th["ink"+sx],ca=th["ac"+sx],ink=ci&&/^#[0-9a-f]{6}$/i.test(ci)&&Math.abs(lum(ci)-lum(P[0]))>.25?ci:P[3],ac=ca&&/^#[0-9a-f]{6}$/i.test(ca)?ca:P[4],on=ac!==P[4]?(lum(ac)>.45?"#1a140e":"#ffffff"):P[5],rd=th.rd==null?20:+th.rd,hi=Math.max(0,k-50)*1.6,tc=document.querySelector('meta[name=theme-color]');document.documentElement.dataset.t=e;document.documentElement.dataset.pal=pn;document.documentElement.dataset.ui="a";document.documentElement.dataset.ly=(UIS.includes(th.ui)?(th.ui==="c"?"i":th.ui):"g");document.documentElement.dataset.acl=Math.abs(lum(ac)-lum(P[0]))<.12?"1":"";document.documentElement.dataset.mc=th.mc?"1":"0";
+function applyTheme(){try{const t0=thGet();if(!t0.g1){t0.ui="g";t0.g1=1;STO.set("th",JSON.stringify(t0))}}catch(e){eLog(e)}/* один раз: всем новый дизайн Bento (вернуть старый — Профиль → Оформление) */const m=STO.get("t")||"auto",e=m==="auto"?(sysDark.matches?"dark":"light"):m,th=thGet(),pn=PALS[th.p]?th.p:"Тинт",P=PALS[pn][e==="dark"?"d":"l"],k=th.ct==null?50:+th.ct,sx=e==="dark"?"d":"l",ci=th["ink"+sx],ca=th["ac"+sx],ink=ci&&/^#[0-9a-f]{6}$/i.test(ci)&&Math.abs(lum(ci)-lum(P[0]))>.25?ci:P[3],ac=ca&&/^#[0-9a-f]{6}$/i.test(ca)?ca:P[4],on=ac!==P[4]?(lum(ac)>.45?"#1a140e":"#ffffff"):P[5],rd=th.rd==null?20:+th.rd,hi=Math.max(0,k-50)*1.6,tc=document.querySelector('meta[name=theme-color]');document.documentElement.dataset.t=e;document.documentElement.dataset.pal=pn;document.documentElement.dataset.ui="a";document.documentElement.dataset.ly="g";document.documentElement.dataset.ui2=UIS.includes(th.ui)?th.ui:"g";document.documentElement.dataset.acl=Math.abs(lum(ac)-lum(P[0]))<.12?"1":"";document.documentElement.dataset.mc=th.mc?"1":"0";
 let st=$("thc");if(!st){st=document.createElement("style");st.id="thc";document.head.appendChild(st)}
 st.textContent=`:root[data-t=${e}]{--bg:${P[0]};--card:${P[1]};--c2:${P[2]};--ink:color-mix(in srgb,${ink} ${100-hi}%,${e==="dark"?"#fff":"#000"});--ac:${ac};--on:${on};--mut:color-mix(in srgb,${ink} ${35+k*.5}%,${P[0]});--line:color-mix(in srgb,${ink} ${10+k*.22}%,${P[0]});--glass:color-mix(in srgb,${P[1]} 86%,transparent)}body{font-size:${+th.fz||16}px}.card{border-radius:${rd}px}.tile{border-radius:${Math.max(8,rd-2)}px}`;
 if(tc)tc.content=P[0]}
-const UIS=["a","b","c","i","t","w","n","g"];
-const DESIGNS=[["g","Bento","Блочная сетка, крупные цифры, матовое стекло"],["a","Аврора","Светящиеся стеклянные карточки, кольца прогресса и график"],["i","iOS","Чистые списки как в iPhone, тонкие линии"],["t","Склад","Индустриальный стиль: моноширинный шрифт, сетка и заказы по дням"],["w","Планер","Тёплые цветные карточки с полосой статуса и прогрессом"],["n","Таблица","Редакторский стиль: засечки, тонкие линии, заказы таблицей"],["b","Неон","Графики и столбики с неоновой подсветкой"]];
+const UIS=["g","o","z","p"];
+const DESIGNS=[["g","Bento","Блочная сетка, крупные цифры, матовое стекло"],["o","Космос","Заказы-планеты на орбитах стадий вокруг звезды-выручки; камера летит к выбранному"],["z","Зум","Острова-дни и спираль заказов; подробности и состав букета открываются масштабом"],["p","Пруд","Заказы-тела: срочные всплывают и краснеют, стадия — колонка; можно хватать и бросать"]];
 function setDesign(i){const d=DESIGNS[i];let th=thGet();th.ui=d[0];STO.set("th",JSON.stringify(th));applyTheme();if(S)draw()}
 function setPal(n){let th=thGet();th.p=n;delete th.acd;delete th.acl;delete th.inkd;delete th.inkl;STO.set("th",JSON.stringify(th));applyTheme();if(S)draw()}
 function thSet(k,v,r){let th=thGet();if(k==="reset")th={};else{if(k==="ac"||k==="ink")k+=(document.documentElement.dataset.t==="dark"?"d":"l");th[k]=v}STO.set("th",JSON.stringify(th));applyTheme();if(r||k==="reset")draw()}
@@ -620,10 +620,11 @@ miniPv=(ui)=>{const r=(n,f)=>Array.from({length:n},(_,k)=>f(k)).join("");return 
  ui==="a"?`<span class="mq-rg">${r(3,k=>`<i style="--p:${[40,62,75][k]}"></i>`)}</span><span class="mq-bars">${r(6,k=>`<i style="height:${[50,80,35,90,60,70][k]}%"></i>`)}</span>`:
  ui==="i"?r(5,()=>`<span class="mq-li"><i></i><em></em><b>›</b></span>`):
  ui==="t"?`<span class="mq-gr">${r(6,()=>"<i></i>")}</span>${r(2,()=>`<span class="mq-li"><i></i><em></em><b>●</b></span>`)}`:
+ ui==="o"?`<i></i><i></i><i></i><b></b><em></em><em></em><em></em>`:ui==="z"?`<i></i><i></i><i></i><b></b><b></b><b></b>`:ui==="p"?`<i></i><i></i><i></i><i></i>`:
  ui==="w"?r(3,k=>`<span class="mq-pc" style="--c:var(--s${k})"><i></i><em></em></span>`):
  ui==="n"?r(6,k=>`<span class="mq-tr${k?"":" h"}"><em></em><em></em><i></i></span>`):
  `<span class="mq-vb">${r(7,k=>`<i style="height:${[40,70,55,95,45,80,65][k]}%"></i>`)}</span><span class="mq-li"><i></i><em></em><b>●</b></span>`}</span>`},
-themeCard=()=>{const t=thGet(),cur=PALS[t.p]?t.p:"Тинт",dk=document.documentElement.dataset.t==="dark"?"d":"l",P=PALS[cur][dk],ui=LY(),
+themeCard=()=>{const t=thGet(),cur=PALS[t.p]?t.p:"Тинт",dk=document.documentElement.dataset.t==="dark"?"d":"l",P=PALS[cur][dk],ui=UIS.includes(t.ui)?t.ui:"g",
  rg=(l,k,mn,mx,d)=>`<label>${l}</label><input type="range" min="${mn}" max="${mx}" value="${t[k]==null?d:t[k]}" oninput="thSet('${k}',+this.value)">`,
  dz=`<div class="dzr">${DESIGNS.map((d,i)=>`<button type="button" class="dzb ${ui===d[0]?"on":""}" onclick="setDesign(${i})" title="${d[2]}">${miniPv(d[0])}<b>${d[1]}</b></button>`).join("")}</div><div class="mut" style="font-size:13px;margin:6px 2px 0">${(DESIGNS.find(d=>d[0]===ui)||DESIGNS[0])[2]}</div>`,
  sw=`<div class="pzr">${Object.keys(PALS).map(n=>{const q=PALS[n][dk];return `<button type="button" class="pzb ${cur===n&&!t["ac"+dk]?"on":""}" onclick="setPal('${n}')" title="${n}" aria-label="${n}" style="--a:${q[4]};--b:${q[1]}"><i></i></button>`}).join("")}<label class="pzb pzc ${t["ac"+dk]?"on":""}" title="Свой цвет" style="--a:${t["ac"+dk]||P[4]}"><i></i><input type="color" value="${t["ac"+dk]||P[4]}" oninput="thSet('ac',this.value)" onchange="draw()"></label></div>`;
@@ -954,7 +955,7 @@ function draw(){if(!S)return;if(window.__ctrlWas&&tab!=="ctrl"&&adm())ctrlSeenAl
  const n=$("nav");n.hidden=false;n.dataset.brand=SH.name||"Mirflowers";const wide=matchMedia("(min-width:900px)").matches,pf0=own()?["home","fin","stock","orders","an"]:({admin:["home","orders","chats","show","stock"],operator:["home","orders","chats","crm","show"],florist:["home","orders","show","stock"],assistant:["home","orders","show","stock","chats"],courier:["home","orders","map","sched"]})[S.role]||["home","orders"],pf=[...new Set(pf0.map(hd0))].filter(k=>T2.some(t=>t[0]===k)),PR=wide?T2:pf.map(k=>T2.find(t=>t[0]===k)).filter(Boolean);MORE=wide?[]:T2.filter(t=>!pf.includes(t[0]));if(MORE.length===1){PR.push(MORE[0]);MORE=[]}
  const NV=PR/* «Ещё» — кнопка ☰ слева вверху */,inMore=tab==="more"||MORE.some(t=>t[0]===hd0(tab)),moreN=MORE.reduce((a,t)=>a+(+nbG(t[0])||0),0),plus=!wide&&mgr();document.body.classList.toggle("hasplus",plus);const nbt=NV.map(t=>`<button class="${t[0]===hd0(tab)||(t[0]==="more"&&inMore)?"on":""}" data-t="${t[0]}"><i>${ic(t[0])}</i>${t[2]}${(t[0]==="more"?moreN:nbG(t[0]))?`<b class="nb">${t[0]==="more"?moreN:nbG(t[0])}</b>`:""}</button>`);if(plus)nbt.splice(Math.min(3,nbt.length),0,`<button class="plus" type="button" data-a="new" aria-label="Новый заказ"><i>${ic("plus")}</i></button>`);morph(n,nbt.join(""));tbDraw(MORE.length>0,moreN);
  n.onclick=e=>{const b=e.target.closest("button");if(b&&b.dataset.t){tab=b.dataset.t;draw();scrollTo(0,0)}};
- const cf=chFocus();if(LOC&&!locs().some(x=>x.id===LOC))LOC="";const vh=locBar()+backBar()+scoped(()=>gtab()+({home,orders,team,me,rep:repV,st:stV,ctrl:ctrlV,cur:curV,fl:homeFl,tpl:tplV,stock,show:vit,gal:galV,crm,chats,tc,leads,fin:own()?fin:home,sched,jr:logv,help:helpV,more:moreV,map:mapV,deals:dealsV,an:own()?anV:home})[tab]())+(mgr()&&(tab==="home"||tab==="orders")?`<button class="btn fab" data-a="new">＋ Заказ</button>`:"");const ve=$("v");if(tab==="map"||draw.tab!==tab){ve.innerHTML=deco(vh);ve.__h=vh}else morph(ve,vh);draw.tab=tab;chFit();bind();if(tab==="map")mapAfter();if(tab==="chats")chBind();if(tab==="tc")tcBind();chAfter(cf)}
+ const cf=chFocus();if(LOC&&!locs().some(x=>x.id===LOC))LOC="";const vh=locBar()+backBar()+scoped(()=>gtab()+({home,orders,team,me,rep:repV,st:stV,ctrl:ctrlV,cur:curV,fl:homeFl,tpl:tplV,stock,show:vit,gal:galV,crm,chats,tc,leads,fin:own()?fin:home,sched,jr:logv,help:helpV,more:moreV,map:mapV,deals:dealsV,an:own()?anV:home})[tab]())+(mgr()&&(tab==="home"||tab==="orders")?`<button class="btn fab" data-a="new">＋ Заказ</button>`:"");const ve=$("v");if(tab==="map"||draw.tab!==tab){ve.innerHTML=deco(vh);ve.__h=vh}else morph(ve,vh);draw.tab=tab;chFit();bind();if(tab==="map")mapAfter();if(tab==="chats")chBind();if(tab==="tc")tcBind();chAfter(cf);if(window.mfvSync)mfvSync()}
 
 /* доставка: сотрудник выставляет заказ (dvPost) → любой курьер принимает → забирает («Забрал, еду», st 3) → «Доставлено» */
 /* Окно работы: собирать и отдавать курьеру можно не раньше чем за WINH часов до срока («Сделать до» или время клиента) */
@@ -3572,4 +3573,362 @@ let pendLink=location.search||"";if(pendLink)setInterval(function(){if(S&&pendLi
 try{navigator.serviceWorker&&navigator.serviceWorker.addEventListener("message",m=>{if(m.data&&m.data.go)openLink(m.data.go)})}catch(e){eLog(e)}
 // после сна телефона / потери сети сразу переподключить обновления
 let hidAt=0;document.addEventListener("visibilitychange",()=>{if(document.hidden){hidAt=Date.now();return}if(S){if(hidAt&&Date.now()-hidAt>20000)netKick("back");else{try{db.enableNetwork()}catch(e){eLog(e)}}dq()}});addEventListener("online",()=>{if(S)netKick("online")});
-</script></body></html>
+</script><script>
+/* ===== Дизайны «Космос / Зум / Пруд» (разд. 50) ===== */
+/* ===== Mirflowers · три пространственных дизайна (Космос / Зум / Пруд) =====
+   Один модуль, один источник данных. Режимы не знают про Firebase: они читают host.orders() и зовут host.open(id).
+   host = { orders():[{id,n,t,tm,b,p,pay,src,st,a,dv,it:[[имя,шт]],date}], ver():число, today():"YYYY-MM-DD", now():часы, open(id), exit?():void } */
+window.MFV=(function(){
+const SITE_DATA={
+  brand:"Mirflowers",
+  stages:["Новый","Собирается","Готов","В пути","Выдан"],
+  modes:{cosmos:"Космос",zoom:"Зум",pond:"Пруд"},
+  hint:{
+    cosmos:"колесо — масштаб · тяните — двигать · клик по планете — лететь к ней",
+    zoom:"колесо / щипок — приблизить · двойной клик — влететь · 0 — вся неделя",
+    pond:"наведите — раздуть · клик — закрепить · тяните и бросайте · срочное всплывает"},
+  star:{title:"Сегодня",orders:"заказов в работе",late:"опаздывают",ontime:"всё по графику"},
+  card:{open:"Открыть заказ",close:"Свернуть",bouquet:"Состав",pay:"Оплата",src:"Источник",addr:"Адрес",time:"Время",sum:"Сумма"},
+  zoomUi:{week:"Неделя",compose:"Состав",open:"Открыть заказ",home:"вся неделя"},
+  pondUi:{title:"пруд заказов",sub:"срочное всплывает · тащите и бросайте"},
+  empty:"Сегодня заказов нет"
+};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),sm=(v,a,b)=>{const t=clamp((v-a)/(b-a),0,1);return t*t*(3-2*t)};
+const fmt=n=>String(Math.round(n||0)).replace(/\B(?=(\d{3})+(?!\d))/g," ");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const SRCH={Instagram:330,WhatsApp:140,"2ГИС":100,"Телефон":200,"Сайт":40};
+const srcHue=s=>SRCH[s]!=null?SRCH[s]:(String(s||"").split("").reduce((a,c)=>a+c.charCodeAt(0),0)*37)%360;
+const hash=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))|0;return Math.abs(h)};
+const addD=(iso,n)=>{const d=new Date(iso+"T12:00:00");d.setDate(d.getDate()+n);return d.toLocaleDateString("sv-SE")};
+const dayName=iso=>new Date(iso+"T12:00:00").toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long"}).replace(/^./,c=>c.toUpperCase());
+const dayShort=iso=>new Date(iso+"T12:00:00").toLocaleDateString("ru-RU",{weekday:"short",day:"numeric"}).replace(/^./,c=>c.toUpperCase());
+
+const CSS=`
+#mfv{position:fixed;left:0;top:0;right:0;bottom:0;z-index:4;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#mfv[hidden]{display:none}
+#mfv canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.mfv-bar{position:absolute;right:12px;top:calc(10px + env(safe-area-inset-top));display:flex;gap:2px;padding:4px;border-radius:99px;background:rgba(16,16,20,.62);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 6px 24px rgba(0,0,0,.28);z-index:3}
+.mfv-bar button{border:0;background:none;color:rgba(255,255,255,.72);font:600 13px system-ui;padding:8px 13px;border-radius:99px;cursor:pointer}
+.mfv-bar button.on{background:#fff;color:#14141a}
+.mfv-bar button.x{color:rgba(255,255,255,.9)}
+.mfv-hint{position:absolute;left:0;right:0;bottom:10px;text-align:center;font-size:12px;padding:0 70px;pointer-events:none;transition:opacity .8s;z-index:2}
+.mfv-card{position:absolute;right:20px;top:50%;transform:translateY(-50%) scale(.96);width:min(300px,calc(100% - 32px));padding:16px 18px;border-radius:20px;background:rgba(10,14,32,.78);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:#eef1ff;box-shadow:0 18px 50px rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);opacity:0;pointer-events:none;transition:opacity .35s,transform .35s;z-index:3}
+.mfv-card.on{opacity:1;pointer-events:auto;transform:translateY(-50%) scale(1)}
+.mfv-card h3{margin:0 0 2px;font-size:19px}.mfv-card .st{font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px;font-weight:700}
+.mfv-card .ln{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;padding:6px 0;border-top:1px solid rgba(255,255,255,.1)}
+.mfv-card .ln span:first-child{opacity:.6}.mfv-card .ln span:last-child{text-align:right}
+.mfv-card .bt{display:flex;gap:8px;margin-top:12px}.mfv-card button{flex:1;border:0;border-radius:12px;padding:10px;font:600 14px system-ui;cursor:pointer}
+.mfv-card .go{background:#ffd479;color:#1c1405}.mfv-card .cl{background:rgba(255,255,255,.12);color:#fff}
+@media(max-width:640px){.mfv-card{right:auto;left:16px;top:auto;bottom:14px;transform:translateY(10px)}.mfv-card.on{transform:none}.mfv-hint{padding:0 14px;bottom:6px}}
+.mfv-bc{position:absolute;left:14px;top:calc(14px + env(safe-area-inset-top));right:230px;font-size:14px;color:#2b3a30;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;z-index:2}
+.mfv-bc b{font-weight:700}.mfv-bc i{font-style:normal;opacity:.4;margin:0 .4em}
+.mfv-btn{position:absolute;left:14px;bottom:14px;border:0;background:#2b3a30;color:#f2ede2;font:600 13px system-ui;padding:9px 14px;border-radius:99px;cursor:pointer;z-index:3}
+.mfv-btn.r{left:auto;right:14px;background:#e8738d;color:#fff}
+.mfv-btn[hidden]{display:none}
+.mq-o,.mq-z,.mq-p{position:relative;overflow:hidden}
+.mq.mq-o{background:radial-gradient(circle at 50% 50%,#2a1d05 0,#070b1a 70%)}.mq-o i{position:absolute;border:1px solid rgba(160,190,255,.45);border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}.mq-o i:nth-child(1){width:30px;height:30px}.mq-o i:nth-child(2){width:54px;height:54px}.mq-o i:nth-child(3){width:78px;height:78px}.mq-o b{position:absolute;width:6px;height:6px;border-radius:50%;background:#ffd479;left:50%;top:50%;margin:-3px;box-shadow:0 0 8px 3px #ffb347}.mq-o em{position:absolute;width:5px;height:5px;border-radius:50%;background:#ff9fb2}.mq-o em:nth-of-type(1){left:22px;top:30px}.mq-o em:nth-of-type(2){right:14px;top:42px;background:#7cc4ff}.mq-o em:nth-of-type(3){left:46px;bottom:6px;background:#9be28a}
+.mq.mq-z{background:#f2ede2}.mq-z i{position:absolute;border-radius:50%;background:rgba(43,58,48,.1);border:1px solid rgba(43,58,48,.3)}.mq-z i:nth-child(1){width:44px;height:44px;left:8px;top:14px}.mq-z i:nth-child(2){width:24px;height:24px;right:8px;top:6px}.mq-z i:nth-child(3){width:20px;height:20px;right:12px;bottom:6px}.mq-z b{position:absolute;border-radius:50%;background:#e8738d;width:8px;height:8px}.mq-z b:nth-of-type(1){left:20px;top:28px}.mq-z b:nth-of-type(2){left:30px;top:36px;background:#eeaa2c}.mq-z b:nth-of-type(3){left:22px;top:42px;background:#6fb85c}
+.mq.mq-p{background:linear-gradient(#1d1128,#10081a)}.mq-p i{position:absolute;border-radius:50%;bottom:4px}.mq-p i:nth-child(1){width:26px;height:26px;left:8px;background:#7b4dff}.mq-p i:nth-child(2){width:18px;height:18px;left:36px;background:#ff6a4d;bottom:30px;box-shadow:0 0 10px #ff6a4d}.mq-p i:nth-child(3){width:14px;height:14px;left:42px;background:#9a82e8}.mq-p i:nth-child(4){width:20px;height:20px;right:8px;background:#6d5aa8}
+`;
+
+/* ---------- общий каркас ---------- */
+let root=null,host=null,cur=null,curMode="",bar=null,hintEl=null,card=null;
+function ensureRoot(){
+  if(root)return;
+  const st=document.createElement("style");st.textContent=CSS;document.head.appendChild(st);
+  root=document.createElement("div");root.id="mfv";root.hidden=true;document.body.appendChild(root);
+}
+function mkCanvas(){const cv=document.createElement("canvas");root.appendChild(cv);return cv}
+function fitCanvas(cv,g,onSize){
+  const f=()=>{const DPR=Math.min(devicePixelRatio||1,2),r=root.getBoundingClientRect();const W=Math.max(10,r.width),H=Math.max(10,r.height);cv.width=W*DPR;cv.height=H*DPR;g.setTransform(DPR,0,0,DPR,0,0);onSize(W,H)};
+  f();const ro=new ResizeObserver(f);ro.observe(root);return()=>ro.disconnect()}
+function setHint(txt,color){if(!hintEl){hintEl=document.createElement("div");hintEl.className="mfv-hint";root.appendChild(hintEl)}hintEl.style.color=color;hintEl.textContent=txt;hintEl.style.opacity=.85;clearTimeout(setHint.t);setHint.t=setTimeout(()=>{if(hintEl)hintEl.style.opacity=0},7000)}
+function buildBar(){
+  if(bar)bar.remove();bar=document.createElement("div");bar.className="mfv-bar";
+  bar.innerHTML=Object.keys(SITE_DATA.modes).map(k=>`<button data-m="${k}" class="${k===curMode?"on":""}">${SITE_DATA.modes[k]}</button>`).join("")+(host.exit?`<button class="x" data-m="__exit">← Bento</button>`:"");
+  bar.onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.m==="__exit")return host.exit();if(host.setMode)host.setMode(b.dataset.m);else api.setMode(b.dataset.m)};
+  root.appendChild(bar)}
+function clearRoot(){if(cur){try{cur.destroy()}catch(e){console.error(e)}cur=null}[...root.children].forEach(c=>c.remove());bar=hintEl=card=null}
+function makeCard(){card=document.createElement("div");card.className="mfv-card";root.appendChild(card);return card}
+function cardHtml(o){const L=(a,b)=>b?`<div class="ln"><span>${a}</span><span>${esc(b)}</span></div>`:"";
+  const C=SITE_DATA.card,S=SITE_DATA.stages;
+  return `<div class="st" style="color:hsl(${srcHue(o.src)},85%,72%)">${esc(o.st===4&&o.dv?"Доставлен":S[o.st]||"")}</div><h3>${esc(o.n)}</h3><div style="opacity:.8;font-size:14px;margin-bottom:6px">${esc(o.b)}</div>`
+   +L(C.time,o.t)+L(C.sum,fmt(o.p)+" ₸")+L(C.pay,o.pay)+L(C.src,o.src)+L(C.addr,o.a)+(o.it&&o.it.length?L(C.bouquet,o.it.map(x=>x[0]+(x[1]>1?" ×"+x[1]:"")).join(", ")):"")
+   +`<div class="bt"><button class="cl" data-k="cl">${C.close}</button><button class="go" data-k="go">${C.open}</button></div>`}
+
+/* ============ РЕЖИМ 1 · КОСМОС ============
+   Звезда в центре = сегодняшняя выручка. Пять орбит = стадии заказа (дальше от звезды — раньше по воронке; «Выдан» упал на ближнюю орбиту).
+   Заказ = планета: размер — сумма, цвет — источник, кольцо — доставка. Линии-созвездие соединяют заказы по времени визита. */
+function cosmos(){
+  const cv=mkCanvas(),g=cv.getContext("2d");let W=1,H=1;const offs=[];
+  offs.push(fitCanvas(cv,g,(w,h)=>{W=w;H=h}));
+  const cd=makeCard();
+  const R0=130,RS=88,Rof=st=>R0+(4-st)*RS,ext=()=>Rof(0)+70,z0=()=>Math.min(W,H)/2/ext();
+  const cam={x:0,y:0,z:1,init:false},tc={x:0,y:0,z:1};
+  let list=[],ver=-1,foc=null,hov=null,fa=0,mouse={x:null,y:0},drag=null,sum=0;
+  const rnd=(()=>{let s=7;return()=>(s=(s*16807)%2147483647)/2147483647})();
+  const stars=Array.from({length:300},()=>({x:rnd(),y:rnd(),d:.04+rnd()*rnd()*.9,r:.4+rnd()*1.3,tw:rnd()*6}));
+  const rad=o=>8+Math.sqrt(Math.max(0,o.p)/1000)*1.7;
+  function sync(){const v=host.ver();if(v===ver)return;ver=v;const t=host.today(),old=new Map(list.map(p=>[p.id,p]));
+    list=host.orders().filter(o=>o.date<=t&&o.st<5).sort((a,b)=>a.tm-b.tm).map((o,i)=>{const p=old.get(o.id)||{id:o.id,a:((o.tm-8)/14)*6.283-1.57+(hash(o.id)%100)/200,r:Rof(o.st)+60,ph:hash(o.id)%628/100};p.o=o;p.r0=Rof(o.st);return p});
+    sum=list.reduce((s,p)=>s+(+p.o.p||0),0);if(foc&&!list.find(p=>p===foc)){foc=list.find(p=>p.id===foc.id)||null;if(!foc)closeCard()}}
+  const pos=p=>[Math.cos(p.a)*p.r,Math.sin(p.a)*p.r];
+  const w2s=(x,y)=>[(x-cam.x)*cam.z+W/2,(y-cam.y)*cam.z+H/2];
+  const s2w=(x,y)=>[(x-W/2)/cam.z+cam.x,(y-H/2)/cam.z+cam.y];
+  function hit(sx,sy){let b=null,bd=1e9;for(const p of list){const[x,y]=pos(p),[px,py]=w2s(x,y),d=Math.hypot(px-sx,py-sy),r=rad(p.o)*cam.z+10;if(d<r&&d<bd){bd=d;b=p}}return b}
+  function focus(p){foc=p;tc.z=Math.max(2.3,tc.z);cd.innerHTML=cardHtml(p.o);cd.classList.add("on")}
+  function closeCard(){foc=null;cd.classList.remove("on");tc.x=0;tc.y=0;tc.z=z0()}
+  cd.onclick=e=>{const k=e.target.dataset.k;if(k==="cl")closeCard();if(k==="go"&&foc)host.open(foc.id)};
+  let moved=0,pid=null;
+  const on=(t,e,f,o)=>{t.addEventListener(e,f,o);offs.push(()=>t.removeEventListener(e,f,o))};
+  on(cv,"pointerdown",e=>{cv.setPointerCapture(e.pointerId);const r=root.getBoundingClientRect();drag={x:e.clientX,y:e.clientY};moved=0});
+  on(cv,"pointermove",e=>{const r=root.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;
+    if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;moved+=Math.abs(dx)+Math.abs(dy);drag.x=e.clientX;drag.y=e.clientY;
+      if(!foc&&moved>6){cam.x-=dx/cam.z;cam.y-=dy/cam.z;tc.x=cam.x;tc.y=cam.y}}else hov=hit(mouse.x,mouse.y)});
+  on(cv,"pointerup",e=>{if(drag&&moved<7){const r=root.getBoundingClientRect(),p=hit(e.clientX-r.left,e.clientY-r.top);if(p&&p!==foc)focus(p);else if(!p||p===foc)closeCard()}drag=null});
+  on(cv,"wheel",e=>{e.preventDefault();tc.z=clamp(tc.z*Math.exp(-e.deltaY*(e.ctrlKey?.012:.0016)),z0()*.7,4.5)},{passive:false});
+  on(window,"keydown",e=>{if(e.key==="Escape")closeCard()});
+  const CF=typeof g.filter==="string";
+  let last=performance.now(),raf=0,alive=true;
+  function frame(t){if(!alive)return;raf=requestAnimationFrame(frame);const dt=Math.min(.05,(t-last)/1000);last=t;sync();
+    if(!cam.init){cam.z=tc.z=z0();cam.init=true}
+    fa+=((foc?1:0)-fa)*.08;
+    for(const p of list){p.r+=(p.r0-p.r)*.05;const sp=.42/Math.pow(p.r0/100,1.5)*(p===foc?.12:1);p.a+=sp*dt*(.4+.6*(1-fa*(p===foc?0:0)))}
+    if(foc){const[x,y]=pos(foc);tc.x=x;tc.y=y}
+    cam.x+=(tc.x-cam.x)*.09;cam.y+=(tc.y-cam.y)*.09;cam.z+=(tc.z-cam.z)*.1;
+    draw(t/1000)}
+  function draw(T){
+    const mx=mouse.x==null?0:(mouse.x-W/2)/W,my=mouse.x==null?0:(mouse.y-H/2)/H;
+    g.clearRect(0,0,W,H);const bg=g.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*.8);bg.addColorStop(0,"#0b1230");bg.addColorStop(1,"#02030a");g.fillStyle=bg;g.fillRect(0,0,W,H);
+    // туманности
+    for(const[nx,ny,c] of [[.3,.35,"rgba(120,70,200,.16)"],[.75,.7,"rgba(40,130,200,.13)"]]){const X=((nx*W-cam.x*.05*cam.z-mx*40)%W+W)%W,Y=((ny*H-cam.y*.05*cam.z-my*40)%H+H)%H,gr=g.createRadialGradient(X,Y,0,X,Y,Math.max(W,H)*.45);gr.addColorStop(0,c);gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(0,0,W,H)}
+    // звёзды с параллаксом
+    for(const s of stars){const X=((s.x*W-cam.x*s.d*.6*cam.z-mx*90*s.d)%W+W)%W,Y=((s.y*H-cam.y*s.d*.6*cam.z-my*90*s.d)%H+H)%H;g.globalAlpha=(.35+.65*s.d)*(.7+.3*Math.sin(T*1.5+s.tw));g.fillStyle="#dfe8ff";g.beginPath();g.arc(X,Y,s.r*(.6+s.d),0,7);g.fill()}
+    g.globalAlpha=1;g.save();
+    const[sx,sy]=w2s(0,0),z=cam.z;
+    // орбиты и планеты вне фокуса — размыты
+    if(fa>.02&&CF)g.filter=`blur(${(fa*2.4).toFixed(1)}px)`;
+    const dim=1-fa*.55;
+    for(let s=0;s<5;s++){if(foc&&foc.o.st===s)continue;g.beginPath();g.arc(sx,sy,Rof(s)*z,0,7);g.strokeStyle=`rgba(150,180,255,${.17*dim})`;g.lineWidth=1;g.stroke()}
+    // созвездие дня: дуги тяготения между соседними по времени заказами
+    g.lineWidth=1;for(let i=1;i<list.length;i++){const[x1,y1]=pos(list[i-1]),[x2,y2]=pos(list[i]),a=w2s(x1,y1),b=w2s(x2,y2),mx2=(a[0]+b[0])/2,my2=(a[1]+b[1])/2;g.beginPath();g.moveTo(a[0],a[1]);g.quadraticCurveTo(sx+(mx2-sx)*.55,sy+(my2-sy)*.55,b[0],b[1]);g.strokeStyle=`rgba(180,205,255,${.14*dim})`;g.stroke()}
+    for(const p of list){if(p===foc)continue;planet(p,dim,sx,sy,z,T)}
+    g.restore();g.filter&&(g.filter="none");
+    if(foc){g.beginPath();g.arc(sx,sy,Rof(foc.o.st)*z,0,7);g.strokeStyle=`rgba(255,220,150,${.5*fa})`;g.lineWidth=1.6;g.stroke();planet(foc,1,sx,sy,z,T)}
+    // звезда
+    const sr=34*z,pulse=1+.05*Math.sin(T*2);
+    const gl=g.createRadialGradient(sx,sy,sr*.3,sx,sy,sr*4.2*pulse);gl.addColorStop(0,"rgba(255,214,120,.55)");gl.addColorStop(.4,"rgba(255,150,60,.16)");gl.addColorStop(1,"rgba(255,120,40,0)");g.fillStyle=gl;g.fillRect(0,0,W,H);
+    const sg=g.createRadialGradient(sx-sr*.25,sy-sr*.25,sr*.1,sx,sy,sr);sg.addColorStop(0,"#fffbe6");sg.addColorStop(.6,"#ffd479");sg.addColorStop(1,"#ff9a3c");g.beginPath();g.arc(sx,sy,sr,0,7);g.fillStyle=sg;g.fill();
+    g.textAlign="center";g.textBaseline="middle";g.fillStyle="#2a1700";
+    const act=list.filter(p=>p.o.st<4),late=act.filter(p=>p.o.tm<host.now()).length,fs=Math.max(9,sr*.3);
+    if(sr>22){g.font=`800 ${fs*1.6}px system-ui`;g.fillText(list.length?act.length:"0",sx,sy-fs*.55);g.font=`600 ${fs*.62}px system-ui`;g.fillText(SITE_DATA.star.title.toUpperCase(),sx,sy+fs*.8)}
+    if(z>.5&&fa<.5){g.fillStyle=`rgba(255,235,190,${.8*(1-fa*2)})`;g.font=`600 ${Math.max(11,13*Math.min(z,1.4))}px system-ui`;g.fillText(list.length?`${fmt(sum)} ₸ · ${late?late+" "+SITE_DATA.star.late:SITE_DATA.star.ontime}`:SITE_DATA.empty,sx,sy+sr+22*Math.min(z,1.3))}
+    // подписи стадий
+    if(fa<.6)for(let s=0;s<5;s++){g.fillStyle=`rgba(170,195,255,${.5*(1-fa/.6)})`;g.font=`${Math.max(9,10*Math.min(z,1.4))}px system-ui`;g.fillText(SITE_DATA.stages[s].toUpperCase(),sx,sy-Rof(s)*z-9)}
+    // подпись под курсором
+    const h=hov&&!foc?hov:null;if(h){const[x,y]=pos(h),[px,py]=w2s(x,y);g.font="600 13px system-ui";g.fillStyle="#fff";g.strokeStyle="rgba(2,3,10,.9)";g.lineWidth=4;g.lineJoin="round";const tx=`${h.o.n} · ${h.o.t}`;g.strokeText(tx,px,py-rad(h.o)*z-12);g.fillText(tx,px,py-rad(h.o)*z-12)}
+  }
+  function planet(p,alpha,sx,sy,z,T){
+    const o=p.o,[x,y]=pos(p),[px,py]=w2s(x,y),r=rad(o)*z;if(px<-r*3||px>W+r*3||py<-r*3||py>H+r*3)return;
+    const hue=srcHue(o.src),late=o.st<4&&o.tm<host.now();
+    g.globalAlpha=alpha*(o.st===4?.72:1);
+    const d=Math.hypot(x,y)||1,lx=-x/d,ly=-y/d;
+    if(o.dv){g.save();g.translate(px,py);g.rotate(-.4);g.beginPath();g.ellipse(0,0,r*1.9,r*.55,0,0,7);g.strokeStyle=`hsla(${hue},70%,78%,.55)`;g.lineWidth=Math.max(1,r*.13);g.stroke();g.restore()}
+    const gr=g.createRadialGradient(px+lx*r*.45,py+ly*r*.45,r*.08,px,py,r*1.05);gr.addColorStop(0,`hsl(${hue},80%,82%)`);gr.addColorStop(.55,`hsl(${hue},65%,52%)`);gr.addColorStop(1,`hsl(${hue},60%,16%)`);
+    g.beginPath();g.arc(px,py,r,0,7);g.fillStyle=gr;g.fill();
+    if(late){const q=(Math.sin(T*5+p.ph)+1)/2;g.beginPath();g.arc(px,py,r*(1.5+q*.35),0,7);g.strokeStyle=`rgba(255,110,90,${.5-q*.35})`;g.lineWidth=2;g.stroke()}
+    if(p===foc||(z>1.5&&r>14)){g.globalAlpha=alpha;g.textAlign="center";g.textBaseline="top";g.font=`600 ${Math.max(11,r*.5)}px system-ui`;g.fillStyle="#fff";g.strokeStyle="rgba(2,3,10,.85)";g.lineWidth=3;g.lineJoin="round";g.strokeText(o.n,px,py+r+6);g.fillText(o.n,px,py+r+6);g.textBaseline="middle"}
+    g.globalAlpha=1}
+  raf=requestAnimationFrame(frame);
+  setHint(SITE_DATA.hint.cosmos,"#9db4e8");
+  return{destroy(){alive=false;cancelAnimationFrame(raf);offs.forEach(f=>f())}}
+}
+
+/* ============ РЕЖИМ 2 · ЗУМ ============
+   Дни — острова, заказы лежат на них по спирали подсолнуха (первый визит в середине). Навигация — только масштаб:
+   неделя → день → заказ → состав букета. Ни меню, ни кнопок «назад» нет: ушли вверх масштабом — вернулись. */
+function zoomMode(){
+  const cv=mkCanvas(),g=cv.getContext("2d");let W=1,H=1,MIN=1;const offs=[];
+  offs.push(fitCanvas(cv,g,(w,h)=>{W=w;H=h;MIN=Math.min(w,h)}));
+  root.style.background="#f2ede2";
+  const bc=document.createElement("div");bc.className="mfv-bc";root.appendChild(bc);
+  const home=document.createElement("button");home.className="mfv-btn";home.textContent="⌂ "+SITE_DATA.zoomUi.home;root.appendChild(home);
+  const open=document.createElement("button");open.className="mfv-btn r";open.textContent=SITE_DATA.zoomUi.open;open.hidden=true;root.appendChild(open);
+  const SCOL=["#e8738d","#eeaa2c","#6fb85c","#4a9fd8","#aaa397","#cfc9bd"],FCOL=["#d9566f","#e59a1c","#5fa14d","#3b86c0","#8e6bbf","#c0715a","#4f9c8f"];
+  const OR=70;let days=[],ver=-1,ext=1300;
+  const ZMIN=.06,ZMAX=14,z0=()=>MIN/2/(ext*1.06);
+  const cam={x:0,y:0,lz:0},tc={x:0,y:0,lz:0};let inited=false;
+  const Z=()=>Math.exp(cam.lz);
+  function layout(){const t=host.today(),by={};
+    host.orders().forEach(o=>{if(o.st>=5)return;let d=o.date;if(d<t){if(o.st>=4)return;d=t}(by[d]=by[d]||[]).push(o)});
+    const up=Object.keys(by).filter(d=>d>t).sort().slice(0,4);for(let i=1;up.length<4;i++){const d=addD(t,i);if(!up.includes(d))up.push(d)}up.sort();
+    const keys=[t,...up],c=105;days=keys.map(d=>{const list=(by[d]||[]).sort((a,b)=>a.tm-b.tm);return{date:d,list,n:list.length,R:Math.max(250,c*Math.sqrt(list.length)+95),x:0,y:0,sum:list.reduce((s,o)=>s+(+o.p||0),0),nodes:[]}});
+    const A=[-135,-45,135,45];ext=days[0].R;
+    for(let k=1;k<5;k++){const a=A[k-1]*Math.PI/180,D=days[0].R+days[k].R+170;days[k].x=Math.cos(a)*D;days[k].y=Math.sin(a)*D;ext=Math.max(ext,D+days[k].R)}
+    days.forEach(d=>d.list.forEach((o,i)=>{const a=i*2.39996,r=c*Math.sqrt(i+.5);d.nodes.push({o,x:d.x+Math.cos(a)*r,y:d.y+Math.sin(a)*r,d})}));
+    if(!inited){const z=Math.log(z0());cam.lz=tc.lz=z;inited=true}}
+  const w2s=(x,y)=>[(x-cam.x)*Z()+W/2,(y-cam.y)*Z()+H/2];
+  const s2w=(sx,sy,c=cam)=>[(sx-W/2)/Math.exp(c.lz)+c.x,(sy-H/2)/Math.exp(c.lz)+c.y];
+  function zoomAt(sx,sy,f){const[wx,wy]=s2w(sx,sy,tc);tc.lz=clamp(tc.lz+Math.log(f),Math.log(ZMIN),Math.log(ZMAX));const z=Math.exp(tc.lz);tc.x=wx-(sx-W/2)/z;tc.y=wy-(sy-H/2)/z}
+  function fly(x,y,z){tc.x=x;tc.y=y;tc.lz=clamp(Math.log(z),Math.log(ZMIN),Math.log(ZMAX))}
+  const goHome=()=>fly(0,0,z0());home.onclick=goHome;
+  const on=(t,e,f,o)=>{t.addEventListener(e,f,o);offs.push(()=>t.removeEventListener(e,f,o))};
+  const rel=e=>{const r=root.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+  on(window,"keydown",e=>{if(e.key==="0"||e.key==="Escape"||e.key==="Home")goHome();if(e.key==="+"||e.key==="=")zoomAt(W/2,H/2,1.4);if(e.key==="-")zoomAt(W/2,H/2,1/1.4)});
+  on(cv,"wheel",e=>{e.preventDefault();const[x,y]=rel(e);zoomAt(x,y,Math.exp(-e.deltaY*(e.ctrlKey?.012:.0017)))},{passive:false});
+  const ptrs=new Map();let pinch=null,lastTap=0,moved=0;
+  on(cv,"pointerdown",e=>{cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,rel(e));moved=0;if(ptrs.size===2){const[a,b]=[...ptrs.values()];pinch=Math.hypot(a[0]-b[0],a[1]-b[1])}});
+  on(cv,"pointermove",e=>{const p=ptrs.get(e.pointerId);if(!p)return;const q=rel(e),dx=q[0]-p[0],dy=q[1]-p[1];p[0]=q[0];p[1]=q[1];moved+=Math.abs(dx)+Math.abs(dy);
+    if(ptrs.size===2){const[a,b]=[...ptrs.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pinch)zoomAt((a[0]+b[0])/2,(a[1]+b[1])/2,d/pinch);pinch=d;cam.lz=tc.lz}
+    else if(ptrs.size===1){const z=Z();cam.x-=dx/z;cam.y-=dy/z;tc.x-=dx/z;tc.y-=dy/z}});
+  const up=e=>{if(ptrs.size===1&&moved<8&&e.type==="pointerup"){const n=performance.now();if(n-lastTap<320){dbl(...rel(e));lastTap=0}else lastTap=n}ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null};
+  on(cv,"pointerup",up);on(cv,"pointercancel",up);
+  function dbl(sx,sy){const[wx,wy]=s2w(sx,sy);for(const d of days)for(const n of d.nodes)if(Math.hypot(wx-n.x,wy-n.y)<OR){if(Z()*OR>MIN*.4)fly(n.x,n.y+OR*.25,MIN*1.2/OR);else fly(n.x,n.y,MIN*.5/OR);return}
+    for(const d of days)if(Math.hypot(wx-d.x,wy-d.y)<d.R){fly(d.x,d.y,MIN*.5/d.R);return}goHome()}
+  const fit=(s,u,maxW)=>{const w=g.measureText(s).width;return w>maxW?u*maxW/w:u};
+  let curOrder=null,raf=0,alive=true;
+  function frame(){if(!alive)return;raf=requestAnimationFrame(frame);
+    const v=host.ver();if(v!==ver){ver=v;layout()}
+    cam.lz+=(tc.lz-cam.lz)*.16;cam.x+=(tc.x-cam.x)*.16;cam.y+=(tc.y-cam.y)*.16;
+    const z=Z();g.clearRect(0,0,W,H);g.fillStyle="#f2ede2";g.fillRect(0,0,W,H);g.textAlign="center";g.textBaseline="middle";
+    g.strokeStyle="rgba(43,58,48,.06)";g.lineWidth=1;{const[sx,sy]=w2s(0,0);for(let r=500;r<=3000;r+=500){g.beginPath();g.arc(sx,sy,r*z,0,7);g.stroke()}}
+    for(const d of days){
+      const[sx,sy]=w2s(d.x,d.y),sr=d.R*z;if(sx+sr<0||sx-sr>W||sy+sr<0||sy-sr>H)continue;
+      g.beginPath();g.arc(sx,sy,sr,0,7);g.fillStyle="rgba(255,255,255,.55)";g.fill();g.strokeStyle="rgba(43,58,48,.22)";g.lineWidth=1.5;g.stroke();
+      const lf=96*z;if(lf>5){g.fillStyle="#2b3a30";g.font=`700 ${lf}px system-ui`;g.fillText(dayShort(d.date),sx,sy-sr-lf*.95);g.fillStyle="#6a7a6f";g.font=`${lf*.5}px system-ui`;g.fillText(d.n?`${d.n} зак. · ${fmt(d.sum)} ₸`:"нет заказов",sx,sy-sr-lf*.3)}
+      for(const n of d.nodes){const o=n.o,[ox,oy]=w2s(n.x,n.y),r=OR*z;if(ox+r<0||ox-r>W||oy+r<0||oy-r>H)continue;
+        g.beginPath();g.arc(ox,oy,r,0,7);g.fillStyle=SCOL[o.st]||SCOL[0];g.globalAlpha=o.st>=4?.7:.92;g.fill();g.globalAlpha=1;g.lineWidth=Math.max(1,r*.04);g.strokeStyle="rgba(43,58,48,.5)";g.stroke();
+        const u=r/100,aT=sm(r,22,50),aD=sm(r,150,230)*(1-sm(r,400,560)),aC=sm(r,420,620);
+        if(aT>0){g.globalAlpha=aT;g.fillStyle="#22302a";g.font=`800 ${26*u}px system-ui`;g.fillText(o.t,ox,oy-40*u);g.font=`600 ${15*u}px system-ui`;g.font=`600 ${fit(o.n,15*u,150*u)}px system-ui`;g.fillText(o.n,ox,oy-14*u);g.globalAlpha=1}
+        if(aD>0){g.globalAlpha=aD;g.fillStyle="#22302a";[o.b,fmt(o.p)+" ₸ · "+o.pay,o.src+" · "+SITE_DATA.stages[o.st],o.a].forEach((t,i)=>{g.font=`${i?400:600} ${9*u}px system-ui`;g.font=`${i?400:600} ${fit(t,9*u,140*u)}px system-ui`;g.fillText(t,ox,oy+(12+i*15)*u)});g.globalAlpha=1}
+        if(aC>0&&o.it&&o.it.length){g.globalAlpha=aC;g.textAlign="left";g.fillStyle="#22302a";
+          o.it.slice(0,5).forEach(([nm,c],i)=>{const y=oy+(2+i*20)*u,x0=ox-62*u;g.fillStyle="#22302a";g.font=`600 ${7.5*u}px system-ui`;g.fillText(String(nm).slice(0,26),x0,y);g.textAlign="right";g.fillText("×"+c,ox+62*u,y);g.textAlign="left";
+            const m=Math.min(c,22),sp=Math.min(5.2,124/m);for(let k=0;k<m;k++){g.beginPath();g.arc(x0+k*sp*u+2*u,y+8*u,2*u,0,7);g.fillStyle=FCOL[i%FCOL.length];g.fill()}});
+          g.textAlign="center";g.globalAlpha=1}}}
+    // хлебные крошки по центру экрана
+    const[wx,wy]=s2w(W/2,H/2);let crumb=[SITE_DATA.zoomUi.week],depth=0;curOrder=null;
+    for(const d of days)if(Math.hypot(wx-d.x,wy-d.y)<d.R&&d.R*z>MIN*.22){crumb=[SITE_DATA.zoomUi.week,dayName(d.date)];depth=1;
+      for(const n of d.nodes)if(Math.hypot(wx-n.x,wy-n.y)<OR&&OR*z>MIN*.3){crumb=[SITE_DATA.zoomUi.week,dayName(d.date),`${n.o.t} · ${n.o.n}`];depth=2;curOrder=n.o;if(OR*z>MIN*.85){crumb.push(SITE_DATA.zoomUi.compose);depth=3}}}
+    bc.innerHTML=crumb.map((c,i)=>i===crumb.length-1?`<b>${esc(c)}</b>`:esc(c)).join("<i>›</i>");open.hidden=!curOrder}
+  open.onclick=()=>{if(curOrder)host.open(curOrder.id)};
+  root.style.background="#f2ede2";
+  bar.style.background="rgba(43,58,48,.82)";
+  raf=requestAnimationFrame(frame);setHint(SITE_DATA.hint.zoom,"#6a7a6f");hintEl.style.left="130px";
+  return{destroy(){alive=false;cancelAnimationFrame(raf);offs.forEach(f=>f());root.style.background=""}}
+}
+
+/* ============ РЕЖИМ 3 · ПРУД ============
+   Заказ — тело, масса растёт с суммой. Срочность — плавучесть: чем ближе срок, тем сильнее тело всплывает и краснеет.
+   Стадия — колонка пруда. Тело можно схватить и бросить, но оно всегда плывёт обратно в свою колонку: данные не меняются. */
+function pond(){
+  const cv=mkCanvas(),g=cv.getContext("2d");let W=1,H=1,CW=1,FLOOR=1;const offs=[],STRIP=38,WALLF=.2;
+  offs.push(fitCanvas(cv,g,(w,h)=>{W=w;H=h;CW=w/5;FLOOR=h-STRIP}));
+  root.style.background="#190f22";bar.style.background="rgba(233,216,255,.16)";
+  let bodies=[],ver=-1,hover=null,pinned=null,drag=null,mouse={x:-999,y:-999};
+  const colX=s=>(s+.5)*CW,G=()=>H*2.1;
+  const baseR=p=>Math.max(CW*.15,CW*.36*Math.sqrt(Math.max(0,p)/120000));
+  const hot=b=>b.st>=4?0:clamp(1-(b.tm-host.now())/2,0,1.25);
+  function sync(){const v=host.ver();if(v===ver)return;ver=v;const t=host.today(),old=new Map(bodies.map(b=>[b.id,b])),nw=[];let k=0;
+    host.orders().filter(o=>o.date<=t&&o.st<5).forEach(o=>{let b=old.get(o.id);const tm=o.date<t?host.now()-5:o.tm;
+      if(b){b.o=o;b.st=o.st;b.tm=tm;b.p=o.p;b.r0=baseR(o.p)}else{b={id:o.id,o,st:o.st,tm,p:o.p,x:colX(o.st)+(Math.random()-.5)*CW*.4,y:-40-(k++)*50,vx:0,vy:0,r0:baseR(o.p),r:baseR(o.p),free:0};}
+      nw.push(b)});
+    bodies=nw;if(pinned&&!bodies.includes(pinned))pinned=null}
+  const on=(t,e,f)=>{t.addEventListener(e,f);offs.push(()=>t.removeEventListener(e,f))};
+  const rel=e=>{const r=root.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+  const pick=(x,y)=>{let best=null,bd=1e9;for(const b of bodies){const d=Math.hypot(b.x-x,b.y-y);if(d<b.r+4&&d<bd){bd=d;best=b}}return best};
+  on(cv,"pointerdown",e=>{cv.setPointerCapture(e.pointerId);const[x,y]=rel(e);mouse.x=x;mouse.y=y;const b=pick(x,y);if(b)drag={b,sx:x,sy:y,moved:false,h:[[performance.now(),x,y]]};else pinned=null});
+  on(cv,"pointermove",e=>{const[x,y]=rel(e);mouse.x=x;mouse.y=y;if(drag){if(Math.hypot(x-drag.sx,y-drag.sy)>6)drag.moved=true;drag.h.push([performance.now(),x,y]);if(drag.h.length>6)drag.h.shift()}});
+  const up=()=>{if(!drag)return;const{b,h,moved}=drag;
+    if(!moved){if(pinned===b)host.open(b.id);else pinned=b}
+    else{const a=h[0],z=h[h.length-1],dt=Math.max(16,z[0]-a[0])/1000;b.vx=clamp((z[1]-a[1])/dt,-1500,1500);b.vy=clamp((z[2]-a[2])/dt,-1800,1500)}
+    drag=null};
+  on(cv,"pointerup",up);on(cv,"pointercancel",up);
+  on(cv,"pointerleave",()=>{if(!drag){mouse.x=-999;mouse.y=-999}});
+  function step(dt){
+    const g0=G(),wallTop=FLOOR-H*WALLF;hover=drag?drag.b:(mouse.x>-900?pick(mouse.x,mouse.y):null);
+    for(const b of bodies){const isD=drag&&drag.b===b;
+      const rt=b===pinned?Math.min(H*.3,W*.44,175):(b===hover?Math.max(b.r0*1.7,Math.min(CW*.8,86)):b.r0);b.r+=(rt-b.r)*.14;
+      if(isD){b.vx=(mouse.x-b.x)*14;b.vy=(mouse.y-b.y)*14;b.x+=b.vx*dt;b.y+=b.vy*dt;continue}
+      let ay=g0,ax=0;const u=hot(b);
+      if(u>.02){const yT=H*(.1+.5*(1-Math.min(u,1)));if(b.y>yT)ay-=u*g0*1.9;if(u>1){ax+=(Math.random()-.5)*g0*1.2;ay+=(Math.random()-.5)*g0*.8}}
+      ax+=(colX(b.st)-b.x)*(b.y<wallTop-b.r?7:3.2); // всегда тянет домой, в свою колонку
+      b.vx+=ax*dt;b.vy+=ay*dt;b.vx*=.99;b.vy*=.997;b.x+=b.vx*dt;b.y+=b.vy*dt;
+      if(b.y>FLOOR-b.r){b.y=FLOOR-b.r;b.vy*=-.2;b.vx*=.94}
+      if(b.x<b.r){b.x=b.r;b.vx*=-.3}if(b.x>W-b.r){b.x=W-b.r;b.vx*=-.3}if(b.y<b.r){b.y=b.r;b.vy*=-.2}}
+    for(let it=0;it<3;it++)for(let i=0;i<bodies.length;i++)for(let j=i+1;j<bodies.length;j++){
+      const a=bodies[i],c=bodies[j],dx=c.x-a.x,dy=c.y-a.y,d=Math.hypot(dx,dy),m=a.r+c.r;
+      if(d<m&&d>1e-3){const nx=dx/d,ny=dy/d,ov=m-d,ma=a.r*a.r,mc=c.r*c.r,t=ma+mc,da=drag&&drag.b===a,dc=drag&&drag.b===c,fa=da?0:dc?1:mc/t,fc=dc?0:da?1:ma/t;
+        a.x-=nx*ov*fa*.85;a.y-=ny*ov*fa*.85;c.x+=nx*ov*fc*.85;c.y+=ny*ov*fc*.85;
+        const vn=(c.vx-a.vx)*nx+(c.vy-a.vy)*ny;if(vn<0){const j2=-1.15*vn;a.vx-=nx*j2*(mc/t);a.vy-=ny*j2*(mc/t);c.vx+=nx*j2*(ma/t);c.vy+=ny*j2*(ma/t)}}}}
+  const fitT=(t,px,maxW,w=600)=>{g.font=`${w} ${px}px system-ui`;const m=g.measureText(t).width;if(m>maxW)px*=maxW/m;g.font=`${w} ${px}px system-ui`};
+  let last=performance.now(),raf=0,alive=true;
+  function frame(t){if(!alive)return;raf=requestAnimationFrame(frame);sync();const dt=Math.min(.033,(t-last)/1000);last=t;for(let k=0;k<2;k++)step(dt/2);
+    const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#1d1128");bg.addColorStop(1,"#10081a");g.fillStyle=bg;g.fillRect(0,0,W,H);
+    const now=host.now(),wallTop=FLOOR-H*WALLF;
+    for(let s=0;s<5;s++){const gr=g.createLinearGradient(0,wallTop,0,FLOOR);gr.addColorStop(0,"rgba(255,255,255,0)");gr.addColorStop(1,`rgba(255,255,255,${s%2?.04:.07})`);g.fillStyle=gr;g.fillRect(s*CW,wallTop,CW,FLOOR-wallTop)}
+    g.strokeStyle="rgba(233,216,255,.22)";g.lineWidth=2;g.setLineDash([3,7]);for(let i=1;i<5;i++){g.beginPath();g.moveTo(i*CW,wallTop-40);g.lineTo(i*CW,FLOOR);g.stroke()}g.setLineDash([]);
+    g.fillStyle="rgba(233,216,255,.12)";g.fillRect(0,FLOOR,W,STRIP);g.textBaseline="middle";g.textAlign="center";
+    for(let s=0;s<5;s++){const bs=bodies.filter(b=>b.st===s),sum=bs.reduce((a,b)=>a+(+b.p||0),0);
+      g.fillStyle="#e9d8ff";const lb=`${SITE_DATA.stages[s]} · ${bs.length}`;fitT(lb,Math.max(11,Math.min(14,CW*.1)),CW-8,700);g.fillText(lb,colX(s),FLOOR+STRIP*.36);
+      g.fillStyle="rgba(233,216,255,.6)";fitT(fmt(sum)+" ₸",10.5,CW-8,400);g.fillText(fmt(sum)+" ₸",colX(s),FLOOR+STRIP*.74)}
+    const order=[...bodies].sort((a,b)=>(a===pinned)-(b===pinned)||(a===hover)-(b===hover)||a.r-b.r);
+    for(const b of order){const u=hot(b),over=b.st<4&&b.tm<now,hue=b.st>=4?270:260-252*Math.min(u,1),sat=b.st>=4?10:72,lig=b.st>=4?52:62;
+      g.save();if(u>.05){g.shadowColor=`hsla(${hue},90%,60%,.9)`;g.shadowBlur=14+u*34}
+      const gr=g.createRadialGradient(b.x-b.r*.3,b.y-b.r*.35,b.r*.1,b.x,b.y,b.r);gr.addColorStop(0,`hsl(${hue},${sat}%,${lig+14}%)`);gr.addColorStop(1,`hsl(${hue},${sat}%,${lig-8}%)`);
+      g.beginPath();g.arc(b.x,b.y,b.r,0,7);g.fillStyle=gr;g.fill();g.restore();
+      if(over){const p=(Math.sin(t*.008+b.x)+1)/2;g.beginPath();g.arc(b.x,b.y,b.r+3+p*5,0,7);g.strokeStyle=`rgba(255,110,100,${.9-p*.6})`;g.lineWidth=2;g.stroke()}
+      g.fillStyle="#1a0f24";const big=b.r>46,full=b===pinned||b.r>Math.min(CW*.6,70),o=b.o;
+      if(b.r>17){fitT(o.t,Math.max(9,b.r*.3),b.r*1.6,800);g.fillText(o.t,b.x,b.y-(big?b.r*.28:0))}
+      if(big){fitT(o.n,Math.max(9,b.r*.2),b.r*1.7,700);g.fillText(o.n,b.x,b.y+(full?-b.r*.04:b.r*.02))}
+      if(full){[o.b,fmt(o.p)+" ₸ · "+o.pay,o.src,o.a].forEach((l,i)=>{fitT(String(l),Math.max(8,b.r*.14),b.r*1.55,i?400:600);g.fillText(String(l),b.x,b.y+b.r*(.2+i*.17))})}}
+    g.textAlign="left";g.fillStyle="#e9d8ff";g.font="700 15px system-ui";g.fillText(SITE_DATA.brand+" · "+SITE_DATA.pondUi.title,16,22);
+    g.fillStyle="rgba(233,216,255,.65)";g.font="12px system-ui";g.fillText(SITE_DATA.pondUi.sub,16,41);
+    if(!bodies.length){g.textAlign="center";g.fillStyle="rgba(233,216,255,.6)";g.font="600 16px system-ui";g.fillText(SITE_DATA.empty,W/2,H/2)}}
+  raf=requestAnimationFrame(frame);setHint(SITE_DATA.hint.pond,"#bfa8e8");hintEl.style.bottom=STRIP+8+"px";
+  return{destroy(){alive=false;cancelAnimationFrame(raf);offs.forEach(f=>f());root.style.background=""}}
+}
+
+const MODES={cosmos,zoom:zoomMode,pond};
+const api={
+  SITE_DATA,
+  setHost(h){host=h},
+  show(mode,h){if(h)host=h;ensureRoot();root.hidden=false;if(curMode===mode&&cur)return;clearRoot();curMode=mode;root.style.background="#02030a";buildBar();cur=MODES[mode]();},
+  hide(){if(!root)return;clearRoot();curMode="";root.hidden=true},
+  setMode(m){api.show(m)},
+  fitTo(r){if(!root)return;root.style.left=(r.left||0)+"px";root.style.top=(r.top||0)+"px";root.style.bottom=(r.bottom||0)+"px"},
+  get mode(){return curMode},
+  get visible(){return !!root&&!root.hidden}
+};
+return api})();
+
+</script>
+<script>
+/* Мост между приложением и режимами MFV: живые заказы из O → нормальная форма; смена дизайна; позиция под шапкой и меню */
+(function(){
+const CODE={o:"cosmos",z:"zoom",p:"pond"},REV={cosmos:"o",zoom:"z",pond:"p"};
+let sig="",ver=0,arr=[],lastT=0;
+const parseComp=c=>String(c||"").split(/\n|[,;]/).map(x=>x.trim()).filter(Boolean).slice(0,6).map(x=>{const m=x.match(/^(.*?)\s*[×xх*]\s*(\d+)\s*$/i);return m&&m[1]?[m[1],+m[2]]:[x,1]});
+function norm(o){const tm=/^\d{1,2}:\d{2}/.test(o.time||"")?(+o.time.split(":")[0]+ +o.time.split(":")[1]/60):12;
+  const st=Math.min(5,Math.max(0,+o.st||0));
+  return{id:o.id,n:String(o.client||"Клиент"),t:o.time?String(o.time).slice(0,5):"—",tm,b:String(o.bn||"Заказ"),p:+o.p||0,pay:String(o.pay||""),src:String(o.src||""),st,a:o.dv?String(o.addr||"Доставка"):"Самовывоз",dv:!!o.dv,it:parseComp(o.comp),date:o.date||today()}}
+function refresh(){const n=Date.now();if(n-lastT<350)return;lastT=n;
+  const s=O.map(o=>[o.id,o.st,o.p,o.date,o.time,o.client,o.dv?1:0,o.bn,o.comp,o.src,o.pay,o.addr].join("|")).join(";");
+  if(s!==sig){sig=s;arr=O.map(norm);ver++}}
+function setUI(code){let th=thGet();th.ui=code;STO.set("th",JSON.stringify(th));applyTheme();draw()}
+const host={orders(){refresh();return arr},ver(){refresh();return ver},today:()=>today(),
+  now:()=>{const d=new Date();return d.getHours()+d.getMinutes()/60},
+  open:id=>detail(id),exit:()=>setUI("g"),setMode:m=>setUI(REV[m])};
+function place(){const tb=document.getElementById("tb"),nv=document.getElementById("nav");
+  let top=0,left=0,bottom=0;
+  if(tb&&getComputedStyle(tb).display!=="none"){const r=tb.getBoundingClientRect();if(r.height&&r.top<=2)top=r.bottom}
+  if(nv&&!nv.hidden){const r=nv.getBoundingClientRect();if(r.width>r.height*1.5)bottom=Math.max(0,innerHeight-r.top);else left=Math.max(0,r.right)}
+  MFV.fitTo({top,left,bottom})}
+window.mfvSync=function(){try{
+  const mode=CODE[(thGet()||{}).ui];
+  if(!(S&&U&&mode&&tab==="orders")){if(MFV.visible)MFV.hide();return}
+  MFV.show(mode,host);place()}catch(e){eLog(e)}};
+addEventListener("resize",()=>{if(MFV.visible)place()});
+mfvSync();
+})();
+</script>
+</body></html>
