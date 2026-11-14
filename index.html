@@ -287,81 +287,82 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
 .scpp{flex:none;font-size:14px;white-space:nowrap}.scpc{flex:none;color:var(--mut);font-size:12px}
 
 /* ================= Дизайн «Чёрная дыра» (data-ly=h) =================
-   Строго ч/б. Отличия от Bento по конструкции: центр «горизонт событий» с орбитами статусов вместо сетки плиток,
-   HUD-панели со скобками по углам, орбитальная лента заказов (дальние мельче), навигация дугой вокруг «＋» (телефон)
-   и шкала с номерами (ноутбук), окна-«иллюминаторы», фон-canvas с диском из точек. Цвет не используется;
-   фото букетов и чатов остаются цветными (фильтров нет). Выбранные палитра и акцент не стираются. */
-#bh{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:none}
+   Планировка не как в Bento: верхней и нижней панели нет. Главная — карта на весь экран: в центре чёрная дыра (сумма за сегодня),
+   заказы-тела на орбитах (расстояние = срок, форма = статус), разделы-планеты на внешнем кольце, внизу «пульт» (поиск, ＋, сигналы).
+   Строго ч/б; фото букетов и чатов остаются цветными. Линии — векторные (SVG), текст сглажен. */
+#bh{position:fixed;left:0;top:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:none}
 :root[data-ly=h] #bh{display:block}
-:root[data-ly=h]{background:var(--bg)}
-:root[data-ly=h] body{background:transparent;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:14px;padding-bottom:calc(160px + env(safe-area-inset-bottom))}
+:root[data-ly=h]{background:var(--bg);--fh:"Exo 2","Arial Narrow",Arial,sans-serif;--fm:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+:root[data-ly=h] body{background:transparent;font-family:var(--fm);font-size:14px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:geometricPrecision;font-variant-numeric:tabular-nums;padding-top:0!important;padding-bottom:calc(104px + env(safe-area-inset-bottom))}
 :root[data-ly=h][data-t=dark]{--bg:#000;--card:#050505;--c2:#0e0e0e;--ink:#fff;--ac:#fff;--on:#000;--glass:rgba(0,0,0,.7);--s0:#fff;--s1:#e0e0e0;--s2:#c4c4c4;--s3:#a8a8a8;--s4:#808080;--s5:#808080;--ok:#fff;--warn:#fff;--bad:#fff}
 :root[data-ly=h][data-t=light]{--bg:#fff;--card:#fafafa;--c2:#f0f0f0;--ink:#000;--ac:#000;--on:#fff;--glass:rgba(255,255,255,.7);--s0:#000;--s1:#202020;--s2:#3c3c3c;--s3:#585858;--s4:#7a7a7a;--s5:#7a7a7a;--ok:#000;--warn:#000;--bad:#000}
 :root[data-ly=h]{--hct:50;--mut:color-mix(in srgb,var(--ink) calc(58% + var(--hct)*.3%),var(--bg));--line:color-mix(in srgb,var(--ink) calc(14% + var(--hct)*.3%),var(--bg))}
-:root[data-ly=h] h1{font-family:"Arial Narrow","Helvetica Neue",Arial,sans-serif;font-stretch:condensed;font-weight:700;letter-spacing:.02em;text-transform:uppercase;font-size:30px}
-:root[data-ly=h] h1::before{content:var(--tn,"N° 01");display:block;font:500 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.24em;color:var(--mut);margin-bottom:8px}
-:root[data-ly=h] h2{font:600 11px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);border-bottom:1px solid var(--line);padding-bottom:6px}
+:root[data-ly=h] #tb{display:none!important}
+:root[data-ly=h] .fab{display:none!important}
+:root[data-ly=h] h1{font-family:var(--fh);font-weight:500;font-size:30px;letter-spacing:.01em;line-height:1.1}
+:root[data-ly=h] h2{font:500 11px/14px var(--fm);letter-spacing:.16em;text-transform:uppercase;color:var(--mut);border-bottom:1px solid var(--line);padding-bottom:6px}
+:root[data-ly=h] b,:root[data-ly=h] strong{font-weight:500}
 :root[data-ly=h] .card,:root[data-ly=h] .tile,:root[data-ly=h] .todo,:root[data-ly=h] .hud,:root[data-ly=h] .sh{position:relative;border-radius:0;box-shadow:none;border:1px solid var(--line);background:color-mix(in srgb,var(--card) 82%,transparent);-webkit-backdrop-filter:none;backdrop-filter:none}
-:root[data-ly=h] .card::before,:root[data-ly=h] .hud::before{content:"";position:absolute;inset:-1px;pointer-events:none;background:linear-gradient(var(--ink),var(--ink)) 0 0/10px 1px,linear-gradient(var(--ink),var(--ink)) 0 0/1px 10px,linear-gradient(var(--ink),var(--ink)) 100% 0/10px 1px,linear-gradient(var(--ink),var(--ink)) 100% 0/1px 10px,linear-gradient(var(--ink),var(--ink)) 0 100%/10px 1px,linear-gradient(var(--ink),var(--ink)) 0 100%/1px 10px,linear-gradient(var(--ink),var(--ink)) 100% 100%/10px 1px,linear-gradient(var(--ink),var(--ink)) 100% 100%/1px 10px;background-repeat:no-repeat}
-:root[data-ly=h] .btn{border-radius:0;border:1px solid var(--ink);background:var(--ink);color:var(--bg);text-transform:uppercase;letter-spacing:.08em;font-weight:700;min-height:46px}
+:root[data-ly=h] .card::before,:root[data-ly=h] .hud::before{content:"";position:absolute;inset:-1px;pointer-events:none;background:linear-gradient(var(--ink),var(--ink)) 0 0/10px 1px,linear-gradient(var(--ink),var(--ink)) 0 0/1px 10px,linear-gradient(var(--ink),var(--ink)) 100% 100%/10px 1px,linear-gradient(var(--ink),var(--ink)) 100% 100%/1px 10px;background-repeat:no-repeat}
+:root[data-ly=h] .btn{border-radius:0;border:1px solid var(--ink);background:var(--ink);color:var(--bg);text-transform:uppercase;letter-spacing:.06em;font-weight:500;min-height:46px}
 :root[data-ly=h] .btn.g{background:transparent;color:var(--ink)}
-:root[data-ly=h] .chip{border-radius:0;border:1px solid var(--line);background:transparent;color:var(--ink);min-height:44px;text-transform:uppercase;letter-spacing:.06em}
+:root[data-ly=h] .chip{border-radius:0;border:1px solid var(--line);background:transparent;color:var(--ink);min-height:44px;text-transform:uppercase;letter-spacing:.04em}
 :root[data-ly=h] .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-:root[data-ly=h] input,:root[data-ly=h] select,:root[data-ly=h] textarea{border-radius:0;border:1px solid var(--mut);background:var(--bg);color:var(--ink);min-height:46px}
+:root[data-ly=h] input,:root[data-ly=h] select,:root[data-ly=h] textarea{border-radius:0;border:1px solid var(--mut);background:var(--bg);color:var(--ink);min-height:46px;font-family:var(--fm)}
 /* статусы без цвета: форма и подпись */
-:root[data-ly=h] .pill{border-radius:0;background:transparent;color:var(--ink);border:1px solid var(--ink);text-transform:uppercase;letter-spacing:.06em;font-size:11px}
+:root[data-ly=h] .pill{border-radius:0;background:transparent;color:var(--ink);border:1px solid var(--ink);text-transform:uppercase;letter-spacing:.05em;font-size:11px}
 :root[data-ly=h] .pill.ok{border-style:solid}
 :root[data-ly=h] .pill.warn{border-style:dashed}
 :root[data-ly=h] .pill.bad{background:var(--ink);color:var(--bg);border-style:solid}
-:root[data-ly=h] .pill.bad::before{content:"! ";font-weight:800}
+:root[data-ly=h] .pill.bad::before{content:"! ";font-weight:500}
 :root[data-ly=h] .pill.warn::before{content:"· "}
 :root[data-ly=h] .nb{background:var(--ink);color:var(--bg);border:1px solid var(--bg)}
-/* главная: горизонт событий */
-:root[data-ly=h] .hz{--s:min(92vw,420px);position:relative;width:var(--s);height:var(--s);margin:8px auto 14px}
-:root[data-ly=h] .hring{position:absolute;left:50%;top:50%;border:1px solid var(--line);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
-:root[data-ly=h] .hring.r0{width:calc(var(--s)*.4);height:calc(var(--s)*.4);border-color:var(--ink)}
-:root[data-ly=h] .hring.r1{width:calc(var(--s)*.58);height:calc(var(--s)*.58)}
-:root[data-ly=h] .hring.r2{width:calc(var(--s)*.74);height:calc(var(--s)*.74);border-style:dashed}
-:root[data-ly=h] .hring.r3{width:calc(var(--s)*.9);height:calc(var(--s)*.9);border-style:dotted}
-:root[data-ly=h] .hev{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(var(--s)*.36);height:calc(var(--s)*.36);border-radius:50%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer}
-:root[data-ly=h] .hev span,:root[data-ly=h] .hev em{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut);font-style:normal}
-:root[data-ly=h] .hev b{font:700 clamp(15px,5vw,24px)/1.1 "Arial Narrow",Arial,sans-serif;font-stretch:condensed}
-:root[data-ly=h] .hsat{--a:calc(var(--i)*90deg + 45deg);--R:calc(var(--s)*(.205 + .055*var(--i)));position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;border:1px solid var(--ink);background:var(--bg);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;cursor:pointer;transform:translate(calc(sin(var(--a))*var(--R)),calc(cos(var(--a))*var(--R)*-1))}
-:root[data-ly=h] .hsat b{font-size:16px;line-height:1}
-:root[data-ly=h] .hsat span{font-size:8px;letter-spacing:.04em;text-transform:uppercase;line-height:1.1;margin-top:2px}
-:root[data-ly=h] .hhud{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:6px 0 10px}
-:root[data-ly=h] .hud{padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
-:root[data-ly=h] .hud span,:root[data-ly=h] .hud em{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);font-style:normal}
-:root[data-ly=h] .hud b{font:700 22px/1.1 "Arial Narrow",Arial,sans-serif}
-/* орбитальная лента заказов: ближние крупнее, дальние мельче */
-:root[data-ly=h] .og.ly-h,:root[data-ly=h] .og{display:flex;flex-direction:column;gap:10px}
-:root[data-ly=h] .hor{--k:calc(1 - var(--r)*.025);transform-origin:top center;width:calc(100%*var(--k));margin-inline:auto;opacity:calc(1 - var(--r)*.05)}
-:root[data-ly=h] .hor .card{margin:0}
-/* окна-«иллюминаторы» */
+/* главная: карта на весь экран */
+:root[data-ly=h] .obs{--s:min(calc(100vw - 8px),calc(100dvh - 250px),560px);position:relative;width:var(--s);height:var(--s);margin:8px auto 4px}
+:root[data-ly=h] .obs .rg{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;shape-rendering:geometricPrecision}
+:root[data-ly=h] .hole,:root[data-ly=h] .hb,:root[data-ly=h] .hp{position:absolute;left:calc(var(--s)*var(--x));top:calc(var(--s)*var(--y));transform:translate(-50%,-50%);margin:0;padding:0;min-height:0;box-sizing:border-box;font-family:var(--fm);color:var(--ink);cursor:pointer}
+:root[data-ly=h] .hole{--x:.5;--y:.5;width:calc(var(--s)*.18889);height:calc(var(--s)*.18889);border-radius:50%;background:var(--bg);border:1px solid var(--ink);box-shadow:0 0 0 5px var(--bg),0 0 0 6px var(--mut);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:14px}
+:root[data-ly=h] .hole span{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--mut)}
+:root[data-ly=h] .hole b{font-family:var(--fh);font-size:14px;line-height:16px}
+:root[data-ly=h] .hole b.sm{font-size:12px}
+:root[data-ly=h] .hb{width:calc(var(--s)*var(--z)/360);height:calc(var(--s)*var(--z)/360);border-radius:50%;border:1px solid var(--ink);background:var(--bg)}
+:root[data-ly=h] .hb::after{content:"";position:absolute;left:-14px;right:-14px;top:-14px;bottom:-14px}
+:root[data-ly=h] .hb.k1{background:linear-gradient(90deg,var(--ink) 50%,var(--bg) 50%)}
+:root[data-ly=h] .hb.k2{background:var(--ink)}
+:root[data-ly=h] .hb.k3{border-style:dashed}
+:root[data-ly=h] .hb.k3::before{content:"";position:absolute;left:100%;top:50%;width:70%;border-top:1px dotted var(--ink)}
+:root[data-ly=h] .hx{position:absolute;right:-7px;top:-7px;width:15px;height:15px;border-radius:50%;background:var(--bg);color:var(--ink);border:1px solid var(--ink);font-size:11px;line-height:13px;text-align:center;font-weight:500}
+:root[data-ly=h] .hp{width:max(54px,calc(var(--s)*.15));height:max(54px,calc(var(--s)*.15));border-radius:50%;border:1px solid var(--ink);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+:root[data-ly=h] .hp i{display:flex}
+:root[data-ly=h] .hp svg{width:16px;height:16px}
+:root[data-ly=h] .hp span{font-size:11px;line-height:12px;max-width:94%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:0}
+:root[data-ly=h] .hp .nb{position:absolute;right:-3px;top:-3px;min-width:18px;height:18px;border-radius:9px;font-size:11px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+:root[data-ly=h] .hlg{font:11px/14px var(--fm);color:var(--mut);text-align:center;letter-spacing:.02em;margin:2px 0 8px}
+:root[data-ly=h] .hqs{justify-content:center}
+:root[data-ly=h] .hmore{text-align:center;margin:6px 0}
+:root[data-ly=h] .hhud{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:10px 0}
+:root[data-ly=h] .hud{padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+:root[data-ly=h] .hud span,:root[data-ly=h] .hud em{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-style:normal}
+:root[data-ly=h] .hud b{font-family:var(--fh);font-size:20px;line-height:24px}
+/* пульт вместо верхней и нижней панелей */
+:root[data-ly=h] nav{position:fixed!important;left:50%!important;right:auto!important;top:auto!important;bottom:calc(12px + env(safe-area-inset-bottom))!important;transform:translateX(-50%)!important;width:auto!important;height:auto!important;display:flex!important;flex-direction:row!important;align-items:center;justify-content:center;gap:14px;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;overflow:visible!important;z-index:30}
+:root[data-ly=h] nav::before,:root[data-ly=h] nav::after{display:none!important}
+:root[data-ly=h] nav button{position:relative!important;flex:none;width:48px!important;height:48px!important;min-width:0!important;min-height:0!important;padding:0!important;margin:0!important;border-radius:50%!important;border:1px solid var(--ink)!important;background:var(--bg)!important;color:var(--ink)!important;display:flex!important;align-items:center;justify-content:center;transform:none!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;box-shadow:none!important}
+:root[data-ly=h] nav button svg{width:22px;height:22px}
+:root[data-ly=h] nav button i{display:flex}
+:root[data-ly=h] nav .plus{width:64px!important;height:64px!important;background:var(--ink)!important;color:var(--bg)!important}
+:root[data-ly=h] nav .nb{position:absolute;right:-4px;top:-4px;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:11px;padding:0 4px}
+/* окна на весь экран с рамкой */
 :root[data-ly=h] .ov{background:rgba(0,0,0,.78);align-items:center}
 :root[data-ly=h] .sh{max-width:640px;max-height:94dvh;border:1px solid var(--ink);background:var(--bg);animation:f .2s}
 @media(max-width:899px){
 :root[data-ly=h] .ov{align-items:stretch}
 :root[data-ly=h] .sh{max-width:none;height:100dvh;max-height:100dvh}
-/* навигация дугой вокруг «＋» */
-:root[data-ly=h] nav{left:0;right:0;bottom:0;height:calc(150px + env(safe-area-inset-bottom));display:block;overflow:visible;padding:0;border:0;border-radius:0;background:linear-gradient(transparent,var(--bg) 70%)!important;box-shadow:none;pointer-events:none}
-:root[data-ly=h] nav button{--a:calc((var(--i)/(var(--n) - 1) - .5)*150deg);--rx:min(40vw,150px);position:absolute;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));width:52px;height:52px;min-width:0;margin:0 0 0 -26px;padding:0;flex:none;border-radius:50%;border:1px solid var(--ink);background:var(--bg);color:var(--ink);font-size:0;gap:0;pointer-events:auto;transform:translate(calc(sin(var(--a))*var(--rx)),calc(cos(var(--a))*-84px + 6px))}
-:root[data-ly=h] nav button i{font-size:20px}
-:root[data-ly=h] nav button.on{background:var(--ink);color:var(--bg)}
-:root[data-ly=h] nav .plus{left:50%;margin-left:-32px;width:64px;height:64px;background:var(--ink);color:var(--bg);transform:none;bottom:calc(10px + env(safe-area-inset-bottom))}
-:root[data-ly=h] nav .nb{position:absolute;top:-4px;right:-4px;font-size:10px}
-:root[data-ly=h] .fab{display:none}
 }
-@media(min-width:900px){
-:root[data-ly=h] body{padding-bottom:24px}
-:root[data-ly=h] nav{background:transparent!important;border:0;border-right:1px solid var(--line);box-shadow:none;counter-reset:hn}
-:root[data-ly=h] nav button{border-radius:0;counter-increment:hn;text-transform:uppercase;letter-spacing:.08em;font-size:12px;border-left:2px solid transparent;color:var(--mut);background:transparent}
-:root[data-ly=h] nav button::before{content:counter(hn,decimal-leading-zero);font:10px ui-monospace,Menlo,monospace;opacity:.7;margin-right:6px;order:-1}
-:root[data-ly=h] nav button.on{border-left-color:var(--ink);color:var(--ink);background:transparent}
-}
+@media(min-width:900px){:root[data-ly=h] body{padding-left:0}:root[data-ly=h] .obs{--s:min(calc(100dvh - 220px),620px)}}
 /* миниатюра в выборе дизайна: всегда ч/б */
 .mq-bh{position:absolute;inset:0;background:#000;border:1px solid #fff;display:block;overflow:hidden}
-.mq-bh i{position:absolute;left:50%;top:50%;width:46%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:#000;border:2px solid #fff;box-shadow:0 0 0 5px #000,0 0 0 6px #888,0 0 0 11px #000,0 0 0 12px #555}
+.mq-bh i{position:absolute;left:50%;top:50%;width:30%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:#000;border:1px solid #fff;box-shadow:0 0 0 5px #000,0 0 0 6px #888,0 0 0 16px #000,0 0 0 17px #555}
 @media(prefers-reduced-motion:reduce){:root[data-ly=h] *{transition:none!important;animation:none!important}}
 </style><style id="fx3">
 .lvpk{display:grid;gap:10px;margin:10px 0 4px}
@@ -603,17 +604,17 @@ const thGet=()=>{try{return JSON.parse(STO.get("th")||"{}")||{}}catch(e){return{
 function applyTheme(){try{const t0=thGet();if(!t0.g1){t0.ui="g";t0.g1=1;STO.set("th",JSON.stringify(t0))}}catch(e){eLog(e)}/* один раз: всем новый дизайн Bento (вернуть старый — Профиль → Оформление) */const m=STO.get("t")||"auto",e=m==="auto"?(sysDark.matches?"dark":"light"):m,th=thGet(),pn=PALS[th.p]?th.p:"Тинт",P=PALS[pn][e==="dark"?"d":"l"],k=th.ct==null?50:+th.ct,sx=e==="dark"?"d":"l",ci=th["ink"+sx],ca=th["ac"+sx],ink=ci&&/^#[0-9a-f]{6}$/i.test(ci)&&Math.abs(lum(ci)-lum(P[0]))>.25?ci:P[3],ac=ca&&/^#[0-9a-f]{6}$/i.test(ca)?ca:P[4],on=ac!==P[4]?(lum(ac)>.45?"#1a140e":"#ffffff"):P[5],rd=th.rd==null?20:+th.rd,hi=Math.max(0,k-50)*1.6,tc=document.querySelector('meta[name=theme-color]');document.documentElement.dataset.t=e;document.documentElement.dataset.pal=pn;document.documentElement.dataset.ui="a";document.documentElement.dataset.ly=(UIS.includes(th.ui)?th.ui:"g");document.documentElement.dataset.acl=Math.abs(lum(ac)-lum(P[0]))<.12?"1":"";document.documentElement.dataset.mc=th.mc?"1":"0";
 let st=$("thc");if(!st){st=document.createElement("style");st.id="thc";document.head.appendChild(st)}
 st.textContent=`:root[data-t=${e}]{--bg:${P[0]};--card:${P[1]};--c2:${P[2]};--ink:color-mix(in srgb,${ink} ${100-hi}%,${e==="dark"?"#fff":"#000"});--ac:${ac};--on:${on};--mut:color-mix(in srgb,${ink} ${35+k*.5}%,${P[0]});--line:color-mix(in srgb,${ink} ${10+k*.22}%,${P[0]});--glass:color-mix(in srgb,${P[1]} 86%,transparent)}body{font-size:${+th.fz||16}px}.card{border-radius:${rd}px}.tile{border-radius:${Math.max(8,rd-2)}px}`;
-st.textContent+=`:root[data-ly=h]{--hct:${k}}`;if(tc)tc.content=P[0];if(typeof bhSync==="function")bhSync()}
-const UIS=["g","h"];/* допустимые дизайны: Bento + новые (h, m, k, d добавляются по этапам) */
-const DESIGNS=[["g","Bento","Блочная сетка, крупные цифры, матовое стекло"],["h","Чёрная дыра","Строго чёрно-белый космос: горизонт событий, орбиты, HUD-панели"]];
+if(tc)tc.content=P[0];if(typeof obSync==="function")obSync()}
+const UIS=["g","h"];/* допустимые дизайны: Bento; новые добавляются по этапам */
+const DESIGNS=[["g","Bento","Блочная сетка, крупные цифры, матовое стекло"],["h","Чёрная дыра","Карта-вселенная: заказы на орбитах, разделы-планеты, пульт вместо панелей"]];
 function setDesign(i){const d=DESIGNS[i];let th=thGet();th.ui=d[0];STO.set("th",JSON.stringify(th));applyTheme();if(S)draw()}
 function setPal(n){let th=thGet();th.p=n;delete th.acd;delete th.acl;delete th.inkd;delete th.inkl;STO.set("th",JSON.stringify(th));applyTheme();if(S)draw()}
 function thSet(k,v,r){let th=thGet();if(k==="reset")th={};else{if(k==="ac"||k==="ink")k+=(document.documentElement.dataset.t==="dark"?"d":"l");th[k]=v}STO.set("th",JSON.stringify(th));applyTheme();if(r||k==="reset")draw()}
 function setTh(m){STO.set("t",m);applyTheme();if(S)draw();else if(typeof login==="function"&&!U)login()}
 const themeChips=()=>`<div class="chips" style="margin:10px 0 0;justify-content:center">${[["auto","Авто"],["light","Светлая"],["dark","Тёмная"]].map(c=>`<button type="button" class="chip ${(STO.get("t")||"auto")===c[0]?"on":""}" onclick="setTh('${c[0]}')">${c[1]}</button>`).join("")}</div>`,
 /* миниатюра экрана в цветах палитры и раскладке дизайна (a/b/c) — пример рядом с выбором (разд. 38) */
-miniPv=(ui)=>{const r=(n,f)=>Array.from({length:n},(_,k)=>f(k)).join("");return `<span class="mq mq-${ui}">${
- ui==="h"?`<span class="mq-bh"><i></i></span>`:
+miniPv=(ui)=>{const r=(n,f)=>Array.from({length:n},(_,k)=>f(k)).join("");return `<span class="mq mq-${ui}">${ui==="h"?`<span class="mq-bh"><i></i></span>`:
+ 
  ui==="g"?`<span class="mq-bg">${r(5,()=>"<i></i>")}</span>`:
  (((((`<span class="mq-vb">${r(7,k=>`<i style="height:${[40,70,55,95,45,80,65][k]}%"></i>`)}</span><span class="mq-li"><i></i><em></em><b>●</b></span>`)))))}</span>`},
 themeCard=()=>{const t=thGet(),cur=PALS[t.p]?t.p:"Тинт",dk=document.documentElement.dataset.t==="dark"?"d":"l",P=PALS[cur][dk],ui=LY(),
@@ -623,23 +624,62 @@ themeCard=()=>{const t=thGet(),cur=PALS[t.p]?t.p:"Тинт",dk=document.document
  sw=`<div class="pzr">${Object.keys(PALS).map(n=>{const q=PALS[n][dk];return `<button type="button" class="pzb ${cur===n&&!t["ac"+dk]?"on":""}" onclick="setPal('${n}')" title="${n}" aria-label="${n}" style="--a:${q[4]};--b:${q[1]}"><i></i></button>`}).join("")}<label class="pzb pzc ${t["ac"+dk]?"on":""}" title="Свой цвет" style="--a:${t["ac"+dk]||P[4]}"><i></i><input type="color" value="${t["ac"+dk]||P[4]}" oninput="thSet('ac',this.value)" onchange="draw()"></label></div>`;
  return `<h2>Оформление</h2><div class="card"><label style="margin-top:0">Дизайн</label>${dz}${hh?`<div class="mut" style="font-size:13px;margin:10px 2px 0">В этом дизайне цвет не меняется: только чёрный и белый. Выбранные раньше палитра и акцент сохранены и вернутся в Bento.</div>${rg("Яркость свечения","hb",20,100,70)}${rg("Плотность звёзд","hd",20,100,60)}${rg("Скорость вращения (0 — выкл)","hs",0,100,40)}`:`<label>Цвет</label>${sw}<label class="row" style="color:var(--ink);margin:12px 2px 0;justify-content:space-between;font-size:15px">Разноцветные карточки<input type="checkbox" style="width:auto;min-height:0" ${t.mc?"checked":""} onchange="thSet('mc',this.checked?1:0,1)"></label>`}${themeChips()}
  <details class="imore" style="margin-top:10px"><summary>Ещё настройки</summary>${rg("Размер текста","fz",13,21,16)}${hh?"":rg("Скругление карточек","rd",6,30,20)}${rg("Контраст текста","ct",0,100,50)}${hh?"":`<label>`}Цвет текста</label><input type="color" value="${t["ink"+dk]||P[3]}" oninput="thSet('ink',this.value)"><div class="mut" style="font-size:13px;margin-top:8px">Видно только вам и только на этом устройстве.</div><div class="acts"><button class="btn g s" type="button" onclick="thSet('reset');toast('Оформление сброшено')">Сбросить</button></div></details></div>`}
-var bhS={on:0,raf:0,cv:null,cx:null,pts:null,st:null,fp:"",last:0,mx:0,my:0,t0:0};
-/* Чёрная дыра: ОДИН canvas на весь сайт. Пауза при скрытой вкладке, статика при prefers-reduced-motion, на чатах/карте/чате команды и при скорости 0; меньше точек на слабых телефонах; 30 кадров/с. */
-function bhInit(){if(bhS.cv)return;const c=document.createElement("canvas");c.id="bh";c.setAttribute("aria-hidden","true");document.body.insertBefore(c,document.body.firstChild);bhS.cv=c;bhS.cx=c.getContext("2d");addEventListener("resize",()=>{bhS.fp="";bhSync()});addEventListener("pointermove",e=>{bhS.mx=e.clientX/innerWidth-.5;bhS.my=e.clientY/innerHeight-.5},{passive:true});document.addEventListener("visibilitychange",()=>bhSync());addEventListener("scroll",()=>{if(bhS.on&&!bhS.raf&&!bhS.sq&&document.querySelector(".hev"))bhS.sq=requestAnimationFrame(()=>{bhS.sq=0;bhSync()})},{passive:true})}
-function bhBuild(th){const d=th.hd==null?60:+th.hd,weak=innerWidth<600||(navigator.hardwareConcurrency||4)<=4,n=Math.round((500+d*12)*(weak?.55:1)),P=[],S=[];for(let i=0;i<n;i++)P.push({r:.14+Math.pow(Math.random(),1.5)*.86,a:Math.random()*6.2832,z:Math.random(),s:Math.random()<.1?2:1});for(let i=0;i<Math.round(50+d*1.6);i++)S.push([Math.random(),Math.random(),Math.random()]);bhS.pts=P;bhS.st=S}
-function bhPaint(ts,dim){const c=bhS.cv,x=bhS.cx,th=thGet(),dk=document.documentElement.dataset.t==="dark",dpr=Math.min(devicePixelRatio||1,innerWidth<600?1:1.5),w=Math.round(innerWidth*dpr),h=Math.round(innerHeight*dpr);if(c.width!==w||c.height!==h){c.width=w;c.height=h}
- const hb=(th.hb==null?70:+th.hb)/100*(dim?.45:1),sp=(th.hs==null?40:+th.hs)/100,t=(ts-bhS.t0)/1000,rgb=dk?"255,255,255":"0,0,0",bg=dk?"#000":"#fff",narrow=innerWidth<900;let cx=w*.5-bhS.mx*14*dpr,cy=h*(narrow?.3:.5)-bhS.my*10*dpr;const hv=document.querySelector(".hev");if(hv){const r=hv.getBoundingClientRect();cx=(r.left+r.width/2)*dpr;cy=(r.top+r.height/2)*dpr}const Rm=Math.min(Math.hypot(w,h)*.42,narrow?h*.62:w*.5),k=.4;
- x.fillStyle=bg;x.fillRect(0,0,w,h);
- x.fillStyle=`rgba(${rgb},${.55*hb})`;x.beginPath();for(const s of bhS.st)x.rect(s[0]*w,s[1]*h,s[2]<.2?2*dpr:dpr,s[2]<.2?2*dpr:dpr);x.fill();
- const B=[[],[],[],[]],ss=sp*.05;for(const p of bhS.pts){const an=p.a+t*ss/Math.pow(p.r,1.5),px=cx+Math.cos(an)*p.r*Rm,py=cy+Math.sin(an)*p.r*Rm*k,q=Math.min(3,Math.floor((1-p.r)*2.2+p.z*1.6));B[q].push(px,py,p.s)}
- for(let q=0;q<4;q++){x.fillStyle=`rgba(${rgb},${hb*(.22+q*.22)})`;x.beginPath();const L=B[q];for(let i=0;i<L.length;i+=3)x.rect(L[i],L[i+1],L[i+2]*dpr,L[i+2]*dpr);x.fill()}
- const rh=Rm*.11;x.fillStyle=bg;x.beginPath();x.arc(cx,cy,rh,0,6.2832);x.fill();x.strokeStyle=`rgba(${rgb},${.55*hb})`;x.lineWidth=dpr;x.stroke()}
-function bhFrame(ts){bhS.raf=0;if(!bhS.on)return;if(ts-bhS.last>=33){bhS.last=ts;bhPaint(ts,0)}bhS.raf=requestAnimationFrame(bhFrame)}
-function bhSync(){const on=document.documentElement.dataset.ly==="h";if(!on){bhS.on=0;if(bhS.raf){cancelAnimationFrame(bhS.raf);bhS.raf=0}return}
- bhInit();const th=thGet(),TN=["home","orders","chats","map","stock","show","gal","sched","rep","st","crm","tpl","deals","leads","fin","an","ctrl","cur","fl","team","jr","tc","help","me","more"],ti=Math.max(0,TN.indexOf(typeof tab==="string"?tab:"home"))+1;document.documentElement.style.setProperty("--tn",'"N° '+(ti<10?"0":"")+ti+'"');
- const fp=innerWidth+"x"+innerHeight+"|"+(th.hd==null?60:th.hd);if(fp!==bhS.fp){bhS.fp=fp;bhBuild(th)}
- bhS.on=1;if(!bhS.t0)bhS.t0=performance.now();const tb=typeof tab==="string"?tab:"",busy=tb==="chats"||tb==="tc"||tb==="map",still=document.hidden||(matchMedia&&matchMedia("(prefers-reduced-motion:reduce)").matches)||busy||(th.hs!=null&&+th.hs===0);
- if(still){if(bhS.raf){cancelAnimationFrame(bhS.raf);bhS.raf=0}if(!document.hidden)bhPaint(bhS.t0,busy)}else if(!bhS.raf)bhS.raf=requestAnimationFrame(bhFrame)}
+/* ===== Дизайн «Чёрная дыра» (h): фон-canvas, карта-главная, пульт ===== */
+var obS={on:0,raf:0,cv:null,cx:null,pts:null,st:null,neb:null,last:0,mx:0,my:0,t0:0,still:0,busy:0};
+function obInit(){if(obS.cv)return;
+ if(!document.getElementById("obfont")){const l=document.createElement("link");l.id="obfont";l.rel="stylesheet";l.href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap";document.head.appendChild(l)}
+ const c=document.createElement("canvas");c.id="bh";c.setAttribute("aria-hidden","true");document.body.insertBefore(c,document.body.firstChild);obS.cv=c;obS.cx=c.getContext("2d");
+ addEventListener("pointermove",e=>{obS.mx=e.clientX/innerWidth-.5;obS.my=e.clientY/innerHeight-.5},{passive:true});
+ addEventListener("resize",()=>obSync(),{passive:true});
+ addEventListener("scroll",()=>{if(obS.on&&obS.still&&!document.hidden)obPaint(obS.t0,obS.busy)},{passive:true});
+ document.addEventListener("visibilitychange",()=>obSync())}
+function obBuild(w,h){const weak=innerWidth<600||(navigator.hardwareConcurrency||4)<=4,th=thGet(),d=th.hd==null?60:+th.hd,n=Math.round((weak?1200:2200)*(.5+d/100)),P=[],S=[];
+ for(let i=0;i<n;i++){const u=Math.random();P.push({r:Math.pow(u,1.7),a:Math.random()*6.2832,z:Math.random(),l:u<.08?3:u<.25?2:u<.55?1:0})}
+ for(let i=0;i<110;i++)S.push([Math.random(),Math.random(),Math.random()]);
+ obS.pts=P;obS.st=S;
+ const o=document.createElement("canvas");o.width=Math.max(2,w>>1);o.height=Math.max(2,h>>1);const q=o.getContext("2d");
+ for(let i=0;i<14;i++){const px=Math.random()*o.width,py=Math.random()*o.height,r=(.12+Math.random()*.25)*Math.max(o.width,o.height),g=q.createRadialGradient(px,py,0,px,py,r);g.addColorStop(0,"rgba(128,128,128,.16)");g.addColorStop(1,"rgba(128,128,128,0)");q.fillStyle=g;q.fillRect(0,0,o.width,o.height)}
+ obS.neb=o}
+function obPaint(ts,dim){const c=obS.cv,x=obS.cx;if(!c||!x)return;const th=thGet(),dk=document.documentElement.dataset.t==="dark",dpr=Math.min(devicePixelRatio||1,2),w=Math.round(innerWidth*dpr),h=Math.round(innerHeight*dpr);
+ if(c.width!==w||c.height!==h||!obS.pts){c.width=w;c.height=h;obBuild(w,h)}
+ const hb=((th.hb==null?70:+th.hb)/100)*(dim?.45:1),sp=(th.hs==null?40:+th.hs)/100,t=(ts-obS.t0)/1000,rgb=dk?"255,255,255":"0,0,0";
+ let cx=w*.5,cy=h*.42,hr=34*dpr;const m=tab==="home"?document.querySelector(".obs"):null;
+ if(m){const b=m.getBoundingClientRect();cx=(b.left+b.width/2)*dpr;cy=(b.top+b.height/2)*dpr;hr=b.width*68/360/2*dpr}
+ cx+=obS.mx*12*dpr;cy+=obS.my*12*dpr;
+ const r0=hr*1.2,Rm=Math.max(w,h)*.62;
+ x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,w,h);
+ if(obS.neb){x.globalAlpha=(dk?1:.45)*(dim?.5:1);x.drawImage(obS.neb,0,0,w,h);x.globalAlpha=1}
+ x.fillStyle="rgba("+rgb+","+(.6*hb).toFixed(2)+")";x.beginPath();for(const s of obS.st){const z=s[2]<.2?2*dpr:dpr;x.rect(s[0]*w,s[1]*h,z,z)}x.fill();
+ const A=[.3,.5,.75,.95],B=[[],[],[],[]];
+ for(const p of obS.pts){const r=r0+(Rm-r0)*p.r,an=p.a+r/(hr*3.2)+t*sp*.5/Math.pow(r/r0,1.5),px=cx+Math.cos(an)*r,py=cy+Math.sin(an)*r*.9;if(px<-4||py<-4||px>w+4||py>h+4)continue;B[p.l].push(px,py,(.6+p.z*.9)*dpr)}
+ for(let k=0;k<4;k++){const L=B[k];if(!L.length)continue;x.fillStyle="rgba("+rgb+","+(A[k]*hb).toFixed(2)+")";x.beginPath();for(let i=0;i<L.length;i+=3){x.rect(L[i],L[i+1],L[i+2],L[i+2])}x.fill()}
+ x.fillStyle=dk?"#000":"#fff";x.beginPath();x.arc(cx,cy,hr*1.02,0,6.2832);x.fill()}
+function obFrame(ts){obS.raf=0;if(!obS.on)return;if(ts-obS.last>=33){obS.last=ts;obPaint(ts,0)}obS.raf=requestAnimationFrame(obFrame)}
+function obSync(){if(typeof obS==="undefined"||!obS)return;const on=document.documentElement.dataset.ly==="h";
+ if(!on){obS.on=0;if(obS.raf){cancelAnimationFrame(obS.raf);obS.raf=0}return}
+ obInit();const th=thGet(),tb=typeof tab==="string"?tab:"",busy=tb==="chats"||tb==="tc"||tb==="map",still=document.hidden||(matchMedia&&matchMedia("(prefers-reduced-motion:reduce)").matches)||busy||(th.hs!=null&&+th.hs===0);
+ obS.on=1;if(!obS.t0)obS.t0=performance.now();obS.still=still?1:0;obS.busy=busy?1:0;
+ if(still){if(obS.raf){cancelAnimationFrame(obS.raf);obS.raf=0}if(!document.hidden)obPaint(obS.t0,busy)}else if(!obS.raf)obS.raf=requestAnimationFrame(obFrame)}
+/* пульт: поиск, ＋ новый заказ, сигналы, чат команды; «к дыре» вне главной. Те же data-a, что были в верхней панели */
+function hPult(){const bd=n=>n>0?`<b class="nb">${n>99?"99+":n}</b>`:"",tn=typeof FX==="function"&&FX("teamChat")&&typeof tcUn==="function"?(+tcUn()||0):-1;
+ return (tab!=="home"?`<button type="button" data-t="home" aria-label="К дыре">${ic("home")}</button>`:"")+`<button type="button" data-a="gso" aria-label="Поиск">${TBI.search}</button>`+(mgr()?`<button class="plus" type="button" data-a="new" aria-label="Новый заказ">${ic("plus")}</button>`:"")+`<button type="button" data-a="nfc" aria-label="Уведомления">${TBI.bell}${bd(nfUnread())}</button>`+(tn>=0?`<button type="button" data-t="tc" aria-label="Чат сотрудников">${TBI.tc}${bd(tn)}</button>`:"")}
+/* карта-главная: центр — дыра с суммой за сегодня; заказы — тела на орбитах (ближе к центру = срок ближе; форма = статус); разделы — планеты на внешнем кольце */
+function hHome(d){const s=360,C=180,now=Date.now(),SEC=(window.HPL||[]).filter(t=>t[0]!=="home"),N=SEC.length||1,
+ sh=l=>({"Статистика":"Стат.","Аналитика":"Аналит.","Контроль":"Контр."}[l]||l),
+ L=d.actF.slice().sort((a,b)=>(dueMs(a)||9e15)-(dueMs(b)||9e15)),V=L.slice(0,12),R=[52,80,106],G=[[],[],[]];
+ V.forEach(o=>{const m=dueMs(o)?(dueMs(o)-now)/6e4:9e9;G[m<=60?0:m<=240?1:2].push(o)});
+ let B="";G.forEach((g,oi)=>g.forEach((o,j)=>{const a=(-90+j/g.length*360+oi*41)*Math.PI/180,x=(C+R[oi]*Math.cos(a))/s,y=(C+R[oi]*Math.sin(a))/s,z=16+2*Math.min(7,Math.floor(tot(o)/6000)),k=Math.min(3,Math.max(0,+o.st||0)),dm=dueMs(o)?(dueMs(o)-now)/6e4:null,lt=dm!=null&&dm<0&&+o.st<3;
+  B+=`<button type="button" class="hb k${k}" data-a="det" data-id="${esc(o.id)}" style="--x:${x.toFixed(4)};--y:${y.toFixed(4)};--z:${z}" aria-label="${esc((o.bn||"Заказ")+" · "+stL(o)+(o.time?" · "+String(o.time).slice(0,5):"")+(o.paid?"":" · не оплачен")+(lt?" · срок прошёл":""))}">${!o.paid||lt?`<b class="hx">${lt?"!":"✕"}</b>`:""}</button>`}));
+ const ring=(r,a)=>`<circle cx="180" cy="180" r="${r}" fill="none" stroke="var(--mut)" stroke-width="1"${a}/>`,dsh=' stroke-dasharray="4 5"',
+ svg=`<svg class="rg" viewBox="0 0 360 360" aria-hidden="true">${ring(52,dsh)}${ring(80,dsh)}${ring(106,dsh)}${ring(152,' stroke-dasharray="1 5" stroke-linecap="round"')}</svg>`,
+ P=SEC.map((t,i)=>{const a=(i/N*360-90)*Math.PI/180,n=nbG(t[0]);return `<button type="button" class="hp" data-a="go2" data-id="${t[0]}|" title="${esc(t[2])}" aria-label="${esc(t[2])}" style="--x:${((C+152*Math.cos(a))/s).toFixed(4)};--y:${((C+152*Math.sin(a))/s).toFixed(4)}"><i>${ic(t[0])}</i><span>${esc(sh(t[2]))}</span>${n?`<b class="nb">${n>99?"99+":n}</b>`:""}</button>`}).join(""),
+ ms=M(d.money),hole=`<button type="button" class="hole" data-a="go2" data-id="orders|today" aria-label="Сумма заказов сегодня"><span>сегодня</span><b${ms.length>8?' class="sm"':""}>${ms}</b><span>${d.td.length} ${pl(d.td.length,"заказ","заказа","заказов")}</span></button>`,
+ hp=(l,v,sb,go)=>`<div class="card hud"${go?` data-a="go2" data-id="${go}"`:""}><span>${l}</span><b>${v}</b>${sb?`<em>${sb}</em>`:""}</div>`;
+ return `<div class="obs">${svg}${B}${P}${hole}</div><p class="hlg">○ новый · ◐ сборка · ● готов · ◌ в пути · ✕ не оплачен · ! срок прошёл</p>`+
+ `<div class="chips hqs">${[0,1,2,3].map(i=>`<button type="button" class="chip" data-a="go2" data-id="orders|st${i}">${SLB[i]} ${d.c(i)}</button>`).join("")}</div>`+
+ (L.length>12?`<p class="hmore"><button type="button" class="btn g" data-a="al" data-id="orders|fresh">Дальний пояс: ещё ${L.length-12} ›</button></p>`:"")+
+ (d.latN?`<p class="mut" data-a="al" data-id="orders|later" style="cursor:pointer;text-align:center">Позже: ${d.latN} ${pl(d.latN,"заказ","заказа","заказов")} на другие дни ›</p>`:"")+
+ `<div class="hhud">${hp("Не оплачено",M(d.ur),d.unpaid.length+" "+pl(d.unpaid.length,"заказ","заказа","заказов"),"orders|unpaid")}${hp("Средний чек · 7 дн",M(d.avg),d.w7.length+" "+pl(d.w7.length,"заказ","заказа","заказов"),"")}${hp("Витрина",d.vsold.length,"продано на "+M(d.vs),"show|sold")}${hp("Оплачено сегодня",d.td.filter(o=>o.paid).length,"из "+d.td.length,"orders|today")}</div>`}
 applyTheme();if(sysDark.addEventListener)sysDark.addEventListener("change",()=>{if((STO.get("t")||"auto")==="auto")applyTheme()});
 function toast(m){const e=$("toast");if(typeof unemo==="function")m=unemo(m);e.textContent=(typeof tr==="function"?tr(m):m);e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,3500)}
 /* Форма не отправилась из-за пустого или неверного поля: на iPhone подсказка браузера у поля за краем окна не видна,
@@ -957,15 +997,15 @@ auth.onAuthStateChanged(async u=>{await FSREADY;__authDone=1;U=u;S=null;O=[];ON=
 function uiKey(){return"ui_"+(U?U.uid:"x")}
 function uiLoad(){tab="home";fs="";fdt="";try{const v=JSON.parse(STO.get(uiKey())||"{}");if(typeof v.tab==="string")tab=v.tab;if(typeof v.fs==="string")fs=v.fs;if(typeof v.fdt==="string")fdt=v.fdt}catch(e){eLog(e)}}
 function uiSave(){if(U&&S)STO.set(uiKey(),JSON.stringify({tab,fs,fdt}))}
-function draw(){if(!S)return;if(typeof bhSync==="function")bhSync();if(window.__ctrlWas&&tab!=="ctrl"&&adm())ctrlSeenAll();window.__ctrlWas=tab==="ctrl";if(tab==="tc"&&U&&typeof tcSeen==="function")tcSeen();if(!bu.c)bu.c=new Map();alerts.d=0;locGate();const T=[["home","⌂","Главная"],["orders","☰","Заказы"]];if(mgr()||S.role==="courier")T.push(["map","◎","Карта"]);if(["admin","operator","florist","assistant"].includes(S.role))T.push(["stock","▦","Склад"]);if(["admin","operator","florist","assistant"].includes(S.role))T.push(["show","▤","Витрина"],["gal","🖼","Галерея"]);T.push(["sched","◷","График"]);if(mgr())T.push(["rep","📋","Отчёты"],["st","📊","Статистика"]);if(mgr())T.push(["crm","♥","Клиенты"],...(isOp()&&FX("clientChat")?[["chats","✆","Чаты"]]:[]),...(canTpl()?[["tpl","💬","Шаблоны"]]:[]),...(FX("deals")?[["deals","◫","Сделки"]]:[]),["leads","✉","Заявки"]);if(!mgr()&&canTpl())T.push(["tpl","💬","Шаблоны"]);if(own())T.push(["fin","₸","Финансы"],["an","◔","Аналитика"]);if(adm())T.push(["ctrl","🛡","Контроль"],["cur","🚚","Курьер"],["fl","✿","Сборка"],["team","☺","Команда"],["jr","✎","Журнал"]);if(tab==="deals"&&!FX("deals"))tab="home";if(FX("teamChat"))T.push(["tc","☷","Чат"]);T.push(["help","?","Справка"],["me","⚙","Профиль"]);{const ci=T.findIndex(t=>t[0]==="chats"),oi=T.findIndex(t=>t[0]==="orders");if(ci>oi+1&&oi>=0){const c=T.splice(ci,1)[0];T.splice(oi+1,0,c)}}if(!T.some(x=>x[0]===tab)&&tab!=="more")tab="home";uiSave();
+function draw(){if(!S)return;if(window.__ctrlWas&&tab!=="ctrl"&&adm())ctrlSeenAll();window.__ctrlWas=tab==="ctrl";if(tab==="tc"&&U&&typeof tcSeen==="function")tcSeen();if(!bu.c)bu.c=new Map();alerts.d=0;locGate();const T=[["home","⌂","Главная"],["orders","☰","Заказы"]];if(mgr()||S.role==="courier")T.push(["map","◎","Карта"]);if(["admin","operator","florist","assistant"].includes(S.role))T.push(["stock","▦","Склад"]);if(["admin","operator","florist","assistant"].includes(S.role))T.push(["show","▤","Витрина"],["gal","🖼","Галерея"]);T.push(["sched","◷","График"]);if(mgr())T.push(["rep","📋","Отчёты"],["st","📊","Статистика"]);if(mgr())T.push(["crm","♥","Клиенты"],...(isOp()&&FX("clientChat")?[["chats","✆","Чаты"]]:[]),...(canTpl()?[["tpl","💬","Шаблоны"]]:[]),...(FX("deals")?[["deals","◫","Сделки"]]:[]),["leads","✉","Заявки"]);if(!mgr()&&canTpl())T.push(["tpl","💬","Шаблоны"]);if(own())T.push(["fin","₸","Финансы"],["an","◔","Аналитика"]);if(adm())T.push(["ctrl","🛡","Контроль"],["cur","🚚","Курьер"],["fl","✿","Сборка"],["team","☺","Команда"],["jr","✎","Журнал"]);if(tab==="deals"&&!FX("deals"))tab="home";if(FX("teamChat"))T.push(["tc","☷","Чат"]);T.push(["help","?","Справка"],["me","⚙","Профиль"]);{const ci=T.findIndex(t=>t[0]==="chats"),oi=T.findIndex(t=>t[0]==="orders");if(ci>oi+1&&oi>=0){const c=T.splice(ci,1)[0];T.splice(oi+1,0,c)}}if(!T.some(x=>x[0]===tab)&&tab!=="more")tab="home";uiSave();
  if(draw.tab&&draw.tab!==tab&&!draw.bk){if(TH[TH.length-1]!==draw.tab)TH.push(draw.tab);if(TH.length>20)TH.shift()}draw.bk=0;if(tab==="home")TH=[];
  /* Похожие разделы собраны в группы: в меню одна кнопка, внутри — переключатель (gtab) */
  const has=k=>T.some(t=>t[0]===k);GP={};(S.role==="assistant"?GRA:GR).forEach(g=>{const p=g.filter(has);p.forEach(k=>GP[k]=p)});
- const T2=T.filter(t=>hd0(t[0])===t[0]).map(t=>{const p=GP[t[0]];return p&&p.length>1?[t[0],t[1],GHN[t[0]]||t[2]]:t});
+ const T2=T.filter(t=>hd0(t[0])===t[0]).map(t=>{const p=GP[t[0]];return p&&p.length>1?[t[0],t[1],GHN[t[0]]||t[2]]:t});window.HPL=T2;
  const n=$("nav");n.hidden=false;n.dataset.brand=SH.name||"Mirflowers";const wide=matchMedia("(min-width:900px)").matches,pf0=own()?["home","fin","stock","orders","an"]:({admin:["home","orders","chats","show","stock"],operator:["home","orders","chats","crm","show"],florist:["home","orders","show","stock"],assistant:["home","orders","show","stock","chats"],courier:["home","orders","map","sched"]})[S.role]||["home","orders"],pf=[...new Set(pf0.map(hd0))].filter(k=>T2.some(t=>t[0]===k)),PR=wide?T2:pf.map(k=>T2.find(t=>t[0]===k)).filter(Boolean);MORE=wide?[]:T2.filter(t=>!pf.includes(t[0]));if(MORE.length===1){PR.push(MORE[0]);MORE=[]}
- const NV=PR/* «Ещё» — кнопка ☰ слева вверху */,inMore=tab==="more"||MORE.some(t=>t[0]===hd0(tab)),moreN=MORE.reduce((a,t)=>a+(+nbG(t[0])||0),0),plus=!wide&&mgr();document.body.classList.toggle("hasplus",plus);const nbt=NV.map((t,ix)=>`<button${LY()==="h"?` style="--i:${ix};--n:${NV.length}"`:""} class="${t[0]===hd0(tab)||(t[0]==="more"&&inMore)?"on":""}" data-t="${t[0]}"><i>${ic(t[0])}</i>${t[2]}${(t[0]==="more"?moreN:nbG(t[0]))?`<b class="nb">${t[0]==="more"?moreN:nbG(t[0])}</b>`:""}</button>`);if(plus)nbt.splice(Math.min(3,nbt.length),0,`<button class="plus" type="button" data-a="new" aria-label="Новый заказ"><i>${ic("plus")}</i></button>`);morph(n,nbt.join(""));tbDraw(MORE.length>0,moreN);
+ const NV=PR/* «Ещё» — кнопка ☰ слева вверху */,inMore=tab==="more"||MORE.some(t=>t[0]===hd0(tab)),moreN=MORE.reduce((a,t)=>a+(+nbG(t[0])||0),0),plus=!wide&&mgr();document.body.classList.toggle("hasplus",plus);const nbt=NV.map((t,ix)=>`<button class="${t[0]===hd0(tab)||(t[0]==="more"&&inMore)?"on":""}" data-t="${t[0]}"><i>${ic(t[0])}</i>${t[2]}${(t[0]==="more"?moreN:nbG(t[0]))?`<b class="nb">${t[0]==="more"?moreN:nbG(t[0])}</b>`:""}</button>`);if(plus)nbt.splice(Math.min(3,nbt.length),0,`<button class="plus" type="button" data-a="new" aria-label="Новый заказ"><i>${ic("plus")}</i></button>`);morph(n,LY()==="h"?hPult():nbt.join(""));tbDraw(MORE.length>0,moreN);
  n.onclick=e=>{const b=e.target.closest("button");if(b&&b.dataset.t){tab=b.dataset.t;draw();scrollTo(0,0)}};
- const cf=chFocus();if(LOC&&!locs().some(x=>x.id===LOC))LOC="";const vh=locBar()+backBar()+scoped(()=>gtab()+({home,orders,team,me,rep:repV,st:stV,ctrl:ctrlV,cur:curV,fl:homeFl,tpl:tplV,stock,show:vit,gal:galV,crm,chats,tc,leads,fin:own()?fin:home,sched,jr:logv,help:helpV,more:moreV,map:mapV,deals:dealsV,an:own()?anV:home})[tab]())+(mgr()&&(tab==="home"||tab==="orders")?`<button class="btn fab" data-a="new">＋ Заказ</button>`:"");const ve=$("v");if(tab==="map"||draw.tab!==tab){ve.innerHTML=deco(vh);ve.__h=vh}else morph(ve,vh);draw.tab=tab;chFit();bind();if(tab==="map")mapAfter();if(tab==="chats")chBind();if(tab==="tc")tcBind();chAfter(cf)}
+ const cf=chFocus();if(LOC&&!locs().some(x=>x.id===LOC))LOC="";const vh=locBar()+backBar()+scoped(()=>gtab()+({home,orders,team,me,rep:repV,st:stV,ctrl:ctrlV,cur:curV,fl:homeFl,tpl:tplV,stock,show:vit,gal:galV,crm,chats,tc,leads,fin:own()?fin:home,sched,jr:logv,help:helpV,more:moreV,map:mapV,deals:dealsV,an:own()?anV:home})[tab]())+(mgr()&&(tab==="home"||tab==="orders")?`<button class="btn fab" data-a="new">＋ Заказ</button>`:"");const ve=$("v");if(tab==="map"||draw.tab!==tab){ve.innerHTML=deco(vh);ve.__h=vh}else morph(ve,vh);draw.tab=tab;chFit();bind();if(tab==="map")mapAfter();if(tab==="chats")chBind();if(tab==="tc")tcBind();chAfter(cf);if(typeof obSync==="function")obSync()}
 
 /* доставка: сотрудник выставляет заказ (dvPost) → любой курьер принимает → забирает («Забрал, еду», st 3) → «Доставлено» */
 /* Окно работы: собирать и отдавать курьеру можно не раньше чем за WINH часов до срока («Сделать до» или время клиента) */
@@ -1039,7 +1079,6 @@ function oRender(l){if(!l.length)return"";const y=LY();
  
  
  
- if(y==="h")return l.map((o,i)=>`<div class="hor" style="--r:${Math.min(i,9)}">${card(o)}</div>`).join("");
  return l.map(card).join("")}
 function stBlock(c){const y=LY(),act=[0,1,2,3].reduce((a,i)=>a+c(i),0)||1,A=i=>`data-a="tf" data-id="${i}"`;
  
@@ -1214,18 +1253,14 @@ function homeOp(){const vsold=scSoldDay(today()),act=O.filter(o=>+o.st<4),c=i=>O
  WG=`<div class="dg" style="margin-top:6px">${todayStaff()}${widgets()}</div>`,RV=rvSec(),
  NE=`<h2>${(("Ближайшие заказы"))}</h2><div class="og ly-${y}">${oRender(up)||`<div class="card mut" style="text-align:center">${flr("tulip")}<br>Ближайших заказов нет.</div>`}</div>${actF.length>6?`<div class="acts"><button class="btn g" data-a="al" data-id="orders|fresh">Все свежие (${actF.length})</button></div>`:""}${latN?`<p class="mut" data-a="al" data-id="orders|later" style="cursor:pointer">Позже: ${latN} ${pl(latN,"заказ","заказа","заказов")} на другие дни ›</p>`:""}`,
  unpaid=live.filter(o=>+o.st<5&&!o.paid),L=(a,b,x)=>`<div class="ln"${x?` data-a="tf" data-id="${x}" style="cursor:pointer"`:""}><span>${a}</span><b>${b}</b></div>`;
- if(y==="h"){const ur=unpaid.reduce((a,o)=>a+rest(o),0),vs=vsold.reduce((a,x)=>a+(+x.price||0),0),
-  sat=(i,n)=>`<button type="button" class="hsat" style="--i:${i}" data-a="go2" data-id="orders|st${i}"><b>${c(i)}</b><span>${n}</span></button>`,
-  HP=(l,v,sb,go)=>`<div class="hud"${go?` data-a="go2" data-id="${go}"`:""}><span>${l}</span><b>${v}</b>${sb?`<em>${sb}</em>`:""}</div>`;
-  return G+`<div class="hz"><i class="hring r0"></i><i class="hring r1"></i><i class="hring r2"></i><i class="hring r3"></i><div class="hev" data-a="go2" data-id="orders|today"><span>Сегодня</span><b>${M(money)}</b><em>${td.length} ${pl(td.length,"заказ","заказа","заказов")}</em></div>${["Новые","В сборке","Готовы","В пути"].map((n,i)=>sat(i,n)).join("")}</div><div class="hhud">${HP("Не оплачено",M(ur),unpaid.length+" "+pl(unpaid.length,"заказ","заказа","заказов"),"orders|unpaid")}${HP("Средний чек · 7 дн",M(avg),w7.length+" "+pl(w7.length,"заказ","заказа","заказов"),"")}${HP("Витрина",vsold.length,"продано на "+M(vs),"show|sold")}</div>`+CT+AL+RV+`<h2>Ближайшие заказы</h2><div class="og ly-h">${oRender(up)||`<div class="card mut" style="text-align:center">Ближайших заказов нет.</div>`}</div>`+(latN?`<p class="mut" data-a="al" data-id="orders|later" style="cursor:pointer">Позже: ${latN} ${pl(latN,"заказ","заказа","заказов")} на другие дни ›</p>`:"")+`<div class="dg" style="margin-top:6px">${todayStaff()}</div>`}
-  if(y==="g"){const pd=td.filter(o=>o.paid).reduce((a,o)=>a+tot(o),0),dl=ym?Math.round((money-ym)/ym*100):null,ur=unpaid.reduce((a,o)=>a+rest(o),0),vs=vsold.reduce((a,x)=>a+(+x.price||0),0),
+  if(y==="g"||y==="h"){const pd=td.filter(o=>o.paid).reduce((a,o)=>a+tot(o),0),dl=ym?Math.round((money-ym)/ym*100):null,ur=unpaid.reduce((a,o)=>a+rest(o),0),vs=vsold.reduce((a,x)=>a+(+x.price||0),0),
   K=(cls,lbl,val,sub,go,ic,col)=>`<div class="bt ${cls}"${go?` data-a="go2" data-id="${go}"`:""} style="--bk:${col||"var(--ac)"}"><span class="btl">${ic?tic(ic,col):""}${lbl}</span><b class="btv">${val}</b>${sub?`<span class="bts">${sub}</span>`:""}</div>`;
   const BG=`<h2>Сегодня</h2><div class="bento">${K("b-hero","Сумма заказов сегодня",M(money),dl==null?"вчера заказов не было":`<span class="${dl>=0?"up":"dn"}">${dl>=0?"▲":"▼"} ${Math.abs(dl)}%</span> к вчера · оплачено ${M(pd)}`,"orders|today","card")}
    ${K("","Заказов",td.length,"оплачено "+td.filter(o=>o.paid).length,"orders|today","orders","#8B5CF6")}${K("","Не оплачено",M(ur),unpaid.length+" "+pl(unpaid.length,"заказ","заказа","заказов"),"orders|unpaid","warn","#F59E0B")}
    ${K("","Средний чек · 7 дн",M(avg),w7.length+" "+pl(w7.length,"заказ","заказа","заказов"),"","st","#0EA5E9")}${K("","Витрина",vsold.length,"продано на "+M(vs),"show|sold","show","#EC4899")}</div>
    <h2>Заказы сейчас</h2><div class="bento">${[0,1,2,3].map(i=>K("b-st",SLB[i],c(i),"","orders|st"+i,"",`var(--s${i})`)).join("")}</div>`;
   const d30=addD(t,-29),LT=locs().length>1?`<h2>Точки · 30 дней</h2><div class="dtw"><table class="dt"><thead><tr><th>Точка</th><th style="text-align:right">Заказов</th><th style="text-align:right">Сумма</th><th style="text-align:right">Ср. чек</th></tr></thead><tbody>${locs().map(l=>{const r=RAW[0].filter(o=>+o.st!==5&&(o.loc||"main")===l.id&&(o.date||"")>=d30&&(o.date||"")<=t),sm=r.reduce((a,o)=>a+tot(o),0);return `<tr><td><b>${esc(l.name)}</b></td><td class="n">${r.length}</td><td class="n">${M(sm)}</td><td class="n">${r.length?M(sm/r.length):"—"}</td></tr>`}).join("")}</tbody></table></div>`:"";
-  return G+BG+`<h2>Ближайшие заказы</h2>${gTable(actF)}${latN?`<p class="mut" data-a="al" data-id="orders|later" style="cursor:pointer">Позже: ${latN} ${pl(latN,"заказ","заказа","заказов")} на другие дни — «Заказы» → «Позже» ›</p>`:""}`+CT+AL+RV+`<div class="dg" style="margin-top:6px">${todayStaff()}</div>`+LT}
+  if(y==="h")return G+hHome({money,td,act,actF,unpaid,avg,w7,vsold,vs,ur,c,latN})+CT+AL+RV+`<div class="dg" style="margin-top:6px">${todayStaff()}</div>`+LT;return G+BG+`<h2>Ближайшие заказы</h2>${gTable(actF)}${latN?`<p class="mut" data-a="al" data-id="orders|later" style="cursor:pointer">Позже: ${latN} ${pl(latN,"заказ","заказа","заказов")} на другие дни — «Заказы» → «Позже» ›</p>`:""}`+CT+AL+RV+`<div class="dg" style="margin-top:6px">${todayStaff()}</div>`+LT}
  
  
  
@@ -2852,7 +2887,7 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-a="ch_lk"]
 (function(){const s=document.createElement("style");s.textContent=".chm.out .chtag{color:inherit;opacity:.85}.chtag{font-size:10px;font-weight:700;color:var(--c);text-transform:uppercase;letter-spacing:.02em}.chml{font-size:10px;font-weight:700;color:var(--ac);background:color-mix(in srgb,var(--ac) 15%,transparent);border-radius:6px;padding:1px 5px;vertical-align:middle}.chsug{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:8px 10px 0;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,var(--ac) 12%,var(--card));font-size:14px}";document.head.appendChild(s)})();
 (function(){const s=document.createElement("style");s.id="skins";s.textContent='\n/* ===== Скины дизайнов на все разделы (разд. 48) ===== */\n/* A · Дашборд: мягкие градиентные карточки, крупные цифры, кнопки с градиентом */\n/* iOS: сгруппированные списки, сегменты, тонированные кнопки */\n/* Склад: контурные панели, квадратные плитки, кнопки-обводки, бейджи */\n/* Планер: пастельные карточки по кругу цветов, крупные скругления, контрастные кнопки */\n/* Таблица: плоско, строки как таблица, вкладки с подчёркиванием, прямые углы */\n/* Графики: полоса-акцент сверху карточек, крупные цифры, подчёркнутые вкладки, маркеры заголовков */\n';document.head.appendChild(s)})();
 (function(){const s=document.createElement("style");s.id="skins2";s.textContent='\n/* структура списков по дизайнам: показатели (.kpis), списки строк (.todo .tr), карточки разделов (.og без ly-) */\n';document.head.appendChild(s)})();
-(function(){const s=document.createElement("style");s.id="shell";s.textContent='\n#tb{display:none}.pt .ptb{display:none}\n@media(max-width:899px){\n:root:is([data-ly=g],[data-ly=h]) #tb{display:flex}\n:root:is([data-ly=g],[data-ly=h]) body{padding-top:0}\n}\n@media(min-width:900px){#tb{display:flex!important;margin:0 0 6px;padding:12px 24px 10px!important;border-bottom:1px solid var(--line)}#tb .tbn2>b{display:none}#tb .tbpt{font-size:15px;padding:6px 12px;border-radius:99px;background:color-mix(in srgb,var(--ac) 12%,transparent)}.chc{top:84px!important;height:calc(100vh - 104px)!important}.chl{max-height:calc(100vh - 104px)!important}}\n#tb{position:sticky;top:0;z-index:7;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top)) 16px 8px;background:var(--bg)}\n#tb .tbl{flex:1;display:flex;align-items:center;gap:8px;min-width:0}.tbn2{display:flex;flex-direction:column;min-width:0;line-height:1.1}.tbn2>b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tbpt{all:unset;cursor:pointer;font-size:12px;font-weight:700;color:var(--ac);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin-top:2px}.tbpt.fx{cursor:default;color:var(--mut)}#tb .tbl b{font-size:17px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#tb .tbr{display:flex;align-items:center;gap:8px}\n#tb .tbb{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;border:0;background:transparent;color:var(--ink);padding:0;position:relative;cursor:pointer}#tb .tbbell i{position:absolute;top:8px;right:9px;width:9px;height:9px;border-radius:50%;background:#f97316;border:2px solid var(--bg)}\n#tb .tba{width:40px;height:40px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--ac),color-mix(in srgb,var(--ac) 55%,#f97316));color:var(--on);font-weight:800;font-size:16px;cursor:pointer}\n@media(max-width:899px){\n/* меню: у каждого дизайна свой вид */\n/* статусы заказов: у каждого дизайна своя раскладка */\n}\n';document.head.appendChild(s)})();
+(function(){const s=document.createElement("style");s.id="shell";s.textContent='\n#tb{display:none}.pt .ptb{display:none}\n@media(max-width:899px){\n:root[data-ly=g] #tb{display:flex}\n:root[data-ly=g] body{padding-top:0}\n}\n@media(min-width:900px){#tb{display:flex!important;margin:0 0 6px;padding:12px 24px 10px!important;border-bottom:1px solid var(--line)}#tb .tbn2>b{display:none}#tb .tbpt{font-size:15px;padding:6px 12px;border-radius:99px;background:color-mix(in srgb,var(--ac) 12%,transparent)}.chc{top:84px!important;height:calc(100vh - 104px)!important}.chl{max-height:calc(100vh - 104px)!important}}\n#tb{position:sticky;top:0;z-index:7;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top)) 16px 8px;background:var(--bg)}\n#tb .tbl{flex:1;display:flex;align-items:center;gap:8px;min-width:0}.tbn2{display:flex;flex-direction:column;min-width:0;line-height:1.1}.tbn2>b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tbpt{all:unset;cursor:pointer;font-size:12px;font-weight:700;color:var(--ac);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin-top:2px}.tbpt.fx{cursor:default;color:var(--mut)}#tb .tbl b{font-size:17px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#tb .tbr{display:flex;align-items:center;gap:8px}\n#tb .tbb{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;border:0;background:transparent;color:var(--ink);padding:0;position:relative;cursor:pointer}#tb .tbbell i{position:absolute;top:8px;right:9px;width:9px;height:9px;border-radius:50%;background:#f97316;border:2px solid var(--bg)}\n#tb .tba{width:40px;height:40px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--ac),color-mix(in srgb,var(--ac) 55%,#f97316));color:var(--on);font-weight:800;font-size:16px;cursor:pointer}\n@media(max-width:899px){\n/* меню: у каждого дизайна свой вид */\n/* статусы заказов: у каждого дизайна своя раскладка */\n}\n';document.head.appendChild(s)})();
 (function(){const s=document.createElement("style");s.id="fx";s.textContent='\n.obk{position:sticky;top:calc(64px + env(safe-area-inset-top));z-index:4;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:10px 12px;margin:0 0 10px;border-radius:10px;background:var(--ac);color:var(--on)}.obk .btn.g{background:color-mix(in srgb,var(--on) 18%,transparent);color:var(--on);border:0}\n.otbs .otr{grid-template-columns:24px minmax(0,1.8fr) minmax(0,.7fr) minmax(0,1fr) minmax(0,.8fr)}.otr input[type=checkbox]{width:18px;height:18px;min-height:0;margin:0;accent-color:var(--ac)}.otr.sel{background:color-mix(in srgb,var(--ac) 12%,transparent)!important}\n.oth button{font:inherit;color:inherit;background:none;border:0;padding:0;text-align:left;cursor:pointer;font-weight:600}\n.ivr{grid-template-columns:minmax(0,1.7fr) minmax(0,.9fr) minmax(0,.5fr) auto!important}.scr{grid-template-columns:minmax(0,1.6fr) minmax(0,.9fr) minmax(0,.9fr) auto!important}.crr{grid-template-columns:minmax(0,1.8fr) minmax(0,.7fr) minmax(0,1fr) minmax(0,1fr)!important}\n.ivb{display:flex;gap:4px;flex-shrink:0}.ivb .btn{min-height:32px;min-width:34px;padding:4px 9px;flex:none}.li .btn.s{min-height:32px;padding:5px 10px;flex:none}\n.kb{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,78%);gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 12px;margin:0 -2px}\n.kbc{scroll-snap-align:start;border-radius:26px;padding:12px;background:color-mix(in srgb,var(--c) 22%,var(--card));min-height:160px;transition:box-shadow .15s}.kbc.ovr{box-shadow:inset 0 0 0 3px var(--c)}\n.kbh{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 10px}.kbh span{background:var(--card);border-radius:99px;padding:2px 10px;font-weight:700;font-size:13px}\n.kbi{background:var(--card);border-radius:18px;padding:12px;margin-bottom:8px;display:flex;flex-direction:column;gap:4px;cursor:grab}.kbi>span{font-size:13px;color:var(--mut)}.kbi .btn{margin-top:6px;min-height:34px;padding:6px 10px;font-size:13px}.kbi.drg{opacity:.5}.kbe{color:var(--mut);font-size:13px;text-align:center;padding:16px}\n/* окна по дизайнам (телефон) */\n@media(max-width:899px){@keyframes pz{from{transform:scale(.94);opacity:.4}}\n@keyframes r{from{transform:translateX(40px);opacity:.4}}\n}\n';document.head.appendChild(s)})();
 (function(){const s=document.createElement("style");s.id="mono";s.textContent='\n/* спокойный режим (по умолчанию): карточки в один тон под цвет акцента, цвет статуса только у меток и цифр */\n:root[data-mc="0"]{--tint:color-mix(in srgb,var(--ac) 12%,var(--card))}\n:root[data-mc="0"] .pc{background:var(--card);border-color:var(--line)}:root[data-mc="0"] .pc .pct{background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--ink)}\n:root[data-mc="0"] .pb,:root[data-mc="0"] .sq,:root[data-mc="0"] .kbc{background:var(--tint)!important;border-color:color-mix(in srgb,var(--ac) 30%,transparent)!important}:root[data-mc="0"] .pb b,:root[data-mc="0"] .sq b{color:var(--c)}\n:root[data-mc="0"] .pt button{background:var(--card)!important}:root[data-mc="0"] .pt button b{color:var(--sk)!important}\n:root[data-mc="0"] .rgi,:root[data-mc="0"] .oav{background:var(--tint)}\n';document.head.appendChild(s)})();
 /* ===== Смена на главной (разд. 49): начать и закончить одной кнопкой, сайт смотреть можно и без смены ===== */
