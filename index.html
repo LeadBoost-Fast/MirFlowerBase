@@ -1284,9 +1284,9 @@ function form(o,lnk){const e=o&&o.id,v=o||{},qpo=!e?quickOpts():"",cs=Object.key
     if(t.classList.contains("bqx")){if(b.lnkId){lnk=null}BL.splice(BL.indexOf(b),1);el.remove();nums();calc()}});
    el.addEventListener("input",ev=>{const t=ev.target;if(t.dataset&&t.dataset.bi){const n=Math.round(+t.value);if(n>0)b.it[t.dataset.bi]=n;calc()}else if(t===b.pr){b.man=b.pr.value!=="";calc()}else if(t===b.q)calc()});
    el.addEventListener("change",ev=>{const t=ev.target;if(t.dataset&&t.dataset.bi){const n=Math.round(+t.value);if(n>0)b.it[t.dataset.bi]=n;else delete b.it[t.dataset.bi];draw(b);calc()}else if(t===b.q){b.q.value=Nq(b);draw(b);calc()}});
-   const sl=el.querySelector(".bqs0");if(sl)scPicker(sl);if(sl)sl.onchange=()=>{const k=sl.value,h=el.querySelector(".bqh");if(b.lnkId){lnk=null;b.lnkId=null;b.q.disabled=false}h.hidden=true;nums();if(!k)return;const id=k.slice(2);let x,q;
+   const sl=el.querySelector(".bqs0");if(sl)scPicker(sl);if(sl)sl.onchange=()=>{const k=sl.value,h=el.querySelector(".bqh");if(b.lnkId){lnk=null;b.lnkId=null;b.q.disabled=false}h.hidden=true;nums();const pv=b.pk||"";if(!k){b.pk="";if(pv){b.it={};b.tx.value="";b.pr.value="";b.man=false;b.nm.value="";if(b.pph){PH=null;b.pph=false;const pp=$("phpv");if(pp)pp.innerHTML=""}draw(b);calc();nums()}return}const id=k.slice(2);let x,q;
     if(k[0]==="s"){if(BL.length>1){sl.value="";return toast("Готовый букет с витрины оформляется отдельным заказом")}x=SC.find(y=>y.id===id);q=x&&BQ.find(z=>z.id===x.bid)}else q=BQ.find(z=>z.id===id);
-    PH=(x&&x.img)||(q&&q.img)||PH;b.nm.value=x?x.name:q.name;b.it={};b.tx.value="";b.pr.value=x?x.price:q.price;b.man=true;
+    {const ph0=(x&&x.img)||(q&&q.img);if(ph0){PH=ph0;b.pph=true;const pp=$("phpv");if(pp)pp.innerHTML=th(ph0)}}b.pk=k;b.nm.value=x?x.name:q.name;b.it={};b.tx.value="";b.pr.value=x?x.price:q.price;b.man=true;
     if(x){b.tx.value=q?bcomp(q):"";lnk=id;b.lnkId=id;b.q.value=1;b.q.disabled=true;h.hidden=false}else(q.items||[]).forEach(i=>{if(i.iid&&+i.q>0)b.it[i.iid]=+i.q});
     draw(b);calc();nums()};
    draw(b);nums();calc();return b};
@@ -1970,7 +1970,7 @@ function scPicker(sl){
  ls.innerHTML='<button type="button" class="scpr" data-k=""><span class="scpt"><b style="font-weight:500">— ввести вручную —</b></span></button>'+rows.map(r=>r.g?`<div class="scpg">${esc(r.g)}</div>`:`<button type="button" class="scpr" data-k="${esc(r.k)}">${im(r)}${txt(r)}</button>`).join("");
  bt.onclick=()=>{ls.hidden=!ls.hidden;if(!ls.hidden)setTimeout(()=>{const o=ls.querySelector(".on");if(o)o.scrollIntoView({block:"nearest"})},0)};
  ls.onclick=e=>{const r=e.target.closest(".scpr");if(!r)return;sl.value=r.dataset.k;sl.dispatchEvent(new Event("change",{bubbles:true}));paint();ls.hidden=true};
- sl.addEventListener("change",paint);paint();
+ sl.addEventListener("change",paint);sl._scp=paint;paint();
  if(!window.__scpO){window.__scpO=1;document.addEventListener("click",e=>document.querySelectorAll(".scpl:not([hidden])").forEach(l=>{if(!l.parentNode.contains(e.target))l.hidden=true}))}}
 function quickOpts(ns){const s=ns?[]:SC.filter(x=>x.st==="in"),g=(t,a)=>a.length?`<optgroup label="${t}">${a.join("")}</optgroup>`:"";
  return g("Готовые на витрине",s.map(x=>`<option value="s:${x.id}">${esc(x.name)} · ${M(x.price)}</option>`))+g("Каталог букетов",BQ.map(b=>`<option value="b:${b.id}">${esc(b.name)} · ${M(b.price)}</option>`))}
@@ -2637,7 +2637,7 @@ function lvForm(scId){const L=myLoc(),bqs=BQ.slice().sort((a,b)=>String(a.name||
   el.q.disabled=!!sx;f.querySelectorAll("[data-wq]").forEach(x=>x.disabled=!!sx);$("lvn").hidden=!!(b||sx);all()};
  $("lvcb").onclick=()=>$("lvc").click();
  $("lvc").onchange=async ev=>{const fl=ev.target.files[0];if(!fl)return;$("lvs").textContent="Обрабатываю…";try{if(fl.type==="application/pdf"){if(fl.size>600000){chkU="";$("lvs").textContent="PDF больше 600 КБ, сфотографируйте чек";return}chkU=await new Promise((r,j)=>{const x=new FileReader();x.onload=()=>r(x.result);x.onerror=j;x.readAsDataURL(fl)});chkPdf=true}else{chkU=await imgBig(fl);chkPdf=false}}catch(x){chkU="";$("lvs").textContent="Не удалось открыть файл";return}upd()};
- all();if(scId){el.bq.value="s:"+scId;if(el.bq.value==="s:"+scId)el.bq.onchange()}
+ scPicker(el.bq);all();if(scId){el.bq.value="s:"+scId;if(el.bq.value==="s:"+scId)el.bq.onchange()}if(el.bq._scp)el.bq._scp();
  f.onsubmit=ev=>{ev.preventDefault();const q=Q(),pr=Math.round(+el.p.value)||0,wr=Math.max(0,Math.round(+el.wrap.value)||0),nt=el.nt.checked?300:0,rb=el.rb.checked?500:0,xs=xtSum(f),bq=BQ.find(x=>x.id===el.bq.value),sx=scSel?SC.find(y=>y.id===scSel):null,ks=Object.keys(it),
   nmk=ks.slice(0,2).map(k=>(inv(k)||{name:"?"}).name).join(", "),bn=(sx?sx.name:bq?bq.name:el.bn.value.trim())||nmk||"Букет";
   if(scSel&&!sx)return toast("Этот букет уже убран с витрины");
