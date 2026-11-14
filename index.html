@@ -297,7 +297,8 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
 :root[data-ly=h][data-t=dark]{--bg:#000;--card:#050505;--c2:#0e0e0e;--ink:#fff;--ac:#fff;--on:#000;--glass:rgba(0,0,0,.7);--s0:#fff;--s1:#e0e0e0;--s2:#c4c4c4;--s3:#a8a8a8;--s4:#808080;--s5:#808080;--ok:#fff;--warn:#fff;--bad:#fff}
 :root[data-ly=h][data-t=light]{--bg:#fff;--card:#fafafa;--c2:#f0f0f0;--ink:#000;--ac:#000;--on:#fff;--glass:rgba(255,255,255,.7);--s0:#000;--s1:#202020;--s2:#3c3c3c;--s3:#585858;--s4:#7a7a7a;--s5:#7a7a7a;--ok:#000;--warn:#000;--bad:#000}
 :root[data-ly=h]{--hct:50;--mut:color-mix(in srgb,var(--ink) calc(58% + var(--hct)*.3%),var(--bg));--line:color-mix(in srgb,var(--ink) calc(14% + var(--hct)*.3%),var(--bg))}
-:root[data-ly=h] #tb{display:none!important}
+/* #tb на телефоне показываем (поиск, колокольчик); на ноутбуке можно скрыть */
+@media(min-width:900px){:root[data-ly=h] #tb{display:none!important}}
 :root[data-ly=h] .fab{display:none!important}
 :root[data-ly=h] h1{font-family:var(--fh);font-weight:500;font-size:30px;letter-spacing:.01em;line-height:1.1}
 :root[data-ly=h] h2{font:500 11px/14px var(--fm);letter-spacing:.16em;text-transform:uppercase;color:var(--mut);border-bottom:1px solid var(--line);padding-bottom:6px}
@@ -325,33 +326,37 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
 :root[data-ly=h] .hole span{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--mut)}
 :root[data-ly=h] .hole b{font-family:var(--fh);font-size:14px;line-height:16px}
 :root[data-ly=h] .hole b.sm{font-size:12px}
-:root[data-ly=h] .hb{width:calc(var(--s)*var(--z)/360);height:calc(var(--s)*var(--z)/360);border-radius:50%;border:1px solid var(--ink);background:var(--bg)}
-:root[data-ly=h] .hb::after{content:"";position:absolute;left:-14px;right:-14px;top:-14px;bottom:-14px}
+:root[data-ly=h] .hb{width:calc(var(--s)*var(--z)/360);height:calc(var(--s)*var(--z)/360);min-width:28px;min-height:28px;border-radius:50%;border:1px solid var(--ink);background:var(--bg);z-index:2}
+/* зона нажатия меньше — иначе тела перехватывают клики соседей и планет */
+:root[data-ly=h] .hb::after{content:"";position:absolute;left:-6px;right:-6px;top:-6px;bottom:-6px;border-radius:50%;pointer-events:auto}
 :root[data-ly=h] .hb.k1{background:linear-gradient(90deg,var(--ink) 50%,var(--bg) 50%)}
 :root[data-ly=h] .hb.k2{background:var(--ink)}
 :root[data-ly=h] .hb.k3{border-style:dashed}
-:root[data-ly=h] .hb.k3::before{content:"";position:absolute;left:100%;top:50%;width:70%;border-top:1px dotted var(--ink)}
-:root[data-ly=h] .hx{position:absolute;right:-7px;top:-7px;width:15px;height:15px;border-radius:50%;background:var(--bg);color:var(--ink);border:1px solid var(--ink);font-size:11px;line-height:13px;text-align:center;font-weight:500}
-:root[data-ly=h] .hp{width:max(54px,calc(var(--s)*.15));height:max(54px,calc(var(--s)*.15));border-radius:50%;border:1px solid var(--ink);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
-:root[data-ly=h] .hp i{display:flex}
+:root[data-ly=h] .hb.k3::before{content:"";position:absolute;left:100%;top:50%;width:70%;border-top:1px dotted var(--ink);pointer-events:none}
+:root[data-ly=h] .hx{position:absolute;right:-7px;top:-7px;width:15px;height:15px;border-radius:50%;background:var(--bg);color:var(--ink);border:1px solid var(--ink);font-size:11px;line-height:13px;text-align:center;font-weight:500;pointer-events:none}
+:root[data-ly=h] .hp{width:max(48px,calc(var(--s)*.13));height:max(48px,calc(var(--s)*.13));border-radius:50%;border:1px solid var(--ink);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;z-index:4}
+:root[data-ly=h] .hp i{display:flex;pointer-events:none}
 :root[data-ly=h] .hp svg{width:16px;height:16px}
-:root[data-ly=h] .hp span{font-size:11px;line-height:12px;max-width:94%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:0}
-:root[data-ly=h] .hp .nb{position:absolute;right:-3px;top:-3px;min-width:18px;height:18px;border-radius:9px;font-size:11px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+:root[data-ly=h] .hp span{font-size:10px;line-height:11px;max-width:94%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:0;pointer-events:none}
+:root[data-ly=h] .hp .nb{position:absolute;right:-3px;top:-3px;min-width:18px;height:18px;border-radius:9px;font-size:11px;display:flex;align-items:center;justify-content:center;padding:0 4px;pointer-events:none}
+:root[data-ly=h] .hole{z-index:5}
 :root[data-ly=h] .hlg{font:11px/14px var(--fm);color:var(--mut);text-align:center;letter-spacing:.02em;margin:2px 0 8px}
-:root[data-ly=h] .hqs{justify-content:center}
+:root[data-ly=h] .hqs{justify-content:center;flex-wrap:wrap}
 :root[data-ly=h] .hmore{text-align:center;margin:6px 0}
 :root[data-ly=h] .hhud{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:10px 0}
 :root[data-ly=h] .hud{padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
 :root[data-ly=h] .hud span,:root[data-ly=h] .hud em{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-style:normal}
 :root[data-ly=h] .hud b{font-family:var(--fh);font-size:20px;line-height:24px}
-/* пульт вместо верхней и нижней панелей */
-:root[data-ly=h] nav{position:fixed!important;left:50%!important;right:auto!important;top:auto!important;bottom:calc(12px + env(safe-area-inset-bottom))!important;transform:translateX(-50%)!important;width:auto!important;height:auto!important;display:flex!important;flex-direction:row!important;align-items:center;justify-content:center;gap:14px;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;overflow:visible!important;z-index:30}
+/* пульт: все кнопки видны, без наложений, подписи не обрезаются */
+:root[data-ly=h] nav{position:fixed!important;left:8px!important;right:8px!important;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;transform:none!important;width:auto!important;max-width:520px;margin:0 auto!important;height:auto!important;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center;justify-content:space-around;gap:4px;padding:8px 6px!important;background:var(--bg)!important;border:1px solid var(--ink)!important;border-radius:999px!important;box-shadow:0 8px 24px rgba(0,0,0,.35)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;overflow-x:auto!important;overflow-y:hidden!important;z-index:30;-webkit-overflow-scrolling:touch}
 :root[data-ly=h] nav::before,:root[data-ly=h] nav::after{display:none!important}
-:root[data-ly=h] nav button{position:relative!important;flex:none;width:48px!important;height:48px!important;min-width:0!important;min-height:0!important;padding:0!important;margin:0!important;border-radius:50%!important;border:1px solid var(--ink)!important;background:var(--bg)!important;color:var(--ink)!important;display:flex!important;align-items:center;justify-content:center;transform:none!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;box-shadow:none!important}
-:root[data-ly=h] nav button svg{width:22px;height:22px}
-:root[data-ly=h] nav button i{display:flex}
-:root[data-ly=h] nav .plus{width:64px!important;height:64px!important;background:var(--ink)!important;color:var(--bg)!important}
-:root[data-ly=h] nav .nb{position:absolute;right:-4px;top:-4px;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:11px;padding:0 4px}
+:root[data-ly=h] nav button{position:relative!important;flex:1 0 auto;min-width:52px!important;width:auto!important;height:auto!important;min-height:48px!important;padding:6px 8px!important;margin:0!important;border-radius:14px!important;border:0!important;background:transparent!important;color:var(--ink)!important;display:flex!important;flex-direction:column!important;align-items:center;justify-content:center;gap:2px;transform:none!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;box-shadow:none!important;font-size:10px!important;line-height:1.1;white-space:nowrap}
+:root[data-ly=h] nav button.on{background:var(--ink)!important;color:var(--bg)!important}
+:root[data-ly=h] nav button svg{width:20px;height:20px;flex:none}
+:root[data-ly=h] nav button i{display:flex;pointer-events:none}
+:root[data-ly=h] nav .plus{min-width:56px!important;width:56px!important;height:56px!important;border-radius:50%!important;background:var(--ink)!important;color:var(--bg)!important;padding:0!important}
+:root[data-ly=h] nav .nb{position:absolute;right:2px;top:2px;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;padding:0 3px;pointer-events:none}
+:root[data-ly=h] main#v,:root[data-ly=h] #v{position:relative;z-index:1}
 /* окна на весь экран с рамкой */
 :root[data-ly=h] .ov{background:rgba(0,0,0,.78);align-items:center}
 :root[data-ly=h] .sh{max-width:640px;max-height:94dvh;border:1px solid var(--ink);background:var(--bg);animation:f .2s}
@@ -363,23 +368,44 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
 /* миниатюра в выборе дизайна: всегда ч/б */
 .mq-bh{position:absolute;inset:0;background:#000;border:1px solid #fff;display:block;overflow:hidden}
 .mq-bh i{position:absolute;left:50%;top:50%;width:30%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:#000;border:1px solid #fff;box-shadow:0 0 0 5px #000,0 0 0 6px #888,0 0 0 16px #000,0 0 0 17px #555}
+.mq{width:96px;height:72px;border-radius:14px;background:var(--bg);border:1px solid var(--line);padding:7px;display:flex;flex-direction:column;gap:3px;overflow:hidden;box-sizing:border-box;position:relative}
+.mq-cols{flex:1;display:flex;gap:3px;min-height:0}.mq-cols i{display:block;border-radius:3px;background:var(--ac);height:100%}
+.mq-cols .c1{width:18%;opacity:.9}.mq-cols .c2{flex:1;opacity:.65}.mq-cols .c3{width:28%;opacity:.4}
+.dzb{flex:0 0 auto;min-width:100px;display:flex;flex-direction:column;gap:6px;align-items:center;background:none;border:2px solid transparent;padding:6px;border-radius:16px;cursor:pointer;color:var(--ink);font:inherit}
+.dzb.on{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 10%,transparent)}
+.dzb b{font-size:12px;font-weight:700;text-align:center;max-width:110px;line-height:1.2}
+.dzr{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:4px 2px 8px;margin:0 -2px;-webkit-overflow-scrolling:touch}
+.dzr::-webkit-scrollbar{display:none}
+/* Чёрная дыра: верхняя панель с поиском/колокольчиком видна — иначе кнопок не хватает */
+@media(max-width:899px){:root[data-ly=h] #tb{display:flex!important;background:transparent;border:0}}
 @media(prefers-reduced-motion:reduce){:root[data-ly=h] *{transition:none!important;animation:none!important}}
 
 /* ===== Командный центр m / Доска k / День d + считыватель ===== */
-:root[data-ly=m]{--rail:220px}:root[data-ly=m] #tb{display:none!important}
+:root[data-ly=m]{--rail:220px}
+/* телефон: верхняя панель и нижнее меню как обычно — иначе пропадают поиск, колокольчик, кнопки */
+@media(max-width:899px){
+:root[data-ly=m] #tb{display:flex!important}
+:root[data-ly=m] nav{display:flex!important}
+:root[data-ly=m] .m-kpi{grid-template-columns:repeat(2,1fr)}
+:root[data-ly=m] .m-shell{display:block}
+:root[data-ly=m] .m-detail{display:none}
+}
 @media(min-width:900px){
+:root[data-ly=m] #tb{display:none!important}
 :root[data-ly=m] body{padding:0 0 0 var(--rail)!important}
-:root[data-ly=m] nav{top:0;bottom:0;left:0;right:auto;width:var(--rail);flex-direction:column;justify-content:flex-start;padding:18px 10px;border-radius:0;border:0;border-right:1px solid var(--line);box-shadow:none;overflow-y:auto;background:var(--card)}
+:root[data-ly=m] nav{top:0;bottom:0;left:0;right:auto;width:var(--rail);flex-direction:column;justify-content:flex-start;padding:18px 10px;border-radius:0;border:0;border-right:1px solid var(--line);box-shadow:none;overflow-y:auto;background:var(--card);display:flex!important}
 :root[data-ly=m] nav::before{content:attr(data-brand);display:block;font-weight:700;font-size:18px;padding:4px 10px 16px;color:var(--ac)}
-:root[data-ly=m] nav button{text-align:left;padding:11px 12px;font-size:14px;flex:none;border-radius:10px}
+:root[data-ly=m] nav button{text-align:left;padding:11px 12px;font-size:14px;flex:none;border-radius:10px;min-height:44px}
 :root[data-ly=m] nav button.on{background:color-mix(in srgb,var(--ac) 16%,transparent);color:var(--ac)}
 :root[data-ly=m] .m-shell{display:grid;grid-template-columns:1fr minmax(300px,38%);gap:14px;align-items:start}
 :root[data-ly=m] .m-detail{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:14px}
 }
 :root[data-ly=m] .m-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 14px}
-:root[data-ly=m] .m-kpi .tile{padding:12px 10px;text-align:left}
+:root[data-ly=m] .m-kpi .tile{padding:12px 10px;text-align:left;cursor:pointer;min-height:44px}
 :root[data-ly=m] .m-kpi .tile b{font-size:22px;display:block}
-@media(max-width:899px){:root[data-ly=m] .m-kpi{grid-template-columns:repeat(2,1fr)}:root[data-ly=m] .m-shell{display:block}:root[data-ly=m] .m-detail{display:none}}
+/* доска/день: карточки не перекрывают соседние кнопки */
+:root[data-ly=k] .kbi,:root[data-ly=d] .day-o{position:relative;z-index:1;touch-action:manipulation}
+:root[data-ly=k] .kb{padding-bottom:20px}
 :root[data-ly=k] .kb{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(240px,82%);gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 14px;margin:0 -2px;-webkit-overflow-scrolling:touch}
 :root[data-ly=k] .kbc{scroll-snap-align:start;border-radius:18px;padding:12px;background:color-mix(in srgb,var(--c,var(--ac)) 14%,var(--card));min-height:180px;border:1px solid var(--line)}
 :root[data-ly=k] .kbh{display:flex;justify-content:space-between;align-items:center;padding:2px 4px 10px;font-weight:700}
@@ -685,14 +711,13 @@ function thSet(k,v,r){let th=thGet();if(k==="reset")th={};else{if(k==="ac"||k===
 function setTh(m){STO.set("t",m);applyTheme();if(S)draw();else if(typeof login==="function"&&!U)login()}
 const themeChips=()=>`<div class="chips" style="margin:10px 0 0;justify-content:center">${[["auto","Авто"],["light","Светлая"],["dark","Тёмная"]].map(c=>`<button type="button" class="chip ${(STO.get("t")||"auto")===c[0]?"on":""}" onclick="setTh('${c[0]}')">${c[1]}</button>`).join("")}</div>`,
 /* миниатюра экрана в цветах палитры и раскладке дизайна (a/b/c) — пример рядом с выбором (разд. 38) */
-miniPv=(ui)=>{const r=(n,f)=>Array.from({length:n},(_,k)=>f(k)).join("");return `<span class="mq mq-${ui}">${
- ui==="h"?`<span class="mq-bh"><i></i></span>`:
- ui==="g"?`<span class="mq-bg">${r(5,()=>"<i></i>")}</span>`:
- ui==="m"?`<span class="mq-vb" style="flex-direction:row;gap:2px"><i style="width:18%;height:100%;border-radius:2px"></i><i style="flex:1;height:100%;border-radius:2px;opacity:.7"></i><i style="width:28%;height:100%;border-radius:2px;opacity:.5"></i></span>`:
- ui==="k"?`<span class="mq-gr">${r(3,()=>"<i></i>")}</span>`:
- ui==="d"?`<span class="mq-vb">${r(6,k=>`<i style="height:${[30,55,40,80,45,60][k]}%"></i>`)}</span>`:
- `<span class="mq-vb">${r(7,k=>`<i style="height:${[40,70,55,95,45,80,65][k]}%"></i>`)}</span>`
-}</span>`},
+miniPv=(ui)=>{const r=(n,f)=>Array.from({length:n},(_,k)=>f(k)).join("");
+ if(ui==="h")return `<span class="mq mq-h"><span class="mq-bh"><i></i></span></span>`;
+ if(ui==="g")return `<span class="mq mq-g"><span class="mq-bg">${r(5,()=>"<i></i>")}</span></span>`;
+ if(ui==="m")return `<span class="mq mq-m"><span class="mq-cols"><i class="c1"></i><i class="c2"></i><i class="c3"></i></span></span>`;
+ if(ui==="k")return `<span class="mq mq-k"><span class="mq-gr">${r(3,()=>"<i></i>")}</span></span>`;
+ if(ui==="d")return `<span class="mq mq-d"><span class="mq-vb">${r(6,k=>`<i style="height:${[35,60,45,85,50,70][k]}%"></i>`)}</span></span>`;
+ return `<span class="mq"><span class="mq-vb">${r(5,k=>`<i style="height:${[40,70,55,90,50][k]}%"></i>`)}</span></span>`},
 themeCard=()=>{const t=thGet(),cur=PALS[t.p]?t.p:"Тинт",dk=document.documentElement.dataset.t==="dark"?"d":"l",P=PALS[cur][dk],ui=LY(),
  hh=ui==="h",
  rg=(l,k,mn,mx,d)=>`<label>${l}</label><input type="range" min="${mn}" max="${mx}" value="${t[k]==null?d:t[k]}" oninput="thSet('${k}',+this.value)">`,
