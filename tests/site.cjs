@@ -210,6 +210,26 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   ok(await pg.evaluate(()=>cOn()&&roleOpts(null).includes('value="r:courier"')),"свои курьеры снова включены: роль вернулась");
   await pg.evaluate(()=>{tab="team";draw()});await pg.waitForTimeout(800);await pg.locator('[data-a=tt_del]').first().click();await pg.waitForTimeout(1500);ok(await pg.evaluate(()=>TT().length===0),"профессию можно убрать");
   await pg.context().close()}
+ /* 4i. мастер первой настройки магазина */
+ {const pg=await lg("tilegen615@gmail.com");ok(await pg.evaluate(()=>!CFG.wizard),"у Mirflowers мастер настройки сам не открывается (wizard не задан)");
+  ok(await pg.evaluate(()=>fxCard().includes('data-a="wz_open"')),"владелец: в «Возможностях» есть кнопка «Мастер настройки магазина»");
+  await pg.evaluate(()=>{wizard()});await pg.waitForTimeout(600);ok(await pg.locator("#wzf").count()===1,"мастер открылся: название, телефон, адрес, шаблон, доставка");
+  ok(await pg.locator('#wzt .chip').count()===3&&await pg.locator('#wzv .chip').count()===3,"3 шаблона магазина и 3 способа доставки");
+  await pg.locator('#wzf [name=nm]').fill("Mirflowers");await pg.locator('#wzt [data-k=mini]').click();await pg.locator('#wzv [data-k=none]').click();
+  ok((await pg.locator("#wzd1").textContent()).includes("Один-два человека")&&(await pg.locator("#wzd2").textContent()).includes("только самовывоз"),"под выбором показано описание");
+  await pg.screenshot({path:OUT+"/wizard.png"});await pg.locator('#wzf button').last().click();await pg.waitForTimeout(1800);
+  const st=(await(await fetch(FS+"/settings/main",{headers:{Authorization:"Bearer owner"}})).json()).fields,fx=(st.fx.mapValue.fields)||{},b=k=>fx[k]&&fx[k].booleanValue;
+  ok(st.setupDone&&st.setupDone.booleanValue===true&&b("rvOn")===false&&b("teamChat")===false&&b("deals")===false&&b("delivery")===false&&b("couriers")===false&&b("clientChat")===true,"шаблон «Мини» и «Только самовывоз» записаны, чаты остались включены");
+  ok(await pg.evaluate(()=>!dvOn()&&!cOn()&&!FX("deals")),"сайт сразу применил настройки: доставки и сделок нет");
+  await pg.evaluate(()=>db.collection("settings").doc("main").set({fx:{...FXD}},{merge:true}));await pg.waitForTimeout(1200);
+  ok(await pg.evaluate(()=>dvOn()&&cOn()&&FX("deals")),"настройки возвращены (проверка не ломает остальное)");
+  await pg.context().close()}
+ /* 4j. каналы связи на главной */
+ {const pg=await lg("tilegen615@gmail.com");await pg.evaluate(()=>{tab="home";draw()});await pg.waitForTimeout(1000);
+  ok(await pg.evaluate(()=>chnHome().includes("WhatsApp и Instagram")),"владелец: на главной «Не подключено: WhatsApp и Instagram»");
+  ok(await pg.locator('[data-a=chn_o]').count()===1,"плашка про каналы видна на главной");
+  await pg.locator('[data-a=chn_o]').tap();await pg.waitForTimeout(900);ok((await pg.locator("#v").textContent()).includes("Каналы связи"),"по нажатию открываются настройки каналов связи");await pg.context().close()}
+ {const pg=await lg("op@x.kz");ok(await pg.evaluate(()=>chnHome()===""),"оператору плашка про каналы не показывается");await pg.context().close()}
  /* 5. аноним не пишет и не листает */
  {const w=await fetch(FS+"/pubShop/main",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({fields:{on:{booleanValue:false}}})});ok(w.status===403,"аноним не может писать: HTTP "+w.status);
   const l=await fetch(FS+"/pubShop");ok(l.status===403,"аноним не может листать коллекцию: HTTP "+l.status);

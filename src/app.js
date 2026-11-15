@@ -185,7 +185,7 @@ st.textContent=`:root[data-t=${e}]{--bg:${P[0]};--card:${P[1]};--c2:${P[2]};--in
 if(tc)tc.content=P[0];try{dsgAfter()}catch(e){}}
 const UIS=["g","h","m","p"];/* у каждого — своя архитектура экранов */
 /* Тяжёлые дизайны лежат в отдельных файлах и грузятся только когда выбраны (пока файл не загрузился, работает Bento) */
-const DLIB={h:"d-cosmos.js",m:"d-command.js",p:"d-atlas.js"},DSTAT={},DSG_V=window.DSGV||"20261116i",
+const DLIB={h:"d-cosmos.js",m:"d-command.js",p:"d-atlas.js"},DSTAT={},DSG_V=window.DSGV||"20261116j",
  dsgReady=k=>k==="g"||DSTAT[k]===2,uiSel=()=>{try{const u=JSON.parse(STO.get("th")||"{}").ui;return UIS.includes(u)?u:"g"}catch(e){return"g"}},
  dsgAfter=()=>{const x=SHELL[LY()];if(x&&x.after)x.after()};
 function dsgLoad(k){if(!DLIB[k]||DSTAT[k]===1||DSTAT[k]===2)return;DSTAT[k]=1;const e=document.createElement("script");e.src=DLIB[k]+"?v="+DSG_V;e.async=true;
@@ -371,7 +371,7 @@ auth.onAuthStateChanged(async u=>{await FSREADY;__authDone=1;U=u;S=null;O=[];ON=
  subs.push(db.collection("shiftLog").where("start",">=",Date.now()-62*864e5).onSnapshot(s=>{SLG=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>{}));
  subs.push(db.collection("shifts").where("date",">=",addD(today(),-60)).onSnapshot(s=>{SHL=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>toast("График: "+er(e))));
  subs.push(db.collection("shiftRequests").where("st","==","wait").onSnapshot(s=>{SR=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>{SR=[];}));subs.push(db.collection("stockReqs").where("st","==","wait").onSnapshot(s=>{SQ=s.docs.map(d=>({id:d.id,...d.data()}));dq()},e=>{SQ=[];}));
- subs.push(db.collection("settings").doc("main").onSnapshot(d=>{SH=d.exists?d.data():{};if(LC.some(l=>l.active!==false))SH.split=true;applySet();dq()},e=>toast("Настройки: "+er(e))));rpSubs();
+ subs.push(db.collection("settings").doc("main").onSnapshot(d=>{SH=d.exists?d.data():{};if(LC.some(l=>l.active!==false))SH.split=true;applySet();dq();if(CFG.wizard&&S&&own()&&!SH.setupDone&&!wzShown){wzShown=1;setTimeout(wizard,700)}},e=>toast("Настройки: "+er(e))));rpSubs();
  uiLoad();draw()});
 
 function uiKey(){return"ui_"+(U?U.uid:"x")}
@@ -466,6 +466,11 @@ function stBlock(c){const y=LY(),act=[0,1,2,3].reduce((a,i)=>a+c(i),0)||1,A=i=>`
  
  return ""}
 function geoBanner(){if(!S||!own())return"";const L=locs().filter(l=>!(geoPts()[l.id]||{}).lat);if(!L.length)return"";return `<div class="card tdt" style="padding:10px 14px"><div class="tdi" data-a="geob_o" style="border:0;padding:4px 0">${tic("pin","#F59E0B")}<span class="tdx"><b>${L.length}</b> ${pl(L.length,"магазин","магазина","магазинов")} без места на карте — задать</span><span class="chev">›</span></div></div>`}
+/* Что не подключено из каналов связи: показываем владельцу и админу на главной, пока WhatsApp и Instagram не работают */
+function chnHome(){if(!S||!(own()||adm())||typeof sad!=="function"||!sad())return"";const wa=waOn(),ig=chOn("ig");if(wa&&ig)return"";
+ const miss=[wa?"":"WhatsApp",ig?"":"Instagram"].filter(Boolean);
+ return `<div class="card tdt" style="padding:10px 14px"><div class="tdi" data-a="chn_o" style="border:0;padding:4px 0">${tic("chats","#F59E0B")}<span class="tdx">Не подключено: <b>${miss.join(" и ")}</b>. Клиенты не смогут писать в CRM</span><span class="chev">›</span></div></div>`}
+document.addEventListener("click",e=>{if(!e.target.closest('[data-a="chn_o"]')||!S||!(own()||adm()))return;tab="set";SETS="tech";draw();setTimeout(()=>{const h=[...document.querySelectorAll("#v h2")].find(x=>/Каналы связи/.test(x.textContent));if(h)h.scrollIntoView({block:"start"})},300)});
 function geoBannerFull(){const L=locs().filter(l=>!(geoPts()[l.id]||{}).lat);return `<div class="card geob"><b>Задайте место магазинов</b><p class="mut" style="margin:4px 0 10px;font-size:13px">Пока место не задано, сотрудники могут начать смену откуда угодно. Нажмите <b>«На карте»</b> и ткните в свой магазин на карте 2ГИС (или «По адресу» / «Я здесь», если вы внутри). После этого смену можно будет начать только в 50 м от него.</p>${L.map(l=>`<div class="lcr"><div style="color:var(--ink)"><b>${esc(l.name)}</b></div><div class="lcb"><button class="btn s" data-a="geo_map" data-id="${esc(l.id)}">🗺 На карте</button><button class="btn g s" data-a="geo_addr" data-id="${esc(l.id)}">По адресу</button><button class="btn g s" data-a="geo_set" data-id="${esc(l.id)}">📍 Я здесь</button></div></div>`).join("")}</div>`}
 /* ===== Движок оболочек SHELL и слой ролей ROLE (разд. 138, Фаза 1) =====
  Дизайн (SHELL) решает, КАК стоит экран; роль (ROLE) — ЧТО на нём и в каком порядке. Два независимых слоя: любой дизайн × любая роль.
@@ -498,6 +503,7 @@ const HB={
  next:["Следующий шаг",()=>nextHero()],
  wd:["Подсказка дня",()=>wdHint()],
  geo:["Точки без адреса на карте",()=>geoBanner()],
+ chn:["Каналы связи: что не подключено",()=>chnHome()],
  shift:["Смена",()=>shiftCard(),1],
  todo:["Нужно сделать",()=>todoTop()],
  rq:["Запросы",()=>rqHome()],
@@ -510,8 +516,8 @@ const HB={
 /* home — блоки главной по порядку; nav — закреплённые разделы (нижнее меню телефона); primary — главное действие;
  orders — вид заказов по умолчанию; order — что сверху в окне заказа; alerts — что «горит». orders/order/alerts читают оболочки следующих фаз. */
 const ROLE={
- own:{home:["me","wd","geo","shift","todo","rq","main","rep","shend"],nav:["home","fin","stock","orders","an"],primary:"fin",orders:{fdt:"t"},order:["sum","pay","hist"],alerts:["late","unpaid","rep","rv"]},
- admin:{home:["me","wd","geo","shift","todo","rq","main","rep","shend"],nav:["home","orders","chats","show","stock"],primary:"new",orders:{fdt:"t",unpaid:1},order:["st","resp","acts"],alerts:["todo","rq","rep"]},
+ own:{home:["me","wd","geo","chn","shift","todo","rq","main","rep","shend"],nav:["home","fin","stock","orders","an"],primary:"fin",orders:{fdt:"t"},order:["sum","pay","hist"],alerts:["late","unpaid","rep","rv"]},
+ admin:{home:["me","wd","geo","chn","shift","todo","rq","main","rep","shend"],nav:["home","orders","chats","show","stock"],primary:"new",orders:{fdt:"t",unpaid:1},order:["st","resp","acts"],alerts:["todo","rq","rep"]},
  operator:{home:["me","wd","shift","next","todo","rq","main","chips","earn","rep","shend"],nav:["home","orders","chats","crm","show"],primary:"new",orders:{fs:"new"},order:["client","phone","chat","pay"],alerts:["chat","unpaid"]},
  florist:{home:["me","wd","shift","next","todo","rq","main","chips","earn","rep","shend"],nav:["home","orders","show","stock"],primary:"asm",orders:{fs:"asm"},order:["recipe","photo","mk"],alerts:["late","redo"]},
  assistant:{home:["me","wd","shift","next","todo","rq","main","chips","earn","rep","shend"],nav:["home","orders","show","stock","chats"],primary:"asm",orders:{fs:"asm"},order:["recipe","check"],alerts:["late"]},
@@ -770,6 +776,25 @@ document.addEventListener("click",e=>{if(!e.target.closest('[data-a="gis_key"]')
 
 let OLIM=0;const ordLim=()=>OLIM||(LITE?30:80);document.addEventListener("click",e=>{if(e.target.closest('[data-a="o_more"]')&&S){OLIM=ordLim()+(LITE?30:80);draw()}});
 
+/* ===== Первая настройка магазина (мастер) и шаблоны ===== */
+const SHT={std:{n:"Стандарт",d:"Всё включено: чаты с клиентами, сделки, командный чат, проверка букета. Подходит большинству магазинов.",fx:{}},
+ mini:{n:"Мини",d:"Один-два человека. Без проверки букета, командного чата и сделок: меньше кнопок, проще работать.",fx:{rvOn:false,teamChat:false,deals:false}},
+ net:{n:"Несколько точек",d:"Сеть магазинов. Всё включено, ссылка на статус заказа уходит клиенту сама.",fx:{linkSend:true}}},
+ WZD={none:{n:"Только самовывоз",d:"Доставки нет: в заказе только самовывоз.",fx:{delivery:false,couriers:false}},
+ svc:{n:"inDrive / Яндекс",d:"Доставка есть, курьеров в штате нет: заказ отправляют через inDrive, Яндекс или другое такси.",fx:{delivery:true,couriers:false}},
+ own:{n:"Свои курьеры",d:"Курьеры в штате. Через inDrive и Яндекс тоже можно отправить.",fx:{delivery:true,couriers:true}}};
+let wzShown=0;
+function wizard(){if(!S||!own())return;let tk="std",dk=dvOn()?(cOn()?"own":"svc"):"none";
+ const chips=(id,M,cur)=>`<div class="chips" id="${id}" style="flex-wrap:wrap;overflow:visible">${Object.keys(M).map(k=>`<button type="button" class="chip ${k===cur?"on":""}" data-k="${k}">${M[k].n}</button>`).join("")}</div>`;
+ modal(hd("Настроим ваш магазин")+`<p class="mut">Три коротких шага. Потом всё можно поменять в «Настройках».</p><form id="wzf"><label>Название магазина</label><input name="nm" required maxlength="60" value="${esc(SH.name||CFG.name||"")}"><label>Телефон для клиентов</label><input name="ph" inputmode="tel" maxlength="60" value="${esc(SH.phone||"")}" placeholder="+7 777 000 00 00"><label>Адрес (по желанию)</label><input name="ad" maxlength="120" value="${esc(SH.addr||"")}" placeholder="Город, улица, дом"><label>Какой у вас магазин</label>${chips("wzt",SHT,tk)}<p class="mut" id="wzd1" style="font-size:13px">${SHT[tk].d}</p><label>Как доставляете</label>${chips("wzv",WZD,dk)}<p class="mut" id="wzd2" style="font-size:13px">${WZD[dk].d}</p><div class="acts"><button type="button" class="btn g" data-a="x">Позже</button><button class="btn">Готово</button></div></form>`);
+ const pick=(id,M,set,dsc)=>{$(id).onclick=e=>{const c=e.target.closest("[data-k]");if(!c)return;set(c.dataset.k);[...$(id).children].forEach(x=>x.classList.toggle("on",x===c));$(dsc).textContent=M[c.dataset.k].d}};
+ pick("wzt",SHT,k=>tk=k,"wzd1");pick("wzv",WZD,k=>dk=k,"wzd2");
+ $("wzf").onsubmit=e=>{e.preventDefault();const f=new FormData($("wzf")),nm=(f.get("nm")||"").toString().trim(),ph=(f.get("ph")||"").toString().trim(),ad=(f.get("ad")||"").toString().trim();if(!nm)return toast("Напишите название магазина");
+  run(async()=>{const fx={...FXD,...SHT[tk].fx,...WZD[dk].fx},set={name:nm,fx,setupDone:true,setupAt:TS(),updatedAt:TS()};if(ph)set.phone=ph;if(ad)set.addr=ad;
+   await db.collection("settings").doc("main").set(set,{merge:true});
+   if(ad&&!LC.length)await db.collection("locations").add({name:ad.slice(0,40),addr:ad,active:true,createdAt:TS()}).catch(()=>{});
+   log("Магазин настроен",{bn:nm},SHT[tk].n+" · "+WZD[dk].n);modal("");toast("Магазин настроен")})}}
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="wz_open"]');if(!b||!S||!own())return;e.preventDefault();wizard()});
 /* ===== Профессии магазина: свои названия должностей (settings.titles) на основе роли; включатель «Доставка и курьеры» ===== */
 const TBASE=["operator","florist","assistant","courier"];
 function TT(){return(Array.isArray(SH.titles)?SH.titles:[]).filter(t=>t&&t.id&&t.name&&TBASE.includes(t.base))}
@@ -2286,7 +2311,7 @@ function tcSend(){const i=$("tcin"),t=(i?i.value:tcDraft).trim();if(!t)return;tc
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="tc_send"]');if(b&&S)tcSend()});
 
 /* ---------- Расширенные настройки возможностей (админ) ---------- */
-function fxCard(){return `<h2>Возможности</h2><form id="fxf" class="card"><div class="mut" style="margin-bottom:12px">Включайте и выключайте функции сайта для всей команды. Изменения вступают в силу после нажатия «Сохранить».</div>${Object.keys(FXD).map(k=>`<label class="row" style="color:var(--ink);margin:0 0 14px;align-items:flex-start;gap:12px"><span><b>${FXL[k]}</b><br><span class="mut" style="font-size:.86em;font-weight:400">${FXH[k]}</span></span><input type="checkbox" name="${k}" style="width:26px;min-height:26px;flex:none" ${FX(k)?"checked":""}></label>`).join("")}
+function fxCard(){return `<h2>Возможности</h2><form id="fxf" class="card"><div class="mut" style="margin-bottom:12px">Включайте и выключайте функции сайта для всей команды. Изменения вступают в силу после нажатия «Сохранить».</div>${own()?`<div class="acts" style="margin:0 0 12px"><button type="button" class="btn g s" data-a="wz_open">Мастер настройки магазина</button></div>`:""}${Object.keys(FXD).map(k=>`<label class="row" style="color:var(--ink);margin:0 0 14px;align-items:flex-start;gap:12px"><span><b>${FXL[k]}</b><br><span class="mut" style="font-size:.86em;font-weight:400">${FXH[k]}</span></span><input type="checkbox" name="${k}" style="width:26px;min-height:26px;flex:none" ${FX(k)?"checked":""}></label>`).join("")}
  <label>Сообщение клиенту с фото готового букета</label><textarea name="photoMsg" rows="4">${esc(photoBase())}</textarea><p class="mut" style="margin:4px 2px 0">Это текст, который уходит клиенту вместе с фото готового букета. Подставляются: {имя} — имя клиента, {букет} — название букета.</p><div class="acts"><button class="btn">Сохранить</button></div></form>`}
 document.addEventListener("submit",e=>{if(e.target.id!=="fxf"||!S||!sad())return;e.preventDefault();const f=new FormData(e.target),fx={};Object.keys(FXD).forEach(k=>fx[k]=f.get(k)==="on");
  run(async()=>{await db.collection("settings").doc("main").set({fx,photoMsg:(f.get("photoMsg")||"").toString().trim()||PHOTO_MSG,updatedAt:TS()},{merge:true});const was=Object.assign({},FXD,SH.fx||{}),on=[],off=[];Object.keys(FXD).forEach(k=>{if(!!was[k]!==fx[k])(fx[k]?on:off).push(FXL[k].split(":")[0].split(" (")[0])});log("Изменены возможности",{bn:"",x:(on.length?"включено: "+on.join(", "):"")+(off.length?(on.length?"; ":"")+"выключено: "+off.join(", "):"")});toast(on.length||off.length?"Сохранено."+(on.length?" Включено: "+on.join(", ")+".":"")+(off.length?" Выключено: "+off.join(", ")+".":""):"Сохранено, переключатели не менялись (изменён только текст сообщения)")})});

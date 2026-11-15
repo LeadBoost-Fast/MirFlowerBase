@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f6f1ea"><meta name="robots" content="index,follow"><title>Условия использования</title>
+<style>
+:root{--bg:#f6f1ea;--card:#fffdf9;--ink:#1f1a15;--mut:#7a7166;--ac:#a35a6b;--line:#e6dccf}
+@media(prefers-color-scheme:dark){:root{--bg:#120f0d;--card:#1d1916;--ink:#f3ede5;--mut:#a89f94;--line:#342d27}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,"SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:720px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top)) 16px 48px}
+h1{font-size:clamp(26px,6vw,34px);line-height:1.2;margin:8px 0 4px}h2{font-size:19px;margin:28px 0 6px}
+p,li{margin:8px 0}ul{padding-left:22px}a{color:var(--ac)}.mut{color:var(--mut);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:16px 0}
+.todo{background:#fff3b0;color:#5a4a00;border-radius:4px;padding:0 4px}
+nav{display:flex;gap:14px;flex-wrap:wrap;margin-top:28px;font-size:14px}
+.btn{display:inline-block;background:var(--ac);color:#fff;text-decoration:none;border-radius:99px;padding:12px 20px;min-height:44px;font-weight:600}
+</style></head><body><main>
+<p class="mut"><a href="./">&larr; <span data-f="name"></span></a></p>
+<h1>Условия использования</h1><p class="mut">Редакция от 15.11.2026</p>
+<p>Эти условия описывают, как магазины-клиенты используют сервис для ведения заказов, клиентов и переписки в WhatsApp и Instagram (далее «сервис»). Магазин, подключивший сервис, принимает их полностью.</p>
+<h2>1. Что даёт сервис</h2>
+<p>Учёт заказов и клиентов, склад, отчёты, чаты с клиентами, автоматические сообщения о статусе заказа, онлайн-витрина и страница статуса заказа для клиента.</p>
+<h2>2. Аккаунт и доступ</h2>
+<ul><li>Владелец магазина отвечает за сотрудников, которым выдал доступ, и за сохранность паролей.</li><li>Роли и права сотрудников настраиваются владельцем.</li></ul>
+<h2>3. Правила отправки сообщений</h2>
+<ul><li>Писать клиентам первыми по шаблону можно только тем, кто сам обратился в магазин или дал согласие на сообщения.</li><li>Запрещены спам, обман, запрещённые товары и всё, что нарушает правила <a href="https://www.whatsapp.com/legal/business-policy" rel="noopener">WhatsApp Business Policy</a> и правила Instagram. Мы можем отключить канал при нарушении.</li><li>Клиент может отказаться от сообщений ответом «Стоп»: магазин обязан это учитывать.</li></ul>
+<h2>4. Данные клиентов магазина</h2>
+<p>Магазин является оператором персональных данных своих клиентов и отвечает за законность их сбора и за согласие клиентов. Сервис обрабатывает эти данные только по поручению магазина и только для работы сервиса. Подробнее: <a href="privacy.html">политика конфиденциальности</a>.</p>
+<h2>5. Оплата</h2>
+<p>Стоимость сервиса и подключения определяется отдельным договором или тарифом. Сообщения WhatsApp оплачиваются магазином напрямую Meta по её тарифам и в стоимость сервиса не входят.</p>
+<h2>6. Доступность и резервные копии</h2>
+<p>Мы стараемся обеспечить работу сервиса круглосуточно и делаем резервные копии данных, но не гарантируем отсутствие перерывов: плановые работы, сбои у провайдеров, сбои WhatsApp и Instagram.</p>
+<h2>7. Завершение работы</h2>
+<p>Магазин может отказаться от сервиса в любой момент. По запросу мы выгрузим его данные и удалим их с серверов в течение 30 дней, кроме данных, которые мы обязаны хранить по закону.</p>
+<h2>8. Ответственность</h2>
+<p>Сервис предоставляется «как есть». Мы не отвечаем за упущенную выгоду, за доставку сообщений мессенджерами и за действия сотрудников магазина. Общая ответственность ограничена суммой, уплаченной за сервис за последние 3 месяца.</p>
+<h2>9. Право и контакты</h2>
+<p>Применяется право Республики Казахстан. Споры решаются переговорами, а при их неудаче в суде по месту нахождения ответчика. Контакты: <span data-f="owner"></span>, <span data-f="email"></span>, <span data-f="phone"></span>.</p>
+<nav><a href="privacy.html">Политика конфиденциальности</a><a href="terms.html">Условия использования</a><a href="data-deletion.html">Удаление данных</a></nav>
+</main>
+<script src="shop.config.js"></script>
+<script>
+/* Реквизиты берутся из shop.config.js (SHOP_CFG.legal). Незаполненное подсвечивается жёлтым: такую страницу публиковать нельзя */
+(function(){var C=window.SHOP_CFG||{},L=C.legal||{},V={name:C.name,owner:L.owner,bin:L.bin,email:L.email,phone:L.phone,address:L.address,storage:L.storage};
+document.querySelectorAll("[data-f]").forEach(function(e){var k=e.getAttribute("data-f"),v=V[k];if(v)e.textContent=v;else{e.textContent="[указать: "+k+"]";e.className="todo"}});
+document.querySelectorAll("a[data-m]").forEach(function(a){var m=L.email;if(m)a.href="mailto:"+m+"?subject="+encodeURIComponent(a.getAttribute("data-m"))})})();
+</script></body></html>
