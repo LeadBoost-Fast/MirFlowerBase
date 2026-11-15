@@ -314,7 +314,7 @@ body.reader-open{overflow:hidden}
 #lvsel .row,#vsel .row{align-items:center}
 </style><style id="fx4">.spr2{display:grid;grid-template-columns:minmax(0,1fr) 40px 72px 40px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}.spr2 input{text-align:center;min-height:42px;padding:6px}.spr2 .btn{min-width:40px;padding:0}.spr2.has{background:color-mix(in srgb,var(--ac) 10%,transparent);border-radius:12px}#spq,#vq{margin:6px 0}.vwarn{border:1.5px solid var(--warn)!important;background:color-mix(in srgb,var(--warn) 9%,var(--card))!important}.tdb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 0 8px 46px}.tdb span{min-width:0;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tdb .btn{flex:none}</style></head><body>
 <main id="v"><p class="mut">Подключение…</p></main>
-<script>try{window.DSGV="20261116g";if(localStorage.getItem("lang")==="kk")document.write('<script src="d-kk.js?v=20261116g"><\/script>')}catch(e){}</script>
+<script>try{window.DSGV="20261116h";if(localStorage.getItem("lang")==="kk")document.write('<script src="d-kk.js?v=20261116h"><\/script>')}catch(e){}</script>
 <script>
 /* Тихие ошибки: не теряются, а пишутся в журнал диагностики (Профиль → «Связь с базой») */
 window.ERRL=[];window.eLog=function(e){try{const st=String((e&&e.stack)||new Error().stack||"").split("\n").map(x=>x.trim()).find(x=>/at \w/.test(x)&&!/eLog/.test(x))||"",fn=(st.match(/at ([\w.$]+)/)||[])[1]||"";ERRL.push([Date.now(),((e&&e.code?e.code+": ":"")+String(e&&e.message||e)).slice(0,200)+(fn?" ["+fn+"]":"")]);if(ERRL.length>60)ERRL.shift()}catch(_){}};
@@ -543,7 +543,7 @@ st.textContent=`:root[data-t=${e}]{--bg:${P[0]};--card:${P[1]};--c2:${P[2]};--in
 if(tc)tc.content=P[0];try{dsgAfter()}catch(e){}}
 const UIS=["g","h","m","p"];/* у каждого — своя архитектура экранов */
 /* Тяжёлые дизайны лежат в отдельных файлах и грузятся только когда выбраны (пока файл не загрузился, работает Bento) */
-const DLIB={h:"d-cosmos.js",m:"d-command.js",p:"d-atlas.js"},DSTAT={},DSG_V=window.DSGV||"20261116g",
+const DLIB={h:"d-cosmos.js",m:"d-command.js",p:"d-atlas.js"},DSTAT={},DSG_V=window.DSGV||"20261116h",
  dsgReady=k=>k==="g"||DSTAT[k]===2,uiSel=()=>{try{const u=JSON.parse(STO.get("th")||"{}").ui;return UIS.includes(u)?u:"g"}catch(e){return"g"}},
  dsgAfter=()=>{const x=SHELL[LY()];if(x&&x.after)x.after()};
 function dsgLoad(k){if(!DLIB[k]||DSTAT[k]===1||DSTAT[k]===2)return;DSTAT[k]=1;const e=document.createElement("script");e.src=DLIB[k]+"?v="+DSG_V;e.async=true;
@@ -1735,8 +1735,8 @@ function msgCard(){if(!sad())return"";
  <label>Куда вести клиента с просьбой об отзыве</label><select name="revMode"><option value="gis"${rm==="gis"?" selected":""}>Сразу ссылка на 2ГИС (рекомендуем)</option><option value="site"${rm==="site"?" selected":""}>Сначала оценка на нашей странице, потом 2ГИС</option></select>
  <p class="mut" style="font-size:13px;margin:4px 0 0">Если клиента сразу отправлять в 2ГИС, недовольный клиент может оставить плохой отзыв публично, а вы не успеете исправить. При оценке на нашей странице плохая оценка (1–3) приходит вам уведомлением, и 2ГИС предлагается только тем, кто поставил 4–5.</p>
  <label>Через сколько минут после выдачи писать</label><input name="revDelayMin" type="number" min="0" max="1440" inputmode="numeric" value="${dl}">
- <label>Ссылка на отзывы в 2ГИС</label>${locs().map(l=>`<div class="mut" style="font-size:13px;margin:8px 0 2px">${esc(l.name||lname(l.id))}</div><input name="rv_${esc(l.id)}" type="url" value="${esc((SH.revUrl||{})[l.id]||"")}" placeholder="https://2gis.kz/aktau/firm/…/tab/reviews">`).join("")}
- <p class="mut" style="font-size:13px;margin:4px 0 0">Откройте свою организацию в 2ГИС, перейдите во вкладку «Отзывы» и скопируйте ссылку из адресной строки. Без ссылки клиент получит просьбу оценить заказ на нашей странице.</p>
+ <label>Ссылка на отзывы в 2ГИС</label>${locs().map(l=>`<div class="mut" style="font-size:13px;margin:8px 0 2px">${esc(l.name||lname(l.id))}</div><input name="rv_${esc(l.id)}" type="url" value="${esc((SH.revUrl||{})[l.id]||revOf(l.id)||"")}" placeholder="https://2gis.kz/aktau/firm/…/tab/reviews">`).join("")}
+ <p class="mut" style="font-size:13px;margin:4px 0 0">Ссылки на 2ГИС ваших точек уже подставлены: проверьте их и нажмите «Сохранить». Если ссылки нет, откройте свою организацию в 2ГИС, перейдите во вкладку «Отзывы» и скопируйте ссылку из адресной строки. Без ссылки клиент получит просьбу оценить заказ на нашей странице.</p>
  <details style="margin-top:12px"><summary>Свои тексты сообщений</summary><p class="mut" style="font-size:13px">Подставляются: {shop} — название магазина, {link} — ссылка. Пусто = стандартный текст.</p>
  ${ta("trkMsg","Заказ принят",SH.trkMsg,MSGD.trk)}${ta("rdyMsg","Заказ готов (самовывоз)",SH.rdyMsg,MSGD.rdy)}${ta("rdyMsgDv","Заказ готов (доставка)",SH.rdyMsgDv,MSGD.rdyDv)}${ta("wayMsg","Курьер выехал",SH.wayMsg,MSGD.way)}${ta("revMsgGis","Просьба об отзыве (ссылка на 2ГИС)",SH.revMsgGis,MSGD.gis)}</details>
  <div class="acts"><button class="btn">Сохранить</button></div></form>`}
