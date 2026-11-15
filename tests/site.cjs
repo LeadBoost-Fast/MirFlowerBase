@@ -289,6 +289,14 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   ok(await pg.evaluate(()=>!subsOn()&&subsChips()===""),"подписки: выключаются в настройках, вкладки нет");
   ok(await pg.evaluate(()=>!layGet().some(i=>i.id==="subd")),"подписки: выключенный блок не стоит на главной");
  }
+ /* размер интерфейса */
+ {const pg=await lg("tilegen615@gmail.com");
+  ok(await pg.evaluate(()=>uizGet()==="m"&&/^width=\d+,/.test(document.getElementById("vp").content)&&!/device-width/.test(document.getElementById("vp").content)),"размер интерфейса: по умолчанию «Чуть мельче», страница шире экрана");
+  ok(await pg.evaluate(()=>window.innerWidth>=430),"размер интерфейса: раскладка получила ширину около 433 px");
+  await pg.evaluate(()=>uizSet("s"));ok(await pg.evaluate(()=>/width=488,/.test(document.getElementById("vp").content)&&STO.get("uiz")==="s"),"размер интерфейса: «Мельче» (80%), выбор запоминается на телефоне");
+  await pg.evaluate(()=>uizSet("n"));ok(await pg.evaluate(()=>/device-width/.test(document.getElementById("vp").content)),"размер интерфейса: «Обычный» возвращает обычный размер");
+  await pg.evaluate(()=>{tab="set";SETS="look";draw()});await pg.waitForTimeout(500);ok(await pg.locator('.chip[onclick^="uizSet"]').count()===3,"в настройках вида три размера интерфейса");
+  await pg.evaluate(()=>uizSet("m"));await pg.context().close()}
  {const pg=await lg("tilegen615@gmail.com");ok(await pg.evaluate(()=>!CFG.wizard),"у Mirflowers мастер настройки сам не открывается (wizard не задан)");
   ok(await pg.evaluate(()=>wzCard().includes('data-a="wz_open"')),"владелец: в «Магазине» есть кнопка «Мастер настройки магазина»");
   await pg.evaluate(()=>{wizard()});await pg.waitForTimeout(600);ok(await pg.locator("#wzf").count()===1,"мастер открылся: название, телефон, адрес, шаблон, доставка");
