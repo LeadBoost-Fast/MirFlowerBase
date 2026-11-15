@@ -8,3 +8,4 @@ tests/out/
 tests/node_modules
 tests/package*.json
 build/node_modules
+dist/
