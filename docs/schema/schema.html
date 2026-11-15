@@ -1,0 +1,55 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Схема платформы</title>
+<style>
+:root{--bg:#f6f1ea;--card:#fffdf9;--ink:#1f1a15;--mut:#6f665b;--line:#d9cdbd;--kz:#2f7d4f;--kzbg:#e6f3ea;--ab:#b5651d;--abbg:#fbeedd;--ac:#a35a6b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,"SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;width:860px;padding:28px 26px 30px}
+h1{font-size:28px;margin:0 0 4px;letter-spacing:-.4px}.sub{color:var(--mut);margin:0 0 20px;font-size:15px}
+.lg{display:flex;gap:16px;margin:0 0 18px;font-size:14px;color:var(--mut)}.lg i{display:inline-block;width:14px;height:14px;border-radius:4px;margin-right:6px;vertical-align:-2px}
+.row{display:flex;gap:12px}.box{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:12px 14px;flex:1}
+.box b{display:block;font-size:16px;margin-bottom:3px}.box span{font-size:13px;color:var(--mut)}
+.kz{border-color:var(--kz);background:var(--kzbg)}.ab{border-color:var(--ab);background:var(--abbg)}
+.zone{border:2px dashed var(--kz);border-radius:22px;padding:14px;margin:0 0 6px;background:rgba(47,125,79,.05)}
+.zone>h2{margin:0 0 10px;font-size:17px;color:var(--kz)}.zone h2 small{font-weight:400;color:var(--mut);font-size:13px}
+.arrow{text-align:center;color:var(--mut);font-size:13px;margin:6px 0;letter-spacing:.2px}.arrow:before{content:"▼ ";color:var(--ac)}
+.st{margin-top:10px;background:var(--card);border-radius:14px;padding:12px 14px;border:1.5px solid var(--line);font-size:14px}
+.st b{color:var(--ac)}.tag{display:inline-block;background:var(--ink);color:#fff;border-radius:99px;padding:2px 10px;font-size:12px;margin-right:6px}
+</style></head><body>
+<h1>Платформа Mirflowers: что за что отвечает</h1>
+<p class="sub">Схема для 10–15 магазинов. Все данные клиентов лежат в Казахстане.</p>
+<div class="lg"><span><i style="background:var(--kzbg);border:1.5px solid var(--kz)"></i>в Казахстане (PS.kz)</span><span><i style="background:var(--abbg);border:1.5px solid var(--ab)"></i>за границей, без хранения данных</span></div>
+
+<div class="row">
+ <div class="box"><b>Сотрудники магазинов</b><span>телефон и ноутбук: заказы, склад, чаты</span></div>
+ <div class="box"><b>Клиенты магазинов</b><span>онлайн-витрина и страница «следить за заказом»</span></div>
+ <div class="box"><b>Вы (владелец платформы)</b><span>создаёте магазины, смотрите состояние</span></div>
+</div>
+<div class="arrow">по адресу магазина, защищённое соединение</div>
+
+<div class="zone"><h2>Основной сервер PS.kz <small>VPS Basic-3 сейчас, Basic-4 на 10–15 магазинов, AlmaLinux 9</small></h2>
+ <div class="row">
+  <div class="box kz"><b>1. Вход (Caddy)</b><span>адрес магазина, сертификат HTTPS, направляет запрос нужному магазину</span></div>
+  <div class="box kz"><b>2. Сайт</b><span>CRM, витрина, страница статуса (файлы без данных клиентов)</span></div>
+ </div>
+ <div class="arrow">запрос магазина</div>
+ <div class="row">
+  <div class="box kz"><b>3. Сервер приложения</b><span>вход, права ролей, живые обновления, расписания (автозакрытие смен, отзывы), уведомления на телефон, сообщения клиентам</span></div>
+ </div>
+ <div class="arrow">читает и пишет</div>
+ <div class="row">
+  <div class="box kz"><b>4. База PostgreSQL</b><span>отдельная база на каждый магазин: заказы, клиенты, склад, чаты, сотрудники</span></div>
+ </div>
+</div>
+<div class="arrow">фото и файлы</div>
+<div class="row">
+ <div class="box kz"><b>5. Хранилище PS.kz (S3)</b><span>фото букетов, вручение, чеки. Растёт без смены тарифа: 12,10 ₸ за ГБ в месяц</span></div>
+ <div class="box kz"><b>6. Копии</b><span>каждую ночь база и фото в архив PS.kz (7,80 ₸ за ГБ); раз в неделю зашифрованная копия на втором хостере в Казахстане</span></div>
+</div>
+
+<div class="arrow">сообщения клиентам и оповещения</div>
+<div class="row">
+ <div class="box ab"><b>7. WhatsApp Meta (официальный)</b><span>наш сервер отправляет шаблоны, ответы клиентов приходят к нам; магазин платит Meta сам</span></div>
+ <div class="box ab"><b>8. Telegram</b><span>только оповещения вам о сбоях, без данных клиентов</span></div>
+</div>
+
+<div class="st"><span class="tag">Расход</span> около <b>21 000 ₸ в месяц</b> на старте и около <b>36 000 ₸</b> на 15 магазинов (сервер, хранилище, копии, допущения). Это 2 400–3 600 ₸ на магазин.</div>
+<div class="st"><span class="tag">Не используем</span> Cloudflare и подобное (данные проходят через чужие страны), Firebase и Railway после переезда.</div>
+</body></html>
