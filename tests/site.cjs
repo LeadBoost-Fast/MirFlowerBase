@@ -211,6 +211,12 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.evaluate(()=>{tab="team";draw()});await pg.waitForTimeout(800);await pg.locator('[data-a=tt_del]').first().click();await pg.waitForTimeout(1500);ok(await pg.evaluate(()=>TT().length===0),"профессию можно убрать");
   await pg.context().close()}
  /* 4i. мастер первой настройки магазина */
+ /* выгрузка склада в CSV (для бухгалтера) */
+ {const pg=await lg("tilegen615@gmail.com");await put("inventory","tinv1",{name:"Роза красная",cat:"Цветы",unit:"шт",qty:12,sell:900,buy:400});await pg.waitForTimeout(1200);
+  const [dl]=await Promise.all([pg.waitForEvent("download",{timeout:8000}),pg.evaluate(()=>{const b=document.createElement("button");b.dataset.a="exp_s";document.body.appendChild(b);b.click()})]);
+  const txt=require("fs").readFileSync(await dl.path(),"utf8");
+  ok(dl.suggestedFilename().startsWith("sklad-")&&txt.includes("Роза красная")&&txt.includes("Остаток")&&txt.includes("Стоимость остатка"),"выгрузка склада: файл, позиция, остаток и стоимость у владельца");
+  ok(/Роза красная;Цветы;шт;12;(0;)*900;400;4800/.test(txt.replace(/\r?\n/g,"\n")),"выгрузка склада: 12 шт × 400 = 4800 в строке")}
  {const pg=await lg("tilegen615@gmail.com");ok(await pg.evaluate(()=>!CFG.wizard),"у Mirflowers мастер настройки сам не открывается (wizard не задан)");
   ok(await pg.evaluate(()=>wzCard().includes('data-a="wz_open"')),"владелец: в «Магазине» есть кнопка «Мастер настройки магазина»");
   await pg.evaluate(()=>{wizard()});await pg.waitForTimeout(600);ok(await pg.locator("#wzf").count()===1,"мастер открылся: название, телефон, адрес, шаблон, доставка");
