@@ -18,3 +18,5 @@ jobs:
         run: cd build && npm ci
       - name: Проверка, что собранное соответствует исходникам
         run: node build/build.mjs --check
+      - name: Проверка генератора нового магазина
+        run: node tools/shop.test.mjs

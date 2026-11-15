@@ -49,6 +49,12 @@ service cloud.firestore {
         && resource.data.role != 'admin');
     }
 
+    // Расстановка главной: у каждого своя (id = uid); владелец и админ могут править любую (расстановки ролей)
+    match /layouts/{id} {
+      allow read: if isActive();
+      allow create, update, delete: if isActive() && (id == request.auth.uid || isOwner() || isAdmin());
+    }
+
     match /presence/{uid} {
       allow read: if isActive();
       allow write: if isActive() && request.auth.uid == uid;

@@ -108,12 +108,12 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   ok(await pg.locator('a.call[href="tel:+77771027292"]').count()===1,"страница статуса: «Позвонить» → +77771027292");ok(await pg.locator('a.wa[href="https://wa.me/77771027292"]').count()===1,"страница статуса: WhatsApp → 77771027292");await ctx.close()}
  /* 4d. админ получает технические настройки, деньги остаются у владельца */
  {const pg=await lg("adm@x.kz");
-  const secs=await pg.evaluate(()=>SETSEC().map(x=>x[1]));ok(secs.includes("Функции")&&secs.includes("Точки и карта")&&secs.includes("Магазин")&&secs.includes("Связь и проверка")&&!secs.includes("Оплата"),"админ видит разделы настроек: "+secs.join(", ")+" (без «Оплата»)");
+  const secs=await pg.evaluate(()=>SETSEC().map(x=>x[1]));ok(secs.join(",")==="Магазин,Команда и доступ,Вид,Каналы связи,Дополнительно","админ видит 5 групп настроек: "+secs.join(", "));ok(await pg.evaluate(()=>{SETS="shop";draw();return !document.querySelector("#pmf")}),"админ: наценок оплаты в «Магазине» нет (только владелец)");
   await pg.evaluate(()=>{tab="set";SETS="shop";draw()});await pg.waitForTimeout(1800);
   ok(await pg.locator("#sf").count()===1&&await pg.locator("#msgf").count()===1&&await pg.locator("#vtf").count()===1,"админ: в «Магазин» есть настройки магазина, сообщения клиентам и онлайн-витрина");
   await pg.evaluate(()=>{SETS="fx";draw()});await pg.waitForTimeout(500);ok(await pg.locator("#fxf").count()===1,"админ: раздел «Функции» открывается");
-  await pg.evaluate(()=>{SETS="pts";draw()});await pg.waitForTimeout(500);ok(await pg.locator('[data-a=lc_n]').count()===1,"админ: «Точки и карта», есть «Новая точка»");
-  await pg.evaluate(()=>{SETS="tech";draw()});await pg.waitForTimeout(800);const th=await pg.locator("#v").textContent();ok(/Проверка базы/.test(th)&&/Фото в базе/.test(th)&&/Каналы связи/.test(th),"админ: «Связь и проверка»: проверка базы, фото, каналы связи ["+["Проверка базы","Фото в базе","Каналы связи"].map(w=>w+"="+th.includes(w)).join(", ")+"]");
+  await pg.evaluate(()=>{SETS="shop";draw()});await pg.waitForTimeout(500);ok(await pg.locator('[data-a=lc_n]').count()===1,"админ: в «Магазине» есть «Новая точка»");
+  await pg.evaluate(()=>{SETS="tech";draw()});await pg.waitForTimeout(800);const th=await pg.locator("#v").textContent();ok(/Проверка базы/.test(th)&&/Фото в базе/.test(th),"админ: «Дополнительно»: проверка базы и фото ["+["Проверка базы","Фото в базе"].map(w=>w+"="+th.includes(w)).join(", ")+"]");await pg.evaluate(()=>{SETS="chn";draw()});await pg.waitForTimeout(500);ok((await pg.locator("#v").textContent()).includes("Каналы связи"),"админ: группа «Каналы связи» открывается");
   const R=(f,x)=>pg.evaluate(f,x);
   ok(await R(async()=>{try{await db.collection("settings").doc("main").set({name:"Mirflowers",fx:{linkSend:false},updatedAt:TS()},{merge:true});return true}catch(e){return e.code}})===true,"правила: админ меняет название и функции");
   ok(await R(async()=>{try{await db.collection("settings").doc("main").set({channels:{wa:{on:false}},revUrl:{main:"https://2gis.kz/x"},trkOff:false},{merge:true});return true}catch(e){return e.code}})===true,"правила: админ меняет каналы связи, ссылки 2ГИС, сообщения");
@@ -127,7 +127,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   ok(await R(async()=>{try{await db.collection("expenses").doc("x").set({sum:1});return "прошло"}catch(e){return e.code}})==="permission-denied","правила: расходы по-прежнему только владельцу");
   await pg.context().close()}
  {const pg=await lg("fl@x.kz");
-  ok(await pg.evaluate(()=>SETSEC().map(x=>x[1]).join(","))==="Внешний вид,Уведомления,Связь и проверка","флорист: разделы настроек только свои");
+  ok(await pg.evaluate(()=>SETSEC().map(x=>x[1]).join(","))==="Вид,Дополнительно","флорист: разделы настроек только свои");
   ok(await pg.evaluate(async()=>{try{await db.collection("settings").doc("main").set({name:"Взлом",updatedAt:TS()},{merge:true});return "прошло"}catch(e){return e.code}})==="permission-denied","правила: флорист не меняет настройки");
   ok(await pg.evaluate(async()=>{try{await db.collection("locations").doc("p9").set({name:"x"});return "прошло"}catch(e){return e.code}})==="permission-denied","правила: флорист не создаёт точки");
   ok(await pg.evaluate(async()=>{try{await db.collection("secrets").doc("channels").set({wa:{evkey:"x"}},{merge:true});return "прошло"}catch(e){return e.code}})==="permission-denied","правила: флорист не пишет ключи каналов");await pg.context().close()}
@@ -212,7 +212,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.context().close()}
  /* 4i. мастер первой настройки магазина */
  {const pg=await lg("tilegen615@gmail.com");ok(await pg.evaluate(()=>!CFG.wizard),"у Mirflowers мастер настройки сам не открывается (wizard не задан)");
-  ok(await pg.evaluate(()=>fxCard().includes('data-a="wz_open"')),"владелец: в «Возможностях» есть кнопка «Мастер настройки магазина»");
+  ok(await pg.evaluate(()=>wzCard().includes('data-a="wz_open"')),"владелец: в «Магазине» есть кнопка «Мастер настройки магазина»");
   await pg.evaluate(()=>{wizard()});await pg.waitForTimeout(600);ok(await pg.locator("#wzf").count()===1,"мастер открылся: название, телефон, адрес, шаблон, доставка");
   ok(await pg.locator('#wzt .chip').count()===3&&await pg.locator('#wzv .chip').count()===3,"3 шаблона магазина и 3 способа доставки");
   await pg.locator('#wzf [name=nm]').fill("Mirflowers");await pg.locator('#wzt [data-k=mini]').click();await pg.locator('#wzv [data-k=none]').click();
@@ -230,6 +230,92 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   ok(await pg.locator('[data-a=chn_o]').count()===1,"плашка про каналы видна на главной");
   await pg.locator('[data-a=chn_o]').tap();await pg.waitForTimeout(900);ok((await pg.locator("#v").textContent()).includes("Каналы связи"),"по нажатию открываются настройки каналов связи");await pg.context().close()}
  {const pg=await lg("op@x.kz");ok(await pg.evaluate(()=>chnHome()===""),"оператору плашка про каналы не показывается");await pg.context().close()}
+ /* 4k. настройки: 5 групп, короткие подписи, главная без пустого */
+ {const pg=await lg("tilegen615@gmail.com");await pg.evaluate(()=>{tab="set";SETS="look";draw()});await pg.waitForTimeout(700);
+  const tabs=await pg.locator(".setnav .chip").allTextContents();ok(tabs.join("|")==="Магазин|Команда и доступ|Вид|Каналы связи|Дополнительно","у владельца 5 групп настроек: "+tabs.join(", "));
+  await pg.evaluate(()=>{SETS="adv";draw()});await pg.waitForTimeout(500);ok(await pg.locator("details.adv").count()>=3&&await pg.locator("details.adv[open]").count()===0,"«Дополнительно»: блоки свёрнуты");
+  await pg.evaluate(()=>{SETS="fx";draw()});await pg.waitForTimeout(500);ok(await pg.locator("details.adv[open] #fxf").count()===1,"старое значение «fx» открывает «Дополнительно» с раскрытыми возможностями");
+  const lens=await pg.evaluate(()=>Object.keys(FXD).map(k=>(FXS[k]||"").length));ok(lens.every(n=>n>0&&n<45),"подписи переключателей короткие: "+lens.join(","));
+  ok(await pg.locator("#fxf .hint-btn").count()===10,"у каждого переключателя есть значок «?»");
+  await pg.locator("#fxf .hint-btn").first().click();await pg.waitForTimeout(400);ok((await pg.locator("#modal, .modal, [role=dialog]").first().textContent().catch(()=>"" )).length>20||await pg.locator('[data-a=x]').count()>0,"по значку «?» открывается пояснение");
+  await pg.evaluate(()=>modal(""));
+  await pg.evaluate(()=>{tab="home";draw()});await pg.waitForTimeout(800);ok(!(await pg.locator("#v").textContent()).includes("Срочных дел нет"),"на главной нет пустой карточки «Всё сделано»");
+  await pg.context().close()}
+ /* 4l. HUD: расстановка главной */
+ {const pg=await lg("fl@x.kz");await pg.evaluate(()=>{tab="home";draw()});await pg.waitForTimeout(800);
+  const uid=await pg.evaluate(()=>U.uid),opId=await pg.evaluate(()=>Object.keys(SF).find(i=>SF[i].email==="op@x.kz"));
+  ok(await pg.evaluate(()=>{const s=LAY;LAY=null;const n=layGet().length;LAY=s;return n>0}),"без сохранённой расстановки главная берёт встроенный набор роли (не пустая)");
+  ok(await pg.locator('[data-a=wg_edit]').count()===1,"на главной есть кнопка «Расставить»");
+  await pg.locator('[data-a=wg_edit]').click();await pg.waitForTimeout(500);
+  const n0=await pg.locator(".wg-ed").count();ok(n0>=3,"режим «Расставить»: виджеты в рамках, их "+n0);
+  const ids0=await pg.evaluate(()=>layGet().map(i=>i.id));
+  /* размер */
+  await pg.locator('[data-a=wg_sz]').first().click();await pg.waitForTimeout(700);
+  /* добавить виджет из галереи */
+  await pg.locator('[data-a=wg_add]').click();await pg.waitForTimeout(400);ok(await pg.locator('[data-a=wg_put][data-id=ordst]').count()===1&&await pg.locator('[data-a=wg_put][data-id=moneyd]').count()===0,"в галерее есть «Заказы сегодня», а денег флористу не предлагается");
+  await pg.locator('[data-a=wg_put][data-id=ordst]').click();await pg.waitForTimeout(900);
+  ok(await pg.evaluate(()=>layGet().some(i=>i.id==="ordst")),"виджет «Заказы сегодня» добавлен");
+  /* убрать */
+  const rmId=await pg.evaluate(()=>{const f=layGet().find(i=>!WG[i.id].fix&&i.id!=="ordst");return f&&f.id});
+  if(rmId){await pg.locator('[data-a=wg_rm][data-id="'+rmId+'"]').click();await pg.waitForTimeout(900);ok(await pg.evaluate(id=>!layGet().some(i=>i.id===id),rmId),"виджет «"+rmId+"» убран")}
+  /* перетаскивание: первый виджет переносим под второй */
+  const before=await pg.evaluate(()=>layGet().map(i=>i.id)),hs=pg.locator(".wg-h"),nh=await hs.count();
+  if(nh>=2){const a=await hs.first().boundingBox(),z=await pg.locator(".wg").nth(1).boundingBox();await pg.mouse.move(a.x+a.width/2,a.y+a.height/2);await pg.mouse.down();await pg.mouse.move(z.x+z.width/2,z.y+z.height*0.85,{steps:12});await pg.mouse.up();await pg.waitForTimeout(900);
+   const after=await pg.evaluate(()=>layGet().map(i=>i.id));ok(after[1]===before[0]&&after.length===before.length,"перетаскивание: первый виджет ("+before[0]+") теперь второй: "+after.slice(0,3).join(","))}
+  const doc=(await(await fetch(FS+"/layouts/"+uid,{headers:{Authorization:"Bearer owner"}})).json()).fields||{},vs=((doc.items||{}).arrayValue||{}).values||[];
+  ok(vs.length>=3&&vs.every(v=>v.mapValue.fields.id&&v.mapValue.fields.s),"расстановка записана на сервер: "+vs.length+" виджетов");
+  const ids1=await pg.evaluate(()=>layGet().map(i=>i.id));
+  await pg.locator('[data-a=wg_done]').click();await pg.waitForTimeout(400);
+  await pg.reload();await pg.waitForTimeout(2500);ok(JSON.stringify(await pg.evaluate(()=>layGet().map(i=>i.id)))===JSON.stringify(ids1),"после перезагрузки расстановка та же");
+  /* чужая расстановка и неизвестный виджет */
+  const bad=await pg.evaluate(async id=>{try{await db.collection("layouts").doc(id).set({items:[]});return "прошло"}catch(e){return e.code}},opId);ok(bad==="permission-denied","сотрудник не может записать расстановку другому: "+bad);
+  const E0=errs.length;await pg.evaluate(()=>db.collection("layouts").doc(U.uid).set({items:[{id:"zzz",s:"m"},{id:"me",s:"l"}]}));await pg.waitForTimeout(1200);
+  ok(await pg.evaluate(()=>layGet().every(i=>i.id!=="zzz"))&&errs.length===E0,"неизвестный виджет пропускается без ошибок");
+  /* сброс */
+  await pg.evaluate(()=>{LAYEDIT=true;draw()});await pg.waitForTimeout(300);await pg.locator('[data-a=wg_reset]').click();await pg.waitForTimeout(1500);
+  ok(await pg.evaluate(()=>LAY===null),"«Сбросить» возвращает встроенный набор");
+  await pg.context().close()}
+ {const pg=await lg("adm@x.kz");await pg.evaluate(()=>{tab="home";draw()});await pg.waitForTimeout(800);
+  ok(await pg.evaluate(()=>{const o=Object.keys(WG).filter(k=>WG[k].ok());return["moneyd","lowst","lateo","onsh"].every(k=>o.includes(k))}),"админу в галерее доступны деньги, склад, просрочено, кто на смене");
+  await pg.evaluate(()=>{LAYEDIT=true;laySave(layGet().concat([{id:"moneyd",s:"s"},{id:"lowst",s:"s"}]));draw()});await pg.waitForTimeout(900);
+  ok(await pg.locator('.wg[data-wg=moneyd] .wgn').count()===1&&await pg.locator('.wg[data-wg=lowst] .wgn').count()===1,"плитки «Деньги за день» и «Мало на складе» показываются с числом");
+  await pg.screenshot({path:OUT+"/hud-edit.png"});await pg.evaluate(()=>{LAYEDIT=false;LAY=null;db.collection("layouts").doc(U.uid).delete()});await pg.context().close()}
+ /* 4m. расстановки по ролям от владельца */
+ {const ow=await lg("tilegen615@gmail.com"),fl=await lg("fl@x.kz");
+  await ow.evaluate(()=>{tab="set";SETS="team";draw()});await ow.waitForTimeout(800);
+  ok(await ow.locator('[data-a=lay_role][data-id=role_florist]').count()===1,"владелец: в «Команда и доступ» есть расстановка для роли «Флорист»");
+  await ow.locator('[data-a=lay_role][data-id=role_florist]').click();await ow.waitForTimeout(700);
+  ok(await ow.evaluate(()=>LAYTGT==="role_florist"&&LAYEDIT&&tab==="home"),"открылся режим расстановки для роли");
+  await ow.evaluate(()=>laySave([{id:"me",s:"l"},{id:"ordst",s:"m"}]));await ow.waitForTimeout(900);
+  const rd=(await(await fetch(FS+"/layouts/role_florist",{headers:{Authorization:"Bearer owner"}})).json()).fields||{};ok((((rd.items||{}).arrayValue||{}).values||[]).length===2,"шаблон роли «Флорист» записан: 2 виджета");
+  ok(await ow.evaluate(()=>{msView("florist");const t=document.body.innerText;return/Глазами: Флорист/.test(t)&&/Заказы сегодня/.test(t)}),"«Смотреть как» флорист показывает расстановку роли");
+  await ow.evaluate(()=>{modal("");LAYTGT="";LAYEDIT=false;tab="set";SETS="team";draw()});await ow.waitForTimeout(500);
+  await ow.locator('[data-a=lay_lock][data-id=role_florist]').check();await ow.waitForTimeout(1500);
+  const st=(await(await fetch(FS+"/settings/main",{headers:{Authorization:"Bearer owner"}})).json()).fields||{};ok((((st.layLock||{}).mapValue||{}).fields||{}).role_florist&&st.layLock.mapValue.fields.role_florist.booleanValue===true,"замок для роли «Флорист» записан");
+  await fl.reload();await fl.waitForTimeout(2500);await fl.evaluate(()=>{tab="home";draw()});await fl.waitForTimeout(700);
+  ok(await fl.evaluate(()=>layLocked()),"флорист: расстановка закреплена владельцем");
+  ok(await fl.locator('[data-a=wg_edit]').count()===0,"флорист: кнопки «Расставить» нет");
+  const ids=await fl.evaluate(()=>layGet().map(i=>i.id));ok(ids.includes("me")&&ids.includes("ordst")&&!ids.includes("wd")&&!ids.includes("todo"),"флорист видит расстановку роли: "+ids.join(","));
+  const w=await fl.evaluate(async()=>{try{await db.collection("layouts").doc("role_florist").set({items:[]});return "прошло"}catch(e){return e.code}});ok(w==="permission-denied","флорист не может менять шаблон роли: "+w);
+  await ow.locator('[data-a=lay_lock][data-id=role_florist]').uncheck();await ow.waitForTimeout(1500);await fl.waitForTimeout(800);
+  ok(await fl.evaluate(()=>!layLocked()),"замок снят: флорист снова может расставлять");
+  await ow.evaluate(()=>db.collection("layouts").doc("role_florist").delete());await ow.context().close();await fl.context().close()}
+ /* 4n. живая картина */
+ {const pg=await lg("adm@x.kz");const flId=await pg.evaluate(()=>Object.keys(SF).find(i=>SF[i].email==="fl@x.kz")),opId=await pg.evaluate(()=>Object.keys(SF).find(i=>SF[i].email==="op@x.kz")),td=new Date().toLocaleDateString("sv-SE"),now=Date.now();
+  await put("orders","lv1",{client:"Лайв1",phone:"+7 700 000 11 11",bn:"Букет А",st:2,loc:"main",date:td,time:"23:30",by:opId,takenBy:flId,asm:flId,createdAt:now-1.2e7,takenAt:now-1.1e7,readyAt:now-7.2e6,ts:now-1.2e7});
+  await put("orders","lv2",{client:"Лайв2",phone:"+7 700 000 22 22",bn:"Букет Б",st:1,loc:"main",date:td,time:"23:30",by:opId,takenBy:flId,createdAt:now-3.6e6,takenAt:now-3e6,ts:now-3.6e6});
+  await put("orders","lv3",{client:"Лайв3",phone:"+7 700 000 33 33",bn:"Букет В",st:1,loc:"main",date:td,time:"00:01",by:opId,createdAt:now-1.4e7,ts:now-1.4e7});
+  await pg.reload();await pg.waitForTimeout(2800);
+  ok(await pg.evaluate(()=>(window.HPL||[]).some(t=>t[0]==="live")),"админу доступен раздел «Картина»");
+  const sd=await pg.evaluate(([u,d])=>staffDay(u,d),[flId,td]);ok(sd.counts.taken===2&&sd.counts.asm===1&&sd.cur&&!sd.onShift,"staffDay флориста: взял 2, собрал 1, ведёт заказ, не на смене: "+JSON.stringify(sd.counts));
+  const fl2=await pg.evaluate(()=>orderFlow(O.find(o=>o.id==="lv2")).map(x=>x.k).join(","));ok(fl2==="created,taken","orderFlow заказа без «собран»: только имеющиеся этапы ("+fl2+")");
+  await pg.evaluate(()=>{tab="live";draw()});await pg.waitForTimeout(900);const lt=await pg.locator("#v").textContent();
+  ok(/Флорист/.test(lt)&&/Оператор/.test(lt)&&/Лента дня/.test(lt)&&!/NaN|undefined/.test(lt),"«Живая картина»: карточки людей и лента дня, без NaN");
+  ok(await pg.locator(".lvr.late").count()>=1&&await pg.locator(".lvr").count()>=3,"в ленте дня заказы полосками, просроченный выделен");
+  await pg.screenshot({path:OUT+"/live.png",fullPage:true});
+  await pg.locator('.lvc[data-id="'+flId+'"]').click();await pg.waitForTimeout(500);ok(await pg.locator(".lvd").count()===3,"день сотрудника: 3 отметки на линии");
+  await pg.evaluate(()=>modal(""));await pg.context().close()}
+ {const pg=await lg("op@x.kz");ok(await pg.evaluate(()=>!(window.HPL||[]).some(t=>t[0]==="live")&&liveBoard()===""),"оператору раздела «Картина» нет");await pg.context().close()}
  /* 5. аноним не пишет и не листает */
  {const w=await fetch(FS+"/pubShop/main",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({fields:{on:{booleanValue:false}}})});ok(w.status===403,"аноним не может писать: HTTP "+w.status);
   const l=await fetch(FS+"/pubShop");ok(l.status===403,"аноним не может листать коллекцию: HTTP "+l.status);
