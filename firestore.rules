@@ -238,6 +238,16 @@ service cloud.firestore {
       allow create, update: if isActive() && request.resource.data.uid == request.auth.uid;
     }
 
+    // Онлайн-витрина (страница vitrina.html для клиентов): один документ pubShop/main, читать может кто угодно по адресу.
+    // Настройки пишет владелец; админ может менять только список фото (items). Здесь нет персональных данных.
+    match /pubShop/{id} {
+      allow get: if true;
+      allow create, delete: if isOwner();
+      allow update: if (isOwner() || (isAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items','updatedAt'])))
+        && (!('items' in request.resource.data) || request.resource.data.items.size() <= 150);
+    }
+
     // Публичный статус заказа для клиента: читать документ по токену может любой, список нельзя, писать только сотрудники
     match /pubOrders/{tok} {
       allow get: if true;

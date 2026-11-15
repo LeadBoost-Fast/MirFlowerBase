@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f6f1ea"><title>Букеты</title>
+<style>
+:root{--bg:#f6f1ea;--card:#fffdf9;--ink:#1f1a15;--mut:#7a7166;--ac:#a35a6b;--line:#e6dccf;--ser:Georgia,"Times New Roman",serif}
+@media(prefers-color-scheme:dark){:root{--bg:#120f0d;--card:#1d1916;--ink:#f3ede5;--mut:#a89f94;--line:#342d27}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;min-height:100dvh;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,"SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%}
+a{color:inherit}button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+.top{display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top)) 0 0}
+.brand{font-family:var(--ser);font-size:20px;letter-spacing:.2px}
+.lang{display:flex;gap:4px}.lang button{border:1px solid var(--line);background:transparent;border-radius:99px;padding:6px 12px;min-height:36px;cursor:pointer;font-size:13px}
+.lang button[aria-pressed=true]{background:var(--ac);border-color:var(--ac);color:#fff}
+.hero{padding:34px 0 22px;max-width:640px}
+.hero h1{font-family:var(--ser);font-weight:400;font-size:clamp(34px,8vw,58px);line-height:1.08;margin:0;letter-spacing:-.5px}
+.hero p{margin:12px 0 0;color:var(--mut);font-size:17px}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.pill{display:inline-flex;align-items:center;gap:8px;border-radius:99px;padding:11px 18px;min-height:44px;text-decoration:none;font-weight:600;font-size:15px;border:1px solid var(--line);background:var(--card)}
+.pill.wa{background:var(--ac);border-color:var(--ac);color:#fff}
+.pill svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 18px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:99px;padding:8px 16px;min-height:40px;cursor:pointer;font-size:14px}
+.chip[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.sort{margin-left:auto;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:8px 10px;min-height:40px;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;padding-bottom:28px}
+@media(min-width:700px){.grid{grid-template-columns:repeat(3,1fr);gap:22px}}
+@media(min-width:1000px){.grid{grid-template-columns:repeat(4,1fr)}}
+.it{all:unset;display:block;cursor:pointer;border-radius:18px;overflow:hidden;background:var(--card);border:1px solid var(--line);transition:transform .2s,box-shadow .2s}
+.it:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(60,40,20,.14)}
+.it:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.it img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:var(--line)}
+.it .t{padding:11px 13px 14px}.it .n{font-family:var(--ser);font-size:18px;line-height:1.2;margin:0}
+.it .p{margin-top:5px;color:var(--ac);font-weight:700}
+.empty{text-align:center;padding:70px 10px;color:var(--mut)}.empty h2{font-family:var(--ser);font-weight:400;color:var(--ink);font-size:28px;margin:0 0 8px}
+footer{border-top:1px solid var(--line);padding:22px 0 calc(28px + env(safe-area-inset-bottom));color:var(--mut);font-size:14px}
+footer b{color:var(--ink)}
+.ov{position:fixed;inset:0;background:rgba(15,10,8,.55);display:none;z-index:20;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.ov.on{display:block}
+.sh{background:var(--bg);max-width:760px;margin:0 auto;min-height:100%;position:relative}
+@media(min-width:760px){.sh{margin:4vh auto;min-height:0;border-radius:24px;overflow:hidden}}
+.sh img.big{display:block;width:100%;max-height:70vh;object-fit:cover;background:var(--line)}
+.x{position:fixed;top:calc(12px + env(safe-area-inset-top));right:12px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.92);color:#1f1a15;font-size:24px;cursor:pointer;z-index:25;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.bd{padding:18px 18px 28px}.bd h2{font-family:var(--ser);font-weight:400;font-size:30px;line-height:1.12;margin:0}
+.bd .pr{color:var(--ac);font-weight:700;font-size:22px;margin:8px 0}
+.bd .ds{white-space:pre-line;color:var(--mut);margin:8px 0 14px}
+form.f{border-top:1px solid var(--line);margin-top:18px;padding-top:6px}
+form.f h3{font-family:var(--ser);font-weight:400;font-size:22px;margin:14px 0 4px}
+.f label{display:block;font-size:14px;color:var(--mut);margin:12px 0 4px}
+.f input,.f select,.f textarea{width:100%;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px 13px;min-height:46px;font-size:16px}
+.f textarea{min-height:76px;resize:vertical}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.seg button{border:1px solid var(--line);background:var(--card);border-radius:12px;min-height:46px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.go{display:flex;justify-content:center;align-items:center;gap:8px;width:100%;margin-top:18px;border:0;border-radius:14px;background:var(--ac);color:#fff;font-weight:700;font-size:17px;min-height:54px;cursor:pointer;text-decoration:none}
+.go.ig{background:transparent;color:var(--ink);border:1px solid var(--line);margin-top:10px;min-height:48px;font-weight:600;font-size:15px}
+.note{color:var(--mut);font-size:13px;margin:8px 2px 0;text-align:center}
+.demo{background:var(--ink);color:var(--bg);text-align:center;font-size:13px;padding:7px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style></head><body>
+<div id="demo" class="demo" hidden></div>
+<div class="wrap">
+ <div class="top"><div class="brand" id="brand"></div><div class="lang" role="group" aria-label="Язык / Тіл"><button data-l="ru">RU</button><button data-l="kk">KZ</button></div></div>
+ <section class="hero"><h1 id="h1"></h1><p id="sl"></p><div class="pills" id="pills"></div></section>
+ <div class="tools" id="tools"></div>
+ <main id="main" class="grid" aria-live="polite"></main>
+ <footer id="ft"></footer>
+</div>
+<div class="ov" id="ov" role="dialog" aria-modal="true"><button class="x" id="cl" aria-label="Закрыть">&times;</button><div class="sh" id="sh"></div></div>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+<script>
+const $=id=>document.getElementById(id),Q=new URLSearchParams(location.search);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const T={ru:{all:"Все",sort:"Сортировка",new:"Сначала новые",pa:"Дешевле",pd:"Дороже",wa:"Заказать в WhatsApp",ig:"Instagram",ig2:"Смотреть в Instagram",addr:"Адрес",hours:"Часы работы",none:"Витрина скоро откроется",none2:"Загляните чуть позже или напишите нам.",ask:"Цена по запросу",ord:"Оформить заказ",name:"Ваше имя",date:"Дата",time:"Время",pick:"Самовывоз",dlv:"Доставка",to:"Адрес доставки",wish:"Пожелания (открытка, цвет, повод)",hint:"Нажмите кнопку: откроется WhatsApp с готовым сообщением. Мы подтвердим наличие и время.",nowa:"Чтобы заказать, позвоните нам.",err:"Не удалось загрузить витрину. Проверьте интернет и обновите страницу.",demo:"Пример витрины: фото и цены условные",tg:"Букет",hi:"Здравствуйте! Хочу заказать букет",d:"Дата",t:"время",dv:"Доставка",pk:"Самовывоз",nm:"Имя",ws:"Пожелания",lk:"Ссылка"},
+kk:{all:"Барлығы",sort:"Сұрыптау",new:"Алдымен жаңалары",pa:"Арзандау",pd:"Қымбаттау",wa:"WhatsApp-та тапсырыс беру",ig:"Instagram",ig2:"Instagram-да қарау",addr:"Мекенжай",hours:"Жұмыс уақыты",none:"Витрина жақында ашылады",none2:"Сәлден кейін кіріңіз немесе бізге жазыңыз.",ask:"Бағасы сұраныс бойынша",ord:"Тапсырыс беру",name:"Атыңыз",date:"Күні",time:"Уақыты",pick:"Өзі алып кетеді",dlv:"Жеткізу",to:"Жеткізу мекенжайы",wish:"Тілектер (открытка, түс, себеп)",hint:"Түймені басыңыз: WhatsApp дайын хабарламамен ашылады. Бар-жоғын және уақытын растаймыз.",nowa:"Тапсырыс беру үшін бізге қоңырау шалыңыз.",err:"Витринаны жүктеу мүмкін болмады. Интернетті тексеріп, бетті жаңартыңыз.",demo:"Витринаның үлгісі: суреттер мен бағалар шартты",tg:"Букет",hi:"Сәлеметсіз бе! Мына букетке тапсырыс бергім келеді",d:"Күні",t:"уақыты",dv:"Жеткізу",pk:"Өзі алып кетеді",nm:"Аты",ws:"Тілектер",lk:"Сілтеме"}};
+let LG="ru";try{LG=localStorage.vl||(/^kk/i.test(navigator.language)?"kk":"ru")}catch(e){}
+const t=k=>(T[LG]||T.ru)[k]||T.ru[k]||k;
+let D=null,ITEMS=[],TAG="all",SORT="new",CUR=null,DEMO=Q.get("demo")==="1",MODE="";
+const IC={wa:'<path d="M3 21l1.6-4.8A9 9 0 1 1 8 19.5z"/><path d="M8.5 9.5c.5 2 2 3.6 4 4.4l1.2-1.1 2 .9-.4 1.6c-3.6.3-7.3-3.4-7-7l1.6-.4.9 2z"/>',ig:'<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".8"/>',pin:'<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.800 12 21 12 21z"/><circle cx="12" cy="9.500" r="2.500"/>'};
+const svg=p=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+p+'</svg>';
+const money=n=>(+n>0?Math.round(+n).toString().replace(/\B(?=(\d{3})+(?!\d))/g," ")+" ₸":t("ask"));
+const okImg=u=>typeof u==="string"&&(/^https:\/\//.test(u)||(DEMO&&/^data:image\//.test(u)));
+const okIg=u=>typeof u==="string"&&/^https:\/\/(www\.)?instagram\.com\//i.test(u);
+const igUser=s=>String(s||"").replace(/^https?:\/\/(www\.)?instagram\.com\//i,"").replace(/^@/,"").replace(/[\/?#].*$/,"").replace(/[^A-Za-z0-9._]/g,"");
+const waNum=s=>{let d=String(s||"").replace(/\D/g,"");if(d.length===11&&d[0]==="8")d="7"+d.slice(1);else if(d.length===10)d="7"+d;return d.length>=10?d:""};
+/* Примерные данные: рисуем букеты в SVG, чтобы страницу можно было показать без фото */
+function art(c1,c2,c3,n){let s='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+c1+'"/><stop offset="1" stop-color="'+c2+'"/></linearGradient></defs><rect width="400" height="500" fill="url(#g)"/><path d="M200 500 L150 330 Q200 300 250 330 Z" fill="#fff" opacity=".35"/>';
+ for(let i=0;i<n;i++){const a=(i/n)*Math.PI*2+.4,r=40+((i*37)%70),x=200+Math.cos(a)*r*1.1,y=250+Math.sin(a)*r*.75-20,z=34+((i*13)%22);s+='<circle cx="'+x.toFixed(0)+'" cy="'+y.toFixed(0)+'" r="'+z+'" fill="'+c3+'" opacity=".9"/><circle cx="'+x.toFixed(0)+'" cy="'+y.toFixed(0)+'" r="'+(z*.45).toFixed(0)+'" fill="#fff" opacity=".35"/>'}
+ return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(s+"</svg>")}
+function demoData(){return{on:true,name:"Mirflowers",slogan:LG==="kk"?"Ақтауда жеткізумен жаңа гүлдер":"Свежие букеты с доставкой по Актау",wa:"77770000000",ig:"mirflowers",addr:"Актау, 15 мкр",hours:"Ежедневно 09:00–21:00",accent:"#a35a6b",items:[
+ ["Нежный рассвет",18000,"Пионовидные розы, эвкалипт, упаковка крафт","Романтика",art("#f7d9d9","#f3b9c3","#e58aa0",11)],["Белое облако",24000,"Гортензия, белые розы, зелень","Свадьба",art("#eef1f3","#d4dde3","#ffffff",13)],["Солнечный день",15000,"Подсолнухи, хамелеон, лента","Яркие",art("#fff1c7","#ffd37a","#f2a900",8)],["Лавандовый сон",21000,"Лизиантус, эустома, хризантема","Романтика",art("#ece3f6","#c9b6e8","#9b7fd1",12)],["Красная классика",30000,"25 красных роз, зелень, лента","Розы",art("#f9d2d2","#e57a7a","#b3112a",14)],["Мини-сюрприз",9000,"Кустовая роза, гипсофила, мини-упаковка","Яркие",art("#e5f4ea","#b5ddc0","#e7708f",6)]].map((a,i)=>({id:"demo"+i,name:a[0],price:a[1],desc:a[2],tag:a[3],img:a[4],ts:1e12-i}))}}
+function sorted(){let l=ITEMS.filter(i=>TAG==="all"||i.tag===TAG);const S={new:(a,b)=>(b.ts||0)-(a.ts||0),pa:(a,b)=>(a.price||9e12)-(b.price||9e12),pd:(a,b)=>(b.price||0)-(a.price||0)};return l.sort(S[SORT]||S.new)}
+function draw(){
+ if(DEMO)$("demo").textContent=t("demo");
+ document.documentElement.lang=LG==="kk"?"kk":"ru";
+ document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.l===LG)));
+ if(!D||MODE==="err"||D.on===false){$("brand").textContent="";$("h1").textContent=MODE==="err"?"":t("none");$("sl").textContent=MODE==="err"?t("err"):t("none2");$("pills").innerHTML="";$("tools").innerHTML="";$("main").innerHTML="";$("ft").innerHTML="";return}
+ const ac=/^#[0-9a-f]{6}$/i.test(D.accent||"")?D.accent:"#a35a6b";document.documentElement.style.setProperty("--ac",ac);
+ const nm=D.name||t("tg");document.title=nm+" — "+(D.slogan||"");$("brand").textContent=nm;$("h1").textContent=D.slogan||nm;$("sl").textContent="";
+ const wa=waNum(D.wa),ig=igUser(D.ig);
+ $("pills").innerHTML=(wa?'<a class="pill wa" href="https://wa.me/'+wa+'" target="_blank" rel="noopener">'+svg(IC.wa)+"WhatsApp</a>":"")+(ig?'<a class="pill" href="https://www.instagram.com/'+esc(ig)+'/" target="_blank" rel="noopener">'+svg(IC.ig)+"Instagram</a>":"")+(D.addr?'<span class="pill">'+svg(IC.pin)+esc(D.addr)+"</span>":"");
+ const tags=[...new Set(ITEMS.map(i=>i.tag).filter(Boolean))];
+ $("tools").innerHTML=(tags.length?'<button class="chip" data-tag="all" aria-pressed="'+(TAG==="all")+'">'+t("all")+"</button>"+tags.map(g=>'<button class="chip" data-tag="'+esc(g)+'" aria-pressed="'+(TAG===g)+'">'+esc(g)+"</button>").join(""):"")+(ITEMS.length>1?'<select class="sort" id="sort" aria-label="'+t("sort")+'">'+[["new","new"],["pa","pa"],["pd","pd"]].map(x=>'<option value="'+x[0]+'"'+(SORT===x[0]?" selected":"")+">"+t(x[1])+"</option>").join("")+"</select>":"");
+ const l=sorted();
+ $("main").className=l.length?"grid":"";
+ $("main").innerHTML=l.length?l.map(i=>'<button class="it" data-id="'+esc(i.id)+'"><img src="'+esc(i.img)+'" alt="'+esc(i.name)+'" loading="lazy" onerror="this.closest(\'.it\').remove()"><div class="t"><h3 class="n">'+esc(i.name)+'</h3><div class="p">'+money(i.price)+"</div></div></button>").join(""):'<div class="empty"><h2>'+t("none")+"</h2><p>"+t("none2")+"</p></div>";
+ $("ft").innerHTML=(D.hours?"<div><b>"+t("hours")+":</b> "+esc(D.hours)+"</div>":"")+(D.addr?"<div><b>"+t("addr")+":</b> "+esc(D.addr)+"</div>":"");
+ if(CUR&&$("ov").classList.contains("on"))sheet(CUR.id,1)}
+function wish(){const s=CUR,v=k=>(document.getElementById("o_"+k)||{}).value||"";const dv=document.getElementById("o_dv").getAttribute("aria-pressed")==="true";
+ const dt=v("d"),tm=v("t");let dd="";if(dt){const p=dt.split("-");dd=p[2]+"."+p[1]}
+ const L=[t("hi")+" «"+s.name+"»"+(+s.price>0?" ("+money(s.price)+")":"")+"."];if(dd||tm)L.push(t("d")+": "+(dd||"—")+(tm?", "+t("t")+": "+tm:""));L.push(dv?t("dv")+": "+(v("a")||"—"):t("pk"));if(v("n"))L.push(t("nm")+": "+v("n"));if(v("w"))L.push(t("ws")+": "+v("w"));
+ L.push(t("lk")+": "+location.origin+location.pathname+"?b="+encodeURIComponent(s.id));return L.join("\n")}
+function sheet(id,keep){const s=ITEMS.find(i=>i.id===id);if(!s)return;CUR=s;const wa=waNum(D.wa),today=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+ let keepV={};if(keep){document.querySelectorAll("#sh [id^=o_]").forEach(e=>keepV[e.id]=e.value)}
+ $("sh").innerHTML='<img class="big" src="'+esc(s.img)+'" alt="'+esc(s.name)+'"><div class="bd"><h2>'+esc(s.name)+'</h2><div class="pr">'+money(s.price)+"</div>"+(s.desc?'<div class="ds">'+esc(s.desc)+"</div>":"")+
+ (wa?'<form class="f" id="of" novalidate><h3>'+t("ord")+'</h3><label for="o_n">'+t("name")+'</label><input id="o_n" autocomplete="name"><div class="r2"><div><label for="o_d">'+t("date")+'</label><input id="o_d" type="date" min="'+today+'"></div><div><label for="o_t">'+t("time")+'</label><input id="o_t" type="time"></div></div><label>&nbsp;</label><div class="seg"><button type="button" id="o_pk" aria-pressed="true">'+t("pick")+'</button><button type="button" id="o_dv" aria-pressed="false">'+t("dlv")+'</button></div><div id="o_ab" hidden><label for="o_a">'+t("to")+'</label><input id="o_a" autocomplete="street-address"></div><label for="o_w">'+t("wish")+'</label><textarea id="o_w"></textarea><a class="go" id="o_go" href="#" target="_blank" rel="noopener">'+svg(IC.wa).replace("<svg",'<svg style="width:22px;height:22px"')+t("wa")+'</a><p class="note">'+t("hint")+"</p></form>":'<p class="note">'+t("nowa")+"</p>")+
+ (okIg(s.ig)?'<a class="go ig" href="'+esc(s.ig)+'" target="_blank" rel="noopener">'+svg(IC.ig).replace("<svg",'<svg style="width:20px;height:20px"')+t("ig2")+"</a>":"")+"</div>";
+ Object.keys(keepV).forEach(k=>{const e=$(k);if(e)e.value=keepV[k]});
+ $("ov").classList.add("on");document.body.style.overflow="hidden";if(!keep)$("ov").scrollTop=0;
+ const of=$("of");if(of){const go=()=>{$("o_go").href="https://wa.me/"+wa+"?text="+encodeURIComponent(wish())},sg=on=>{$("o_dv").setAttribute("aria-pressed",String(on));$("o_pk").setAttribute("aria-pressed",String(!on));$("o_ab").hidden=!on;go()};
+  of.addEventListener("input",go);$("o_pk").onclick=()=>sg(false);$("o_dv").onclick=()=>sg(true);of.addEventListener("submit",e=>e.preventDefault());go()}}
+function closeSheet(){$("ov").classList.remove("on");document.body.style.overflow="";CUR=null;if(Q.has("b")){history.replaceState(null,"",location.pathname+(DEMO?"?demo=1":""))}}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-l]");if(b){LG=b.dataset.l;try{localStorage.vl=LG}catch(x){}if(DEMO){D=demoData();ITEMS=D.items}draw();return}
+ const c=e.target.closest("[data-tag]");if(c){TAG=c.dataset.tag;draw();return}const i=e.target.closest(".it");if(i){sheet(i.dataset.id);return}
+ if(e.target.id==="cl"||e.target===$("ov"))closeSheet()});
+document.addEventListener("change",e=>{if(e.target.id==="sort"){SORT=e.target.value;draw()}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&CUR)closeSheet()});
+async function load(){
+ try{
+  if(DEMO){D=demoData();$("demo").hidden=false;$("demo").textContent=t("demo")}
+  else{firebase.initializeApp({apiKey:"AIzaSyCDxDJvmIOw8R0kP7bNbiBHYDAOqY_9cSQ",authDomain:"mirflowersbase.firebaseapp.com",projectId:"mirflowersbase",storageBucket:"mirflowersbase.firebasestorage.app",messagingSenderId:"142575786641",appId:"1:142575786641:web:de2d1b79b076894c29fd30"});
+   const db=firebase.firestore();if(window.__FSEMU)db.useEmulator("127.0.0.1",8080);const d=await db.collection("pubShop").doc("main").get();D=d.exists?d.data():null}
+  ITEMS=D&&D.on!==false?(D.items||[]).filter(i=>i&&i.id&&okImg(i.img)):[];
+ }catch(e){MODE="err";D=null}
+ draw();const b=Q.get("b");if(b&&ITEMS.some(i=>i.id===b))sheet(b)}
+if(DEMO)$("demo").hidden=false;
+load();
+</script></body></html>
