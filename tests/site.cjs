@@ -217,6 +217,39 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   const txt=require("fs").readFileSync(await dl.path(),"utf8");
   ok(dl.suggestedFilename().startsWith("sklad-")&&txt.includes("Роза красная")&&txt.includes("Остаток")&&txt.includes("Стоимость остатка"),"выгрузка склада: файл, позиция, остаток и стоимость у владельца");
   ok(/Роза красная;Цветы;шт;12;(0;)*900;400;4800/.test(txt.replace(/\r?\n/g,"\n")),"выгрузка склада: 12 шт × 400 = 4800 в строке")}
+ /* план дня и праздничные даты */
+ {const pg=await lg("tilegen615@gmail.com"),td=new Date().toLocaleDateString("sv-SE");
+  await put("orders","plan1",{client:"П1",phone:"+7 700 000 00 01",bn:"План Утро",st:0,loc:"main",by:"x",date:td,time:"09:00",ts:Date.now()});
+  await put("orders","plan2",{client:"П2",phone:"+7 700 000 00 02",bn:"План Вечер",st:1,loc:"main",by:"x",date:td,time:"23:59",ts:Date.now()});
+  await put("orders","plan3",{client:"П3",phone:"+7 700 000 00 03",bn:"План Готов",st:2,loc:"main",by:"x",date:td,time:"10:00",ts:Date.now()});
+  await pg.waitForTimeout(1500);
+  ok(await pg.evaluate(()=>{const r=planRows().map(x=>x.o.bn);return r.includes("План Утро")&&r.includes("План Вечер")&&!r.includes("План Готов")}),"план дня: в списке заказы на сборку, готовые не попадают");
+  ok(await pg.evaluate(()=>{const r=planRows(),a=r.findIndex(x=>x.o.bn==="План Утро"),b=r.findIndex(x=>x.o.bn==="План Вечер");return a>-1&&b>a}),"план дня: сортировка по времени");
+  ok(await pg.evaluate(()=>{const x=planRows().find(x=>x.o.bn==="План Вечер");return !!x&&x.due===(23*60+59)-planLead()}),"план дня: «собрать до» = время минус запас на сборку");
+  ok(await pg.evaluate(()=>{const h=planHtml();return h.includes("План Вечер")&&h.includes("План дня")&&h.includes("plg")}),"план дня: блок рисуется, есть части дня");
+  ok(await pg.evaluate(()=>WG.plan.ok()===true),"план дня: включён по умолчанию");
+  await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{dayPlan:false}},{merge:true})});await pg.waitForTimeout(1200);
+  ok(await pg.evaluate(()=>WG.plan.ok()===false),"план дня: выключается в настройках");
+  await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{dayPlan:true},planLead:30},{merge:true})});await pg.waitForTimeout(1200);
+  ok(await pg.evaluate(()=>WG.plan.ok()===true&&planLead()===30),"план дня: включается снова, запас на сборку берётся из настроек");
+  const d3=await pg.evaluate(()=>addD(today(),3));
+  ok(await pg.evaluate(()=>holAll().length===0&&WG.hol.ok()===false),"праздники: по умолчанию выключены");
+  await put("orders","hol1",{client:"Х1",phone:"+7 700 000 00 04",bn:"Праздничный 1",st:0,loc:"main",by:"x",date:d3,ts:Date.now()});await put("orders","hol2",{client:"Х2",phone:"+7 700 000 00 05",bn:"Праздничный 2",st:1,loc:"main",by:"x",date:d3,ts:Date.now()});
+  await pg.evaluate(async d=>{await db.collection("settings").doc("main").set({fx:{holidays:true},holidays:[{n:"Тест-праздник",f:d.slice(5),t:d.slice(5),l:2,o:30,note:"Только самовывоз",on:true}]},{merge:true})},d3);await pg.waitForTimeout(1500);
+  ok(await pg.evaluate(d=>!!holOn(d)&&!holOn(today())&&holNext().d===3,d3),"праздники: дата распознаётся, ближайший через 3 дня");
+  ok(await pg.evaluate(d=>{const h=holHint(d,"");return h.includes("Тест-праздник")&&h.includes("2 из 2")&&h.includes("Лимит достигнут")&&h.includes("Только самовывоз")},d3),"праздники: подсказка в заказе показывает число заказов, лимит и заметку");
+  ok(await pg.evaluate(d=>holHint(d,"hol1").includes("1 из 2")&&!holHint(d,"hol1").includes("Лимит достигнут"),d3),"праздники: при редактировании заказа он сам себя не считает");
+  ok(await pg.evaluate(()=>WG.hol.ok()&&WG.hol.r().includes("Тест-праздник")&&WG.hol.r().includes("через 3 дн.")),"праздники: блок «Ближайший праздник» на главной");
+  ok(await pg.evaluate(async d=>{form();const f=document.getElementById("of");f.elements.date.value=d;f.dispatchEvent(new Event("input",{bubbles:true}));await new Promise(r=>setTimeout(r,200));return document.getElementById("holh").innerText.includes("Тест-праздник")},d3),"праздники: в форме заказа при выборе даты появляется подсказка");
+  await pg.evaluate(async()=>{modal("");await holPub(true,SH.holidays);await vtDoc().set({on:true,name:"Тест"},{merge:true})});
+  {const pd=await (await fetch(FS+"/pubShop/main")).json(),f=pd.fields||{};ok(f.holOn&&f.holOn.booleanValue===true&&JSON.stringify(f.hol||{}).includes("Тест-праздник"),"праздники: список опубликован для онлайн-витрины")}
+  {const ctx=await br.newContext({...devices["iPhone 13"]}),vp=await ctx.newPage();await vp.goto("http://127.0.0.1:5078/vitrina.html");await vp.waitForTimeout(2500);
+   const tx=await vp.evaluate(()=>(document.querySelector("#hol .hol")||{}).innerText||"");ok(tx.includes("Тест-праздник")&&tx.includes("через 3 дн."),"праздники: на онлайн-витрине виден баннер предзаказа");
+   await ctx.close()}
+  await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{holidays:false}},{merge:true});await holPub(false,[])});await pg.waitForTimeout(1200);
+  ok(await pg.evaluate(()=>holAll().length===0&&WG.hol.ok()===false),"праздники: выключаются в настройках");
+  {const ctx=await br.newContext({...devices["iPhone 13"]}),vp=await ctx.newPage();await vp.goto("http://127.0.0.1:5078/vitrina.html");await vp.waitForTimeout(2000);ok(await vp.evaluate(()=>!document.querySelector("#hol .hol")),"праздники: после выключения баннера на витрине нет");await ctx.close()}
+ }
  {const pg=await lg("tilegen615@gmail.com");ok(await pg.evaluate(()=>!CFG.wizard),"у Mirflowers мастер настройки сам не открывается (wizard не задан)");
   ok(await pg.evaluate(()=>wzCard().includes('data-a="wz_open"')),"владелец: в «Магазине» есть кнопка «Мастер настройки магазина»");
   await pg.evaluate(()=>{wizard()});await pg.waitForTimeout(600);ok(await pg.locator("#wzf").count()===1,"мастер открылся: название, телефон, адрес, шаблон, доставка");
@@ -242,7 +275,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.evaluate(()=>{SETS="adv";draw()});await pg.waitForTimeout(500);ok(await pg.locator("details.adv").count()>=3&&await pg.locator("details.adv[open]").count()===0,"«Дополнительно»: блоки свёрнуты");
   await pg.evaluate(()=>{SETS="fx";draw()});await pg.waitForTimeout(500);ok(await pg.locator("details.adv[open] #fxf").count()===1,"старое значение «fx» открывает «Дополнительно» с раскрытыми возможностями");
   const lens=await pg.evaluate(()=>Object.keys(FXD).map(k=>(FXS[k]||"").length));ok(lens.every(n=>n>0&&n<45),"подписи переключателей короткие: "+lens.join(","));
-  ok(await pg.locator("#fxf .hint-btn").count()===10,"у каждого переключателя есть значок «?»");
+  ok(await pg.locator("#fxf .hint-btn").count()===12,"у каждого переключателя есть значок «?»");
   await pg.locator("#fxf .hint-btn").first().click();await pg.waitForTimeout(400);ok((await pg.locator("#modal, .modal, [role=dialog]").first().textContent().catch(()=>"" )).length>20||await pg.locator('[data-a=x]').count()>0,"по значку «?» открывается пояснение");
   await pg.evaluate(()=>modal(""));
   await pg.evaluate(()=>{tab="home";draw()});await pg.waitForTimeout(800);ok(!(await pg.locator("#v").textContent()).includes("Срочных дел нет"),"на главной нет пустой карточки «Всё сделано»");
