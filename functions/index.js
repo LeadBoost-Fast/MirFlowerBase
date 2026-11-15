@@ -328,7 +328,7 @@ async function runBackup(){
 exports.dailyBackup=onSchedule({...OPT,schedule:"0 3 * * *",timeZone:TZ,memory:"1GiB",timeoutSeconds:540},async()=>{await runBackup()});
 exports.backupNow=onCall({...OPT,memory:"1GiB",timeoutSeconds:540},async req=>{
   if(!req.auth)throw new HttpsError("unauthenticated","Войдите в систему");
-  if(!TOP.includes(String(req.auth.token.email||"").toLowerCase()))throw new HttpsError("permission-denied","Только владелец и главный админ");
+  if(!TOP.includes(String(req.auth.token.email||"").toLowerCase())){const st=await admin.firestore().doc("staff/"+req.auth.uid).get(),d=st.exists?st.data():{};if(!(d.active===true&&d.role==="admin"))throw new HttpsError("permission-denied","Только владелец и администратор")}
   try{return{ok:true,files:await runBackup()}}catch(err){throw new HttpsError("internal","Копия не сохранена: "+(err.message||err))}
 });
 
@@ -353,17 +353,36 @@ async function pubDoc(db,ref,o,sh){
   return k;
 }
 async function chatOf(db,o){
-  const ids=[o.chat,o.pk||String(o.phone||"").replace(/\D/g,"")?"wa_"+(o.pk||String(o.phone||"").replace(/\D/g,"")):""].filter(Boolean);
+  const np=WA.normPhone(o.phone),ids=[...new Set([o.chat,o.pk||String(o.phone||"").replace(/\D/g,"")?"wa_"+(o.pk||String(o.phone||"").replace(/\D/g,"")):"",np?"wa_"+np:""].filter(Boolean))];
   for(const id of ids){const c=await db.doc("chats/"+id).get();if(c.exists){const d=c.data();if(d.grp&&d.grp!==id){const g=await db.doc("chats/"+d.grp).get();if(g.exists)return g}return c}}
   return null;
 }
-const TRK_DEF="Ваш заказ принят, спасибо, что выбрали {shop}! Следить за готовностью можно здесь: {link}";
+const MSG=require("./msgs"),WA=require("./channels").__wa;
 // Можно ли сейчас писать в этот чат: клиент сам нам писал, не 2ГИС, и не вышло окно 24 ч (WhatsApp/Instagram)
 function chatReady(cd,now){
   if(cd.ch==="gis")return"nochat";
   if(!(cd.lastInTs||cd.lastDir==="in"))return"nowrote";
   if(["wa","ig"].includes(cd.ch)&&cd.lastInTs&&now-cd.lastInTs>23.5*36e5)return"window";
   return"";
+}
+// Кому и куда писать по заказу. Есть чат с клиентом — пишем в него (для WhatsApp на Evolution API окно 24 часа не действует).
+// Чата нет, но в заказе есть номер — если номер есть в WhatsApp, создаём чат и пишем первыми. Иначе {why}.
+async function clientTarget(db,o){
+  const c=await chatOf(db,o);
+  if(c){const cd=c.data();
+    if(cd.ch==="wa"&&await WA.waEvo(o.loc,cd.wi))return{ref:c.ref};
+    const why=chatReady(cd,Date.now());return why?{why}:{ref:c.ref}}
+  const num=WA.normPhone(o.phone);if(!num)return{why:"nophone"};
+  const ev=await WA.waEvo(o.loc);if(!ev)return{why:"nochat"};
+  if(!(await WA.waHas(ev,num)))return{why:"nowa"};
+  return{ref:db.doc("chats/wa_"+num),create:{ch:"wa",wi:ev.iid,name:o.client||"Клиент",phone:"+"+num,handle:"",loc:o.loc||"main",st:"open",resp:"",nIn:0,nOut:0,firstTs:0,firstReplyTs:0,leadId:""}}}
+// Кладёт сообщение в очередь отправки (его подхватит sendChannelMsg) и отмечает заказ
+function queueMsg(db,tgt,oid,orderRef,t,auto,byName,orderUpd){
+  const b=db.batch(),ts=Date.now(),last={last:t,lastDir:"out",lastTs:ts};
+  if(tgt.create)b.set(tgt.ref,{...tgt.create,...last,unread:0,ts});else b.update(tgt.ref,last);
+  b.set(tgt.ref.collection("msgs").doc(),{dir:"out",t,ts,by:"",byName,st:"pending",auto,oid});
+  b.update(orderRef,typeof orderUpd==="function"?orderUpd(ts):orderUpd);
+  return b.commit();
 }
 const siteOf=sh=>String(sh.siteUrl||SITE_DEF).replace(/\/?$/,"/");
 // Копия заказа для страницы статуса держится актуальной и при правках с сервера
@@ -381,19 +400,40 @@ exports.trackSend=onDocumentCreated({...OPT,document:"orders/{id}"},async e=>{
   if(o.trkAsked||+o.st>=4)return;
   try{
     const s=await db.doc("settings/main").get(),sh=s.exists?s.data():{};
-    if(sh.trkOff)return;
-    const c=await chatOf(db,o);
-    if(!c){await snap.ref.update({trkAsked:"nochat"});return}
-    const why=chatReady(c.data(),Date.now());
-    if(why){await snap.ref.update({trkAsked:why});return}
+    if(sh.trkOff||(sh.fx||{}).linkSend===true)return;/* linkSend: ссылку уже отправляет сайт при создании заказа */
+    const tg=await clientTarget(db,o);
+    if(tg.why){await snap.ref.update({trkAsked:tg.why});return}
     const k=await pubDoc(db,snap.ref,o,sh),link=siteOf(sh)+"status.html?t="+k;
-    const t=String(sh.trkMsg||TRK_DEF).replace("{shop}",sh.name||"нас").replace("{link}",link);
-    const b=db.batch(),ts=Date.now();
-    b.set(c.ref.collection("msgs").doc(),{dir:"out",t,ts,by:"",byName:"Авто: заказ",st:"pending",auto:"track",oid:snap.id});
-    b.update(c.ref,{last:t,lastDir:"out",lastTs:ts});
-    b.update(snap.ref,{trkAsked:ts,pub:k});
-    await b.commit();
+    await queueMsg(db,tg,snap.id,snap.ref,MSG.trackText(sh,link),"track","Авто: заказ",ts=>({trkAsked:ts,pub:k}));
   }catch(err){console.error("trackSend",e.params.id,err);await snap.ref.update({trkAsked:"err"}).catch(()=>{})}
+});
+// Заказ стал «Готов» → клиенту в чат уходит сообщение о готовности (один раз на заказ)
+exports.readySend=onDocumentUpdated({...OPT,document:"orders/{id}"},async e=>{
+  const a=e.data.before.data(),b=e.data.after.data();
+  if(!(+b.st===2&&+a.st!==2)||b.rdyAsked)return;
+  const db=admin.firestore(),ref=e.data.after.ref;
+  try{
+    const s=await db.doc("settings/main").get(),sh=s.exists?s.data():{};
+    const t=MSG.readyText(sh,b);
+    if(!t){await ref.update({rdyAsked:"off"});return}
+    const tg=await clientTarget(db,b);
+    if(tg.why){await ref.update({rdyAsked:tg.why});return}
+    await queueMsg(db,tg,e.params.id,ref,t,"ready","Авто: готов",ts=>({rdyAsked:ts}));
+  }catch(err){console.error("readySend",e.params.id,err);await ref.update({rdyAsked:"err"}).catch(()=>{})}
+});
+// Доставка: заказ стал «Курьер в пути» → клиенту сообщение, что курьер выехал (один раз на заказ)
+exports.waySend=onDocumentUpdated({...OPT,document:"orders/{id}"},async e=>{
+  const a=e.data.before.data(),b=e.data.after.data();
+  if(!(+b.st===3&&+a.st!==3)||b.wayAsked||!b.dv)return;
+  const db=admin.firestore(),ref=e.data.after.ref;
+  try{
+    const s=await db.doc("settings/main").get(),sh=s.exists?s.data():{};
+    const t=MSG.wayText(sh,b);
+    if(!t){await ref.update({wayAsked:"off"});return}
+    const tg=await clientTarget(db,b);
+    if(tg.why){await ref.update({wayAsked:tg.why});return}
+    await queueMsg(db,tg,e.params.id,ref,t,"way","Авто: курьер",ts=>({wayAsked:ts}));
+  }catch(err){console.error("waySend",e.params.id,err);await ref.update({wayAsked:"err"}).catch(()=>{})}
 });
 exports.reviewArm=onDocumentUpdated({...OPT,document:"orders/{id}"},async e=>{
   const a=e.data.before.data(),b=e.data.after.data();
@@ -401,7 +441,7 @@ exports.reviewArm=onDocumentUpdated({...OPT,document:"orders/{id}"},async e=>{
   const s=await admin.firestore().doc("settings/main").get(),m=s.exists?+s.data().revDelayMin:NaN;
   await e.data.after.ref.update({rvAskAt:Date.now()+(isFinite(m)&&m>=0?m*6e4:RV_DELAY)});/* settings.revDelayMin — задержка в минутах, по умолчанию 60 */
 });
-exports.reviewAsk=onSchedule({...OPT,schedule:"*/15 * * * *",timeZone:TZ},async()=>{
+async function reviewAskRun(){
   const db=admin.firestore(),now=Date.now(),q=await db.collection("orders").where("rvAskAt","<=",now).limit(40).get();
   if(q.empty)return;
   const s=await db.doc("settings/main").get(),sh=s.exists?s.data():{};
@@ -409,23 +449,18 @@ exports.reviewAsk=onSchedule({...OPT,schedule:"*/15 * * * *",timeZone:TZ},async(
   for(const d of q.docs){const o=d.data();
     try{
       if(+o.st!==4){await d.ref.update({rvAskAt:del});continue}/* статус откатили — не просим; снова «Выдан» → запустится заново */
-      if(sh.revOff||o.rate){await d.ref.update({rvAskAt:del,rvAsked:"skip"});continue}
-      const c=await chatOf(db,o);
-      if(!c){await d.ref.update({rvAskAt:del,rvAsked:"nochat"});continue}
-      const cd=c.data();
-      // только тем, кто сам писал; WhatsApp и Instagram разрешают писать первыми лишь 24 часа после последнего сообщения клиента
-      const why=chatReady(cd,now);
-      if(why){await d.ref.update({rvAskAt:del,rvAsked:why});continue}
+      if(o.rate||sh.revOff||sh.revMode==="off"){await d.ref.update({rvAskAt:del,rvAsked:"skip"});continue}
+      const tg=await clientTarget(db,o);
+      if(tg.why){await d.ref.update({rvAskAt:del,rvAsked:tg.why});continue}
       const k=await pubDoc(db,d.ref,o,sh),link=String(sh.siteUrl||SITE_DEF).replace(/\/?$/,"/")+"status.html?t="+k+"&r=1";/* r=1 — страница показывает форму оценки */
-      const t=String(sh.revMsg||"Спасибо, что выбрали {shop}! Оцените, пожалуйста, букет — это займёт 10 секунд: {link}").replace("{shop}",sh.name||"нас").replace("{link}",link);
-      const b=db.batch(),ts=Date.now();
-      b.set(c.ref.collection("msgs").doc(),{dir:"out",t,ts,by:"",byName:"Авто: отзыв",st:"pending",auto:"review",oid:d.id});
-      b.update(c.ref,{last:t,lastDir:"out",lastTs:ts});
-      b.update(d.ref,{rvAskAt:del,rvAsked:ts,pub:k});
-      await b.commit();
+      const plan=MSG.reviewPlan(sh,o,link);
+      if(!plan){await d.ref.update({rvAskAt:del,rvAsked:"skip"});continue}
+      await queueMsg(db,tg,d.id,d.ref,plan.text,"review","Авто: отзыв",ts=>({rvAskAt:del,rvAsked:ts,rvMode:plan.mode,pub:k}));
     }catch(err){console.error("reviewAsk",d.id,err);await d.ref.update({rvAskAt:del,rvAsked:"err"}).catch(()=>{})}
   }
-});
+}
+exports.reviewAsk=onSchedule({...OPT,schedule:"*/15 * * * *",timeZone:TZ},reviewAskRun);
+Object.defineProperty(exports,"__test",{value:{reviewAskRun},enumerable:false});
 exports.reviewIn=onDocumentCreated({...OPT,document:"reviews/{tok}"},async e=>{
   const r=e.data&&e.data.data();if(!r)return;
   const db=admin.firestore(),q=await db.collection("orders").where("pub","==",e.params.tok).limit(1).get();
