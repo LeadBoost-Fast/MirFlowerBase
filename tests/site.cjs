@@ -248,7 +248,46 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
    await ctx.close()}
   await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{holidays:false}},{merge:true});await holPub(false,[])});await pg.waitForTimeout(1200);
   ok(await pg.evaluate(()=>holAll().length===0&&WG.hol.ok()===false),"праздники: выключаются в настройках");
+  ok(await pg.evaluate(()=>!layGet().some(i=>i.id==="hol")),"праздники: выключенный блок не стоит на главной");
   {const ctx=await br.newContext({...devices["iPhone 13"]}),vp=await ctx.newPage();await vp.goto("http://127.0.0.1:5078/vitrina.html");await vp.waitForTimeout(2000);ok(await vp.evaluate(()=>!document.querySelector("#hol .hol")),"праздники: после выключения баннера на витрине нет");await ctx.close()}
+ }
+ /* воронка в чатах и подписки на цветы */
+ {const pg=await lg("tilegen615@gmail.com");
+  ok(await pg.evaluate(()=>funOk()),"воронка в чатах: по умолчанию включена");
+  ok(await pg.evaluate(()=>FTPL.some(f=>f[0]==="retail"&&f[3].length===6)),"шаблон воронки «Обычные покупатели» есть");
+  await pg.evaluate(()=>{tab="chats";chV="fun";draw()});await pg.waitForTimeout(800);
+  {const tx=await pg.evaluate(()=>{const v=document.getElementById("v");return (/chfun/.test(v.innerHTML)?"FUN ":"nofun ")+v.innerText.slice(0,160)});ok(tx.startsWith("FUN ")&&/новая сделка/i.test(tx),"воронка в чатах: доска сделок открывается во вкладке «Воронка» ["+tx.replace(/\n/g," | ")+"]")}
+  ok(await pg.locator('.chtabs [data-a=ch_v][data-id=fun]').count()===1,"вкладка «Воронка» стоит среди вкладок чатов");
+  await pg.evaluate(()=>dealForm({client:"Анна",phone:"+7 700 111 22 33",src:"WhatsApp"}));
+  ok(await pg.evaluate(()=>{const f=document.getElementById("df");return f.elements.client.value==="Анна"&&f.elements.phone.value.includes("700")&&f.elements.src.value==="WhatsApp"}),"сделка из чата: имя, телефон и источник подставлены");
+  await pg.evaluate(()=>modal(""));
+  await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{chatFun:false}},{merge:true})});await pg.waitForTimeout(1200);
+  ok(await pg.evaluate(()=>!funOk()),"воронка в чатах: выключается в настройках");
+  await pg.evaluate(()=>{tab="chats";chV="list";draw()});await pg.waitForTimeout(500);
+  ok(await pg.locator('.chtabs [data-a=ch_v][data-id=fun]').count()===0,"после выключения вкладки «Воронка» в чатах нет");
+  await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{chatFun:true}},{merge:true})});await pg.waitForTimeout(800);
+  /* подписки */
+  ok(await pg.evaluate(()=>!subsOn()&&WG.subd.ok()===false),"подписки: по умолчанию выключены");
+  ok(await pg.evaluate(()=>sbNext("2026-01-31","m")==="2026-02-28"&&sbNext("2026-03-10","w")==="2026-03-17"&&sbNext("2026-03-10","2w")==="2026-03-24"),"подписки: следующая дата (неделя, две недели, месяц с концом месяца)");
+  await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{subs:true}},{merge:true})});await pg.waitForTimeout(1200);
+  ok(await pg.evaluate(()=>subsOn()&&WG.subd.ok()===true),"подписки: включаются в настройках");
+  const sid=await pg.evaluate(async()=>{const r=await db.collection("subs").add({client:"Сауле",phone:"+7 701 000 00 01",bn:"Нежный микс",comp:"",p:15000,freq:"w",next:today(),time:"10:00",dv:false,addr:"",loc:"main",note:"",on:true,n:0,ts:Date.now()});return r.id});
+  await pg.evaluate(()=>{tab="deals";DLV="subs";draw()});await pg.waitForTimeout(1200);
+  {const tx=await pg.evaluate(()=>document.getElementById("v").innerText.slice(0,600));ok(/нежный микс/i.test(tx)&&/пора оформить/i.test(tx)&&/подписки/i.test(tx),"подписки: список, метка «Пора оформить» и вкладка «Подписки» ["+tx.replace(/\n/g," | ")+"]")}
+  ok(await pg.evaluate(()=>WG.subd.r().includes("Сауле")),"подписки: блок на главной показывает клиента");
+  const nO=await pg.evaluate(()=>O.length);
+  await pg.locator('[data-a=sb_o]').first().click();await pg.waitForTimeout(1800);
+  ok(await pg.evaluate(id=>O.some(o=>o.sub===id&&o.src==="Подписка"&&o.date===today()&&o.bn==="Нежный микс"&&+o.p===15000&&+o.st===0),sid),"подписки: кнопка создаёт заказ на сегодня");
+  ok(await pg.evaluate(async id=>{const s=(await db.collection("subs").doc(id).get()).data();return s.next===addD(today(),7)&&s.n===1&&s.last===today()},sid),"подписки: после заказа следующая дата через неделю, счётчик 1");
+  const dub=await pg.evaluate(async id=>{const s=(await db.collection("subs").doc(id).get()).data(),before=O.length;sbOrder({...s,id,next:today()});await new Promise(r=>setTimeout(r,1000));return O.length-before},sid);ok(dub===0,"подписки: второй заказ на ту же дату не создаётся");
+  await pg.evaluate(()=>{DLV="subs";draw()});await pg.waitForTimeout(500);
+  await pg.locator('[data-a=sb_s]').first().click();await pg.waitForTimeout(1200);
+  ok(await pg.evaluate(async id=>(await db.collection("subs").doc(id).get()).data().next===addD(today(),14),sid),"подписки: «Пропустить» сдвигает дату");
+  await pg.locator('[data-a=sb_p]').first().click();await pg.waitForTimeout(1200);
+  ok(await pg.evaluate(async id=>(await db.collection("subs").doc(id).get()).data().on===false&&!sbDue({...(await db.collection("subs").doc(id).get()).data(),next:today()}),sid),"подписки: пауза выключает подписку");
+  await pg.evaluate(async id=>{await db.collection("subs").doc(id).delete();await db.collection("settings").doc("main").set({fx:{subs:false}},{merge:true})},sid);await pg.waitForTimeout(1200);
+  ok(await pg.evaluate(()=>!subsOn()&&subsChips()===""),"подписки: выключаются в настройках, вкладки нет");
+  ok(await pg.evaluate(()=>!layGet().some(i=>i.id==="subd")),"подписки: выключенный блок не стоит на главной");
  }
  {const pg=await lg("tilegen615@gmail.com");ok(await pg.evaluate(()=>!CFG.wizard),"у Mirflowers мастер настройки сам не открывается (wizard не задан)");
   ok(await pg.evaluate(()=>wzCard().includes('data-a="wz_open"')),"владелец: в «Магазине» есть кнопка «Мастер настройки магазина»");
@@ -275,7 +314,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.evaluate(()=>{SETS="adv";draw()});await pg.waitForTimeout(500);ok(await pg.locator("details.adv").count()>=3&&await pg.locator("details.adv[open]").count()===0,"«Дополнительно»: блоки свёрнуты");
   await pg.evaluate(()=>{SETS="fx";draw()});await pg.waitForTimeout(500);ok(await pg.locator("details.adv[open] #fxf").count()===1,"старое значение «fx» открывает «Дополнительно» с раскрытыми возможностями");
   const lens=await pg.evaluate(()=>Object.keys(FXD).map(k=>(FXS[k]||"").length));ok(lens.every(n=>n>0&&n<45),"подписи переключателей короткие: "+lens.join(","));
-  ok(await pg.locator("#fxf .hint-btn").count()===12,"у каждого переключателя есть значок «?»");
+  ok(await pg.locator("#fxf .hint-btn").count()===14,"у каждого переключателя есть значок «?»");
   await pg.locator("#fxf .hint-btn").first().click();await pg.waitForTimeout(400);ok((await pg.locator("#modal, .modal, [role=dialog]").first().textContent().catch(()=>"" )).length>20||await pg.locator('[data-a=x]').count()>0,"по значку «?» открывается пояснение");
   await pg.evaluate(()=>modal(""));
   await pg.evaluate(()=>{tab="home";draw()});await pg.waitForTimeout(800);ok(!(await pg.locator("#v").textContent()).includes("Срочных дел нет"),"на главной нет пустой карточки «Всё сделано»");
@@ -497,7 +536,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await ow.evaluate(()=>{tab="set";SETS="cl";draw()});await ow.waitForTimeout(700);
   ok(await ow.locator('#fnl [data-a=fn_tpl]').count()===1,"в «Клиенты и оплата» есть «Воронки продаж»");
   await ow.locator('#fnl [data-a=fn_tpl]').click();await ow.waitForTimeout(500);
-  const nt=await ow.locator('[data-a=fn_add]').count();ok(nt===10,"в списке 9 готовых воронок и «Своя воронка»: "+nt);
+  const nt=await ow.locator('[data-a=fn_add]').count();ok(nt===11,"в списке 10 готовых воронок и «Своя воронка»: "+nt);
   await ow.locator('[data-a=fn_add][data-id=b2b]').click();await ow.waitForTimeout(1500);
   await ow.locator('#fnl [data-a=fn_tpl]').click();await ow.waitForTimeout(500);await ow.locator('[data-a=fn_add][data-id=holiday]').click();await ow.waitForTimeout(1500);
   ok(await ow.evaluate(()=>FUN().map(f=>f.id).join(",")==="sales,b2b,holiday"),"добавлены «Корпоративные клиенты» и «Праздники»");
