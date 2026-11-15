@@ -440,6 +440,20 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.reload();await pg.waitForTimeout(2500);ok((await navT()).includes("ctrl"),"после перезагрузки «Контроль» в меню");
   await pg.evaluate(()=>{tab="more";draw()});await pg.waitForTimeout(500);await pg.locator('[data-a=pin_open]').click();await pg.waitForTimeout(500);await pg.locator('[data-a=pin_reset]').click();await pg.waitForTimeout(900);
   ok(JSON.stringify(await navT())===JSON.stringify(before),"«По умолчанию» возвращает прежнее меню");
+  /* «Ещё»: свой список, раздел может стоять и внизу, и в «Ещё» */
+  {const moreDef=await pg.evaluate(()=>moreIds()),pinned=before.find(x=>x!=="home"&&x!=="more");
+   ok(await pg.evaluate(()=>JSON.stringify(MORE.map(t=>t[0]))===JSON.stringify(moreIds())),"«Ещё»: по умолчанию список как раньше (чего нет в нижнем меню)");
+   await pg.evaluate(()=>pinsOpen());await pg.waitForTimeout(500);
+   ok(await pg.locator('[data-a=more_t]').count()>=5&&await pg.locator('.pin-h').count()===1,"в меню два столбца: «Снизу» и «В Ещё»");
+   await pg.locator('[data-a=more_t][data-id='+pinned+']').check();await pg.waitForTimeout(800);
+   ok(await pg.evaluate(id=>MORE.some(t=>t[0]===id)&&rolePins().includes(id),pinned),"раздел «"+pinned+"» стоит и внизу, и в «Ещё»");
+   ok((await navT()).includes(pinned),"нижнее меню не изменилось");
+   const dm=(await(await fetch(FS+"/layouts/"+uid,{headers:{Authorization:"Bearer owner"}})).json()).fields||{};ok(JSON.stringify(dm.more||{}).includes(pinned),"список «Ещё» записан на сервер");
+   const ids=await pg.evaluate(()=>moreIds());for(const id of ids.slice(0,-1)){await pg.locator('[data-a=more_t][data-id='+id+']').uncheck();await pg.waitForTimeout(250)}
+   await pg.locator('[data-a=more_t][data-id='+ids[ids.length-1]+']').click();await pg.waitForTimeout(400);
+   ok(await pg.locator('[data-a=more_t][data-id='+ids[ids.length-1]+']').isChecked()&&(await pg.evaluate(()=>moreIds())).length===1,"в «Ещё» нельзя убрать последний раздел");
+   await pg.locator('[data-a=pin_reset]').click();await pg.waitForTimeout(900);
+   ok(JSON.stringify(await pg.evaluate(()=>moreIds()))===JSON.stringify(moreDef)&&JSON.stringify(await navT())===JSON.stringify(before),"«По умолчанию» возвращает и «Ещё», и нижнее меню")}
   await pg.evaluate(()=>modal(""));await pg.context().close()}
  {const ow=await lg("tilegen615@gmail.com");await ow.evaluate(()=>{tab="more";draw()});await ow.waitForTimeout(600);await ow.locator('[data-a=pin_open]').click();await ow.waitForTimeout(500);
   await ow.locator('[data-a=pin_role]').click();await ow.waitForTimeout(500);await ow.locator('[data-a=pins_put][data-id=role_florist]').click();await ow.waitForTimeout(1200);
