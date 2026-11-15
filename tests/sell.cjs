@@ -12,7 +12,7 @@ const srv=http.createServer((q,r)=>{let u=decodeURIComponent(q.url.split("?")[0]
   await pg.evaluate(()=>[...document.images].forEach(i=>i.loading="eager"));await pg.waitForTimeout(500);
   ok(await pg.evaluate(()=>[...document.images].every(i=>i.naturalWidth>0)),nm+": у всех картинок есть содержимое");
   await pg.waitForTimeout(4600);ok(await pg.evaluate(()=>document.querySelectorAll("#steps li.on").length===5&&document.getElementById("bub").classList.contains("on")),nm+": бирка заказа прошла все 5 этапов, сообщение клиенту показано");
-  ok(await pg.evaluate(()=>[...document.querySelectorAll("[data-wa]")].every(a=>/^https:\/\/wa\.me\/77071362008\?text=/.test(a.href)&&!a.classList.contains("todo"))),nm+": кнопки WhatsApp ведут на номер с готовым сообщением");
+  ok(await pg.evaluate(()=>[...document.querySelectorAll("[data-wa]")].every(a=>/^https:\/\/wa\.me\/77071362009\?text=/.test(a.href)&&!a.classList.contains("todo"))),nm+": кнопки WhatsApp ведут на номер с готовым сообщением");
   ok(await pg.evaluate(()=>[...document.querySelectorAll("[data-mail]")].every(a=>getComputedStyle(a).display==="none")),nm+": без почты кнопка почты скрыта");
   ok(await pg.evaluate(()=>/[0-9]/.test(document.querySelector("[data-p=base]").textContent)&&!document.querySelector(".plans .todo")),nm+": цены на странице");
   ok(await pg.evaluate(()=>document.querySelectorAll("[data-kk]").length>60),nm+": тексты есть и на казахском");
