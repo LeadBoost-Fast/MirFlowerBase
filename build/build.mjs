@@ -37,6 +37,7 @@ if(!page.includes("{{APP_JS}}")||!page.includes("{{APP_CSS}}"))throw new Error("
 page=page.replace("{{APP_JS}}",jsName).replace("{{APP_CSS}}",cssName);
 files.set("index.html",page);
 for(const f of LAZY)files.set(f,await js(fs.readFileSync(SRC(f),"utf8")));
+files.set("shop.config.js",fs.readFileSync(SRC("shop.config.js"),"utf8")); // настройки магазина, не сжимаются, чтобы их можно было читать и править
 
 if(CHECK){
   let bad=0;

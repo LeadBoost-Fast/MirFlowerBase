@@ -189,6 +189,27 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
  await putm("settings","main",{gisKey:"test-key"});await fetch(FS+"/settings/main?updateMask.fieldPaths=mapOn",{method:"PATCH",headers:{"content-type":"application/json",Authorization:"Bearer owner"},body:JSON.stringify({fields:{mapOn:{booleanValue:true}}})});
  {const pg=await lg("adm@x.kz");const ids=await pg.evaluate(()=>(window.HPL||[]).map(t=>t[0]));ok(ids.includes("map"),"карта включена и есть ключ: вкладка «Карта» появилась");await pg.context().close()}
  await fetch(FS+"/settings/main?updateMask.fieldPaths=mapOn",{method:"PATCH",headers:{"content-type":"application/json",Authorization:"Bearer owner"},body:JSON.stringify({fields:{mapOn:{booleanValue:false}}})});
+ /* 4h. свои профессии и доставка */
+ {const pg=await lg("adm@x.kz");await pg.evaluate(()=>{tab="team";draw()});await pg.waitForTimeout(1200);
+  ok(await pg.locator("#ttf").count()===1,"в «Команде» есть карточка «Профессии»");
+  await pg.locator('#ttf [name=tn]').fill("Декоратор");await pg.locator('#ttf [name=tb]').selectOption("florist");await pg.locator('#ttf [name=stock]').uncheck();await pg.locator('#ttf button').last().click();await pg.waitForTimeout(1500);
+  const tt=await pg.evaluate(()=>TT().map(t=>t.name+"|"+t.base+"|"+JSON.stringify(t.perms)));ok(tt.length===1&&tt[0]==='Декоратор|florist|{"stock":false}',"профессия «Декоратор» сохранена с закрытым складом: "+tt.join(";"));
+  const opId=await pg.evaluate(()=>Object.keys(SF).find(i=>SF[i].email==="op@x.kz"));await pg.evaluate(()=>{tab="team";draw()});await pg.waitForTimeout(800);
+  ok(await pg.locator('[data-a=role][data-id="'+opId+'"] optgroup option').count()===1,"в списке роли сотрудника появилась «Декоратор»");
+  const tid=await pg.evaluate(()=>TT()[0].id);await pg.locator('[data-a=role][data-id="'+opId+'"]').selectOption("t:"+tid);await pg.waitForTimeout(1500);
+  let sf=(await(await fetch(FS+"/staff/"+opId,{headers:{Authorization:"Bearer owner"}})).json()).fields;ok(sf.role.stringValue==="florist"&&sf.title.stringValue===tid&&((sf.perms.mapValue.fields||{}).stock||{}).booleanValue===false,"у сотрудника роль florist, профессия и закрытый склад записаны");
+  await pg.evaluate(()=>{tab="team";draw()});await pg.waitForTimeout(800);ok((await pg.locator("#v").textContent()).includes("Декоратор"),"в «Команде» у сотрудника подпись «Декоратор»");
+  await pg.locator('[data-a=role][data-id="'+opId+'"]').selectOption("r:operator");await pg.waitForTimeout(1500);
+  sf=(await(await fetch(FS+"/staff/"+opId,{headers:{Authorization:"Bearer owner"}})).json()).fields;ok(sf.role.stringValue==="operator"&&(sf.title||{}).stringValue==="","возврат на обычную роль «Оператор» убрал профессию");
+  /* доставка выключена: нет курьера и экрана «Курьер», в заказе только самовывоз */
+  await pg.evaluate(()=>db.collection("settings").doc("main").set({fx:{...(SH.fx||{}),delivery:false}},{merge:true}));await pg.waitForTimeout(1500);
+  await pg.evaluate(()=>{tab="team";draw()});await pg.waitForTimeout(800);
+  const ro=await pg.evaluate(()=>roleOpts(null).includes('value="r:courier"'));ok(ro===false,"доставка выключена: «Курьер» в списке ролей скрыт");
+  ok(await pg.evaluate(()=>!dvOn()&&!((window.HPL||[]).some(t=>t[0]==="cur"))),"доставка выключена: вкладки «Курьер» нет");
+  await pg.evaluate(()=>db.collection("settings").doc("main").set({fx:{...(SH.fx||{}),delivery:true}},{merge:true}));await pg.waitForTimeout(1500);
+  ok(await pg.evaluate(()=>dvOn()&&roleOpts(null).includes('value="r:courier"')),"доставка снова включена: курьер вернулся");
+  await pg.evaluate(()=>{tab="team";draw()});await pg.waitForTimeout(800);await pg.locator('[data-a=tt_del]').first().click();await pg.waitForTimeout(1500);ok(await pg.evaluate(()=>TT().length===0),"профессию можно убрать");
+  await pg.context().close()}
  /* 5. аноним не пишет и не листает */
  {const w=await fetch(FS+"/pubShop/main",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({fields:{on:{booleanValue:false}}})});ok(w.status===403,"аноним не может писать: HTTP "+w.status);
   const l=await fetch(FS+"/pubShop");ok(l.status===403,"аноним не может листать коллекцию: HTTP "+l.status);
