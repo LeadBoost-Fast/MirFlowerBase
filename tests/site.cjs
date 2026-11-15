@@ -431,6 +431,13 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   const st=(await(await fetch(FS+"/settings/main",{headers:{Authorization:"Bearer owner"}})).json()).fields||{};ok((((st.layLock||{}).mapValue||{}).fields||{}).all&&st.layLock.mapValue.fields.all.booleanValue===true,"замок «все сотрудники» записан");
   const fl2=await lg("fl@x.kz");await fl2.waitForTimeout(800);ok(await fl2.evaluate(()=>layLocked()),"флорист: настройка закреплена");await fl2.context().close();
   await ow.evaluate(async()=>{modal("");await db.collection("settings").doc("main").set({layLock:{all:false}},{merge:true});await db.collection("layouts").doc("all").delete()});await ow.context().close()}
+ /* 4t. «Заказы»: без дублей фильтров */
+ {const pg=await lg("op@x.kz");await pg.evaluate(()=>{tab="orders";draw()});await pg.waitForTimeout(900);
+  ok(await pg.locator(".pt button").count()===4,"в «Заказах» 4 плитки этапов с числами");
+  const ch=(await pg.locator('.chips [data-a=f]').allTextContents()).join("|");ok(ch==="Все|Выданы|Отменены","кнопки фильтра без дублей плиток: "+ch);
+  await pg.locator('.pt [data-a=f]').nth(1).click();await pg.waitForTimeout(500);ok(await pg.evaluate(()=>fs==="1"),"нажатие на плитку «В сборке» включает фильтр");
+  await pg.locator('.chips [data-a=f][data-id=""]').click();await pg.waitForTimeout(500);ok(await pg.evaluate(()=>fs===""),"«Все» сбрасывает фильтр");
+  await pg.context().close()}
  /* 5. аноним не пишет и не листает */
  {const w=await fetch(FS+"/pubShop/main",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({fields:{on:{booleanValue:false}}})});ok(w.status===403,"аноним не может писать: HTTP "+w.status);
   const l=await fetch(FS+"/pubShop");ok(l.status===403,"аноним не может листать коллекцию: HTTP "+l.status);

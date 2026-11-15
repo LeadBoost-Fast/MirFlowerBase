@@ -185,7 +185,7 @@ st.textContent=`:root[data-t=${e}]{--bg:${P[0]};--card:${P[1]};--c2:${P[2]};--in
 if(tc)tc.content=P[0];try{dsgAfter()}catch(e){}}
 const UIS=["g","h","m","p"];/* у каждого — своя архитектура экранов */
 /* Тяжёлые дизайны лежат в отдельных файлах и грузятся только когда выбраны (пока файл не загрузился, работает Bento) */
-const DLIB={h:"d-cosmos.js",m:"d-command.js",p:"d-atlas.js"},DSTAT={},DSG_V=window.DSGV||"20261116t",
+const DLIB={h:"d-cosmos.js",m:"d-command.js",p:"d-atlas.js"},DSTAT={},DSG_V=window.DSGV||"20261116u",
  dsgReady=k=>k==="g"||DSTAT[k]===2,uiSel=()=>{try{const u=JSON.parse(STO.get("th")||"{}").ui;return UIS.includes(u)?u:"g"}catch(e){return"g"}},
  dsgAfter=()=>{const x=SHELL[LY()];if(x&&x.after)x.after()};
 function dsgLoad(k){if(!DLIB[k]||DSTAT[k]===1||DSTAT[k]===2)return;DSTAT[k]=1;const e=document.createElement("script");e.src=DLIB[k]+"?v="+DSG_V;e.async=true;
@@ -902,7 +902,7 @@ function orders(){const QT=sQuery(fq),dd=fdt==="t"?today():fdt==="n"?addD(today(
  /* Чёрная дыра — радар-строки */
  if(y==="h")return csOrders(l,filt);
  /* Bento — классика */
- return `<h1>Заказы</h1>${filt}<div class="pt">${(()=>{const P=[[0,"Новые"],[1,"В сборке"],[2,"Готовы"],[3,"В пути"]].map(x=>[...x,O.filter(o=>+o.st===x[0]&&!(x[0]===0&&ntLater(o))&&(S.role!=="courier"||(o.dv&&(o.courier===U.uid||dvFree(o))))).length]),mx=Math.max(1,...P.map(x=>x[2]));return P.map(x=>`<button type="button" class="k-${x[0]} ${fs===String(x[0])?"on":""}" data-a="f" data-id="${fs===String(x[0])?"":x[0]}"><b>${x[2]}</b><span>${x[1]}</span><i class="ptb"><em style="width:${Math.round(x[2]/mx*100)}%"></em></i></button>`).join("")})()}</div><div class="chips">${[["","Все"],...ST.map((s,i)=>[String(i),s])].map(c=>`<button class="chip ${fs===c[0]?"on":""}" data-a="f" data-id="${c[0]}">${c[1]}</button>`).join("")}</div><div class="og ly-g">${oRender(l.slice(0,ordLim()))||(fq?sEmpty(fq):'<div class="card mut">Ничего не найдено.</div>')}</div>${l.length>ordLim()?`<div class="acts"><button class="btn g" data-a="o_more">Показать ещё (${l.length-ordLim()})</button></div>`:""}`}
+ return `<h1>Заказы</h1>${filt}<div class="pt">${(()=>{const P=[[0,"Новые"],[1,"В сборке"],[2,"Готовы"],[3,"В пути"]].map(x=>[...x,O.filter(o=>+o.st===x[0]&&!(x[0]===0&&ntLater(o))&&(S.role!=="courier"||(o.dv&&(o.courier===U.uid||dvFree(o))))).length]),mx=Math.max(1,...P.map(x=>x[2]));return P.map(x=>`<button type="button" class="k-${x[0]} ${fs===String(x[0])?"on":""}" data-a="f" data-id="${fs===String(x[0])?"":x[0]}"><b>${x[2]}</b><span>${x[1]}</span><i class="ptb"><em style="width:${Math.round(x[2]/mx*100)}%"></em></i></button>`).join("")})()}</div><div class="chips">${[["","Все"],["4","Выданы"],["5","Отменены"]].map(c=>`<button class="chip ${fs===c[0]?"on":""}" data-a="f" data-id="${c[0]}">${c[1]}</button>`).join("")}</div><div class="og ly-g">${oRender(l.slice(0,ordLim()))||(fq?sEmpty(fq):'<div class="card mut">Ничего не найдено.</div>')}</div>${l.length>ordLim()?`<div class="acts"><button class="btn g" data-a="o_more">Показать ещё (${l.length-ordLim()})</button></div>`:""}`}
 
 /* ===== Карта 2ГИС: доставки на карте ===== */
 /* Карта 2ГИС внутри сайта (платная) выключена по умолчанию: включается галочкой в Настройки → Точки и карта и только при наличии ключа */ const mapOn=()=>!!(typeof SH!=="undefined"&&SH&&SH.mapOn===true&&SH.gisKey); const AKT=CFG.mapCenter||[51.1722,43.6481];let GM=null,GMEL=null,GMK=[],GMME=null,GMLOAD=null,GMSIG="",GMSEQ=0,GMXH="";
