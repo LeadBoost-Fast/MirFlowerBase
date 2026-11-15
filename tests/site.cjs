@@ -387,6 +387,57 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.emulateMedia({reducedMotion:"reduce"});
   ok(await pg.evaluate(()=>{tab="stock";draw();return [...document.getElementById("v").children].every(e=>getComputedStyle(e).animationName==="none")}),"при настройке телефона «уменьшить движение» анимаций нет");
   await pg.context().close()}
+ /* 4r. меню снизу: любые разделы */
+ {const pg=await lg("adm@x.kz");const uid=await pg.evaluate(()=>U.uid);await pg.evaluate(()=>{tab="more";draw()});await pg.waitForTimeout(700);
+  ok(await pg.locator('[data-a=pin_open]').count()===1,"в «Ещё» есть «Настроить меню снизу»");
+  const navT=()=>pg.evaluate(()=>[...document.querySelectorAll("nav button[data-t]")].map(b=>b.dataset.t));const before=await navT();
+  await pg.locator('[data-a=pin_open]').click();await pg.waitForTimeout(600);const np=await pg.locator('[data-a=pin_t]').count();ok(np>=10,"в списке меню все разделы ("+np+")");
+  await pg.locator('[data-a=pin_t][data-id=show]').uncheck();await pg.waitForTimeout(500);await pg.locator('[data-a=pin_t][data-id=ctrl]').check();await pg.waitForTimeout(900);
+  ok((await navT()).includes("ctrl"),"«Контроль» стоит в нижнем меню: "+(await navT()).join(","));
+  ok(await pg.evaluate(()=>{const b=document.querySelector('nav button[data-t=ctrl]');return !!b&&/Контроль/.test(b.textContent)}),"кнопка называется «Контроль», а не «Команда»");
+  await pg.locator('[data-a=pin_t][data-id=crm]').click();await pg.waitForTimeout(500);ok(await pg.locator('[data-a=pin_t][data-id=crm]').isChecked()===false,"больше 4 разделов закрепить нельзя");
+  const d1=(await(await fetch(FS+"/layouts/"+uid,{headers:{Authorization:"Bearer owner"}})).json()).fields||{};ok(JSON.stringify(d1.pins||{}).includes("ctrl"),"меню записано на сервер");
+  await pg.evaluate(()=>modal(""));await pg.waitForTimeout(400);await pg.evaluate(()=>{tab="ctrl";draw()});await pg.waitForTimeout(500);ok(await pg.evaluate(()=>document.querySelector('nav button[data-t=ctrl]').classList.contains("on")),"открыт «Контроль»: кнопка в меню подсвечена");
+  await pg.reload();await pg.waitForTimeout(2500);ok((await navT()).includes("ctrl"),"после перезагрузки «Контроль» в меню");
+  await pg.evaluate(()=>{tab="more";draw()});await pg.waitForTimeout(500);await pg.locator('[data-a=pin_open]').click();await pg.waitForTimeout(500);await pg.locator('[data-a=pin_reset]').click();await pg.waitForTimeout(900);
+  ok(JSON.stringify(await navT())===JSON.stringify(before),"«По умолчанию» возвращает прежнее меню");
+  await pg.evaluate(()=>modal(""));await pg.context().close()}
+ {const ow=await lg("tilegen615@gmail.com");await ow.evaluate(()=>{tab="more";draw()});await ow.waitForTimeout(600);await ow.locator('[data-a=pin_open]').click();await ow.waitForTimeout(500);
+  await ow.locator('[data-a=pin_role]').click();await ow.waitForTimeout(500);await ow.locator('[data-a=pins_put][data-id=role_florist]').click();await ow.waitForTimeout(1200);
+  const rd=(await(await fetch(FS+"/layouts/role_florist",{headers:{Authorization:"Bearer owner"}})).json()).fields||{};ok(JSON.stringify(rd.pins||{}).includes("stock"),"меню сохранено как основа для роли «Флорист»");
+  const fl=await lg("fl@x.kz");await fl.waitForTimeout(800);ok(await fl.evaluate(()=>{const t=layTplF("pins");return !!t&&t.pins.includes("stock")}),"флорист видит основу меню от владельца");await fl.context().close();
+  await ow.evaluate(async()=>{await db.collection("layouts").doc("role_florist").delete()});await ow.context().close()}
+ /* 4s. конструктор экранов */
+ {const ow=await lg("tilegen615@gmail.com");await ow.evaluate(()=>{tab="set";SETS="sec";draw()});await ow.waitForTimeout(700);
+  const nt=await ow.locator('[data-a=stu_open]').count();ok(nt>=8,"в «Разделах» плитки экранов для настройки: "+nt);
+  ok(await ow.locator('.st-tile[data-a=wg_home_tile]').count()===1,"плитка «Главная» ведёт в расстановку главной");
+  await ow.locator('[data-a=stu_open][data-id=orders]').click();await ow.waitForTimeout(900);
+  ok(await ow.evaluate(()=>tab==="set"),"конструктор не уводит со страницы настроек");
+  ok(await ow.locator("#stv .scr-bar").count()>=3,"в окне виден экран «Заказы» с панелями блоков");
+  const auds=(await ow.locator(".st-aud .chip").allTextContents()).join("|");ok(/Для меня/.test(auds)&&/Все сотрудники/.test(auds)&&/Флорист/.test(auds),"можно выбрать, для кого: "+auds);
+  await ow.screenshot({path:OUT+"/studio.png"});
+  await ow.locator('.st-aud [data-id=all]').click();await ow.waitForTimeout(500);
+  const qid=await ow.evaluate(()=>{const q=document.querySelector("#stv input[type=search]");let e=q;while(e&&e.parentNode&&e.parentNode.id!=="stv")e=e.parentNode;const bar=e&&e.previousElementSibling;return bar&&bar.querySelector("[data-a=stu_hide]")?bar.querySelector("[data-a=stu_hide]").dataset.id:null});
+  ok(!!qid,"поле поиска — отдельный блок в конструкторе ("+qid+")");
+  await ow.locator('#stbody [data-a=stu_hide][data-id="'+qid+'"]').click();await ow.waitForTimeout(500);
+  await ow.locator('[data-a=stu_apply]').click();await ow.waitForTimeout(1200);
+  const da=(await(await fetch(FS+"/layouts/all",{headers:{Authorization:"Bearer owner"}})).json()).fields||{};ok(JSON.stringify(da.scr||{}).includes(qid),"настройка для всех записана (layouts/all)");
+  const fl=await lg("fl@x.kz");await fl.evaluate(()=>{tab="orders";draw()});await fl.waitForTimeout(1200);
+  ok(await fl.evaluate(()=>{const q=document.querySelector("#q");return !q||q.offsetParent===null}),"флорист без своих настроек видит экран «для всех» (поиск скрыт)");
+  ok(await fl.evaluate(()=>{tab="set";SETS="look";draw();return document.querySelectorAll("[data-a=stu_open]").length>0}),"у флориста тоже есть конструктор (в «Вид»)");
+  await fl.evaluate(()=>stOpen("orders","me"));await fl.waitForTimeout(500);const fa=(await fl.locator(".st-aud .chip").allTextContents()).join("|");ok(fa==="Для меня","сотруднику доступно только «Для меня»: "+fa);
+  await fl.context().close();
+  await ow.locator('.st-aud [data-id=all]').click();await ow.waitForTimeout(400);await ow.locator('#stbody [data-a=lay_lock][data-id=all]').check();await ow.waitForTimeout(1200);
+  const st=(await(await fetch(FS+"/settings/main",{headers:{Authorization:"Bearer owner"}})).json()).fields||{};ok((((st.layLock||{}).mapValue||{}).fields||{}).all&&st.layLock.mapValue.fields.all.booleanValue===true,"замок «все сотрудники» записан");
+  const fl2=await lg("fl@x.kz");await fl2.waitForTimeout(800);ok(await fl2.evaluate(()=>layLocked()),"флорист: настройка закреплена");await fl2.context().close();
+  await ow.evaluate(async()=>{modal("");await db.collection("settings").doc("main").set({layLock:{all:false}},{merge:true});await db.collection("layouts").doc("all").delete()});await ow.context().close()}
+ /* 4t. «Заказы»: без дублей фильтров */
+ {const pg=await lg("op@x.kz");await pg.evaluate(()=>{tab="orders";draw()});await pg.waitForTimeout(900);
+  ok(await pg.locator(".pt button").count()===4,"в «Заказах» 4 плитки этапов с числами");
+  const ch=(await pg.locator('.chips [data-a=f]').allTextContents()).join("|");ok(ch==="Все|Выданы|Отменены","кнопки фильтра без дублей плиток: "+ch);
+  await pg.locator('.pt [data-a=f]').nth(1).click();await pg.waitForTimeout(500);ok(await pg.evaluate(()=>fs==="1"),"нажатие на плитку «В сборке» включает фильтр");
+  await pg.locator('.chips [data-a=f][data-id=""]').click();await pg.waitForTimeout(500);ok(await pg.evaluate(()=>fs===""),"«Все» сбрасывает фильтр");
+  await pg.context().close()}
  /* 5. аноним не пишет и не листает */
  {const w=await fetch(FS+"/pubShop/main",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({fields:{on:{booleanValue:false}}})});ok(w.status===403,"аноним не может писать: HTTP "+w.status);
   const l=await fetch(FS+"/pubShop");ok(l.status===403,"аноним не может листать коллекцию: HTTP "+l.status);
