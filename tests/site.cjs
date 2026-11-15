@@ -245,8 +245,9 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
  {const pg=await lg("fl@x.kz");await pg.evaluate(()=>{tab="home";draw()});await pg.waitForTimeout(800);
   const uid=await pg.evaluate(()=>U.uid),opId=await pg.evaluate(()=>Object.keys(SF).find(i=>SF[i].email==="op@x.kz"));
   ok(await pg.evaluate(()=>{const s=LAY;LAY=null;const n=layGet().length;LAY=s;return n>0}),"без сохранённой расстановки главная берёт встроенный набор роли (не пустая)");
-  ok(await pg.locator('[data-a=wg_edit]').count()===1,"на главной есть кнопка «Расставить»");
-  await pg.locator('[data-a=wg_edit]').click();await pg.waitForTimeout(500);
+  ok(await pg.locator('[data-a=wg_edit]').count()===0,"на главной кнопки «Расставить» нет");
+  await pg.evaluate(()=>{tab="set";SETS="look";draw()});await pg.waitForTimeout(600);ok(await pg.locator('[data-a=wg_open_home]').count()===1,"в «Настройки → Вид → Мой экран» есть «Расставить главную»");
+  await pg.locator('[data-a=wg_open_home]').click();await pg.waitForTimeout(500);
   const n0=await pg.locator(".wg-ed").count();ok(n0>=3,"режим «Расставить»: виджеты в рамках, их "+n0);
   const ids0=await pg.evaluate(()=>layGet().map(i=>i.id));
   /* размер */
@@ -294,7 +295,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   const st=(await(await fetch(FS+"/settings/main",{headers:{Authorization:"Bearer owner"}})).json()).fields||{};ok((((st.layLock||{}).mapValue||{}).fields||{}).role_florist&&st.layLock.mapValue.fields.role_florist.booleanValue===true,"замок для роли «Флорист» записан");
   await fl.reload();await fl.waitForTimeout(2500);await fl.evaluate(()=>{tab="home";draw()});await fl.waitForTimeout(700);
   ok(await fl.evaluate(()=>layLocked()),"флорист: расстановка закреплена владельцем");
-  ok(await fl.locator('[data-a=wg_edit]').count()===0,"флорист: кнопки «Расставить» нет");
+  ok(await fl.locator('[data-a=wg_edit]').count()===0,"флорист: кнопки «Расставить» нет");await fl.evaluate(()=>{tab="set";SETS="look";draw()});await fl.waitForTimeout(500);ok(await fl.locator('[data-a=wg_open_home]').count()===0,"флорист: в настройках «Расставить главную» нет, расстановку закрепил владелец");await fl.evaluate(()=>{tab="home";draw()});await fl.waitForTimeout(300);
   const ids=await fl.evaluate(()=>layGet().map(i=>i.id));ok(ids.includes("me")&&ids.includes("ordst")&&!ids.includes("wd")&&!ids.includes("todo"),"флорист видит расстановку роли: "+ids.join(","));
   const w=await fl.evaluate(async()=>{try{await db.collection("layouts").doc("role_florist").set({items:[]});return "прошло"}catch(e){return e.code}});ok(w==="permission-denied","флорист не может менять шаблон роли: "+w);
   await ow.locator('[data-a=lay_lock][data-id=role_florist]').uncheck();await ow.waitForTimeout(1500);await fl.waitForTimeout(800);
@@ -367,6 +368,25 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   ok(await pg.evaluate(id=>{const h=card(O.find(x=>x.id===id));return!/class="prg"/.test(h)&&!/\+7 7/.test(h.split("Клиенту")[0])},oid),"скрытые поля («полоска», «телефон») из карточки убраны");
   await pg.evaluate(()=>{tab="set";SETS="look";draw()});await pg.waitForTimeout(500);ok(await pg.locator('[data-a=ocf_t]').count()>=5,"в «Вид» есть «Карточка заказа» с галочками");
   await pg.evaluate(()=>ocfSave([]));await pg.waitForTimeout(600);await pg.context().close()}
+ /* 4q. движение */
+ {const pg=await lg("adm@x.kz");
+  ok(await pg.evaluate(()=>{const g=n=>{const v=getComputedStyle(document.documentElement).getPropertyValue(n).trim();return v.endsWith("ms")?parseFloat(v):parseFloat(v)*1000};return g("--m1")===100&&g("--m2")===150&&g("--m3")===200&&g("--m4")===300}),"единые длительности движения: 100/150/200/300 мс");
+  ok(await pg.evaluate(()=>{tab="orders";draw();return document.getElementById("v").classList.contains("mv-in")}),"при смене раздела включается плавное появление");
+  ok(await pg.evaluate(()=>[...document.getElementById("v").children].some(e=>getComputedStyle(e).animationName==="mvIn")),"блоки раздела появляются анимацией");
+  await pg.waitForTimeout(1000);ok(await pg.evaluate(()=>!document.getElementById("v").classList.contains("mv-in")),"после появления класс снимается, обычные обновления не мигают");
+  ok(await pg.evaluate(()=>{modal("<p>тест</p>");modal("");return !!document.getElementById("ov")&&document.getElementById("ov").classList.contains("ov-out")}),"окно закрывается плавно");
+  await pg.waitForTimeout(450);ok(await pg.evaluate(()=>!document.getElementById("ov")),"после плавного закрытия окна не остаётся");
+  ok(await pg.evaluate(()=>{modal("<p>а</p>");modal("");modal("<p>б</p>");return document.querySelector("#m .sh").textContent.includes("б")}),"новое окно сразу после закрытия не пропадает");
+  await pg.waitForTimeout(450);ok(await pg.evaluate(()=>!!document.querySelector("#m .sh")&&document.querySelector("#m .sh").textContent.includes("б")),"и через 0,4 с остаётся на экране");
+  await pg.evaluate(()=>modal(""));await pg.waitForTimeout(400);
+  /* перестановка блоков главной двигается */
+  await pg.evaluate(()=>{tab="home";LAYEDIT=true;draw()});await pg.waitForTimeout(700);
+  ok(await pg.evaluate(()=>{document.querySelector("[data-a=wg_dn]").click();return document.getAnimations().length>0}),"при перестановке блоков есть движение");
+  await pg.waitForTimeout(500);await pg.evaluate(()=>{LAYEDIT=false;LAY=null;draw()});
+  /* «меньше движения» выключает всё */
+  await pg.emulateMedia({reducedMotion:"reduce"});
+  ok(await pg.evaluate(()=>{tab="stock";draw();return [...document.getElementById("v").children].every(e=>getComputedStyle(e).animationName==="none")}),"при настройке телефона «уменьшить движение» анимаций нет");
+  await pg.context().close()}
  /* 5. аноним не пишет и не листает */
  {const w=await fetch(FS+"/pubShop/main",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({fields:{on:{booleanValue:false}}})});ok(w.status===403,"аноним не может писать: HTTP "+w.status);
   const l=await fetch(FS+"/pubShop");ok(l.status===403,"аноним не может листать коллекцию: HTTP "+l.status);
