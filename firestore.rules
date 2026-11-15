@@ -222,14 +222,17 @@ service cloud.firestore {
         && request.resource.data.uid == resource.data.uid;
       allow delete: if isOwner();
     }
-    match /locations/{id}       { allow read: if isActive(); allow write: if isOwner(); }
-    // Настройки магазина: владелец/главный админ; шаблоны чата (tpls) могут менять все, кроме курьера
+    // Точки: создавать и менять могут владелец и админ (техническая настройка), удалять только владелец
+    match /locations/{id}       { allow read: if isActive(); allow create, update: if isOwner() || isAdmin(); allow delete: if isOwner(); }
+    // Настройки магазина. Владелец и главный админ: всё. Обычный админ: все технические настройки (магазин, функции, точки, каналы связи,
+    // сообщения клиентам, витрина), но не деньги: ставки сотрудников (pay), бонусы клиентам (bonus), наценки оплаты (payRed, payRas),
+    // отсечка финансов (finFrom*). Шаблоны чата (tpls) могут менять все, кроме курьера.
     match /settings/{id} {
       allow read: if isActive();
-      allow write: if isOwner() || (isActive() && role() in ['admin','operator','florist','assistant']
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tpls','updatedAt']))
-        || (isAdmin()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statsFrom','statsFromBy','statsFromByName','updatedAt']));
+      allow write: if isOwner()
+        || (isAdmin() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['pay','bonus','payRed','payRas','finFrom','finFromBy','finFromByName']))
+        || (isActive() && role() in ['operator','florist','assistant']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tpls','updatedAt']));
     }
 
     // Push-токены устройств: каждый сотрудник управляет только своими (читает и шлёт сервер)
@@ -239,13 +242,12 @@ service cloud.firestore {
     }
 
     // Онлайн-витрина (страница vitrina.html для клиентов): один документ pubShop/main, читать может кто угодно по адресу.
-    // Настройки пишет владелец; админ может менять только список фото (items). Здесь нет персональных данных.
+    // Настройки, список фото и отзывы пишут владелец и админ. Здесь нет персональных данных.
     match /pubShop/{id} {
       allow get: if true;
-      allow create, delete: if isOwner();
-      allow update: if (isOwner() || (isAdmin()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items','updatedAt'])))
+      allow create, update: if (isOwner() || isAdmin())
         && (!('items' in request.resource.data) || request.resource.data.items.size() <= 150);
+      allow delete: if isOwner();
     }
 
     // Публичный статус заказа для клиента: читать документ по токену может любой, список нельзя, писать только сотрудники
@@ -268,9 +270,9 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Ключи каналов связи (WhatsApp, Instagram, Telegram): пишет только владелец, с сайта читать нельзя, читает сервер
+    // Ключи каналов связи (WhatsApp, Instagram, Telegram): пишут владелец и админ (подключение каналов), с сайта читать нельзя, читает сервер
     match /secrets/{id} {
-      allow write: if isOwner();
+      allow write: if isOwner() || isAdmin();
       allow read: if false;
     }
 

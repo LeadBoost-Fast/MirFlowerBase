@@ -113,9 +113,13 @@ exports.waHook=onRequest({...OPT,maxInstances:10},async(req,res)=>{
 });
 
 // ================= WhatsApp по QR-коду через Evolution API =================
-const topOnly=req=>{
+// Техническая настройка (подключение каналов, копия): владелец, главный админ и обычный админ
+const topOnly=async req=>{
   if(!req.auth)throw new HttpsError("unauthenticated","Войдите в систему");
-  if(!TOP.includes(String(req.auth.token.email||"").toLowerCase()))throw new HttpsError("permission-denied","Только владелец и главный админ");
+  if(TOP.includes(String(req.auth.token.email||"").toLowerCase()))return;
+  const st=await db().doc("staff/"+req.auth.uid).get(),d=st.exists?st.data():{};
+  if(d.active===true&&d.role==="admin")return;
+  throw new HttpsError("permission-denied","Только владелец и администратор");
 };
 // Несколько номеров WhatsApp (у каждой точки свой): номер "" — основной (secrets.wa / settings.channels.wa), остальные — secrets.waI[id] / settings.channels.waI[id]
 const iidOf=x=>String(x||"").replace(/[^A-Za-z0-9_-]/g,"").slice(0,40);
@@ -268,7 +272,7 @@ exports.chMediaFetch=onCall({...OPT,timeoutSeconds:120},async req=>{
 });
 // Подключение номера к Evolution API: создаёт инстанс и включает уведомления на наш адрес
 exports.waGreenSetup=onCall(OPT,async req=>{
-  topOnly(req);
+  await topOnly(req);
   const url=String((req.data&&req.data.url)||"");let host="";try{host=new URL(url).hostname}catch(e){}
   if(!/^https:\/\//.test(url)||!/(cloudfunctions\.net|run\.app)$/.test(host))throw new HttpsError("invalid-argument","Неверный адрес webhook");
   const wi=iidOf(req.data&&req.data.i),c=await greenCfg(wi);
@@ -285,7 +289,7 @@ exports.waGreenSetup=onCall(OPT,async req=>{
 });
 // QR-код для привязки телефона (обновляется каждые ~20 секунд, сайт спрашивает заново)
 exports.waGreenQr=onCall(OPT,async req=>{
-  topOnly(req);const wi=iidOf(req.data&&req.data.i),c=await greenCfg(wi);
+  await topOnly(req);const wi=iidOf(req.data&&req.data.i),c=await greenCfg(wi);
   if(c.mode==="evo"){
     try{
       const st=await eState(c,wi);if(st==="authorized"){await waState(st,wi);return{state:st}}
@@ -298,7 +302,7 @@ exports.waGreenQr=onCall(OPT,async req=>{
 });
 // Привязка без камеры: код для входа по номеру телефона (WhatsApp → Связанные устройства → Привязать по номеру телефона)
 exports.waGreenCode=onCall(OPT,async req=>{
-  topOnly(req);const c=await greenCfg(iidOf(req.data&&req.data.i));
+  await topOnly(req);const c=await greenCfg(iidOf(req.data&&req.data.i));
   let ph=String((req.data&&req.data.phone)||"").replace(/\D/g,"");if(/^8\d{10}$/.test(ph))ph="7"+ph.slice(1);
   if(!/^\d{10,15}$/.test(ph))throw new HttpsError("invalid-argument","Введите номер магазина полностью, например 77011234567");
   try{
@@ -310,7 +314,7 @@ exports.waGreenCode=onCall(OPT,async req=>{
 });
 // Отвязать телефон
 exports.waGreenLogout=onCall(OPT,async req=>{
-  topOnly(req);const wi=iidOf(req.data&&req.data.i),c=await greenCfg(wi);
+  await topOnly(req);const wi=iidOf(req.data&&req.data.i),c=await greenCfg(wi);
   try{await eCall(c,"DELETE","/instance/logout/"+eNm(c,wi));await waState("notAuthorized",wi);return{ok:true}}catch(e){throw new HttpsError("internal",String(e.message||e))}
 });
 
@@ -375,8 +379,7 @@ exports.tgHook=onRequest({...OPT,maxInstances:10,invoker:"public"},async(req,res
 
 // Подключение Telegram: регистрирует webhook у бота (вызывает сайт при сохранении канала)
 exports.tgSetup=onCall(OPT,async req=>{
-  if(!req.auth)throw new HttpsError("unauthenticated","Войдите в систему");
-  if(!TOP.includes(String(req.auth.token.email||"").toLowerCase()))throw new HttpsError("permission-denied","Только владелец и главный админ");
+  await topOnly(req);
   const url=String((req.data&&req.data.url)||"");
   let host="";try{host=new URL(url).hostname}catch(e){}
   if(!/^https:\/\//.test(url)||!/(cloudfunctions\.net|run\.app)$/.test(host))throw new HttpsError("invalid-argument","Неверный адрес webhook");

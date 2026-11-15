@@ -328,7 +328,7 @@ async function runBackup(){
 exports.dailyBackup=onSchedule({...OPT,schedule:"0 3 * * *",timeZone:TZ,memory:"1GiB",timeoutSeconds:540},async()=>{await runBackup()});
 exports.backupNow=onCall({...OPT,memory:"1GiB",timeoutSeconds:540},async req=>{
   if(!req.auth)throw new HttpsError("unauthenticated","Войдите в систему");
-  if(!TOP.includes(String(req.auth.token.email||"").toLowerCase()))throw new HttpsError("permission-denied","Только владелец и главный админ");
+  if(!TOP.includes(String(req.auth.token.email||"").toLowerCase())){const st=await admin.firestore().doc("staff/"+req.auth.uid).get(),d=st.exists?st.data():{};if(!(d.active===true&&d.role==="admin"))throw new HttpsError("permission-denied","Только владелец и администратор")}
   try{return{ok:true,files:await runBackup()}}catch(err){throw new HttpsError("internal","Копия не сохранена: "+(err.message||err))}
 });
 
@@ -420,6 +420,20 @@ exports.readySend=onDocumentUpdated({...OPT,document:"orders/{id}"},async e=>{
     if(tg.why){await ref.update({rdyAsked:tg.why});return}
     await queueMsg(db,tg,e.params.id,ref,t,"ready","Авто: готов",ts=>({rdyAsked:ts}));
   }catch(err){console.error("readySend",e.params.id,err);await ref.update({rdyAsked:"err"}).catch(()=>{})}
+});
+// Доставка: заказ стал «Курьер в пути» → клиенту сообщение, что курьер выехал (один раз на заказ)
+exports.waySend=onDocumentUpdated({...OPT,document:"orders/{id}"},async e=>{
+  const a=e.data.before.data(),b=e.data.after.data();
+  if(!(+b.st===3&&+a.st!==3)||b.wayAsked||!b.dv)return;
+  const db=admin.firestore(),ref=e.data.after.ref;
+  try{
+    const s=await db.doc("settings/main").get(),sh=s.exists?s.data():{};
+    const t=MSG.wayText(sh,b);
+    if(!t){await ref.update({wayAsked:"off"});return}
+    const tg=await clientTarget(db,b);
+    if(tg.why){await ref.update({wayAsked:tg.why});return}
+    await queueMsg(db,tg,e.params.id,ref,t,"way","Авто: курьер",ts=>({wayAsked:ts}));
+  }catch(err){console.error("waySend",e.params.id,err);await ref.update({wayAsked:"err"}).catch(()=>{})}
 });
 exports.reviewArm=onDocumentUpdated({...OPT,document:"orders/{id}"},async e=>{
   const a=e.data.before.data(),b=e.data.after.data();
