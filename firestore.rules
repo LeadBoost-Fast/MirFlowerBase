@@ -133,7 +133,16 @@ service cloud.firestore {
       allow delete: if isAdmin() || isOwner();
     }
 
-    match /inventory/{id}       { allow read, create, update: if isWork(); allow delete: if isAdmin() || isOwner(); }
+    // Позиции склада: все рабочие роли двигают остатки (приход, списание, сборка, возврат): qty, qs (остаток по точкам), lt (партии),
+    // recv; фото, срок хранения и поставщика тоже можно. Название, категорию, единицу, цену продажи и минимальный остаток
+    // меняют только админ и владелец (сотрудник отправляет запрос, kind ed в stockReqs)
+    match /inventory/{id} {
+      allow read, create: if isWork();
+      allow update: if isAdmin() || isOwner()
+        || (isWork() && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['qty','qs','lt','recv','updatedAt','img','shelf','sup']));
+      allow delete: if isAdmin() || isOwner();
+    }
     match /invcost/{id}         { allow read, write: if isOwner(); }
     match /stockMovements/{id} {
       allow read, create: if isWork();
@@ -143,7 +152,8 @@ service cloud.firestore {
     // Каталог букетов: удалять могут админы, владельцы, флористы и помощники флориста
     match /bouquets/{id}        { allow read, create, update: if isMgr(); allow delete: if isAdmin() || isOwner() || (isActive() && role() in ['florist','assistant']); }
     match /stockReqs/{id}       { allow read: if isActive(); allow create: if isActive() && request.resource.data.uid == request.auth.uid; allow update, delete: if isAdmin() || isOwner(); }
-    match /gallery/{id}         { allow read: if isWork(); allow create: if isWork() && request.resource.data.by == request.auth.uid; allow update: if isMgr(); allow delete: if isMgr() || isAdmin() || isOwner(); }
+    // Галерея: цену и состав меняют только админ и владелец (сотрудник отправляет запрос, kind gal в stockReqs)
+    match /gallery/{id}         { allow read: if isWork(); allow create: if isWork() && request.resource.data.by == request.auth.uid; allow update: if isAdmin() || isOwner(); allow delete: if isMgr() || isAdmin() || isOwner(); }
     match /showcase/{id}        { allow read, create, update: if isWork(); allow delete: if isAdmin() || isOwner(); }
     match /visits/{id}          { allow read, create, update: if isWork(); allow delete: if isAdmin() || isOwner(); }
 
