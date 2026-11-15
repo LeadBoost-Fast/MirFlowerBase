@@ -24,6 +24,12 @@ service cloud.firestore {
     function isMgr()     { return isActive() && role() in ['admin','operator','florist','assistant']; }
     function isWork()    { return isActive() && role() in ['admin','operator','florist','assistant']; }
     // Оператор, флорист, помощник флориста, админ: оплата, приёмка, переделка, чаты, шаблоны (равные права)
+    // Доступ сотрудникам: админ и владелец могут закрыть раздел отдельному сотруднику (staff/{uid}.perms: {chats:false, crm:false}).
+    // По умолчанию всё открыто, как у роли. Закрывается чтение чатов (chats) и клиентов, заявок, сделок (crm); писать в чаты, как и раньше,
+    // могут все рабочие роли: туда уходят фото готового букета и ссылка на статус из заказа.
+    function perm(k)     { return staffDoc().get('perms', {}).get(k, true) != false; }
+    function canCrm()    { return isAdmin() || isOwner() || (isMgr() && perm('crm')); }
+    function canChats()  { return isAdmin() || isOwner() || (isMgr() && perm('chats')); }
     function isOpRole()  { return isActive() && role() in ['admin','operator','florist','assistant']; }
     function isCourier() { return isActive() && role() == 'courier'; }
 
@@ -179,18 +185,20 @@ service cloud.firestore {
       allow delete: if isAdmin() || isOwner();
     }
 
-    match /customers/{id}       { allow read, create, update: if isMgr(); allow delete: if isAdmin() || isOwner(); }
-    match /leads/{id}           { allow read, create, update: if isMgr(); allow delete: if isAdmin() || isOwner(); }
+    match /customers/{id}       { allow read, create, update: if canCrm(); allow delete: if isAdmin() || isOwner(); }
+    match /leads/{id}           { allow read, create, update: if canCrm(); allow delete: if isAdmin() || isOwner(); }
     match /deals/{id} {
-      allow read, create, update: if isMgr();
+      allow read, create, update: if canCrm();
       allow delete: if isAdmin() || isOwner();
     }
 
     match /chats/{id} {
-      allow read, create, update: if isMgr();
+      allow read: if canChats();
+      allow create, update: if isMgr();
       allow delete: if isAdmin() || isOwner();
       match /msgs/{mid} {
-        allow read, create, update: if isMgr();
+        allow read: if canChats();
+        allow create, update: if isMgr();
         allow delete: if isAdmin() || isOwner();
       }
     }
