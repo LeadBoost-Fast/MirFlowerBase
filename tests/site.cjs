@@ -438,6 +438,47 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.locator('.pt [data-a=f]').nth(1).click();await pg.waitForTimeout(500);ok(await pg.evaluate(()=>fs==="1"),"нажатие на плитку «В сборке» включает фильтр");
   await pg.locator('.chips [data-a=f][data-id=""]').click();await pg.waitForTimeout(500);ok(await pg.evaluate(()=>fs===""),"«Все» сбрасывает фильтр");
   await pg.context().close()}
+ /* 4u. воронки */
+ {const ow=await lg("tilegen615@gmail.com");
+  ok(await ow.evaluate(()=>FUN().length===1&&FUN()[0].id==="sales"&&FUN()[0].st.length===6&&FUN()[0].st[3].k==="won"&&FUN()[0].st[4].k==="lost"),"по умолчанию одна воронка «Продажи» с 6 этапами, как раньше");
+  await ow.evaluate(()=>{tab="set";SETS="cl";draw()});await ow.waitForTimeout(700);
+  ok(await ow.locator('#fnl [data-a=fn_tpl]').count()===1,"в «Клиенты и оплата» есть «Воронки продаж»");
+  await ow.locator('#fnl [data-a=fn_tpl]').click();await ow.waitForTimeout(500);
+  const nt=await ow.locator('[data-a=fn_add]').count();ok(nt===10,"в списке 9 готовых воронок и «Своя воронка»: "+nt);
+  await ow.locator('[data-a=fn_add][data-id=b2b]').click();await ow.waitForTimeout(1500);
+  await ow.locator('#fnl [data-a=fn_tpl]').click();await ow.waitForTimeout(500);await ow.locator('[data-a=fn_add][data-id=holiday]').click();await ow.waitForTimeout(1500);
+  ok(await ow.evaluate(()=>FUN().map(f=>f.id).join(",")==="sales,b2b,holiday"),"добавлены «Корпоративные клиенты» и «Праздники»");
+  const sd=(await(await fetch(FS+"/settings/main",{headers:{Authorization:"Bearer owner"}})).json()).fields||{};ok((((sd.funnels||{}).arrayValue||{}).values||[]).length===3,"воронки записаны в настройки");
+  await ow.evaluate(()=>{FSEL="b2b";tab="deals";draw()});await ow.waitForTimeout(800);
+  ok(await ow.locator('.chips [data-a=fn_sel]').count()===3,"в «Сделках» переключатель из 3 воронок");
+  ok((await ow.locator("#v").textContent()).includes("Договор и счёт"),"колонки воронки «Корпоративные клиенты»");
+  await ow.locator('[data-a=dl_n]').first().click();await ow.waitForTimeout(600);
+  ok(await ow.evaluate(()=>document.querySelector("#df [name=fid]").value==="b2b"),"в новой сделке выбрана текущая воронка");
+  await ow.locator('#df [name=client]').fill("Офис Альфа");await ow.locator('#df [name=phone]').fill("+7 700 555 66 77");await ow.locator('#df [name=title]').fill("Букеты в офис раз в неделю");await ow.locator('#df button').last().click();await ow.waitForTimeout(1500);
+  ok(await ow.evaluate(()=>DL.some(d=>d.client==="Офис Альфа"&&d.fid==="b2b"&&+d.st===0)),"сделка создана в воронке «Корпоративные клиенты»");
+  ok((await ow.locator("#v").textContent()).includes("Офис Альфа"),"сделка видна в колонке «Запрос»");
+  await ow.evaluate(()=>{FSEL="sales";draw()});await ow.waitForTimeout(500);ok(!(await ow.locator("#v").textContent()).includes("Офис Альфа"),"в воронке «Продажи» её нет");
+  const did=await ow.evaluate(()=>DL.find(d=>d.client==="Офис Альфа").id);
+  await ow.evaluate(id=>dealOpen(id),did);await ow.waitForTimeout(600);
+  ok(await ow.evaluate(()=>/wa\.me\/77005556677/.test(document.getElementById("dwa").href)&&/Получили ваш запрос/.test(decodeURIComponent(document.getElementById("dwa").href))),"кнопка WhatsApp подставляет сообщение для этапа «Запрос»");
+  await ow.locator('#dof [name=st]').selectOption("6");await ow.waitForTimeout(300);ok(await ow.locator("#drs").isVisible(),"на этапе «Завершено» нужно указать результат");
+  await ow.locator('#dof button').last().click();await ow.waitForTimeout(1500);
+  ok(await ow.evaluate(()=>{const d=DL.find(x=>x.client==="Офис Альфа");return +d.st===6&&dWon(d)&&!!d.res}),"сделка закрыта как успешная");
+  ok(await ow.evaluate(()=>{const h=anV();return/Воронки/.test(h)&&/Корпоративные клиенты/.test(h)}),"в аналитике есть блок «Воронки»");
+  ok(await ow.evaluate(()=>/Сделки в работе/.test(WG.funw.r())),"на главной доступен блок «Воронки»");
+  /* редактор */
+  await ow.evaluate(()=>feOpen("b2b"));await ow.waitForTimeout(500);
+  ok(await ow.locator('#fe [data-a=fe_up]').first().isDisabled()&&await ow.locator('#fe [data-a=fe_rm]').first().isDisabled(),"в воронке есть сделки: этапы нельзя переставлять и убирать");
+  const n0=await ow.locator("#fe .fe-r").count();await ow.locator('#fe [data-a=fe_add]').click();await ow.waitForTimeout(300);await ow.locator('#fe [data-fe=sn]').last().fill("Повторный заказ");await ow.locator('#fe [data-fe=n]').fill("Корпоративные");await ow.locator('#fe [data-a=fe_save]').click();await ow.waitForTimeout(1500);
+  ok(await ow.evaluate(()=>{const f=FUN().find(x=>x.id==="b2b");return f.n==="Корпоративные"&&f.st.length===9&&f.st[8].n==="Повторный заказ"}),"этап добавлен, воронка переименована ("+n0+" → "+(n0+1)+")");
+  /* своя воронка */
+  await ow.evaluate(()=>funTpl());await ow.waitForTimeout(400);await ow.locator('[data-a=fn_add][data-id=new]').click();await ow.waitForTimeout(1500);
+  ok(await ow.locator("#fe").count()===1,"«Своя воронка»: сразу открывается редактор этапов");
+  await ow.locator('#fe [data-fe=n]').fill("Свои");await ow.locator('#fe [data-a=fe_save]').click();await ow.waitForTimeout(1200);
+  ok(await ow.evaluate(()=>FUN().some(f=>f.n==="Свои")),"своя воронка сохранена");
+  /* уборка */
+  await ow.evaluate(async id=>{modal("");await db.collection("deals").doc(id).delete();await db.collection("settings").doc("main").set({funnels:[]},{merge:true})},did);await ow.waitForTimeout(800);await ow.context().close()}
+ {const op=await lg("op@x.kz");await op.evaluate(()=>{tab="deals";draw()});await op.waitForTimeout(800);ok(await op.locator('[data-a=dl_n]').count()>=1&&await op.locator('[data-a=fn_open]').count()===0,"оператор работает со сделками, но не меняет воронки");await op.context().close()}
  /* 5. аноним не пишет и не листает */
  {const w=await fetch(FS+"/pubShop/main",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({fields:{on:{booleanValue:false}}})});ok(w.status===403,"аноним не может писать: HTTP "+w.status);
   const l=await fetch(FS+"/pubShop");ok(l.status===403,"аноним не может листать коллекцию: HTTP "+l.status);
