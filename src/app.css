@@ -344,3 +344,16 @@ details.adv>.card,details.adv>form.card{border:0;box-shadow:none;margin:0;backgr
 .lvax{display:flex;justify-content:space-between;font-size:11px;color:var(--mut,#777);margin-bottom:10px}
 .wg-top{flex-wrap:wrap}
 .wg-top>b{flex:1 1 100%}
+
+/* Расстановка: понятнее */
+.wg-stick{position:sticky;top:0;z-index:6;background:var(--bg,#f6f1ea);padding:8px 0;margin:0 0 8px;border-bottom:1px solid var(--line,#e5e0d8)}
+.wg-hint{flex:1 1 100%;margin:0;font-size:13px;text-transform:none;letter-spacing:normal}
+.wgrid.ed{padding-bottom:140px}
+.wg-bar2{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px;flex-wrap:wrap}
+.wg-zs{display:inline-flex;border:1px solid var(--line,#ddd);border-radius:12px;overflow:hidden}
+.wg-z{border:0;background:var(--card,#fff);padding:10px 12px;min-height:44px;font-size:13px;cursor:pointer;color:var(--ink,#222)}
+.wg-z+.wg-z{border-left:1px solid var(--line,#ddd)}
+.wg-z.on{background:var(--ink,#111);color:var(--bg,#fff)}
+.wg-mv{width:44px;height:44px;border:1px solid var(--line,#ddd);border-radius:12px;background:var(--card,#fff);font-size:20px;cursor:pointer;padding:0}
+.wg-gb{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;text-transform:none;letter-spacing:normal;padding:12px 14px}
+.wg-gb .mut{font-size:13px}

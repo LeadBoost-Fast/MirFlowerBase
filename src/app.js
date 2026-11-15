@@ -185,7 +185,7 @@ st.textContent=`:root[data-t=${e}]{--bg:${P[0]};--card:${P[1]};--c2:${P[2]};--in
 if(tc)tc.content=P[0];try{dsgAfter()}catch(e){}}
 const UIS=["g","h","m","p"];/* у каждого — своя архитектура экранов */
 /* Тяжёлые дизайны лежат в отдельных файлах и грузятся только когда выбраны (пока файл не загрузился, работает Bento) */
-const DLIB={h:"d-cosmos.js",m:"d-command.js",p:"d-atlas.js"},DSTAT={},DSG_V=window.DSGV||"20261116k",
+const DLIB={h:"d-cosmos.js",m:"d-command.js",p:"d-atlas.js"},DSTAT={},DSG_V=window.DSGV||"20261116l",
  dsgReady=k=>k==="g"||DSTAT[k]===2,uiSel=()=>{try{const u=JSON.parse(STO.get("th")||"{}").ui;return UIS.includes(u)?u:"g"}catch(e){return"g"}},
  dsgAfter=()=>{const x=SHELL[LY()];if(x&&x.after)x.after()};
 function dsgLoad(k){if(!DLIB[k]||DSTAT[k]===1||DSTAT[k]===2)return;DSTAT[k]=1;const e=document.createElement("script");e.src=DLIB[k]+"?v="+DSG_V;e.async=true;
@@ -540,6 +540,7 @@ wgNew("onsh","Кто на смене","m",()=>mgr(),()=>{const l=Object.keys(SF)
 wgNew("waitch","Ждут ответа","s",()=>FX("clientChat")&&typeof can==="function"&&can("chats"),()=>wgT("Клиенты ждут ответа",(typeof CHS!=="undefined"?CHS:[]).filter(c=>chW(c)).length,"","chats"));
 wgNew("lowst","Мало на складе","s",()=>adm()||own(),()=>wgT("Заканчивается на складе",ctrlStat().low,"","stock"));
 wgNew("lateo","Просрочено","s",()=>adm()||own(),()=>wgT("Заказов просрочено",ctrlStat().late,"","orders"));
+const WGD={me:"Ваше имя и роль",next:"Какой заказ делать следующим",wd:"Время работы магазина и подсказка дня",geo:"Магазины без места на карте",chn:"Какие каналы связи не подключены",shift:"Кнопка начала и конца смены",todo:"Что требует внимания прямо сейчас",rq:"Запросы на подтверждение",main:"Главная сводка по вашей роли",chips:"Ваши показатели за день",earn:"Ваш заработок",rep:"Отчёты за день",shend:"Итог смены",ordst:"Сколько заказов сегодня и на каком они этапе",moneyd:"Сумма заказов за сегодня",onsh:"Кто сейчас на смене",waitch:"Сколько клиентов ждут ответа",lowst:"Что заканчивается на складе",lateo:"Сколько заказов просрочено",livew:"Карточки сотрудников и лента дня"};
 let LAY=null,LAYEDIT=false,WGDRAG=null,LAYTGT="",LAYALL={};
 const layDefFor=r=>(ROLE[r]||ROLE.admin).home.filter(k=>WG[k]).map(id=>({id,s:WG[id].d})),layDef=()=>myHome().filter(k=>WG[k]).map(id=>({id,s:WG[id].d})),
  layArr=d=>d&&Array.isArray(d.items)?d.items:null,
@@ -556,10 +557,10 @@ function layGet(){const src=layItems();if(!src)return LAYTGT?layDefFor(layRk()):
 async function laySave(items){const id=LAYTGT||U.uid;if(LAYTGT)LAYALL[id]={...(LAYALL[id]||{}),items};else LAY={...(LAY||{}),items};try{await db.collection("layouts").doc(id).set({items,updatedAt:TS(),by:U.uid},{merge:true})}catch(e){eLog(e);toast("Расстановка не сохранилась: "+er(e))}}
 const wgGrip='<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg>',WGSZ={s:"Малый",m:"Средний",l:"Большой"};
 function wgHtml(i){const w=WG[i.id];let h="";try{h=w.r()||""}catch(e){eLog(e)}if(!h&&!LAYEDIT)return"";
- const ed=LAYEDIT?`<div class="wg-bar"><button type="button" class="wg-h" aria-label="Перетащить">${wgGrip}</button><span class="wg-n">${esc(w.n)}</span><button type="button" class="btn g s" data-a="wg_sz" data-id="${i.id}">${WGSZ[i.s]}</button>${w.fix?"":`<button type="button" class="btn g s" data-a="wg_rm" data-id="${i.id}">Убрать</button>`}</div>`:"";
+ const ed=LAYEDIT?`<div class="wg-bar"><button type="button" class="wg-h" aria-label="Перетащить">${wgGrip}</button><span class="wg-n">${esc(w.n)}</span><button type="button" class="wg-mv" data-a="wg_up" data-id="${i.id}" aria-label="Выше">↑</button><button type="button" class="wg-mv" data-a="wg_dn" data-id="${i.id}" aria-label="Ниже">↓</button></div><div class="wg-bar2"><span class="wg-zs">${w.sz.map(z=>`<button type="button" class="wg-z${z===i.s?" on":""}" data-a="wg_set" data-id="${i.id}" data-z="${z}">${WGSZ[z]}</button>`).join("")}</span>${w.fix?"":`<button type="button" class="btn g s" data-a="wg_rm" data-id="${i.id}">Убрать</button>`}</div>`:"";
  return `<div class="wg wg-${i.s}${LAYEDIT?" wg-ed":""}" data-wg="${i.id}">${ed}<div class="wg-b">${h||'<p class="mut">Сейчас здесь пусто</p>'}</div></div>`}
-function roleHome(){const nm=LAYTGT?(LAYTGT.startsWith("role_")?RL[LAYTGT.slice(5)]:((TT().find(x=>"title_"+x.id===LAYTGT)||{}).name||"")):"",top=RV.v?"":LAYEDIT?`<div class="wg-top"><b>${LAYTGT?"Главная для: "+esc(nm):"Расстановка"}</b><span class="acts"><button type="button" class="btn g s" data-a="wg_add">Добавить</button><button type="button" class="btn g s" data-a="wg_reset">Сбросить</button><button type="button" class="btn s" data-a="wg_done">Готово</button></span></div>`:layLocked()?"":`<div class="wg-top"><span></span><button type="button" class="btn g s" data-a="wg_edit">Расставить</button></div>`;
- return top+`<div class="wgrid">${layGet().map(wgHtml).join("")}</div>`}
+function roleHome(){const nm=LAYTGT?(LAYTGT.startsWith("role_")?RL[LAYTGT.slice(5)]:((TT().find(x=>"title_"+x.id===LAYTGT)||{}).name||"")):"",top=RV.v?"":LAYEDIT?`<div class="wg-top wg-stick"><b>${LAYTGT?"Главная для: "+esc(nm):"Расстановка главной"}</b><span class="acts"><button type="button" class="btn g s" data-a="wg_add">Добавить</button><button type="button" class="btn g s" data-a="wg_reset">Сбросить</button><button type="button" class="btn s" data-a="wg_done">Готово</button></span><p class="mut wg-hint">Тяните за точки или нажимайте стрелки. Размер выбирайте кнопками под названием.</p></div>`:layLocked()?"":`<div class="wg-top"><span></span><button type="button" class="btn g s" data-a="wg_edit">Расставить</button></div>`;
+ return top+`<div class="wgrid${LAYEDIT?" ed":""}">${layGet().map(wgHtml).join("")}</div>`}
 /* ===== Живая картина: что делают сотрудники (владелец и админ) ===== */
 const lvT=x=>x&&x.toMillis?x.toMillis():+x||0;
 function staffDay(uid,date){const d0=new Date(date+"T00:00:00").getTime(),d1=d0+864e5,inD=t=>t>=d0&&t<d1,c={created:0,taken:0,asm:0,acc:0,sent:0,done:0},ev=[];
@@ -592,11 +593,12 @@ const layRoles=()=>{if(!sad())return"";const rows=[...Object.keys(RL).filter(r=>
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="lay_role"]');if(!b||!S||!sad())return;e.preventDefault();LAYTGT=b.dataset.id;LAYEDIT=true;tab="home";draw();scrollTo(0,0)});
 document.addEventListener("change",e=>{const c=e.target.closest&&e.target.closest('[data-a="lay_lock"]');if(!c||!S||!sad())return;run(async()=>{await db.collection("settings").doc("main").set({layLock:{[c.dataset.id]:c.checked},updatedAt:TS()},{merge:true});log(c.checked?"Расстановка закреплена":"Расстановка открыта",{bn:c.dataset.id});toast(c.checked?"Закреплено: сотрудники не меняют":"Сотрудники могут менять расстановку")})});
 function wgGallery(){const have=new Set(layGet().map(i=>i.id)),L=Object.keys(WG).filter(k=>!have.has(k)&&WG[k].ok());
- modal(hd("Добавить на главную")+(L.length?`<div class="wg-gal">${L.map(k=>`<button type="button" class="btn g" data-a="wg_put" data-id="${k}">${esc(WG[k].n)}</button>`).join("")}</div>`:'<p class="mut">Всё уже на главной.</p>')+'<div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button></div>')}
+ modal(hd("Добавить на главную")+(L.length?`<div class="wg-gal">${L.map(k=>`<button type="button" class="btn g wg-gb" data-a="wg_put" data-id="${k}"><b>${esc(WG[k].n)}</b><span class="mut">${esc(WGD[k]||"")}</span></button>`).join("")}</div>`:'<p class="mut">Всё уже на главной.</p>')+'<div class="acts"><button class="btn g" type="button" data-a="x">Закрыть</button></div>')}
 document.addEventListener("click",e=>{const o=e.target.closest('[data-a="wg_open_home"]');if(o&&S){e.preventDefault();LAYTGT="";LAYEDIT=true;tab="home";draw();scrollTo(0,0);return}const b=e.target.closest("[data-a^='wg_']");if(!b||!S)return;const a=b.dataset.a,id=b.dataset.id;e.preventDefault();
  const cur=()=>layGet().map(i=>({...i}));
  if(a==="wg_edit"){LAYEDIT=true;draw()}else if(a==="wg_done"){LAYEDIT=false;LAYTGT="";draw()}
- else if(a==="wg_sz"){const l=cur(),i=l.find(x=>x.id===id);if(!i)return;const z=WG[id].sz;i.s=z[(z.indexOf(i.s)+1)%z.length];laySave(l);draw()}
+ else if(a==="wg_set"){const l=cur(),i=l.find(x=>x.id===id);if(!i||!WG[id].sz.includes(b.dataset.z))return;i.s=b.dataset.z;laySave(l);draw()}
+ else if(a==="wg_up"||a==="wg_dn"){const l=cur(),i=l.findIndex(x=>x.id===id),j=a==="wg_up"?i-1:i+1;if(i<0||j<0||j>=l.length)return;[l[i],l[j]]=[l[j],l[i]];laySave(l);draw()}
  else if(a==="wg_rm"){laySave(cur().filter(x=>x.id!==id));draw()}
  else if(a==="wg_add")wgGallery();
  else if(a==="wg_put"){const l=cur();if(!l.some(x=>x.id===id))l.push({id,s:WG[id].d});modal("");laySave(l);draw()}
@@ -932,10 +934,10 @@ const netCard=()=>`<h2>Связь с базой</h2><div class="card"><div class
 const wzCard=()=>own()?`<h2>Первая настройка</h2><div class="card"><p class="mut">Название, шаблон магазина и способ доставки в три шага.</p><div class="acts"><button type="button" class="btn g s" data-a="wz_open">Мастер настройки магазина</button></div></div>`:"",
  teamLinks=()=>`<h2>Команда и доступ</h2><div class="card"><p class="mut">Сотрудники, их роли и профессии, доступ к разделам, расстановка главной.</p><div class="acts"><button type="button" class="btn s" data-a="goto" data-id="team">Открыть «Команду»</button></div></div>`,
  adet=(t,h,open)=>h?`<details class="adv"${open?" open":""}><summary>${t}</summary>${h}</details>`:"";
-const SGR=[["shop","Магазин"],["team","Команда и доступ"],["look","Вид"],["chn","Каналы связи"],["adv","Дополнительно"]],SALIAS={notif:"look",pay:"shop",fx:"adv",pts:"adv",tech:"adv"};
-const SETSEC=()=>SGR.filter(x=>sad()||x[0]==="look"||x[0]==="adv");
+const SGR=[["shop","Магазин"],["cl","Клиенты и оплата"],["team","Команда и доступ"],["look","Вид"],["notif","Уведомления"],["chn","Каналы связи"],["adv","Дополнительно"]],SALIAS={pay:"cl",fx:"adv",pts:"adv",tech:"adv"};
+const SETSEC=()=>SGR.filter(x=>sad()||["look","notif","adv"].includes(x[0]));
 function setV(){const L=SETSEC(),legacy=!!SALIAS[SETS];let k=SALIAS[SETS]||SETS;if(!L.some(x=>x[0]===k)){k="look";SETS="look"}
- const B={shop:()=>wzCard()+wdCard()+(sad()?setCard()+msgCard()+vtCard()+(own()?payCard():"")+locCard():shopInfo()),team:()=>teamLinks()+layRoles(),look:()=>langCard()+themeCard()+msCard()+liteCard()+nfCard()+pushCard(),chn:()=>chnCard(),
+ const B={shop:()=>wzCard()+wdCard()+(sad()?setCard()+locCard():shopInfo()),cl:()=>msgCard()+vtCard()+(own()?payCard():""),team:()=>teamLinks()+layRoles(),look:()=>langCard()+themeCard()+msCard()+liteCard(),notif:()=>nfCard()+pushCard(),chn:()=>chnCard(),
   adv:()=>adet("Возможности сайта",sad()?fxCard():"",legacy&&SETS==="fx")+adet("Карта 2ГИС",sad()?gisCard():"",legacy&&SETS==="pts")+adet("Связь с базой и проверка",netCard()+(sad()?dbCard():""),legacy&&SETS==="tech")+adet("Фото",sad()?imgCard():"",legacy&&SETS==="tech")+adet("Расходы и очистка данных",adm()?wipeCard():"",legacy&&SETS==="tech")};
  return `<h1>Настройки</h1><div class="chips setnav" role="tablist" aria-label="Разделы настроек">${L.map(x=>`<button type="button" role="tab" class="chip ${x[0]===k?"on":""}" onclick="setSec('${x[0]}')">${x[1]}</button>`).join("")}</div><div class="setb">${B[k]()}</div>`}
 /* ===== Профиль — по разделам: обо мне, моя работа, график, магазин, аккаунт ===== */
