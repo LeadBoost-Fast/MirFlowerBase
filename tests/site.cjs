@@ -13,7 +13,7 @@ const sign=async e=>(await(await fetch("http://127.0.0.1:9099/identitytoolkit.go
 const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==","base64");
 (async()=>{
  const N=globalThis.N=[],errs=globalThis.E=[];const ok=(c,m)=>N.push((c?"OK   ":"FAIL ")+m);
- for(const [e,role,nm] of [["tilegen615@gmail.com","admin","Владелец"],["adm@x.kz","admin","Админ"],["fl@x.kz","florist","Флорист"],["op@x.kz","operator","Оператор"]]){const id=await sign(e);await put("staff",id,{role,active:true,email:e,name:nm})}
+ for(const [e,role,nm] of [["tilegen615@gmail.com","admin","Владелец"],["adm@x.kz","admin","Админ"],["fl@x.kz","florist","Флорист"],["op@x.kz","operator","Оператор"],["co@x.kz","courier","Курьер"]]){const id=await sign(e);await put("staff",id,{role,active:true,email:e,name:nm})}
  await put("settings","main",{name:"Mirflowers",phone:"777 102 72 92 · +7 706 707 36 22"});
  await put("gallery","g1",{img:"https://example.com/g1.jpg",name:"Розы нежные",price:18000,by:"x",at:Date.now(),loc:"main"});
  await put("gallery","g2",{img:"https://example.com/g2.jpg",name:"Белое облако",price:24000,by:"x",at:Date.now(),loc:"main"});
@@ -157,7 +157,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   const flId=await pg.evaluate(()=>Object.keys(SF).find(i=>SF[i].email==="fl@x.kz")),opId=await pg.evaluate(()=>Object.keys(SF).find(i=>SF[i].email==="op@x.kz")),ownId=await pg.evaluate(()=>Object.keys(SF).find(i=>SF[i].email==="tilegen615@gmail.com"));
   ok(await pg.locator('[data-a=t_perm]').count()>=2,"в «Команде» у сотрудников есть кнопка «Доступ»");ok(await pg.locator('[data-a=t_perm][data-id="'+ownId+'"]').count()===0,"у владельца и админов кнопки «Доступ» нет");
   await pg.locator('[data-a=t_perm][data-id="'+flId+'"]').click();await pg.waitForTimeout(500);
-  ok(await pg.locator('#tpf input[type=checkbox]').count()===7,"в окне «Доступ» 7 разделов, у каждого значок и описание");ok(await pg.locator('#tpf input[type=checkbox]:checked').count()===7,"по умолчанию всё открыто");
+  ok(await pg.locator('#tpf input[type=checkbox]').count()===6,"в окне «Доступ» 6 разделов (пункт «Карта» скрыт, пока карта выключена), у каждого значок и описание");ok(await pg.locator('#tpf input[type=checkbox]:checked').count()===6,"по умолчанию всё открыто");
   await pg.screenshot({path:OUT+"/perm.png"});
   await pg.locator('#tpf [name=chats]').uncheck();await pg.locator('#tpf [name=crm]').uncheck();await pg.locator('#tpf [name=stock]').uncheck();await pg.locator('#tpf button').last().click();await pg.waitForTimeout(1800);
   const sf=(await(await fetch(FS+"/staff/"+flId,{headers:{Authorization:"Bearer owner"}})).json()).fields;const pf=(sf.perms&&sf.perms.mapValue&&sf.perms.mapValue.fields)||{};
@@ -181,6 +181,14 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
  {const pg=await lg("op@x.kz");const R=q=>pg.evaluate(async q=>{try{await db.collection(q).limit(1).get();return "прочитал"}catch(e){return e.code}},q);
   ok(await R("chats")==="прочитал"&&await R("customers")==="прочитал"&&await R("leads")==="прочитал"&&await R("deals")==="прочитал","оператор без ограничений читает чаты, клиентов, заявки, сделки (как раньше)");
   const ids=await pg.evaluate(()=>(window.HPL||[]).map(t=>t[0]));ok(ids.includes("chats")&&ids.includes("crm")&&ids.includes("stock"),"меню оператора не изменилось");await pg.context().close()}
+ /* 4g. карта 2ГИС выключена по умолчанию */
+ {const pg=await lg("adm@x.kz");const ids=await pg.evaluate(()=>(window.HPL||[]).map(t=>t[0]));ok(!ids.includes("map"),"карта выключена: у админа нет вкладки «Карта»");
+  const r=await pg.evaluate(async()=>{window.__f=[];const o=window.fetch.bind(window);window.fetch=(...a)=>{window.__f.push(String(a[0]));return o(...a)};const g=await geocode("Актау, 15 мкр");return{g,calls:window.__f.filter(u=>/2gis/.test(u)).length}});ok(r.g===0&&r.calls===0,"карта выключена: поиск адреса не обращается к 2ГИС (запросов: "+r.calls+")");
+  await pg.evaluate(()=>{tab="set";SETS="pts";draw()});await pg.waitForTimeout(700);ok(await pg.locator('[data-a=gis_on]').count()===1&&!(await pg.locator('[data-a=gis_on]').isChecked()),"в «Точки и карта» есть галочка «Карта внутри сайта», по умолчанию выключена");await pg.context().close()}
+ {const pg=await lg("co@x.kz");const ids=await pg.evaluate(()=>(window.HPL||[]).map(t=>t[0]));ok(!ids.includes("map")&&ids.includes("orders"),"карта выключена: у курьера нет вкладки «Карта», заказы на месте: "+ids.join(","));await pg.context().close()}
+ await putm("settings","main",{gisKey:"test-key"});await fetch(FS+"/settings/main?updateMask.fieldPaths=mapOn",{method:"PATCH",headers:{"content-type":"application/json",Authorization:"Bearer owner"},body:JSON.stringify({fields:{mapOn:{booleanValue:true}}})});
+ {const pg=await lg("adm@x.kz");const ids=await pg.evaluate(()=>(window.HPL||[]).map(t=>t[0]));ok(ids.includes("map"),"карта включена и есть ключ: вкладка «Карта» появилась");await pg.context().close()}
+ await fetch(FS+"/settings/main?updateMask.fieldPaths=mapOn",{method:"PATCH",headers:{"content-type":"application/json",Authorization:"Bearer owner"},body:JSON.stringify({fields:{mapOn:{booleanValue:false}}})});
  /* 5. аноним не пишет и не листает */
  {const w=await fetch(FS+"/pubShop/main",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({fields:{on:{booleanValue:false}}})});ok(w.status===403,"аноним не может писать: HTTP "+w.status);
   const l=await fetch(FS+"/pubShop");ok(l.status===403,"аноним не может листать коллекцию: HTTP "+l.status);
