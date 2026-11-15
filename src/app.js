@@ -185,7 +185,7 @@ st.textContent=`:root[data-t=${e}]{--bg:${P[0]};--card:${P[1]};--c2:${P[2]};--in
 if(tc)tc.content=P[0];try{dsgAfter()}catch(e){}}
 const UIS=["g","h","m","p"];/* у каждого — своя архитектура экранов */
 /* Тяжёлые дизайны лежат в отдельных файлах и грузятся только когда выбраны (пока файл не загрузился, работает Bento) */
-const DLIB={h:"d-cosmos.js",m:"d-command.js",p:"d-atlas.js"},DSTAT={},DSG_V=window.DSGV||"20261116n",
+const DLIB={h:"d-cosmos.js",m:"d-command.js",p:"d-atlas.js"},DSTAT={},DSG_V=window.DSGV||"20261116o",
  dsgReady=k=>k==="g"||DSTAT[k]===2,uiSel=()=>{try{const u=JSON.parse(STO.get("th")||"{}").ui;return UIS.includes(u)?u:"g"}catch(e){return"g"}},
  dsgAfter=()=>{const x=SHELL[LY()];if(x&&x.after)x.after()};
 function dsgLoad(k){if(!DLIB[k]||DSTAT[k]===1||DSTAT[k]===2)return;DSTAT[k]=1;const e=document.createElement("script");e.src=DLIB[k]+"?v="+DSG_V;e.async=true;
@@ -990,7 +990,7 @@ function secNav(){const out=[];(window.TALL||[]).forEach(t=>{if(t[0]==="more")re
  SECHUB.forEach(([sec,L])=>L.forEach(([n,g])=>{if(g[0]==="@")out.push({t:n,h:"Настройки · "+sec,tab:g.slice(1),s:"",kw:sec});else if(secOk(g))out.push({t:n,h:"Настройки · "+sec,tab:"set",s:g,kw:sec})}));
  SEXTRA.forEach(([n,g,kw])=>{if(secOk(g))out.push({t:n,h:"Настройки",tab:"set",s:g,kw})});return out}
 function secHub(){if(!sad())return"";const b=(n,g)=>g[0]==="@"?`<button type="button" class="btn g" data-a="goto" data-id="${g.slice(1)}">${esc(n)}</button>`:secOk(g)?`<button type="button" class="btn g" data-a="set_go" data-s="${g}">${esc(n)}</button>`:"";
- return `<h2>Настройки по разделам</h2><p class="mut">Всё, что настраивается в каждом разделе, собрано здесь. Нажмите, чтобы перейти к нужной настройке. Найти любой раздел или настройку можно общим поиском (лупа вверху).</p>${SECHUB.map(([sec,L])=>`<div class="card"><b>${sec}</b><div class="wg-gal">${L.map(([n,g])=>b(n,g)).join("")}</div></div>`).join("")}`}
+ return `<h2>Настройки по разделам</h2><p class="mut">Всё, что настраивается в каждом разделе, собрано здесь. Нажмите, чтобы перейти к нужной настройке. Найти любой раздел или настройку можно общим поиском (лупа вверху).</p>${SECHUB.map(([sec,L])=>`<div class="card"><b>${sec}</b><div class="wg-gal sec-g">${L.map(([n,g])=>b(n,g)).join("")}</div></div>`).join("")}`}
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="set_go"]');if(!b||!S)return;e.preventDefault();modal("");tab="set";SETS=b.dataset.s||"look";draw();scrollTo(0,0)});
 const SGR=[["sec","Разделы"],["shop","Магазин"],["cl","Клиенты и оплата"],["team","Команда и доступ"],["look","Вид"],["notif","Уведомления"],["chn","Каналы связи"],["adv","Дополнительно"]],SALIAS={pay:"cl",fx:"adv",pts:"adv",tech:"adv"};
 const SETSEC=()=>SGR.filter(x=>sad()||["look","notif","adv"].includes(x[0]));

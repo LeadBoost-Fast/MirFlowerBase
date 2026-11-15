@@ -366,3 +366,5 @@ details.adv>.card,details.adv>form.card{border:0;box-shadow:none;margin:0;backgr
 .scr-n{flex:1;min-width:0;font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .scr-top{position:sticky;top:0;z-index:6;background:var(--bg,#f6f1ea);padding:8px 0;margin:0 0 8px;border-bottom:1px solid var(--line,#e5e0d8);display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
 .scr-top .acts{margin:0;display:flex;gap:6px;flex-wrap:wrap}
+
+.sec-g{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.sec-g .btn{text-transform:none;letter-spacing:normal;font-size:14px;padding:10px 12px;min-height:44px;line-height:1.25}
