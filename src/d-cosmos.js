@@ -24,7 +24,7 @@ function csList(){let l=O.filter(o=>+o.st<4);
  return l.sort((a,b)=>(dueMs(a)||9e15)-(dueMs(b)||9e15))}
 function csBody(o,x,y,z,d,full,nol){const now=Date.now(),late=!!dueMs(o)&&dueMs(o)<now&&+o.st<4,unp=csMoney()&&!o.paid&&+o.st>=2&&+o.st!==5,t=String(o.time||"").slice(0,5);
  return `<button type="button" class="cs-b ck${+o.st||0}${late?" cl":""}" data-a="det" data-id="${esc(o.id)}" style="--x:${x.toFixed(4)};--y:${y.toFixed(4)};--z:${z}px;--d:${d}ms" aria-label="${esc((o.client||"Заказ")+", "+stL(o))}">${csGlyph(o.st)}${nol?"":`<span class="cs-bl">${late||unp?"✕ ":""}${esc(t||"—")}${full?` · ${esc(String(o.client||o.bn||"").slice(0,16))}`:""}</span>`}</button>`}
-const csTop=()=>`<div class="cs-top"><span class="cs-brand">${esc(SH.name||"Mirflowers")}</span>${typeof ptBtn==="function"?ptBtn():""}</div>`;
+const csTop=()=>`<div class="cs-top"><span class="cs-brand">${esc(SH.name||"База флористики")}</span>${typeof ptBtn==="function"?ptBtn():""}</div>`;
 function csPult(){const nf=typeof nfUnread==="function"?+nfUnread()||0:0,m=mgr();
  return `<div class="cs-pult" role="toolbar" aria-label="Пульт"><button type="button" data-a="gso" aria-label="Поиск">${TBI.search}<span>Поиск</span></button><button type="button" class="cs-plus" ${m?'data-a="new" aria-label="Новый заказ"':'data-a="goto" data-id="orders" aria-label="Заказы"'}>${ic(m?"plus":"orders")}</button><button type="button" data-a="nfc" aria-label="Сигналы">${TBI.bell}<span>Сигналы</span>${nf?`<b class="nb">${nf>99?"99+":nf}</b>`:""}</button></div>`}
 /* сцены «Космоса»: меняются фон и форма главной, конструкция экранов общая */
