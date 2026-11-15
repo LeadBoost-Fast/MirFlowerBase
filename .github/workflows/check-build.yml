@@ -20,3 +20,5 @@ jobs:
         run: node build/build.mjs --check
       - name: Проверка генератора нового магазина
         run: node tools/shop.test.mjs
+      - name: Проверка папки сайта для сервера PS.kz
+        run: node tools/make-site.mjs --check
