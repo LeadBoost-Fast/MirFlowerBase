@@ -201,13 +201,13 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.evaluate(()=>{tab="team";draw()});await pg.waitForTimeout(800);ok((await pg.locator("#v").textContent()).includes("Декоратор"),"в «Команде» у сотрудника подпись «Декоратор»");
   await pg.locator('[data-a=role][data-id="'+opId+'"]').selectOption("r:operator");await pg.waitForTimeout(1500);
   sf=(await(await fetch(FS+"/staff/"+opId,{headers:{Authorization:"Bearer owner"}})).json()).fields;ok(sf.role.stringValue==="operator"&&(sf.title||{}).stringValue==="","возврат на обычную роль «Оператор» убрал профессию");
-  /* доставка выключена: нет курьера и экрана «Курьер», в заказе только самовывоз */
-  await pg.evaluate(()=>db.collection("settings").doc("main").set({fx:{...(SH.fx||{}),delivery:false}},{merge:true}));await pg.waitForTimeout(1500);
+  /* свои курьеры выключены: нет роли и экрана «Курьер», доставка (inDrive / Яндекс) остаётся */
+  await pg.evaluate(()=>db.collection("settings").doc("main").set({fx:{...(SH.fx||{}),couriers:false}},{merge:true}));await pg.waitForTimeout(1500);
   await pg.evaluate(()=>{tab="team";draw()});await pg.waitForTimeout(800);
-  const ro=await pg.evaluate(()=>roleOpts(null).includes('value="r:courier"'));ok(ro===false,"доставка выключена: «Курьер» в списке ролей скрыт");
-  ok(await pg.evaluate(()=>!dvOn()&&!((window.HPL||[]).some(t=>t[0]==="cur"))),"доставка выключена: вкладки «Курьер» нет");
-  await pg.evaluate(()=>db.collection("settings").doc("main").set({fx:{...(SH.fx||{}),delivery:true}},{merge:true}));await pg.waitForTimeout(1500);
-  ok(await pg.evaluate(()=>dvOn()&&roleOpts(null).includes('value="r:courier"')),"доставка снова включена: курьер вернулся");
+  const ro=await pg.evaluate(()=>roleOpts(null).includes('value="r:courier"'));ok(ro===false,"свои курьеры выключены: «Курьер» в списке ролей скрыт");
+  ok(await pg.evaluate(()=>dvOn()&&!cOn()&&!((window.HPL||[]).some(t=>t[0]==="cur"))),"свои курьеры выключены: вкладки «Курьер» нет, доставка осталась");
+  await pg.evaluate(()=>db.collection("settings").doc("main").set({fx:{...(SH.fx||{}),couriers:true}},{merge:true}));await pg.waitForTimeout(1500);
+  ok(await pg.evaluate(()=>cOn()&&roleOpts(null).includes('value="r:courier"')),"свои курьеры снова включены: роль вернулась");
   await pg.evaluate(()=>{tab="team";draw()});await pg.waitForTimeout(800);await pg.locator('[data-a=tt_del]').first().click();await pg.waitForTimeout(1500);ok(await pg.evaluate(()=>TT().length===0),"профессию можно убрать");
   await pg.context().close()}
  /* 5. аноним не пишет и не листает */
