@@ -316,6 +316,36 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.locator('.lvc[data-id="'+flId+'"]').click();await pg.waitForTimeout(500);ok(await pg.locator(".lvd").count()===3,"день сотрудника: 3 отметки на линии");
   await pg.evaluate(()=>modal(""));await pg.context().close()}
  {const pg=await lg("op@x.kz");ok(await pg.evaluate(()=>!(window.HPL||[]).some(t=>t[0]==="live")&&liveBoard()===""),"оператору раздела «Картина» нет");await pg.context().close()}
+ /* 4o. настроить любой экран */
+ {const pg=await lg("fl@x.kz");const uid=await pg.evaluate(()=>U.uid);await pg.evaluate(()=>{tab="orders";draw()});await pg.waitForTimeout(900);
+  ok(await pg.locator('[data-a=scr_edit]').count()===1,"на «Заказах» есть «Настроить экран»");
+  ok(await pg.evaluate(()=>{tab="home";draw();return !document.querySelector('[data-a=scr_edit]')}),"на главной кнопки «Настроить экран» нет (там «Расставить»)");
+  await pg.evaluate(()=>{tab="orders";draw()});await pg.waitForTimeout(600);
+  await pg.locator('[data-a=scr_edit]').click();await pg.waitForTimeout(600);
+  await pg.screenshot({path:OUT+"/scr-edit.png"});const nb=await pg.locator(".scr-bar").count();ok(nb>=3,"режим настройки: у блоков есть панели ("+nb+")");
+  const qid=await pg.evaluate(()=>{const q=document.querySelector("#q");return q&&q.dataset.scrb});ok(!!qid,"поле поиска — отдельный блок ("+qid+")");
+  const ids0=await pg.evaluate(()=>[...document.querySelectorAll(".scr-bar [data-a=scr_up]")].map(b=>b.dataset.id));
+  await pg.locator('.scr-bar [data-a=scr_dn][data-id="'+ids0[0]+'"]').click();await pg.waitForTimeout(600);
+  ok(await pg.evaluate(([a,b])=>{const x=document.querySelector('[data-scrb="'+a+'"]'),y=document.querySelector('[data-scrb="'+b+'"]');return +x.style.order>+y.style.order},[ids0[0],ids0[1]]),"стрелка «вниз» меняет порядок блоков");
+  await pg.locator('.scr-bar [data-a=scr_hide][data-id="'+qid+'"]').click();await pg.waitForTimeout(600);
+  ok(await pg.locator(".scr-dim #q, #q.scr-dim").count()>=0&&await pg.locator('.scr-bar [data-a=scr_hide][data-id="'+qid+'"]').textContent()==="Показать","скрытый блок в режиме настройки приглушён, кнопка «Показать»");
+  await pg.locator('[data-a=scr_done]').click();await pg.waitForTimeout(700);
+  ok(await pg.evaluate(()=>{const q=document.querySelector("#q");return !q||q.offsetParent===null}),"после «Готово» поиск скрыт");
+  const d1=(await(await fetch(FS+"/layouts/"+uid,{headers:{Authorization:"Bearer owner"}})).json()).fields||{};ok(JSON.stringify(d1.scr||{}).includes(qid),"настройка экрана записана на сервер");
+  await pg.reload();await pg.waitForTimeout(2500);await pg.evaluate(()=>{tab="orders";draw()});await pg.waitForTimeout(800);
+  ok(await pg.evaluate(()=>{const q=document.querySelector("#q");return !q||q.offsetParent===null}),"после перезагрузки поиск всё ещё скрыт");
+  await pg.locator('[data-a=scr_edit]').click();await pg.waitForTimeout(500);await pg.locator('[data-a=scr_reset]').click();await pg.waitForTimeout(800);await pg.locator('[data-a=scr_done]').click();await pg.waitForTimeout(500);
+  ok(await pg.evaluate(()=>{const q=document.querySelector("#q");return !!q&&q.offsetParent!==null}),"«Сбросить» возвращает поиск");
+  await pg.context().close()}
+ {const ow=await lg("tilegen615@gmail.com");await ow.evaluate(()=>{tab="orders";draw()});await ow.waitForTimeout(900);
+  await ow.locator('[data-a=scr_edit]').click();await ow.waitForTimeout(500);const qid=await ow.evaluate(()=>{const q=document.querySelector("#q");return q&&q.dataset.scrb});
+  await ow.locator('.scr-bar [data-a=scr_hide][data-id="'+qid+'"]').click();await ow.waitForTimeout(500);
+  await ow.locator('[data-a=scr_role]').click();await ow.waitForTimeout(500);await ow.locator('[data-a=scr_put][data-id=role_florist]').click();await ow.waitForTimeout(1200);
+  const rd=(await(await fetch(FS+"/layouts/role_florist",{headers:{Authorization:"Bearer owner"}})).json()).fields||{};ok(JSON.stringify(rd.scr||{}).includes(qid),"экран «Заказы» сохранён как основа для роли «Флорист»");
+  const fl=await lg("fl@x.kz");await fl.evaluate(()=>{tab="orders";draw()});await fl.waitForTimeout(1200);
+  ok(await fl.evaluate(()=>{const q=document.querySelector("#q");return !q||q.offsetParent===null}),"флорист без своей настройки видит экран по основе роли (поиск скрыт)");
+  await fl.context().close();
+  await ow.evaluate(async()=>{await db.collection("layouts").doc("role_florist").delete();await db.collection("layouts").doc(U.uid).set({scr:{}},{mergeFields:["scr"]})});await ow.context().close()}
  /* 5. аноним не пишет и не листает */
  {const w=await fetch(FS+"/pubShop/main",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({fields:{on:{booleanValue:false}}})});ok(w.status===403,"аноним не может писать: HTTP "+w.status);
   const l=await fetch(FS+"/pubShop");ok(l.status===403,"аноним не может листать коллекцию: HTTP "+l.status);
