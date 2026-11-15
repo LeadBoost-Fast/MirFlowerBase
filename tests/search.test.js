@@ -1,5 +1,5 @@
 // Проверка умного поиска без браузера. Запуск: node tests/search.test.js
-const fs=require("fs");const h=fs.readFileSync(require("path").join(__dirname,"..","index.html"),"utf8");
+const fs=require("fs");const h=fs.readFileSync(require("path").join(__dirname,"..","src","app.js"),"utf8");
 const a=h.indexOf("const sNrm=");const b=h.indexOf("function orders(){const QT=");
 const code=h.slice(a,b);
 const ST=["Новый","Собирается","Готов","В пути","Выдан","Отменён"];

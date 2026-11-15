@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#e9e3d8"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="preconnect" href="https://www.gstatic.com" crossorigin><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Unbounded:wght@500;600&display=swap"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-180.png"><title>Mirflowers</title>
+<link rel="stylesheet" href="{{APP_CSS}}"><style id="fx3">
+.lvpk{display:grid;gap:10px;margin:10px 0 4px}
+.lvpk button.btn{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;text-align:left;min-height:68px;width:100%;padding:14px 18px;white-space:normal}
+.lvpk button.btn small{display:block;font-weight:400;opacity:.75;font-size:13px;line-height:1.3;white-space:normal}
+#lvf select,#vaf select{margin-bottom:8px}#lvn{margin-top:0}#vnm{margin-top:0}
+#lvf .qrow{align-items:stretch!important}#lvf .qrow .btn{align-self:stretch;min-height:46px;padding:0 16px}
+#lvf .g2,#vaf .g2{align-items:start}
+.fpick{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 0}.fpick .btn{flex:none}.fpick .mut{flex:1;min-width:140px;font-size:13px;margin:0}
+#lvt,#vtt{margin:10px 2px 0;font-size:16px}#lvt b,#vtt b{font-size:19px}
+#lvf input,#lvf select,#vaf input,#vaf select{font-size:16px}
+#lvf .chip,#vaf .chip{min-height:40px}#lvf [data-bd],#vaf [data-bd]{min-height:42px;min-width:46px}
+#lvf .acts,#vaf .acts{margin-top:14px}
+#lvsel .row,#vsel .row{align-items:center}
+</style><style id="fx4">.spr2{display:grid;grid-template-columns:minmax(0,1fr) 40px 72px 40px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}.spr2 input{text-align:center;min-height:42px;padding:6px}.spr2 .btn{min-width:40px;padding:0}.spr2.has{background:color-mix(in srgb,var(--ac) 10%,transparent);border-radius:12px}#spq,#vq{margin:6px 0}.vwarn{border:1.5px solid var(--warn)!important;background:color-mix(in srgb,var(--warn) 9%,var(--card))!important}.tdb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 0 8px 46px}.tdb span{min-width:0;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tdb .btn{flex:none}</style></head><body>
+<main id="v"><p class="mut">Подключение…</p></main>
+<script>try{window.DSGV="20261116j";if(localStorage.getItem("lang")==="kk")document.write('<script src="d-kk.js?v=20261116j"><\/script>')}catch(e){}</script>
+<script>
+/* Тихие ошибки: не теряются, а пишутся в журнал диагностики (Профиль → «Связь с базой») */
+window.ERRL=[];window.eLog=function(e){try{const st=String((e&&e.stack)||new Error().stack||"").split("\n").map(x=>x.trim()).find(x=>/at \w/.test(x)&&!/eLog/.test(x))||"",fn=(st.match(/at ([\w.$]+)/)||[])[1]||"";ERRL.push([Date.now(),((e&&e.code?e.code+": ":"")+String(e&&e.message||e)).slice(0,200)+(fn?" ["+fn+"]":"")]);if(ERRL.length>60)ERRL.shift()}catch(_){}};
+/* Свои окна вместо системных confirm()/prompt() iPhone. Код сайта вызывает confirm/prompt как раньше:
+   первый вызов показывает окно сайта и возвращает «нет»; после «Да» тот же клик повторяется, и вызов
+   с тем же текстом получает «да» (или введённый текст). Без недавнего клика — системное окно, как раньше. */
+(function(){const nC=window.confirm.bind(window),nP=window.prompt.bind(window);let last=null,lastT=0,busy=false;const okC=new Map(),okP=new Map();
+ document.addEventListener("click",e=>{if(e.isTrusted||e.__ask){last=e.target;lastT=Date.now()}},true);
+ const esc0=t=>String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+ function box(msg,inp,def,ro,done){busy=true;const o=document.createElement("div");o.id="askov";o.innerHTML=`<div class="askb" role="dialog" aria-modal="true"><div class="askm">${esc0(msg).replace(/\n/g,"<br>")}</div>${inp?`<input class="aski" value="${esc0(def)}" ${ro?"readonly":""}>`:""}<div class="aska">${ro?"":`<button type="button" class="btn g" data-k="0">Отмена</button>`}<button type="button" class="btn" data-k="1">${ro?"Готово":inp?"OK":"Да"}</button></div></div>`;
+  document.body.appendChild(o);const i=o.querySelector(".aski");setTimeout(()=>{try{if(i){i.focus();if(ro)i.select()}else o.querySelector('[data-k="1"]').focus()}catch(_){}},40);
+  const fin=k=>{const v=i?i.value:"";o.remove();busy=false;done(k,v)};o.onclick=e=>{const b=e.target.closest("[data-k]");if(b)fin(b.dataset.k==="1");else if(e.target===o&&!ro)fin(false)};
+  if(i)i.onkeydown=e=>{if(e.key==="Enter")fin(true)}}
+ const again=el=>{setTimeout(()=>{try{const ev=new MouseEvent("click",{bubbles:true,cancelable:true});ev.__ask=1;el.dispatchEvent(ev)}catch(e){eLog(e)}},30)};
+ window.confirm=function(msg){msg=String(msg);if(window.__NATIVEASK)return nC(msg);const t=okC.get(msg);if(t&&t>Date.now())return true;
+  const el=last;if(busy||!el||!el.isConnected||Date.now()-lastT>2500)return nC(msg);
+  box(msg,false,"",false,k=>{if(k){okC.set(msg,Date.now()+30000);again(el)}});return false};
+ window.prompt=function(msg,def){msg=String(msg);if(window.__NATIVEASK)return nP(msg,def);if(okP.has(msg)){const v=okP.get(msg);if(v.t>Date.now()){okP.delete(msg);return v.v}okP.delete(msg)}
+  const ro=/^Скопируйте/.test(msg),el=last;if(busy||((!el||!el.isConnected||Date.now()-lastT>2500)&&!ro))return nP(msg,def);
+  box(msg,true,def==null?"":def,ro,(k,v)=>{if(k&&!ro){okP.set(msg,{v,t:Date.now()+30000});again(el)}});return null}})();
+window.__mfErr="";
+window.addEventListener("error",function(e){window.__mfErr=(e&&e.message)||"error";});
+window.addEventListener("unhandledrejection",function(e){window.__mfErr=(e&&e.reason&&(e.reason.message||e.reason))||"promise";});
+setTimeout(function(){
+  try{
+    var v=document.getElementById("v");
+    if(!v)return;
+    if(v.querySelector("form,#em,.btn"))return;
+    if(!/Подключение|Долгое/.test(v.textContent||""))return;
+    var err=window.__mfErr||(!window.firebase?"Firebase SDK не загрузился (проверьте интернет / блокировщик)":"Firebase не ответил. В Firebase Console → Authentication → Settings → Authorized domains добавьте: "+location.hostname);
+    v.innerHTML='<div class="card" style="margin-top:12vh"><h1>Mirflowers</h1><p class="mut">'+String(err).replace(/</g,"&lt;")+'</p><p class="mut">Домен: '+location.hostname+'</p><button class="btn" onclick="location.reload()">Обновить</button></div>';
+  }catch(e){eLog(e)}
+}, 8000);
+</script><nav id="nav" hidden></nav><div id="m"></div><div id="toast" hidden></div>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-functions-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-messaging-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="shop.config.js"></script><script src="{{APP_JS}}"></script>
+</body></html>

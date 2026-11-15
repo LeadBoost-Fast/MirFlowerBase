@@ -1,0 +1,1 @@
+{"name":"mirflowers-build","private":true,"type":"module","version":"1.0.0","description":"Сборка сайта: сжатие скриптов и стилей","dependencies":{"esbuild":"0.28.2"}}
