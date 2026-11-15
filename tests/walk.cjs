@@ -22,7 +22,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.goto("http://127.0.0.1:5078/");await pg.waitForTimeout(1200);await pg.locator('input[type=email]').first().fill(e);await pg.locator('input[type=password]').first().fill("secret12");await pg.locator('button:has-text("Войти")').first().tap();await pg.waitForFunction(()=>typeof S!=="undefined"&&S,null,{timeout:20000});await pg.waitForTimeout(2000);await pg.evaluate(()=>{locSave("main")});return pg};
  const doc=async()=>{const r=await fetch(FS+"/pubShop/main",{headers:{Authorization:"Bearer owner"}});return r.status===200?await r.json():null};
  fs.mkdirSync(OUT+"/walk",{recursive:true});
- const ROLES=[["tilegen615@gmail.com","owner"],["adm@x.kz","admin"],["op@x.kz","operator"],["fl@x.kz","florist"],["co@x.kz","courier"]],DEV=[["phone",devices["iPhone 13"]],["laptop",{viewport:{width:1366,height:800}}]],bad=[];let checks=0;
+ const ROLES=[["tilegen615@gmail.com","owner"],["adm@x.kz","admin"],["op@x.kz","operator"],["fl@x.kz","florist"],["co@x.kz","courier"]],DEV=[["phone",devices["iPhone 13"]],["laptop",{viewport:{width:1366,height:800},hasTouch:true}]],bad=[];let checks=0;
  await put("orders","w1",{client:"Алия",phone:"+7 700 111 22 33",bn:"Розы",st:1,loc:"main",by:"x",date:new Date().toLocaleDateString("sv-SE"),ts:Date.now(),sum:15000});
  for(const [dn,dv] of DEV)for(const [em,rn] of ROLES){
   const pg=await lg(em,dv);
