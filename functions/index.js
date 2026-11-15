@@ -357,7 +357,7 @@ async function chatOf(db,o){
   for(const id of ids){const c=await db.doc("chats/"+id).get();if(c.exists){const d=c.data();if(d.grp&&d.grp!==id){const g=await db.doc("chats/"+d.grp).get();if(g.exists)return g}return c}}
   return null;
 }
-const TRK_DEF="Ваш заказ принят, спасибо, что выбрали {shop}! Следить за готовностью можно здесь: {link}";
+const MSG=require("./msgs");
 // Можно ли сейчас писать в этот чат: клиент сам нам писал, не 2ГИС, и не вышло окно 24 ч (WhatsApp/Instagram)
 function chatReady(cd,now){
   if(cd.ch==="gis")return"nochat";
@@ -387,13 +387,33 @@ exports.trackSend=onDocumentCreated({...OPT,document:"orders/{id}"},async e=>{
     const why=chatReady(c.data(),Date.now());
     if(why){await snap.ref.update({trkAsked:why});return}
     const k=await pubDoc(db,snap.ref,o,sh),link=siteOf(sh)+"status.html?t="+k;
-    const t=String(sh.trkMsg||TRK_DEF).replace("{shop}",sh.name||"нас").replace("{link}",link);
+    const t=MSG.trackText(sh,link);
     const b=db.batch(),ts=Date.now();
     b.set(c.ref.collection("msgs").doc(),{dir:"out",t,ts,by:"",byName:"Авто: заказ",st:"pending",auto:"track",oid:snap.id});
     b.update(c.ref,{last:t,lastDir:"out",lastTs:ts});
     b.update(snap.ref,{trkAsked:ts,pub:k});
     await b.commit();
   }catch(err){console.error("trackSend",e.params.id,err);await snap.ref.update({trkAsked:"err"}).catch(()=>{})}
+});
+// Заказ стал «Готов» → клиенту в чат уходит сообщение о готовности (один раз на заказ)
+exports.readySend=onDocumentUpdated({...OPT,document:"orders/{id}"},async e=>{
+  const a=e.data.before.data(),b=e.data.after.data();
+  if(!(+b.st===2&&+a.st!==2)||b.rdyAsked)return;
+  const db=admin.firestore(),ref=e.data.after.ref;
+  try{
+    const s=await db.doc("settings/main").get(),sh=s.exists?s.data():{};
+    const t=MSG.readyText(sh,b);
+    if(!t){await ref.update({rdyAsked:"off"});return}
+    const c=await chatOf(db,b);
+    if(!c){await ref.update({rdyAsked:"nochat"});return}
+    const why=chatReady(c.data(),Date.now());
+    if(why){await ref.update({rdyAsked:why});return}
+    const bt=db.batch(),ts=Date.now();
+    bt.set(c.ref.collection("msgs").doc(),{dir:"out",t,ts,by:"",byName:"Авто: готов",st:"pending",auto:"ready",oid:e.params.id});
+    bt.update(c.ref,{last:t,lastDir:"out",lastTs:ts});
+    bt.update(ref,{rdyAsked:ts});
+    await bt.commit();
+  }catch(err){console.error("readySend",e.params.id,err);await ref.update({rdyAsked:"err"}).catch(()=>{})}
 });
 exports.reviewArm=onDocumentUpdated({...OPT,document:"orders/{id}"},async e=>{
   const a=e.data.before.data(),b=e.data.after.data();
@@ -409,7 +429,7 @@ exports.reviewAsk=onSchedule({...OPT,schedule:"*/15 * * * *",timeZone:TZ},async(
   for(const d of q.docs){const o=d.data();
     try{
       if(+o.st!==4){await d.ref.update({rvAskAt:del});continue}/* статус откатили — не просим; снова «Выдан» → запустится заново */
-      if(sh.revOff||o.rate){await d.ref.update({rvAskAt:del,rvAsked:"skip"});continue}
+      if(o.rate){await d.ref.update({rvAskAt:del,rvAsked:"skip"});continue}
       const c=await chatOf(db,o);
       if(!c){await d.ref.update({rvAskAt:del,rvAsked:"nochat"});continue}
       const cd=c.data();
@@ -417,11 +437,13 @@ exports.reviewAsk=onSchedule({...OPT,schedule:"*/15 * * * *",timeZone:TZ},async(
       const why=chatReady(cd,now);
       if(why){await d.ref.update({rvAskAt:del,rvAsked:why});continue}
       const k=await pubDoc(db,d.ref,o,sh),link=String(sh.siteUrl||SITE_DEF).replace(/\/?$/,"/")+"status.html?t="+k+"&r=1";/* r=1 — страница показывает форму оценки */
-      const t=String(sh.revMsg||"Спасибо, что выбрали {shop}! Оцените, пожалуйста, букет — это займёт 10 секунд: {link}").replace("{shop}",sh.name||"нас").replace("{link}",link);
+      const plan=MSG.reviewPlan(sh,o,link);
+      if(!plan){await d.ref.update({rvAskAt:del,rvAsked:"skip"});continue}
+      const t=plan.text;
       const b=db.batch(),ts=Date.now();
       b.set(c.ref.collection("msgs").doc(),{dir:"out",t,ts,by:"",byName:"Авто: отзыв",st:"pending",auto:"review",oid:d.id});
       b.update(c.ref,{last:t,lastDir:"out",lastTs:ts});
-      b.update(d.ref,{rvAskAt:del,rvAsked:ts,pub:k});
+      b.update(d.ref,{rvAskAt:del,rvAsked:ts,rvMode:plan.mode,pub:k});
       await b.commit();
     }catch(err){console.error("reviewAsk",d.id,err);await d.ref.update({rvAskAt:del,rvAsked:"err"}).catch(()=>{})}
   }
