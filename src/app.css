@@ -413,3 +413,16 @@ details[open]>*:not(summary){animation:mvFade var(--m3) var(--eo)}
 .st-v .scr-bar,.st-v .scr-bar *{pointer-events:auto}
 .st-aud{margin:8px 0}
 .st-tile:active{transform:scale(.97)}
+
+/* План дня и праздничные даты */
+.wgp{cursor:default;min-height:0;gap:4px}
+.wgp .wgn{margin-bottom:2px}
+.plg{margin:12px 0 2px;font-weight:600;font-size:13px;color:var(--mut)}
+.pln{display:grid;grid-template-columns:auto 1fr;gap:0 12px;align-items:baseline;padding:10px 0;border-top:1px solid var(--line);cursor:pointer;min-height:44px}
+.pln b{grid-row:span 2;min-width:62px}
+.pln.soon b,.pln.soon span.mut{color:var(--warn)}
+.pln.late b,.pln.late span.mut{color:var(--bad)}
+.hrw{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:14px;padding:12px;margin:0 0 12px}
+.hrw .g2{margin:0}
+.holh{border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:10px;padding:10px 12px;margin:8px 0;font-size:14px}
+.holh.full{border-left-color:var(--bad)}
