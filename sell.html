@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#13261d">
+<title>CRM для цветочного магазина: заказы, склад, чаты, команда</title>
+<meta name="description" content="Заказы, склад, переписка с клиентами в WhatsApp и Instagram, команда и воронки сделок цветочного магазина в одном месте. Работает с телефона, на русском и казахском.">
+<meta property="og:title" content="CRM для цветочного магазина"><meta property="og:description" content="Сотрудники видят, что собирать и кому ответить. Вы видите, кто что делает."><meta property="og:type" content="website">
+<style>
+:root{--paper:#f2f5f0;--ink:#13261d;--leaf:#1d5a3e;--tulip:#c42f5b;--sun:#f2c53d;--mut:#4d6055;--line:#cbd6cb;--white:#fff}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%}
+a{color:inherit}img{max-width:100%;display:block}
+.wrap{max-width:1080px;margin:0 auto;padding:0 18px}
+h1,h2,h3{font-weight:800;letter-spacing:-.025em;line-height:1.08;margin:0;text-wrap:balance}
+h1{font-size:clamp(34px,8vw,64px)}h2{font-size:clamp(26px,5.5vw,40px)}h3{font-size:20px;letter-spacing:-.01em;line-height:1.25}
+p{margin:0 0 14px;max-width:62ch}.mut{color:var(--mut)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:calc(16px + env(safe-area-inset-top)) 0 0}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.01em;text-decoration:none}
+.lang{display:flex;gap:4px}.lang button{border:1.5px solid var(--ink);background:transparent;border-radius:99px;padding:6px 13px;min-height:40px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;color:var(--ink)}
+.lang button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 24px;border-radius:99px;background:var(--tulip);color:#fff;font-weight:700;font-size:17px;text-decoration:none;border:0;cursor:pointer}
+.btn.g{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+.btn:focus-visible,.lang button:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
+.acts{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}
+/* первый экран: бирка заказа */
+.hero{display:grid;gap:34px;padding:34px 0 54px}
+.hero p.lead{font-size:19px;margin-top:18px;color:var(--mut)}
+.tag{position:relative;background:var(--white);border-radius:6px 6px 22px 22px;padding:46px 24px 24px;max-width:380px;box-shadow:0 18px 0 -10px rgba(19,38,29,.12);transform:rotate(-1.6deg);border-top:14px solid var(--leaf)}
+.tag::before{content:"";position:absolute;top:-1px;left:50%;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:var(--paper);box-shadow:inset 0 0 0 2px var(--leaf)}
+.tag small{display:block;color:var(--mut);font-size:14px}
+.tag h2{font-size:26px;margin:4px 0 6px}
+.steps{list-style:none;margin:20px 0 0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.steps li{font-size:12px;line-height:1.2;color:var(--mut);padding-top:10px;border-top:5px solid var(--line);transition:border-color .2s,color .2s}
+.steps li.on{border-color:var(--leaf);color:var(--ink);font-weight:700}
+.bubble{margin-top:18px;background:#dcf5e3;border-radius:16px 16px 16px 4px;padding:12px 14px;font-size:15px;opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s}
+.bubble.on{opacity:1;transform:none}
+@media(min-width:860px){.hero{grid-template-columns:1.15fr .85fr;align-items:center;padding:56px 0 76px}.tag{justify-self:center}}
+/* блоки */
+section{padding:56px 0}
+.sec-h{margin-bottom:28px}.sec-h p{margin-top:12px;color:var(--mut)}
+.band{background:var(--white)}
+.feat{display:grid;gap:22px;padding:30px 0;border-top:2px solid var(--ink)}
+.feat:first-of-type{border-top:0;padding-top:0}
+.shot{border:7px solid var(--ink);border-radius:30px;overflow:hidden;background:var(--paper);max-width:300px}
+.shot img{width:100%;height:auto}
+@media(min-width:860px){.feat{grid-template-columns:1fr 300px;gap:56px;align-items:center}.feat.rev{grid-template-columns:300px 1fr}.feat.rev .shot{order:-1}}
+.more{columns:1;gap:36px;padding:0;margin:0;list-style:none}
+.more li{break-inside:avoid;padding:14px 0 14px 34px;border-top:1px solid var(--line);position:relative}
+.more li::before{content:"";position:absolute;left:4px;top:19px;width:14px;height:8px;border-left:3px solid var(--leaf);border-bottom:3px solid var(--leaf);transform:rotate(-45deg)}
+.more b{display:block}
+@media(min-width:700px){.more{columns:2}}
+/* шаги */
+.how{list-style:none;margin:0;padding:0;display:grid;gap:0;counter-reset:s}
+.how li{counter-increment:s;padding:22px 0 22px 64px;border-top:2px solid var(--ink);position:relative}
+.how li::before{content:counter(s);position:absolute;left:0;top:18px;width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px}
+.how b{display:block;font-size:20px;letter-spacing:-.01em}
+@media(min-width:860px){.how{grid-template-columns:repeat(3,1fr);gap:36px}.how li{border-top:2px solid var(--ink)}}
+/* тарифы */
+.plans{display:grid;gap:18px}
+.plan{padding:22px;border-top:8px solid var(--leaf);background:var(--paper)}
+.plan.mid{background:var(--ink);color:var(--paper);border-top-color:var(--sun)}
+.plan .pr{font-size:38px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.plan .pr small{font-size:16px;font-weight:600;letter-spacing:0}
+.plan ul{list-style:none;margin:16px 0 0;padding:0}.plan li{padding:7px 0 7px 22px;position:relative;font-size:16px}
+.plan li::before{content:"";position:absolute;left:0;top:15px;width:10px;height:10px;border-radius:50%;background:var(--tulip)}
+.plan.mid li::before{background:var(--sun)}
+@media(min-width:860px){.plans{grid-template-columns:repeat(3,1fr);align-items:start}.plan.mid{margin-top:-16px;padding-bottom:34px}}
+.note{margin-top:22px;font-size:15px;color:var(--mut)}
+/* вопросы */
+details{border-top:1px solid var(--line);padding:2px 0}details:last-of-type{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;font-weight:700;font-size:18px;padding:16px 36px 16px 0;list-style:none;position:relative;min-height:52px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";position:absolute;right:4px;top:12px;font-size:28px;line-height:1;font-weight:400;transition:transform .2s}
+details[open]>summary::after{transform:rotate(45deg)}
+details p{margin:0 0 18px;color:var(--mut)}
+/* контакт */
+.cta{background:var(--ink);color:var(--paper);padding:60px 0}
+.cta h2{max-width:20ch}.cta p{color:#c9d6cd;margin-top:14px}
+.cta .btn.g{color:var(--paper);box-shadow:inset 0 0 0 2px var(--paper)}
+footer{padding:26px 0 calc(34px + env(safe-area-inset-bottom));font-size:14px;color:var(--mut)}footer a{margin-right:16px}
+.todo{background:var(--sun);color:#5a4a00;border-radius:4px;padding:0 4px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}html{scroll-behavior:auto}}
+</style></head><body>
+<div class="wrap"><div class="top"><a class="brand" href="#" id="brand">CRM для цветочного магазина</a><div class="lang" role="group" aria-label="Язык"><button type="button" data-l="ru" aria-pressed="true">RU</button><button type="button" data-l="kk" aria-pressed="false">KZ</button></div></div>
+<header class="hero"><div>
+<h1 data-kk="Гүл дүкенінің тапсырысы, қоймасы және жазысуы бір жерде">Заказы, склад и переписка цветочного магазина в одном месте</h1>
+<p class="lead" data-kk="Қызметкер нені жинау, нені жеткізу және кімге жауап беру керегін көреді. Сіз кім не істейтінін және қанша тапқанын көресіз. Телефоннан жұмыс істейді, орыс және қазақ тілінде.">Сотрудники видят, что собирать, что везти и кому ответить. Вы видите, кто что делает и сколько заработано. Работает с телефона, на русском и казахском.</p>
+<div class="acts"><a class="btn" data-wa href="#contacts" data-kk="WhatsApp-қа жазу">Написать в WhatsApp</a><a class="btn g" href="vitrina.html?demo=1" data-kk="Онлайн-витринаны көру">Посмотреть онлайн-витрину</a></div></div>
+<div class="tag" aria-label="Пример заказа"><small data-kk="Бүгінгі тапсырыс">Заказ на сегодня</small><h2 data-kk="Нәзік раушан, 51 дана">Розы нежные, 51 шт</h2><small data-kk="Алия · бүгін 18:00-ге дейін · жеткізу">Алия · сегодня к 18:00 · доставка</small>
+<ol class="steps" id="steps"><li data-kk="Жаңа">Новый</li><li data-kk="Жиналуда">Собирается</li><li data-kk="Дайын">Готов</li><li data-kk="Жолда">В пути</li><li data-kk="Берілді">Выдан</li></ol>
+<div class="bubble" id="bub" data-kk="Алия, букетіңіз дайын. Курьер жолға шығып жатыр.">Алия, ваш букет готов. Курьер уже выезжает.</div></div></header></div>
+
+<section class="band"><div class="wrap">
+<div class="sec-h"><h2 data-kk="Неден тұрады">Из чего состоит</h2></div>
+<div class="feat"><div><h3 data-kk="Тапсырыс бір жолмен жүреді">Заказ идёт одним путём</h3><p data-kk="Жаңа, жиналуда, дайын, жолда, берілді. Флорист тек өз кезегін көреді, оператор қабылдап, төлемді белгілейді, курьер өз жеткізулерін көреді. Ешкім «кім алды?» деп сұрамайды.">Новый, собирается, готов, в пути, выдан. Флорист видит только свою очередь, оператор принимает и отмечает оплату, курьер видит свои доставки. Никто не спрашивает «кто взял?».</p></div><div class="shot"><img src="assets/sell/orders.jpg" alt="Экран «Заказы»: этапы, поиск, карточка заказа" width="520" height="772" loading="lazy"></div></div>
+<div class="feat rev"><div><h3 data-kk="Кім не істеп жатқаны көрініп тұр">Видно, кто что делает</h3><p data-kk="Қызметкерлер карточкалары: ауысымда ма, қай тапсырысты жасап жатыр, бүгін қанша жасады. Күн лентасында әр тапсырыс жолақпен көрсетіледі, кешіккендері қызыл. Қолмен есеп жоқ.">Карточки сотрудников: на смене или нет, какой заказ ведёт, сколько сделал сегодня. В ленте дня каждый заказ полоской по времени, задержки красным. Без ручных отчётов.</p></div><div class="shot"><img src="assets/sell/live.jpg" alt="Живая картина: карточки сотрудников" width="520" height="772" loading="lazy"></div></div>
+<div class="feat"><div><h3 data-kk="Әр дүкен өзіне баптайды">Каждый магазин настраивает под себя</h3><p data-kk="Басты бет блоктардан тұрады: орнын ауыстырыңыз, артығын жасырыңыз. Кез келген экранды өзіңізге, рөлге немесе барлық қызметкерге бөлек баптауға болады. Төменгі мәзірге керек бөлімдерді қойыңыз.">Главная из блоков: переставляйте и прячьте лишнее. Любой экран можно настроить для себя, для роли или для всех сотрудников. В нижнее меню ставьте разделы, которые нужны чаще всего.</p></div><div class="shot"><img src="assets/sell/studio.jpg" alt="Конструктор экранов: выбор, для кого настроить" width="520" height="885" loading="lazy"></div></div>
+</div></section>
+
+<section><div class="wrap">
+<div class="sec-h"><h2 data-kk="Және ішінде">И ещё внутри</h2></div>
+<ul class="more">
+<li><b data-kk="Қойма және гүлдің балғындығы">Склад и свежесть цветов</b><span class="mut" data-kk="Партиялар, нені тапсырыс беру керек, жақында солады.">Партии, что заказать, что скоро завянет.</span></li>
+<li><b data-kk="WhatsApp және Instagram чаттары">Чаты WhatsApp и Instagram</b><span class="mut" data-kk="Бір терезеде, тапсырыспен және клиент тарихымен қатар.">В одном окне, рядом с заказами и историей клиента.</span></li>
+<li><b data-kk="Мәміле воронкалары">Воронки сделок</b><span class="mut" data-kk="Корпоративтік клиенттер, мерекелер, тойлар, жазылым, клиентті қайтару, шағымдар, жеткізушілер, жұмысқа алу.">Корпоративные клиенты, праздники, свадьбы, подписка, возврат клиентов, жалобы, поставщики, найм.</span></li>
+<li><b data-kk="Жеткізу">Доставка</b><span class="mut" data-kk="Өз курьерлеріңіз немесе inDrive және Яндекс арқылы.">Свои курьеры или inDrive и Яндекс.</span></li>
+<li><b data-kk="Онлайн-витрина">Онлайн-витрина</b><span class="mut" data-kk="Клиентке арналған бет «WhatsApp-та тапсырыс беру» түймесімен.">Страница для клиентов с кнопкой «Заказать в WhatsApp».</span></li>
+<li><b data-kk="Рөлдер және қолжетімділік">Роли и доступ</b><span class="mut" data-kk="Флорист, оператор, курьер және өз мамандықтарыңыз: әркім өзіне керегін көреді.">Флорист, оператор, курьер и свои профессии: каждый видит нужное.</span></li>
+<li><b data-kk="Ауысымдар, есептер, ақша">Смены, отчёты, деньги</b><span class="mut" data-kk="Күн қорытындысы, қызметкерлер табысы, талдау.">Итоги дня, заработок сотрудников, аналитика.</span></li>
+<li><b data-kk="Бонустар және клиент тарихы">Бонусы и история клиентов</b><span class="mut" data-kk="Кім не қашан тапсырыс бергені бір жерде.">Кто что и когда заказывал, в одном месте.</span></li>
+<li><b data-kk="Орысша және қазақша">Русский и казахский</b><span class="mut" data-kk="Тілді бір басумен ауыстыруға болады.">Язык переключается одним нажатием.</span></li>
+<li><b data-kk="Бәрінен іздеу">Поиск по всему</b><span class="mut" data-kk="Клиенттер, тапсырыстар, қойма, бөлімдер және баптаулар.">Клиенты, заказы, склад, разделы и настройки.</span></li>
+</ul></div></section>
+
+<section class="band"><div class="wrap">
+<div class="sec-h"><h2 data-kk="Қосылу қалай өтеді">Как проходит подключение</h2></div>
+<ol class="how">
+<li><b data-kk="Бізге жазыңыз">Напишите нам</b><span class="mut" data-kk="Дүкен туралы айтыңыз, сұрақтарға жауап береміз.">Расскажите про магазин, ответим на вопросы.</span></li>
+<li><b data-kk="1–2 күнде қосамыз">Подключаем за 1–2 дня</b><span class="mut" data-kk="Дүкеніңізді жасаймыз, алғашқы баптауға және қызметкерлерді енгізуге көмектесеміз.">Создаём ваш магазин, помогаем с первой настройкой и заводим сотрудников.</span></li>
+<li><b data-kk="Жұмыс істейсіз">Работаете</b><span class="mut" data-kk="Қызметкерлер телефоннан кіреді. Түсініксіз болса, жанындамыз.">Сотрудники входят с телефона. Если что-то непонятно, мы рядом.</span></li>
+</ol></div></section>
+
+<section id="plans"><div class="wrap">
+<div class="sec-h"><h2 data-kk="Бағалар">Стоимость</h2><p data-kk="Ай сайынғы төлем және бір реттік қосылу. Дүкеніңізге қарай тарифті бірге таңдаймыз.">Ежемесячная оплата и разовое подключение. Тариф подберём вместе под ваш магазин.</p></div>
+<div class="plans" id="plansBox">
+<div class="plan"><h3 data-kk="Базалық">Базовый</h3><p class="pr"><span data-p="base">—</span> <small data-kk="₸ / ай">₸ в месяц</small></p><p class="mut" style="margin:6px 0 0"><span data-kk="Қосылу:">Подключение:</span> <span data-s="base">—</span> ₸</p><ul><li data-kk="Тапсырыстар, қойма, клиенттер">Заказы, склад, клиенты</li><li data-kk="Онлайн-витрина">Онлайн-витрина</li><li data-kk="Қызметкерлерге рөлдер бойынша қолжетімділік">Доступ сотрудникам по ролям</li><li data-kk="Анықтама орысша және қазақша">Справка на русском и казахском</li></ul></div>
+<div class="plan mid"><h3 data-kk="Стандарт">Стандарт</h3><p class="pr"><span data-p="std">—</span> <small data-kk="₸ / ай">₸ в месяц</small></p><p style="margin:6px 0 0;opacity:.8"><span data-kk="Қосылу:">Подключение:</span> <span data-s="std">—</span> ₸</p><ul><li data-kk="Базалықтағының бәрі">Всё из «Базового»</li><li data-kk="WhatsApp және Instagram чаттары">Чаты WhatsApp и Instagram</li><li data-kk="Клиентке тапсырыс күйі туралы хабарлама">Сообщения клиентам о статусе заказа</li><li data-kk="Мәміле воронкалары">Воронки сделок</li><li data-kk="Қолдау">Поддержка</li></ul></div>
+<div class="plan"><h3 data-kk="Про">Про</h3><p class="pr"><span data-p="pro">—</span> <small data-kk="₸ / ай">₸ в месяц</small></p><p class="mut" style="margin:6px 0 0"><span data-kk="Қосылу:">Подключение:</span> <span data-s="pro">—</span> ₸</p><ul><li data-kk="Стандарттағының бәрі">Всё из «Стандарта»</li><li data-kk="Бірнеше нүкте">Несколько точек</li><li data-kk="Өз түсіңіз және атауыңыз">Свой цвет и название</li><li data-kk="Басымдықты қолдау">Приоритетная поддержка</li></ul></div>
+</div>
+<p class="note" data-kk="WhatsApp хабарламаларына Meta өз тарифі бойынша тікелей ақы алады. Шағын дүкен үшін бұл әдетте айына бірнеше мың теңге.">За сообщения WhatsApp Meta берёт плату напрямую по своим тарифам. Для небольшого магазина это обычно несколько тысяч тенге в месяц.</p>
+</div></section>
+
+<section class="band"><div class="wrap">
+<div class="sec-h"><h2 data-kk="Жиі қойылатын сұрақтар">Частые вопросы</h2></div>
+<details><summary data-kk="Бірдеңе орнату керек пе?">Нужно ли что-то устанавливать?</summary><p data-kk="Жоқ. Сайт телефон браузерінде ашылады, оны экранға қосымша ретінде қоюға болады.">Нет. Сайт открывается в браузере телефона, его можно поставить на экран как приложение.</p></details>
+<details><summary data-kk="Біздің деректер не болады?">Что с нашими данными?</summary><p data-kk="Әр дүкеннің деректері басқа дүкендерден бөлек сақталады. Қызметкерлерге қолжетімділік рөлдер бойынша. Деректерді сұраған кезде көшіріп аласыз.">Данные каждого магазина хранятся отдельно от других магазинов. Доступ сотрудников по ролям. Данные можно забрать по запросу.</p></details>
+<details><summary data-kk="Бізде курьер жоқ">У нас нет своих курьеров</summary><p data-kk="Жеткізуді inDrive немесе Яндекс арқылы жүргізуге болады. Өз курьерлеріңіз кейін қосылады.">Доставку можно вести через inDrive или Яндекс. Свои курьеры включаются отдельно, когда нужны.</p></details>
+<details><summary data-kk="Ескі тапсырыстар мен клиенттерді көшіруге бола ма?">Можно перенести старые заказы и клиентов?</summary><p data-kk="Қазір клиенттер мен тапсырыстарды қайда жүргізетініңізді айтыңыз, қалай көшіруді ұсынамыз.">Расскажите, где сейчас ведёте клиентов и заказы, подскажем, как перенести.</p></details>
+<details><summary data-kk="Қандай тілде?">На каком языке работает?</summary><p data-kk="Орысша және қазақша, ауыстыру бір басумен.">На русском и казахском, язык переключается одним нажатием.</p></details>
+<details><summary data-kk="Қолданып көруге бола ма?">Можно посмотреть до подключения?</summary><p data-kk="Бізге жазыңыз: жүйені сіздің дүкеніңіздің мысалында көрсетеміз.">Напишите нам: покажем систему на примере вашего магазина.</p></details>
+</div></section>
+
+<div class="cta" id="contacts"><div class="wrap"><h2 data-kk="Жазыңыз, дүкеніңізге қарай көрсетеміз">Напишите, покажем на примере вашего магазина</h2><p data-kk="Орысша немесе қазақша жауап береміз.">Ответим по-русски или по-казахски.</p>
+<div class="acts"><a class="btn" data-wa href="#contacts" data-kk="WhatsApp-қа жазу">Написать в WhatsApp</a><a class="btn g" data-mail href="#contacts" data-kk="Поштаға жазу">Написать на почту</a></div></div></div>
+<div class="wrap"><footer><a href="privacy.html" data-kk="Құпиялылық саясаты">Политика конфиденциальности</a><a href="terms.html" data-kk="Пайдалану шарттары">Условия использования</a></footer></div>
+
+<script>
+/* Настройки страницы. Незаполненное подсвечивается жёлтым, с пустыми значениями страницу публиковать нельзя */
+var SELL={
+ brand:"",               /* название сервиса, например «Флорист CRM» (если пусто, стоит описание) */
+ wa:"",                  /* WhatsApp для заявок, только цифры, например 77001234567 */
+ email:"",               /* почта для заявок */
+ prices:{base:15000,std:25000,pro:40000},      /* ₸ в месяц: предварительные цены, подтвердите перед публикацией */
+ setup:{base:100000,std:125000,pro:150000}     /* ₸ разовое подключение: предварительные цены */
+};
+(function(){
+var KK=false,fmt=function(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g," ")},msg={ru:"Здравствуйте! Хочу подключить CRM для цветочного магазина. Расскажите подробнее.",kk:"Сәлеметсіз бе! Гүл дүкеніме CRM қосқым келеді. Толығырақ айтыңыз."};
+document.querySelectorAll("[data-kk]").forEach(function(e){e.setAttribute("data-ru",e.textContent)});
+document.querySelectorAll("[data-p]").forEach(function(e){var v=SELL.prices[e.getAttribute("data-p")];e.textContent=v?fmt(v):"[цена]";if(!v)e.className="todo"});
+document.querySelectorAll("[data-s]").forEach(function(e){var v=SELL.setup[e.getAttribute("data-s")];e.textContent=v?fmt(v):"[цена]";if(!v)e.className="todo"});
+if(SELL.brand)document.getElementById("brand").textContent=SELL.brand;
+function contacts(){document.querySelectorAll("[data-wa]").forEach(function(a){if(SELL.wa){a.href="https://wa.me/"+SELL.wa+"?text="+encodeURIComponent(msg[KK?"kk":"ru"]);a.classList.remove("todo")}else{a.href="#contacts";a.classList.add("todo");a.title="Укажите номер WhatsApp в SELL.wa"}});
+ document.querySelectorAll("[data-mail]").forEach(function(a){if(SELL.email){a.href="mailto:"+SELL.email+"?subject="+encodeURIComponent(KK?"CRM гүл дүкеніне":"CRM для цветочного магазина")}else{a.style.display="none"}})}
+contacts();
+function lang(k){KK=k==="kk";document.documentElement.lang=KK?"kk":"ru";document.querySelectorAll("[data-kk]").forEach(function(e){e.textContent=e.getAttribute(KK?"data-kk":"data-ru")});
+ document.querySelectorAll(".lang button").forEach(function(b){b.setAttribute("aria-pressed",String(b.getAttribute("data-l")===k))});contacts();try{localStorage.setItem("sellLang",k)}catch(e){}}
+document.querySelectorAll(".lang button").forEach(function(b){b.addEventListener("click",function(){lang(b.getAttribute("data-l"))})});
+try{if(localStorage.getItem("sellLang")==="kk")lang("kk")}catch(e){}
+/* бирка заказа: один раз проходит этапы */
+var li=document.querySelectorAll("#steps li"),bub=document.getElementById("bub"),still=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function at(i){li.forEach(function(x,j){x.classList.toggle("on",j<=i)});bub.classList.toggle("on",i>=2)}
+if(still)at(4);else{var i=0;at(0);var t=setInterval(function(){i++;at(i);if(i>=4)clearInterval(t)},1000)}
+})();
+</script></body></html>
