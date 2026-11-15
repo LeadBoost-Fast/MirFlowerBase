@@ -297,6 +297,26 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.evaluate(()=>uizSet("n"));ok(await pg.evaluate(()=>/device-width/.test(document.getElementById("vp").content)),"размер интерфейса: «Обычный» возвращает обычный размер");
   await pg.evaluate(()=>{tab="set";SETS="look";draw()});await pg.waitForTimeout(500);ok(await pg.locator('.chip[onclick^="uizSet"]').count()===3,"в настройках вида три размера интерфейса");
   await pg.evaluate(()=>uizSet("m"));await pg.context().close()}
+ /* доска заказов */
+ {const pg=await lg("tilegen615@gmail.com");
+  await put("orders","brd1",{client:"Доска1",phone:"+7 700 000 01 01",bn:"Доска Букет",st:0,loc:"main",by:"x",date:new Date().toLocaleDateString("sv-SE"),time:"23:50",ts:Date.now()+5});
+  await pg.waitForTimeout(1500);
+  await pg.evaluate(()=>{tab="orders";draw()});await pg.waitForTimeout(500);
+  ok(await pg.evaluate(()=>ovwOn())&&await pg.locator('.chip[data-a=obv]').count()===2,"доска заказов: переключатель «Список» и «Доска» есть");
+  await pg.locator('.chip[data-a=obv][data-id=board]').click();await pg.waitForTimeout(600);
+  ok(await pg.locator('.obd .obcol').count()===5&&await pg.locator('.obd .obc').count()>=1,"доска заказов: пять колонок и карточки");
+  ok(/новые/i.test(await pg.locator('.obd').first().innerText())&&/выданы сегодня/i.test(await pg.locator('.obd').first().innerText()),"доска заказов: колонки названы по статусам");
+  ok(await pg.locator('.obc [data-a=adv][data-id=brd1]').count()===1,"доска заказов: у нового заказа кнопка следующего шага");
+  await pg.locator('.obc [data-a=adv][data-id=brd1]').click();await pg.waitForTimeout(600);
+  ok(await pg.locator('#tcy').count()===1,"доска заказов: кнопка включает то же подтверждение «Точно берёшь этот заказ?», что и список");
+  await pg.locator('#tcy').click();await pg.waitForTimeout(2500);
+  ok(await pg.evaluate(async()=>{const d=(await db.collection("orders").doc("brd1").get()).data();return +d.st===1&&!!d.takenBy}),"доска заказов: после подтверждения заказ взят в работу по обычным правилам");
+  ok(await pg.locator('.obcol').nth(1).locator('.obc').filter({hasText:"Доска Букет"}).count()===1,"доска заказов: карточка переехала в колонку «Собирается»");
+  await pg.locator('.chip[data-a=obv][data-id=list]').click();await pg.waitForTimeout(500);
+  ok(await pg.locator('.obd').count()===0&&await pg.locator('.pt').count()===1,"доска заказов: «Список» возвращает обычный вид");
+  await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{ordBoard:false}},{merge:true})});await pg.waitForTimeout(1200);
+  ok(await pg.evaluate(()=>{tab="orders";draw();return !ovwOn()})&&await pg.locator('.chip[data-a=obv]').count()===0,"доска заказов: выключается в настройках, переключателя нет");
+  await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{ordBoard:true}},{merge:true});STO.set("obv","list")});await pg.waitForTimeout(800);await pg.context().close()}
  {const pg=await lg("tilegen615@gmail.com");ok(await pg.evaluate(()=>!CFG.wizard),"у Mirflowers мастер настройки сам не открывается (wizard не задан)");
   ok(await pg.evaluate(()=>wzCard().includes('data-a="wz_open"')),"владелец: в «Магазине» есть кнопка «Мастер настройки магазина»");
   await pg.evaluate(()=>{wizard()});await pg.waitForTimeout(600);ok(await pg.locator("#wzf").count()===1,"мастер открылся: название, телефон, адрес, шаблон, доставка");
@@ -322,7 +342,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.evaluate(()=>{SETS="adv";draw()});await pg.waitForTimeout(500);ok(await pg.locator("details.adv").count()>=3&&await pg.locator("details.adv[open]").count()===0,"«Дополнительно»: блоки свёрнуты");
   await pg.evaluate(()=>{SETS="fx";draw()});await pg.waitForTimeout(500);ok(await pg.locator("details.adv[open] #fxf").count()===1,"старое значение «fx» открывает «Дополнительно» с раскрытыми возможностями");
   const lens=await pg.evaluate(()=>Object.keys(FXD).map(k=>(FXS[k]||"").length));ok(lens.every(n=>n>0&&n<45),"подписи переключателей короткие: "+lens.join(","));
-  ok(await pg.locator("#fxf .hint-btn").count()===14,"у каждого переключателя есть значок «?»");
+  ok(await pg.locator("#fxf .hint-btn").count()===15,"у каждого переключателя есть значок «?»");
   await pg.locator("#fxf .hint-btn").first().click();await pg.waitForTimeout(400);ok((await pg.locator("#modal, .modal, [role=dialog]").first().textContent().catch(()=>"" )).length>20||await pg.locator('[data-a=x]').count()>0,"по значку «?» открывается пояснение");
   await pg.evaluate(()=>modal(""));
   await pg.evaluate(()=>{tab="home";draw()});await pg.waitForTimeout(800);ok(!(await pg.locator("#v").textContent()).includes("Срочных дел нет"),"на главной нет пустой карточки «Всё сделано»");
