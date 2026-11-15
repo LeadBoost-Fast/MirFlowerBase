@@ -407,6 +407,30 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   const rd=(await(await fetch(FS+"/layouts/role_florist",{headers:{Authorization:"Bearer owner"}})).json()).fields||{};ok(JSON.stringify(rd.pins||{}).includes("stock"),"меню сохранено как основа для роли «Флорист»");
   const fl=await lg("fl@x.kz");await fl.waitForTimeout(800);ok(await fl.evaluate(()=>{const t=layTplF("pins");return !!t&&t.pins.includes("stock")}),"флорист видит основу меню от владельца");await fl.context().close();
   await ow.evaluate(async()=>{await db.collection("layouts").doc("role_florist").delete()});await ow.context().close()}
+ /* 4s. конструктор экранов */
+ {const ow=await lg("tilegen615@gmail.com");await ow.evaluate(()=>{tab="set";SETS="sec";draw()});await ow.waitForTimeout(700);
+  const nt=await ow.locator('[data-a=stu_open]').count();ok(nt>=8,"в «Разделах» плитки экранов для настройки: "+nt);
+  ok(await ow.locator('.st-tile[data-a=wg_home_tile]').count()===1,"плитка «Главная» ведёт в расстановку главной");
+  await ow.locator('[data-a=stu_open][data-id=orders]').click();await ow.waitForTimeout(900);
+  ok(await ow.evaluate(()=>tab==="set"),"конструктор не уводит со страницы настроек");
+  ok(await ow.locator("#stv .scr-bar").count()>=3,"в окне виден экран «Заказы» с панелями блоков");
+  const auds=(await ow.locator(".st-aud .chip").allTextContents()).join("|");ok(/Для меня/.test(auds)&&/Все сотрудники/.test(auds)&&/Флорист/.test(auds),"можно выбрать, для кого: "+auds);
+  await ow.screenshot({path:OUT+"/studio.png"});
+  await ow.locator('.st-aud [data-id=all]').click();await ow.waitForTimeout(500);
+  const qid=await ow.evaluate(()=>{const q=document.querySelector("#stv input[type=search]");let e=q;while(e&&e.parentNode&&e.parentNode.id!=="stv")e=e.parentNode;const bar=e&&e.previousElementSibling;return bar&&bar.querySelector("[data-a=stu_hide]")?bar.querySelector("[data-a=stu_hide]").dataset.id:null});
+  ok(!!qid,"поле поиска — отдельный блок в конструкторе ("+qid+")");
+  await ow.locator('#stbody [data-a=stu_hide][data-id="'+qid+'"]').click();await ow.waitForTimeout(500);
+  await ow.locator('[data-a=stu_apply]').click();await ow.waitForTimeout(1200);
+  const da=(await(await fetch(FS+"/layouts/all",{headers:{Authorization:"Bearer owner"}})).json()).fields||{};ok(JSON.stringify(da.scr||{}).includes(qid),"настройка для всех записана (layouts/all)");
+  const fl=await lg("fl@x.kz");await fl.evaluate(()=>{tab="orders";draw()});await fl.waitForTimeout(1200);
+  ok(await fl.evaluate(()=>{const q=document.querySelector("#q");return !q||q.offsetParent===null}),"флорист без своих настроек видит экран «для всех» (поиск скрыт)");
+  ok(await fl.evaluate(()=>{tab="set";SETS="look";draw();return document.querySelectorAll("[data-a=stu_open]").length>0}),"у флориста тоже есть конструктор (в «Вид»)");
+  await fl.evaluate(()=>stOpen("orders","me"));await fl.waitForTimeout(500);const fa=(await fl.locator(".st-aud .chip").allTextContents()).join("|");ok(fa==="Для меня","сотруднику доступно только «Для меня»: "+fa);
+  await fl.context().close();
+  await ow.locator('.st-aud [data-id=all]').click();await ow.waitForTimeout(400);await ow.locator('#stbody [data-a=lay_lock][data-id=all]').check();await ow.waitForTimeout(1200);
+  const st=(await(await fetch(FS+"/settings/main",{headers:{Authorization:"Bearer owner"}})).json()).fields||{};ok((((st.layLock||{}).mapValue||{}).fields||{}).all&&st.layLock.mapValue.fields.all.booleanValue===true,"замок «все сотрудники» записан");
+  const fl2=await lg("fl@x.kz");await fl2.waitForTimeout(800);ok(await fl2.evaluate(()=>layLocked()),"флорист: настройка закреплена");await fl2.context().close();
+  await ow.evaluate(async()=>{modal("");await db.collection("settings").doc("main").set({layLock:{all:false}},{merge:true});await db.collection("layouts").doc("all").delete()});await ow.context().close()}
  /* 5. аноним не пишет и не листает */
  {const w=await fetch(FS+"/pubShop/main",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({fields:{on:{booleanValue:false}}})});ok(w.status===403,"аноним не может писать: HTTP "+w.status);
   const l=await fetch(FS+"/pubShop");ok(l.status===403,"аноним не может листать коллекцию: HTTP "+l.status);

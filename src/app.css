@@ -404,3 +404,12 @@ details[open]>*:not(summary){animation:mvFade var(--m3) var(--eo)}
 @media(min-width:900px){.ov-out .sh{animation:mvOutRight var(--m2) var(--ei) forwards!important}}
 /* режим «меньше движения» и лёгкий режим выключают всё */
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* Конструктор экранов */
+.st-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;margin:8px 0 18px}
+.st-tile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;min-height:92px;border:1px solid var(--line,#e5e0d8);border-radius:16px;background:var(--card,#fff);color:var(--ink,#222);font-size:13px;font-weight:600;cursor:pointer;text-transform:none;letter-spacing:normal}
+.st-frame{max-height:52vh;overflow:auto;border:1px solid var(--line,#e5e0d8);border-radius:20px;padding:10px;margin:10px 0;background:var(--bg,#f6f1ea)}
+.st-v>*:not(.scr-bar){pointer-events:none}
+.st-v .scr-bar,.st-v .scr-bar *{pointer-events:auto}
+.st-aud{margin:8px 0}
+.st-tile:active{transform:scale(.97)}
