@@ -198,6 +198,12 @@ service cloud.firestore {
       allow delete: if isAdmin() || isOwner();
     }
 
+    // Подписки на цветы (регулярные букеты): ведёт тот, у кого есть доступ к клиентам
+    match /subs/{id} {
+      allow read, create, update: if canCrm();
+      allow delete: if isAdmin() || isOwner();
+    }
+
     match /chats/{id} {
       allow read: if canChats();
       allow create, update: if isMgr();

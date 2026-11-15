@@ -289,7 +289,7 @@ exports.orderStatus=onRequest({...OPT,maxInstances:5},async(req,res)=>{
 
 // ================= АВТОКОПИЯ =================
 // Каждую ночь пишет JSON в Cloud Storage (бакет по умолчанию): backups/ГГГГ-ММ-ДД/<коллекция>.json, хранит 14 дней
-const BK_COLS=["orders","customers","inventory","stockMovements","showcase","bouquets","leads","deals","reports","builds","shifts","staff","activityLogs","chats","expenses","invcost","settings","locations","team"];
+const BK_COLS=["orders","customers","inventory","stockMovements","showcase","bouquets","leads","deals","subs","reports","builds","shifts","staff","activityLogs","chats","expenses","invcost","settings","locations","team"];
 const BK_DAYS=14;
 const ser=function(k,v){const r=this[k];return r&&typeof r.toMillis==="function"?{ts:r.toMillis()}:v};
 async function runBackup(){

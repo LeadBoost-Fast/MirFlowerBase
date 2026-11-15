@@ -426,3 +426,10 @@ details[open]>*:not(summary){animation:mvFade var(--m3) var(--eo)}
 .hrw .g2{margin:0}
 .holh{border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:10px;padding:10px 12px;margin:8px 0;font-size:14px}
 .holh.full{border-left-color:var(--bad)}
+
+/* Доска заказов */
+.obd{display:flex;gap:10px;overflow-x:auto;align-items:flex-start;padding-bottom:8px;margin:0 -2px}
+.obcol{flex:none;width:252px}
+.obc{margin:6px 0;display:flex;flex-direction:column;gap:8px}.obt{cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.obc.late{border-left:3px solid var(--bad)}
+@media(min-width:900px){.obcol{flex:1;width:auto;min-width:200px}}
