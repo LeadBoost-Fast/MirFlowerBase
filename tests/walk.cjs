@@ -26,9 +26,9 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
  await put("orders","w1",{client:"Алия",phone:"+7 700 111 22 33",bn:"Розы",st:1,loc:"main",by:"x",date:new Date().toLocaleDateString("sv-SE"),ts:Date.now(),sum:15000});
  for(const [dn,dv] of DEV)for(const [em,rn] of ROLES){
   const pg=await lg(em,dv);
-  const ids=await pg.evaluate(()=>[...new Set([...(window.HPL||[]).map(t=>t[0]),...(typeof MORE!=="undefined"?MORE.map(t=>t[0]):[])])]);
+  const ids=await pg.evaluate(()=>[...new Set([...(window.TALL||[]).map(t=>t[0]),...(window.HPL||[]).map(t=>t[0]),...(typeof MORE!=="undefined"?MORE.map(t=>t[0]):[])])]);
   const steps=ids.map(id=>[id,id,null]);
-  if(rn==="owner"||rn==="admin")["look","shop","team","chn","adv","notif","pay","fx","pts","tech"].forEach(s=>steps.push(["set","set/"+s,s]));
+  if(rn==="owner"||rn==="admin")["sec","look","shop","team","chn","adv","notif","pay","fx","pts","tech"].forEach(s=>steps.push(["set","set/"+s,s]));
   for(const [id,name,sub] of steps){
    await pg.evaluate(([id,sub])=>{tab=id;if(sub)SETS=sub;draw()},[id,sub]);await pg.waitForTimeout(450);
    const r=await pg.evaluate(()=>{const v=document.querySelector("#v")||document.body,t=v.textContent.trim();return{len:t.length,ow:document.documentElement.scrollWidth-window.innerWidth,bad:(t.match(/undefined|NaN|\[object|null\b/)||[""])[0]}});
