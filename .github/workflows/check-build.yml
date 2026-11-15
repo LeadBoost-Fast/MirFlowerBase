@@ -1,0 +1,20 @@
+name: Проверка сборки сайта
+
+# Запускается для каждого PR и после слияния: готовые файлы в корне должны соответствовать исходникам из src/
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Установка сборщика
+        run: cd build && npm ci
+      - name: Проверка, что собранное соответствует исходникам
+        run: node build/build.mjs --check
