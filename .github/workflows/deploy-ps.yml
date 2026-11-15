@@ -1,0 +1,47 @@
+name: Выкладка сайта на сервер PS.kz
+
+# Запускается при слиянии в main и вручную (Actions, Run workflow).
+# Пока сервера нет и секреты не заданы, работа просто пропускается и ничего не ломает.
+# Нужные секреты репозитория (Settings, Secrets and variables, Actions):
+#   PS_HOST  адрес сервера (IP или домен)
+#   PS_USER  пользователь для входа по SSH
+#   PS_SSH_KEY  закрытый ключ этого пользователя (создайте отдельный ключ только для выкладки, не свой личный)
+# Пароли и ключи в чат и в код не пишем: только в секреты GitHub.
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Есть ли секреты
+        id: sec
+        env:
+          H: ${{ secrets.PS_HOST }}
+          U: ${{ secrets.PS_USER }}
+          K: ${{ secrets.PS_SSH_KEY }}
+        run: |
+          if [ -n "$H" ] && [ -n "$U" ] && [ -n "$K" ]; then echo "go=1" >> "$GITHUB_OUTPUT"; else echo "Секреты PS_HOST, PS_USER, PS_SSH_KEY не заданы: выкладка пропущена"; fi
+      - uses: actions/checkout@v4
+        if: steps.sec.outputs.go == '1'
+      - uses: actions/setup-node@v4
+        if: steps.sec.outputs.go == '1'
+        with:
+          node-version: 22
+      - name: Сборка папки с сайтом
+        if: steps.sec.outputs.go == '1'
+        run: node tools/make-site.mjs --out dist/ps-site/site
+      - name: Выкладка на сервер
+        if: steps.sec.outputs.go == '1'
+        env:
+          H: ${{ secrets.PS_HOST }}
+          U: ${{ secrets.PS_USER }}
+          K: ${{ secrets.PS_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$K" > ~/.ssh/ps_key && chmod 600 ~/.ssh/ps_key
+          test -f dist/ps-site/site/index.html
+          rsync -az --delete -e "ssh -i ~/.ssh/ps_key -o StrictHostKeyChecking=accept-new" dist/ps-site/site/ "$U@$H:/opt/crm/site/"
+          echo "Выложено: $(cat dist/ps-site/site/site-version.txt | head -1)"

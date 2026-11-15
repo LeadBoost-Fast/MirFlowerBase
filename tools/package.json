@@ -1,0 +1,6 @@
+{
+  "name": "crm-tools",
+  "private": true,
+  "description": "Служебные скрипты: выгрузка данных из Firebase перед переездом на свой сервер",
+  "dependencies": { "firebase-admin": "^12.7.0" }
+}
