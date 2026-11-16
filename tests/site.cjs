@@ -348,6 +348,17 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({dealStale:10},{merge:true})});await pg.waitForTimeout(1200);
   ok(await pg.evaluate(()=>dealStaleN()===10&&!dealAttn().includes("Давняя сделка")),"воронка: порог «без движения» меняется в настройках");
   await pg.evaluate(async(a)=>{await db.collection("settings").doc("main").set({dealStale:3},{merge:true});await db.collection("deals").doc(a).delete()},sid);await pg.context().close()}
+ /* цветочное оформление «Цветник» */
+ {const pg=await lg("tilegen615@gmail.com");
+  ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Цветник"&&PAL0==="Цветник"&&!!PALS["Цветник"]),"оформление: по умолчанию палитра «Цветник»");
+  ok(await pg.evaluate(()=>LITE||!!document.getElementById("petals")),"оформление «Цветник»: лепестки на фоне (если не лёгкий режим)");
+  ok(await pg.evaluate(()=>!!document.getElementById("flfont")),"оформление «Цветник»: подключён шрифт заголовков");
+  ok(await pg.evaluate(()=>{tab="home";draw();const h=document.querySelector(".bento .b-hero");return !!h&&getComputedStyle(h,"::after").backgroundImage.includes("svg")}),"оформление «Цветник»: пион в углу главной карточки");
+  await pg.evaluate(()=>setPal("Тинт"));await pg.waitForTimeout(500);
+  ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Тинт"&&!document.getElementById("petals")),"другая палитра: цветочное оформление и лепестки убираются");
+  await pg.evaluate(()=>setPal("Цветник"));await pg.waitForTimeout(500);
+  ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Цветник"&&(LITE||!!document.getElementById("petals"))),"палитра «Цветник» включается снова");
+  await pg.evaluate(()=>{STO.set("th",JSON.stringify({ui:"g",g1:1}));applyTheme()});await pg.context().close()}
  {const pg=await lg("tilegen615@gmail.com");ok(await pg.evaluate(()=>!CFG.wizard),"у Mirflowers мастер настройки сам не открывается (wizard не задан)");
   ok(await pg.evaluate(()=>wzCard().includes('data-a="wz_open"')),"владелец: в «Магазине» есть кнопка «Мастер настройки магазина»");
   await pg.evaluate(()=>{wizard()});await pg.waitForTimeout(600);ok(await pg.locator("#wzf").count()===1,"мастер открылся: название, телефон, адрес, шаблон, доставка");
