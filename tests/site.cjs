@@ -575,7 +575,10 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   const cnt=await pg.evaluate(()=>[(window.HPL||[]).length,(window.TALL||[]).length]);ok(cnt[0]<=cnt[1]-5,"в меню меньше кнопок, чем разделов: "+cnt[0]+" из "+cnt[1]);
   await pg.evaluate(()=>{tab="orders";draw()});await pg.waitForTimeout(700);const g1=(await pg.locator(".gtab button").allTextContents()).join("|");ok(/Заказы/.test(g1)&&/Воронка/.test(g1)&&/Сборка/.test(g1)&&/Доставка/.test(g1),"«Заказы» собраны с «Воронкой», «Сборкой» и «Доставкой»: "+g1);
   ok(await pg.locator("#q").count()===1,"в «Заказах» свой отдельный поиск остался");
-  await pg.evaluate(()=>{tab="team";draw()});await pg.waitForTimeout(700);const g2=(await pg.locator(".gtab button").allTextContents()).join("|");ok(/Сотрудники/.test(g2)&&/График/.test(g2)&&/Контроль/.test(g2)&&/Картина/.test(g2),"«Команда» собрана с «Графиком», «Контролем», «Картиной»: "+g2);
+  await pg.evaluate(()=>{tab="team";draw()});await pg.waitForTimeout(700);const g2=(await pg.locator(".gtab button").allTextContents()).map(x=>x.replace(/\d+/g,"").trim()).join("|");ok(/^Сейчас\|Сотрудники\|График\|Отчёты\|Статистика\|Журнал/.test(g2),"«Команда»: Сейчас, Сотрудники, График, Отчёты, Статистика, Журнал: "+g2);
+  await pg.evaluate(()=>{tab="fin";draw()});await pg.waitForTimeout(700);{const g3=(await pg.locator(".gtab button").allTextContents()).map(x=>x.trim()).join("|");ok(g3==="Финансы|Аналитика","«Деньги»: только Финансы и Аналитика: "+g3)}
+  ok(await pg.evaluate(()=>{const v=document.getElementById("v").innerText;return !/Источники заказов/.test(v)&&!/СОХРАНИТЬ НАЦЕНКИ/i.test(v)}),"в «Финансах» нет повторов из «Аналитики» и настроек оплаты");
+  await pg.evaluate(()=>{tab="live";draw()});await pg.waitForTimeout(600);ok(await pg.evaluate(()=>tab==="ctrl"&&/Кто что делает сегодня/.test(document.getElementById("v").innerText)),"«Живая картина» теперь внутри «Команда → Сейчас»");
   await pg.evaluate(()=>{tab="set";SETS="sec";draw()});await pg.waitForTimeout(700);ok(await pg.locator('#v [data-a=set_go]').count()>=6,"«Разделы» в настройках: кнопки к настройкам других разделов");
   await pg.locator('#v [data-a=set_go][data-s=shop]').first().click();await pg.waitForTimeout(500);ok(await pg.evaluate(()=>SETS==="shop"&&tab==="set"),"кнопка ведёт в нужную настройку");
   /* общий поиск */
@@ -615,8 +618,8 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   const navT=()=>pg.evaluate(()=>[...document.querySelectorAll("nav button[data-t]")].map(b=>b.dataset.t));const before=await navT();
   await pg.locator('[data-a=pin_open]').click();await pg.waitForTimeout(600);const np=await pg.locator('[data-a=pin_t]').count();ok(np>=10,"в списке меню все разделы ("+np+")");
   await pg.locator('[data-a=pin_t][data-id=show]').uncheck();await pg.waitForTimeout(500);await pg.locator('[data-a=pin_t][data-id=ctrl]').check();await pg.waitForTimeout(900);
-  ok((await navT()).includes("ctrl"),"«Контроль» стоит в нижнем меню: "+(await navT()).join(","));
-  ok(await pg.evaluate(()=>{const b=document.querySelector('nav button[data-t=ctrl]');return !!b&&/Контроль/.test(b.textContent)}),"кнопка называется «Контроль», а не «Команда»");
+  ok((await navT()).includes("ctrl"),"«Команда» стоит в нижнем меню: "+(await navT()).join(","));
+  ok(await pg.evaluate(()=>{const b=document.querySelector('nav button[data-t=ctrl]');return !!b&&/Команда/.test(b.textContent)}),"кнопка называется «Команда» (внутри «Сейчас», «Сотрудники», «График»…)");
   await pg.locator('[data-a=pin_t][data-id=crm]').click();await pg.waitForTimeout(500);ok(await pg.locator('[data-a=pin_t][data-id=crm]').isChecked()===false,"больше 4 разделов закрепить нельзя");
   const d1=(await(await fetch(FS+"/layouts/"+uid,{headers:{Authorization:"Bearer owner"}})).json()).fields||{};ok(JSON.stringify(d1.pins||{}).includes("ctrl"),"меню записано на сервер");
   await pg.evaluate(()=>modal(""));await pg.waitForTimeout(400);await pg.evaluate(()=>{tab="ctrl";draw()});await pg.waitForTimeout(500);ok(await pg.evaluate(()=>document.querySelector('nav button[data-t=ctrl]').classList.contains("on")),"открыт «Контроль»: кнопка в меню подсвечена");
