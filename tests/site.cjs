@@ -406,6 +406,15 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   ok(await pg.locator('[data-a=ch_retry][data-id=fx1]').count()===1,"чаты: у неотправленного сообщения кнопка «Повторить»");
   await pg.locator('[data-a=ch_retry][data-id=fx1]').click();await pg.waitForTimeout(1500);
   ok(await pg.evaluate(()=>{const o=chMsgs.find(m=>m.id==="fx1"),n=chMsgs.filter(m=>m.t==="Ваш букет готов"&&m.id!=="fx1");return o&&o.st==="retried"&&n.length===1&&n[0].st==="pending"}),"«Повторить»: сообщение отправлено ещё раз, старое помечено");
+  /* ответ на сообщение цитатой, как в WhatsApp */
+  await pg.evaluate(async()=>{await db.collection("chats").doc("chq2").collection("msgs").doc("m_3EB0ABC123").set({dir:"in",t:"15 мыңға гүл бар ма?",mid:"3EB0ABC123",ts:Date.now()+1000})});await pg.waitForTimeout(1500);
+  await pg.locator('.chm[data-id="m_3EB0ABC123"]').click();await pg.waitForTimeout(400);
+  ok(await pg.locator('[data-a=ch_rep][data-id="m_3EB0ABC123"]').count()===1,"чаты: нажатие на сообщение показывает «Ответить»");
+  await pg.locator('[data-a=ch_rep][data-id="m_3EB0ABC123"]').click();await pg.waitForTimeout(400);
+  ok(await pg.evaluate(()=>{const r=document.querySelector(".chrp");return !!r&&/15 мыңға/.test(r.textContent)}),"над полем ввода видна цитата сообщения клиента");
+  await pg.locator("#chin").fill("Да, есть, соберём к вечеру");await pg.locator('[data-a=ch_send]').click();await pg.waitForTimeout(1500);
+  ok(await pg.evaluate(()=>{const m=chMsgs.filter(x=>x.dir==="out").slice(-1)[0];return !!m&&m.t==="Да, есть, соберём к вечеру"&&m.q&&m.q.mid==="3EB0ABC123"&&m.q.dir==="in"&&/15 мыңға/.test(m.q.t)&&!document.querySelector(".chrp")}),"ответ ушёл с цитатой (id сообщения для WhatsApp), цитата над полем исчезла");
+  ok(await pg.evaluate(()=>{const m=chMsgs.filter(x=>x.dir==="out").slice(-1)[0],el=document.querySelector('.chm[data-id="'+m.id+'"] .chqt');return !!el&&/15 мыңға/.test(el.textContent)}),"в переписке ответ показан с цитатой");
   await pg.evaluate(()=>{chStop();draw()});
   await pg.evaluate(()=>chDealQuick(CHS.find(x=>x.id==="chq1")));await pg.waitForTimeout(1800);
   {const dj=await pg.evaluate(()=>{const d=DL.find(x=>x.chat==="chq1");return d?JSON.stringify({t:d.title,s:d.src,p:d.phone,st:d.st,c:d.client}):"нет"});const dd=dj==="нет"?null:JSON.parse(dj);ok(!!dd&&dd.t.includes("Хочу букет")&&dd.s==="WhatsApp"&&dd.p==="+77011110000"&&+dd.st===0&&!!dd.c,"воронка из чата: сделка создана одним нажатием (название из сообщения, источник, телефон) "+dj)}

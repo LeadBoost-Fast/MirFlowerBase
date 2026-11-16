@@ -613,3 +613,10 @@ html.lite[data-pz="1"] #v h1::after,html.lite[data-pz="1"] #v h1::before,html.li
 :root:not([data-ly=h]) .chw .chsd{background:var(--wa-gr)!important;color:#fff!important}
 :root:not([data-ly=h]) .chw .chpl{color:var(--mut)}
 .chrt{all:unset;display:inline-block;cursor:pointer;font-size:12px;font-weight:700;color:var(--bad,#e5484d);margin:4px 8px 0 0;padding:2px 0}
+
+/* ответ на сообщение: цитата над полем ввода */
+.chrp{display:flex;align-items:center;gap:8px;padding:8px 12px 0;background:color-mix(in srgb,var(--wa-bg,var(--bg)) 70%,var(--card))}
+.chrp>div{flex:1;min-width:0;border-left:4px solid var(--wa-gr,var(--ac));background:var(--wa-in,var(--card));border-radius:8px;padding:6px 10px}
+.chrp b{display:block;font-size:12.5px;color:var(--wa-gr,var(--ac))}.chrp span{display:block;font-size:13.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chrpx{all:unset;flex:none;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;color:var(--mut);cursor:pointer;font-size:15px}
+.chm{touch-action:pan-y}
