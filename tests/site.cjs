@@ -564,6 +564,12 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
  {const pg=await lg("op@x.kz");ok(await pg.evaluate(()=>!(window.TALL||[]).some(t=>t[0]==="live")&&liveBoard()===""),"оператору раздела «Картина» нет");await pg.context().close()}
  /* как работает команда; первая настройка сотрудника */
  {const ow=await lg("tilegen615@gmail.com");
+  /* баннер «Не подключено» можно скрыть; чаты убираются из «Нужно сделать» */
+  ok(await ow.evaluate(()=>{const h=chnHome();return h===""||/chn_hide/.test(h)}),"в баннере «Не подключено» есть «… не нужен — скрыть»");
+  await ow.evaluate(async()=>{await db.collection("settings").doc("main").set({chnHide:["wa","ig"]},{merge:true})});await ow.waitForTimeout(1200);
+  ok(await ow.evaluate(()=>chnHome()===""),"скрытые каналы больше не показываются на главной");
+  await ow.evaluate(async()=>{await db.collection("settings").doc("main").set({chnHide:[]},{merge:true})});
+  ok(await ow.evaluate(()=>{STO.set(tdChatKey(),"");const a=tdChatOn();STO.set(tdChatKey(),"1");const b=tdChatOn();STO.set(tdChatKey(),"");return a&&!b}),"чаты в «Нужно сделать» убираются и возвращаются");
   await ow.evaluate(()=>{tab="fin";draw()});await ow.waitForTimeout(800);{const g3=(await ow.locator(".gtab button").allTextContents()).map(x=>x.trim()).join("|");ok(g3==="Финансы|Аналитика","владелец: «Деньги» — Финансы и Аналитика: "+g3)}
   ok(await ow.evaluate(()=>{const v=document.getElementById("v").textContent;return !/Источники заказов/.test(v)&&!/Сохранить наценки/i.test(v)}),"в «Финансах» нет повторов из «Аналитики» и настроек оплаты");
   await ow.evaluate(()=>{tab="team";draw()});await ow.waitForTimeout(600);
