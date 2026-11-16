@@ -573,3 +573,20 @@ html.lite[data-pz="1"] #v h1::after,html.lite[data-pz="1"] #v h1::before,html.li
 .scr-ic svg{width:18px;height:18px}.scr-ic:active{transform:scale(.94)}
 /* блок смены в одну строку */
 .shc1{padding:10px 14px}.shc1 .row{gap:10px}.shc1 .btn{min-height:40px}
+
+/* «Команда → Сейчас» */
+.nwk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:6px 0 4px}
+.nwk>div{background:var(--card);border-radius:16px;padding:12px;box-shadow:var(--sh);min-width:0}
+.nwk b{display:block;font-size:20px;line-height:1.15;color:var(--ink);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nwk span{display:block;font-size:12px;color:var(--mut);margin-top:2px}.nwk small{display:block;font-size:12px;color:var(--mut);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nwa .nwbad{color:var(--bad,#e5484d)}.nwok{color:var(--ink)}
+.nwsub{margin:4px 0 2px;font-size:12px}.nwsub+.ln{margin-top:0}.nwsrc{margin:8px 0 0;font-size:12px}
+.nwc .nwm{padding:6px 0;border-bottom:1px solid var(--line)}.nwc .nwm:last-of-type{border-bottom:0}.nwc .nwm div{margin-top:2px;white-space:pre-wrap;word-break:break-word}
+.nwcf{display:flex;gap:8px;margin-top:10px}.nwcf input{flex:1;min-width:0}.nwcf .btn{flex:none}
+.nwl .ln span:first-child,.nwf .ln span:first-child{min-width:0;word-break:break-word}
+.wgm{margin-top:6px;font-size:13px;line-height:1.35}.wgm div{word-break:break-word}
+
+/* первая настройка сотрудника */
+.obw h1{font-family:var(--fd,inherit)}.obdots{display:flex;gap:6px;justify-content:center;margin:0 0 10px}.obdots i{width:8px;height:8px;border-radius:50%;background:var(--line)}.obdots i.on{background:var(--ac);width:22px;border-radius:4px}.obdots i.was{background:color-mix(in srgb,var(--ac) 45%,var(--line))}
+.obl .obr{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}.obl .obr:last-child{border-bottom:0}.obr span{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--ac) 14%,var(--card));color:var(--ac);font-weight:700;font-size:13px}.obr div{line-height:1.4}
+.tfpv{margin:8px 2px 0;font-size:13px;color:var(--mut);line-height:1.4}.tfpv b{color:var(--ink)}

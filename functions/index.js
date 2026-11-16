@@ -7,7 +7,7 @@ const {setGlobalOptions}=require("firebase-functions/v2");
 setGlobalOptions({region:"asia-southeast1",maxInstances:10,cpu:"gcf_gen1"});
 const {onCall,onRequest,HttpsError}=require("firebase-functions/v2/https");
 const {defineSecret}=require("firebase-functions/params");
-const {onDocumentCreated,onDocumentUpdated}=require("firebase-functions/v2/firestore");
+const {onDocumentCreated,onDocumentUpdated,onDocumentWrittenWithAuthContext}=require("firebase-functions/v2/firestore");
 const {onSchedule}=require("firebase-functions/v2/scheduler");
 const admin=require("firebase-admin");
 const {FieldValue:FV}=require("firebase-admin/firestore");
@@ -289,7 +289,7 @@ exports.orderStatus=onRequest({...OPT,maxInstances:5},async(req,res)=>{
 
 // ================= АВТОКОПИЯ =================
 // Каждую ночь пишет JSON в Cloud Storage (бакет по умолчанию): backups/ГГГГ-ММ-ДД/<коллекция>.json, хранит 14 дней
-const BK_COLS=["orders","customers","inventory","stockMovements","showcase","bouquets","leads","deals","subs","reports","builds","shifts","staff","activityLogs","chats","expenses","invcost","settings","locations","team"];
+const BK_COLS=["orders","customers","inventory","stockMovements","showcase","bouquets","leads","deals","subs","reports","builds","shifts","staff","activityLogs","chats","expenses","invcost","settings","locations","team","audit"];
 const BK_DAYS=14;
 const ser=function(k,v){const r=this[k];return r&&typeof r.toMillis==="function"?{ts:r.toMillis()}:v};
 async function runBackup(){
@@ -469,3 +469,51 @@ exports.reviewIn=onDocumentCreated({...OPT,document:"reviews/{tok}"},async e=>{
   await od.ref.update({rate:{s,c,at:Date.now()}});
   if(s<=3)await push("ord",u=>u.top||u.role==="admin",{imp:true,title:"Плохой отзыв: "+"★".repeat(s)+"☆".repeat(5-s),body:[o.bn||"Букет",o.client,c].filter(Boolean).join(" · "),tag:"rate_"+od.id,url:"/?o="+od.id});
 });
+
+
+// ===== Журнал изменений на сервере (audit) =====
+// Кто и что поменял в деньгах и важных данных. Пишет только сервер (по входу сотрудника, подделать имя нельзя),
+// с сайта запись нельзя ни изменить, ни удалить (правила: audit write false). Читают владелец и админ.
+// Следим только за полями, где могут «пропасть» деньги: цена, доставка, предоплата, скидка, оплата, способ оплаты,
+// отмена, бонусы, гонорар курьеру; витрина (продажа, списание, цена); смены (начало и конец); роли и доступ сотрудников.
+const AUDF={
+  orders:["p","fee","pre","disc","paid","pay","st","bu","cpay","wrap"],
+  showcase:["st","price"],
+  shiftLog:["start","end"],
+  staff:["role","perms","active","title","loc"]
+};
+const audV=v=>v===undefined?null:(v&&typeof v.toMillis==="function"?v.toMillis():v);
+function audFlag(col,kind,b,a,ch){
+  if(kind==="delete")return col!=="shiftLog"||!!b;
+  if(col==="orders"){
+    if(kind==="create")return false;
+    const dn=k=>ch[k]&&(+ch[k][1]||0)<(+ch[k][0]||0),up=k=>ch[k]&&(+ch[k][1]||0)>(+ch[k][0]||0);
+    return !!(dn("p")||dn("fee")||up("disc")||up("bu")||(ch.paid&&ch.paid[0]===true&&ch.paid[1]!==true)||(ch.st&&+ch.st[1]===5&&(b&&b.paid))||(ch.pay&&b&&b.paid));
+  }
+  if(col==="showcase")return !!((ch.st&&ch.st[1]==="wo")||(ch.price&&(+ch.price[1]||0)<(+ch.price[0]||0)));
+  if(col==="shiftLog")return kind==="update"&&!!(ch.start||(ch.end&&+ch.end[0]>0));
+  if(col==="staff")return kind==="update";
+  return false;
+}
+function audFn(col){
+  return onDocumentWrittenWithAuthContext({document:col+"/{id}"},async e=>{
+    const b=e.data&&e.data.before&&e.data.before.exists?e.data.before.data():null;
+    const a=e.data&&e.data.after&&e.data.after.exists?e.data.after.data():null;
+    if(!a&&!b)return;
+    const kind=!b?"create":!a?"delete":"update";
+    if(kind==="create"&&!["orders","staff"].includes(col))return;
+    const ch={};
+    if(b&&a){AUDF[col].forEach(k=>{const x=audV(b[k]),y=audV(a[k]);if(JSON.stringify(x)!==JSON.stringify(y))ch[k]=[x,y]});if(!Object.keys(ch).length)return}
+    else if(kind==="create"&&col==="orders"){AUDF.orders.forEach(k=>{if(a[k]!==undefined&&a[k]!==""&&a[k]!==0&&a[k]!==false)ch[k]=[null,audV(a[k])]})}
+    const db=admin.firestore(),uid=String(e.authId||"");let who="";
+    if(uid){try{const s=await db.doc("staff/"+uid).get();who=(s.exists&&s.data().name)||""}catch(x){}}
+    else who=e.authType==="system"?"сервер":(e.authType||"");
+    const d=a||b||{};
+    await db.collection("audit").add({ms:Date.now(),col,id:e.params.id,kind,uid,who,ch,flag:audFlag(col,kind,b,a,ch),
+      bn:String(d.bn||d.name||"").slice(0,120),client:String(d.client||"").slice(0,80),loc:String(d.loc||""),sum:(+d.p||0)+(+d.fee||0)});
+  });
+}
+exports.auditOrders=audFn("orders");
+exports.auditShowcase=audFn("showcase");
+exports.auditShifts=audFn("shiftLog");
+exports.auditStaff=audFn("staff");
