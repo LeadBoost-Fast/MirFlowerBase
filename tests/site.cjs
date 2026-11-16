@@ -253,18 +253,29 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
  }
  /* воронка в чатах и подписки на цветы */
  {const pg=await lg("tilegen615@gmail.com");
-  ok(await pg.evaluate(()=>funOk()),"воронка в чатах: по умолчанию включена");
+  ok(await pg.evaluate(()=>funOk()),"сделка из чата: по умолчанию включена");
   ok(await pg.evaluate(()=>FTPL.some(f=>f[0]==="retail"&&f[3].length===6)),"шаблон воронки «Обычные покупатели» есть");
+  /* воронка теперь рядом с заказами, а не в чатах */
   await pg.evaluate(()=>{tab="chats";chV="fun";draw()});await pg.waitForTimeout(800);
-  {const tx=await pg.evaluate(()=>{const v=document.getElementById("v");return (/chfun/.test(v.innerHTML)?"FUN ":"nofun ")+v.innerText.slice(0,160)});ok(tx.startsWith("FUN ")&&/новая сделка/i.test(tx),"воронка в чатах: доска сделок открывается во вкладке «Воронка» ["+tx.replace(/\n/g," | ")+"]")}
-  ok(await pg.locator('.chtabs [data-a=ch_v][data-id=fun]').count()===1,"вкладка «Воронка» стоит среди вкладок чатов");
+  ok(await pg.locator('.chtabs [data-a=ch_v][data-id=fun]').count()===0&&await pg.evaluate(()=>chV==="list"),"в чатах вкладки «Воронка» больше нет (старое значение переключается на «Диалоги»)");
+  {const ct=await pg.evaluate(()=>[...document.querySelectorAll(".chtabs .chip")].map(b=>b.textContent.replace(/\s*·.*$/,"").trim()).join("|"));ok(ct==="Диалоги|Статистика|Каналы|Шаблоны","вкладки чатов у владельца: "+ct)}
+  await pg.evaluate(()=>{tab="orders";draw()});await pg.waitForTimeout(700);
+  {const g=(await pg.locator(".gtab button").allTextContents()).map(x=>x.replace(/\d+/g,"").trim());ok(g[0]==="Заказы"&&g[1]==="Воронка"&&g.includes("Сборка"),"«Заказы»: вкладки Заказы, Воронка, Сборка… "+g.join("|"))}
+  await pg.evaluate(()=>{tab="deals";draw()});await pg.waitForTimeout(700);
+  {const tx=await pg.evaluate(()=>document.getElementById("v").innerText.slice(0,260));ok(/Воронка/.test(tx)&&/новая сделка/i.test(tx),"«Заказы → Воронка»: доска сделок открывается ["+tx.replace(/\n/g," | ").slice(0,120)+"]")}
+  ok(await pg.evaluate(()=>!(GP.crm||[]).includes("deals")&&!(window.TALL||[]).some(x=>x[0]==="leads")),"в «Клиентах» нет отдельных «Сделок» и «Заявок»");
+  /* заявка: видна в «Воронке» сверху и одним нажатием становится сделкой */
+  const lid=await pg.evaluate(async()=>{const r=await db.collection("leads").add({loc:"main",src:"Instagram",name:"Сауле",phone:"+7 701 222 33 44",want:"Пионы 15 шт",budget:20000,note:"",st:"new",resp:"",by:U.uid,ts:Date.now()});return r.id});await pg.waitForTimeout(1500);
+  await pg.evaluate(()=>{tab="deals";draw()});await pg.waitForTimeout(700);
+  ok(await pg.locator(`.ldb [data-a=l_d][data-id="${lid}"]`).count()===1&&await pg.evaluate(()=>nbN("deals")>=1),"новая заявка видна в «Воронке» сверху, на вкладке цифра");
+  await pg.locator(`.ldb [data-a=l_d][data-id="${lid}"]`).click();await pg.waitForTimeout(1800);
+  ok(await pg.evaluate(id=>{const l=LD.find(x=>x.id===id);return l&&l.st==="done"&&!!l.did&&DL.some(d=>d.id===l.did&&d.client==="Сауле"&&d.title==="Пионы 15 шт"&&+d.p===20000&&+d.st===0)},lid),"«В воронку»: из заявки создана сделка на первом этапе, заявка закрыта");
+  await pg.evaluate(()=>{tab="leads";draw()});await pg.waitForTimeout(500);ok(await pg.evaluate(()=>tab==="deals"),"старая ссылка на «Заявки» открывает «Воронку»");
   await pg.evaluate(()=>dealForm({client:"Анна",phone:"+7 700 111 22 33",src:"WhatsApp"}));
   ok(await pg.evaluate(()=>{const f=document.getElementById("df");return f.elements.client.value==="Анна"&&f.elements.phone.value.includes("700")&&f.elements.src.value==="WhatsApp"}),"сделка из чата: имя, телефон и источник подставлены");
   await pg.evaluate(()=>modal(""));
   await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{chatFun:false}},{merge:true})});await pg.waitForTimeout(1200);
-  ok(await pg.evaluate(()=>!funOk()),"воронка в чатах: выключается в настройках");
-  await pg.evaluate(()=>{tab="chats";chV="list";draw()});await pg.waitForTimeout(500);
-  ok(await pg.locator('.chtabs [data-a=ch_v][data-id=fun]').count()===0,"после выключения вкладки «Воронка» в чатах нет");
+  ok(await pg.evaluate(()=>!funOk()),"сделка из чата: выключается в настройках");
   await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{chatFun:true}},{merge:true})});await pg.waitForTimeout(800);
   /* подписки */
   ok(await pg.evaluate(()=>!subsOn()&&WG.subd.ok()===false),"подписки: по умолчанию выключены");
@@ -296,7 +307,53 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.evaluate(()=>uizSet("s"));ok(await pg.evaluate(()=>/width=488,/.test(document.getElementById("vp").content)&&STO.get("uiz")==="s"),"размер интерфейса: «Мельче» (80%), выбор запоминается на телефоне");
   await pg.evaluate(()=>uizSet("n"));ok(await pg.evaluate(()=>/device-width/.test(document.getElementById("vp").content)),"размер интерфейса: «Обычный» возвращает обычный размер");
   await pg.evaluate(()=>{tab="set";SETS="look";draw()});await pg.waitForTimeout(500);ok(await pg.locator('.chip[onclick^="uizSet"]').count()===3,"в настройках вида три размера интерфейса");
-  await pg.evaluate(()=>uizSet("m"));await pg.context().close()}
+  await pg.evaluate(()=>uizSet("m"));
+  ok(await pg.evaluate(()=>{const c=document.getElementById("vp").content,m=c.match(/initial-scale=([\d.]+)/),x=c.match(/maximum-scale=([\d.]+)/);return !!m&&!!x&&m[1]===x[1]&&+m[1]===0.9}),"размер интерфейса: масштаб закреплён, iPhone не увеличивает страницу при нажатии на поле");
+  await pg.context().close()}
+ /* ввод текста: курсор и набранный текст не пропадают; форма заказа */
+ {const pg=await lg("tilegen615@gmail.com");
+  const td=await pg.evaluate(()=>today());
+  await pg.evaluate(async td=>{await db.collection("orders").add({client:"Гульнара",phone:"+7 707 444 55 66",bn:"Тюльпаны 25",p:12000,st:4,paid:true,date:td,time:"12:00",dv:true,addr:"мкр 12, дом 7",loc:"main",ts:Date.now()})},td);await pg.waitForTimeout(1500);
+  await pg.evaluate(()=>form());await pg.waitForTimeout(500);
+  const ph=pg.locator('#of [name=phone]');
+  ok(await pg.evaluate(()=>{const f=document.getElementById("of"),a=[...f.querySelectorAll("input:not([type=hidden])")];return a[0]&&a[0].name==="phone"&&a[1].name==="client"}),"форма заказа: сначала телефон, потом имя");
+  await ph.tap();await pg.waitForTimeout(120);await pg.keyboard.type("7074445566",{delay:20});await pg.waitForTimeout(700);
+  ok(await ph.inputValue()==="+7 707 444 55 66","телефон набирается по цифре и форматируется: "+await ph.inputValue());
+  ok(await pg.evaluate(()=>document.querySelector("#of [name=client]").value==="Гульнара"&&!document.getElementById("clh").hidden&&/Уже заказывал|Постоянный/.test(document.getElementById("clh").textContent)),"по номеру знакомого клиента подставилось имя и видна его история");
+  ok(await pg.locator('#clh [data-a=cl_addr]').count()===1,"предложен адрес из прошлой доставки");
+  await pg.locator('#clh [data-a=cl_addr]').click();await pg.waitForTimeout(300);
+  ok(await pg.evaluate(()=>{const f=document.getElementById("of");return f.elements.dv.value==="1"&&f.elements.addr.value==="мкр 12, дом 7"}),"«Адрес как в прошлый раз»: включилась доставка, адрес подставлен");
+  /* исправить цифру в середине номера: курсор не прыгает в конец, остальные цифры на месте */
+  await pg.evaluate(()=>{const e=document.querySelector("#of [name=phone]");e.blur()});await pg.waitForTimeout(100);
+  await pg.evaluate(()=>{const e=document.querySelector("#of [name=phone]");e.focus();e.setSelectionRange(6,6)});await pg.waitForTimeout(150);
+  ok(await pg.evaluate(()=>document.querySelector("#of [name=phone]").selectionStart===6),"при нажатии в середину номера курсор остаётся там, где нажали");
+  await pg.keyboard.press("Backspace");await pg.keyboard.type("9");await pg.waitForTimeout(200);
+  ok(await ph.inputValue()==="+7 709 444 55 66"&&await pg.evaluate(()=>document.querySelector("#of [name=phone]").selectionStart)===6,"цифра в середине исправлена, курсор на месте: "+await ph.inputValue());
+  ok(await pg.evaluate(()=>{const d=document.querySelector("#of .ofx");return !!d&&!d.open&&!!d.querySelector("[name=wrap]")&&!!d.querySelector("[name=disc]")}),"оформление, скидка, записка и лента свёрнуты в один блок");
+  ok(await pg.evaluate(()=>getComputedStyle(document.querySelector("#of .ofa")).position==="sticky"),"итог и «Создать заказ» всегда видны внизу окна");
+  await pg.evaluate(()=>modal(""));await pg.waitForTimeout(300);
+  /* окно заказа обновилось, пока в нём печатают: текст не теряется */
+  const oid=await pg.evaluate(()=>O.find(o=>o.client==="Гульнара").id);
+  await pg.evaluate(id=>detail(id),oid);await pg.waitForTimeout(600);
+  const hasIn=await pg.evaluate(()=>{const d=document.querySelector("#m [data-det],#reader [data-det]");const i=d&&d.querySelector("textarea,input:not([type=hidden]):not([type=file]):not([type=checkbox])");if(!i)return false;i.focus();i.value="печатаю ответ";return true});
+  if(hasIn){await pg.evaluate(async id=>{await db.collection("orders").doc(id).update({note:"обновлено другим сотрудником"})},oid);await pg.waitForTimeout(1200);
+   ok(await pg.evaluate(()=>{const d=document.querySelector("#m [data-det],#reader [data-det]"),a=document.activeElement;return !!d&&!!a&&d.contains(a)&&a.value==="печатаю ответ"}),"окно заказа не перерисовывается, пока в нём печатают");
+   await pg.evaluate(()=>document.activeElement.blur());await pg.waitForTimeout(900);
+   ok(await pg.evaluate(()=>/обновлено другим сотрудником/.test((document.querySelector("#m [data-det],#reader [data-det]")||{}).innerText||"")),"после ввода окно заказа обновилось")}
+  await pg.evaluate(()=>modal(""));
+  /* поиск: блок, появившийся над полем, не сбрасывает набранный текст */
+  await pg.evaluate(()=>{tab="orders";draw()});await pg.waitForTimeout(500);
+  await pg.locator("#q").tap();await pg.keyboard.type("Гуль",{delay:30});await pg.waitForTimeout(400);
+  await pg.evaluate(()=>{const v=document.getElementById("v"),h=v.__h;morph(v,'<div class="card">новый блок сверху</div>'+h)});await pg.waitForTimeout(100);
+  ok(await pg.evaluate(()=>document.activeElement&&document.activeElement.id==="q"&&document.activeElement.value==="Гуль"),"поле поиска осталось активным и с текстом, когда сверху появился блок");
+  /* карточка заказа: открывается нажатием, отдельной «Подробнее» нет */
+  await pg.evaluate(()=>{fq="";tab="orders";draw()});await pg.waitForTimeout(500);
+  ok(await pg.evaluate(()=>!![...document.querySelectorAll("#v .oc")].length&&![...document.querySelectorAll("#v .oc button")].some(b=>/Подробнее/.test(b.textContent))),"в карточках заказов нет кнопки «Подробнее»");
+  ok(await pg.locator("#v [data-a=back]").count()===0,"у раздела из нижнего меню нет кнопки «Назад»");
+  ok(await pg.locator("#v h1 .scr-ic[data-a=scr_edit]").count()===1,"«Настроить экран» — значок рядом с заголовком");
+  await pg.context().close()}
+ {const pg=await lg("fl@x.kz");await pg.evaluate(()=>{tab="home";draw()});await pg.waitForTimeout(600);
+  ok(await pg.evaluate(()=>{const w=document.createElement("div");w.innerHTML=shiftCard();const c=w.querySelector(".shc");if(!c||!c.querySelector("[data-a=sh_go]"))return false;const many=locs().length>1;return many?!c.classList.contains("shc1"):c.classList.contains("shc1")}),"флорист: «Вы не на смене» — одна строка с кнопкой (при нескольких точках — кнопки по точкам)");await pg.context().close()}
  /* доска заказов */
  {const pg=await lg("tilegen615@gmail.com");
   await put("orders","brd1",{client:"Доска1",phone:"+7 700 000 01 01",bn:"Доска Букет",st:0,loc:"main",by:"x",date:new Date().toLocaleDateString("sv-SE"),time:new Date().toTimeString().slice(0,5),ts:Date.now()+5});
@@ -516,7 +573,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
  {const pg=await lg("adm@x.kz");
   ok(await pg.evaluate(()=>!/изменить/.test(wdHint())&&/настройки/.test(wdHint())),"на главной вместо «изменить» ссылка «настройки»");
   const cnt=await pg.evaluate(()=>[(window.HPL||[]).length,(window.TALL||[]).length]);ok(cnt[0]<=cnt[1]-5,"в меню меньше кнопок, чем разделов: "+cnt[0]+" из "+cnt[1]);
-  await pg.evaluate(()=>{tab="orders";draw()});await pg.waitForTimeout(700);const g1=(await pg.locator(".gtab button").allTextContents()).join("|");ok(/Заказы/.test(g1)&&/Сборка/.test(g1)&&/Курьеры/.test(g1),"«Заказы» собраны с «Сборкой» и «Курьерами»: "+g1);
+  await pg.evaluate(()=>{tab="orders";draw()});await pg.waitForTimeout(700);const g1=(await pg.locator(".gtab button").allTextContents()).join("|");ok(/Заказы/.test(g1)&&/Воронка/.test(g1)&&/Сборка/.test(g1)&&/Доставка/.test(g1),"«Заказы» собраны с «Воронкой», «Сборкой» и «Доставкой»: "+g1);
   ok(await pg.locator("#q").count()===1,"в «Заказах» свой отдельный поиск остался");
   await pg.evaluate(()=>{tab="team";draw()});await pg.waitForTimeout(700);const g2=(await pg.locator(".gtab button").allTextContents()).join("|");ok(/Сотрудники/.test(g2)&&/График/.test(g2)&&/Контроль/.test(g2)&&/Картина/.test(g2),"«Команда» собрана с «Графиком», «Контролем», «Картиной»: "+g2);
   await pg.evaluate(()=>{tab="set";SETS="sec";draw()});await pg.waitForTimeout(700);ok(await pg.locator('#v [data-a=set_go]').count()>=6,"«Разделы» в настройках: кнопки к настройкам других разделов");

@@ -524,8 +524,8 @@ html.lite .bootw .mk{animation:none}
 :root[data-pz="1"]:not([data-ly=h]) #v h1::after{content:"";display:block;width:120px;height:16px;margin-top:7px;background:var(--pzd) left center/contain no-repeat;opacity:.8;transform-origin:0 50%}
 :root[data-pz="1"] #v.mv-in h1::after{animation:pzDiv .9s cubic-bezier(.2,.8,.2,1) both}
 /* цветок справа от заголовка (в Bento и «Командном центре»); лежит под содержимым и ничего не перекрывает */
-:root[data-pz="1"]:is([data-ly=g],[data-ly=m]) #v h1{position:relative}
-:root[data-pz="1"]:is([data-ly=g],[data-ly=m]) #v h1::before{content:"";position:absolute;right:2px;top:-10px;width:78px;height:78px;z-index:-1;background:var(--pza) center/contain no-repeat;opacity:.5;pointer-events:none}
+:root[data-pz="1"]:is([data-ly=g],[data-ly=m]) #v>h1{position:relative}
+:root[data-pz="1"]:is([data-ly=g],[data-ly=m]) #v>h1::before{content:"";position:absolute;right:2px;top:-10px;width:78px;height:78px;z-index:-1;background:var(--pza) center/contain no-repeat;opacity:.5;pointer-events:none}
 :root[data-pz="1"] #v.mv-in h1::before{animation:pzArt 1.1s cubic-bezier(.2,.8,.2,1) both}
 :root[data-pz="1"]:is([data-ly=g],[data-ly=m]) #v .deco{display:none}
 /* главная карточка */
@@ -555,3 +555,21 @@ html.lite[data-pz="1"] #v h1::after,html.lite[data-pz="1"] #v h1::before,html.li
 .pzt.on{box-shadow:0 0 0 2px var(--ac)}
 /* знак на экране входа берёт цвет оформления */
 .bootw{color:var(--ac)}
+
+/* Форма заказа: подсказка о клиенте, свёрнутые допы, итог и кнопка всегда внизу окна */
+.clh{margin:8px 2px 0;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--ac) 9%,var(--card));font-size:14px;line-height:1.35}
+.clh .btn{display:block;width:100%;margin-top:8px;text-align:left;white-space:normal;text-transform:none;letter-spacing:0}
+#of .ofx{margin-top:12px}
+.sh:has(#of){padding-bottom:0}
+#of .ofa{position:sticky;bottom:0;z-index:3;background:var(--bg);margin:14px -16px 0;padding:10px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);align-items:center}
+:root[data-ly=g] #of .ofa{background:color-mix(in srgb,var(--bg) 94%,transparent);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+#of .ofa #otot2{flex:1 0 100%;margin:0 2px 2px;font-size:14px;color:var(--ink)}#of .ofa #otot2:empty{display:none}
+
+/* «Воронка»: новые заявки над доской */
+.ldb{margin:6px 0 10px}.ldb .ldc{margin:8px 0}.ldb .ldc .acts{margin-top:8px}
+
+/* «Настроить экран»: значок рядом с заголовком */
+.scr-ic{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;min-height:0;margin:0 0 0 8px;padding:0;vertical-align:middle;border:1px solid var(--line);border-radius:50%;background:var(--card);color:var(--mut);cursor:pointer;font:inherit}
+.scr-ic svg{width:18px;height:18px}.scr-ic:active{transform:scale(.94)}
+/* блок смены в одну строку */
+.shc1{padding:10px 14px}.shc1 .row{gap:10px}.shc1 .btn{min-height:40px}
