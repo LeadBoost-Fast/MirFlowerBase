@@ -358,7 +358,12 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Тинт"&&!document.getElementById("petals")),"другая палитра: цветочное оформление и лепестки убираются");
   await pg.evaluate(()=>setPal("Цветник"));await pg.waitForTimeout(500);
   ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Цветник"&&(LITE||!!document.getElementById("petals"))),"палитра «Цветник» включается снова");
-  await pg.evaluate(()=>{STO.set("th",JSON.stringify({ui:"g",g1:1}));applyTheme()});await pg.context().close()}
+  /* один раз всем включается «Цветник», дальше каждый меняет сам */
+  await pg.evaluate(()=>{STO.set("th",JSON.stringify({ui:"g",g1:1,p:"Мята",acl:"#ff0000"}));applyTheme()});
+  ok(await pg.evaluate(()=>{const t=thGet();return t.p==="Цветник"&&t.fl1===1&&!t.acl&&document.documentElement.dataset.pal==="Цветник"}),"оформление: при первом заходе всем включается «Цветник» (и сбрасывается свой цвет)");
+  await pg.evaluate(()=>{setPal("Мята");applyTheme()});
+  ok(await pg.evaluate(()=>thGet().p==="Мята"&&document.documentElement.dataset.pal==="Мята"),"оформление: после этого палитру можно сменить, она больше не сбрасывается");
+  await pg.evaluate(()=>{STO.set("th",JSON.stringify({ui:"g",g1:1,fl1:1}));applyTheme()});await pg.context().close()}
  {const pg=await lg("tilegen615@gmail.com");ok(await pg.evaluate(()=>!CFG.wizard),"у Mirflowers мастер настройки сам не открывается (wizard не задан)");
   ok(await pg.evaluate(()=>wzCard().includes('data-a="wz_open"')),"владелец: в «Магазине» есть кнопка «Мастер настройки магазина»");
   await pg.evaluate(()=>{wizard()});await pg.waitForTimeout(600);ok(await pg.locator("#wzf").count()===1,"мастер открылся: название, телефон, адрес, шаблон, доставка");
