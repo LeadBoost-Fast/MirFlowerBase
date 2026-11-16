@@ -359,7 +359,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.evaluate(()=>setPal("Цветник"));await pg.waitForTimeout(500);
   ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Цветник"&&(LITE||!!document.getElementById("petals"))),"палитра «Цветник» включается снова");
   ok(await pg.evaluate(()=>typeof BLOOM==="string"&&BLOOM.includes('class="mk"')&&(BLOOM.match(/class="pt"/g)||[]).length===16),"экран входа: знак цветка из тонких линий");
-  {const ih=await (await fetch("http://127.0.0.1:5078/")).text();ok(ih.includes('aria-label="Posy"')&&ih.includes('class="wm3"')&&ih.includes('class="ring"')&&!ih.includes("gl_FragColor")&&ih.includes('aria-label="Posy"')&&ih.includes("Подключение"),"заставка подключения: чёрно-белая, слово POSY с кольцом вместо «O», надпись «Подключение…» осталась")}
+  {const ih=await (await fetch("http://127.0.0.1:5078/")).text();ok(ih.includes('aria-label="Posy"')&&ih.includes('class="wm3"')&&ih.includes('class="ring"')&&(ih.match(/class="pl"/g)||[]).length===6&&!ih.includes("gl_FragColor")&&ih.includes('aria-label="Posy"')&&ih.includes("Подключение"),"заставка подключения: чёрно-белая, слово POSY, в кольце вместо «O» раскрывается цветок из шести лепестков, надпись «Подключение…» осталась")}
   /* один раз всем включается «Цветник», дальше каждый меняет сам */
   await pg.evaluate(()=>{STO.set("th",JSON.stringify({ui:"g",g1:1,p:"Мята",acl:"#ff0000"}));applyTheme()});
   ok(await pg.evaluate(()=>{const t=thGet();return t.p==="Цветник"&&t.fl1===1&&!t.acl&&document.documentElement.dataset.pal==="Цветник"}),"оформление: при первом заходе всем включается «Цветник» (и сбрасывается свой цвет)");

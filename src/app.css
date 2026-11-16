@@ -485,17 +485,20 @@ html.lite .bq{animation:none}
 html.lite .bq .pp,html.lite .bq .st,html.lite .bq .fi,html.lite .bq .rb{animation:none;transform:none;opacity:1}
 @media(prefers-reduced-motion:reduce){.bq{animation:none}.bq .pp,.bq .st,.bq .fi,.bq .rb{animation:none;transform:none;opacity:1}}
 
-/* Заставка подключения: чёрно-белая. Слово POSY тонкими буквами, вместо «O» ровное кольцо: оно рисуется, и по нему бежит блик, пока сайт подключается. Цвета свои и не зависят от темы, которая подключается позже */
-.boot{position:fixed;inset:0;margin:0;gap:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;color:#f2f2f0;overflow:hidden;background:radial-gradient(95vmin 80vmin at 50% 42%,rgba(255,255,255,.075),rgba(255,255,255,0) 70%),#070708}
+/* Заставка подключения: чёрно-белая. Слово POSY тонкими буквами, вместо «O» ровное кольцо. Кольцо рисуется, внутри него по одному раскрываются шесть лепестков из тонких линий (цветок), потом по кольцу бежит блик, пока сайт подключается. Цвета заданы переменными в .boot и не зависят от темы, которая подключается позже */
+.boot{--bg:#070708;--gl:rgba(255,255,255,.075);--fg:#f2f2f0;--ring:rgba(242,242,240,.5);--gt:#fff;--mu:rgba(242,242,240,.42);position:fixed;inset:0;margin:0;gap:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;color:var(--fg);overflow:hidden;background:radial-gradient(95vmin 80vmin at 50% 42%,var(--gl),transparent 70%),var(--bg)}
 .boot .dust{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;animation:bkLetter 2s ease-out .2s forwards}
 .boot .dust .tw{animation:bkTw 3.6s ease-in-out var(--d) infinite}
-.wm3{position:relative;display:flex;align-items:center;justify-content:center;font-family:"Cormorant Garamond",Georgia,"Times New Roman",serif;font-weight:500;font-size:clamp(40px,12.5vw,60px);line-height:1;letter-spacing:.34em;margin-right:-.34em}
+.wm3{position:relative;display:flex;align-items:center;justify-content:center;font-family:"Cormorant Garamond",Georgia,"Times New Roman",serif;font-weight:500;font-size:clamp(42px,13vw,62px);line-height:1;letter-spacing:.34em;margin-right:-.34em}
 .wm3 span{display:inline-block;opacity:0;transform:translateY(.12em);animation:bkLetter 1s cubic-bezier(.2,.8,.2,1) calc(.25s + var(--i)*.13s) forwards}
-.wm3 .ring{width:.7em;height:.7em;margin-right:.34em;overflow:visible;flex:none}
-.ring circle{fill:none;transform-origin:50% 50%}
-.ring .rg{stroke:rgba(242,242,240,.5);stroke-width:3.4;stroke-dasharray:100;stroke-dashoffset:100;transform:rotate(-90deg);animation:bkDraw 1.1s cubic-bezier(.4,0,.2,1) .38s forwards}
-.ring .gt{stroke:#fff;stroke-width:4.4;stroke-linecap:round;stroke-dasharray:18 82;opacity:0;animation:bkLetter .5s ease-out 1.2s forwards,bkSpin 1.5s linear 1.2s infinite}
-.boot .mut{position:absolute;left:0;right:0;bottom:max(9vh,44px);margin:0;font-size:12px;letter-spacing:.14em;color:rgba(242,242,240,.42)}
+.wm3 .ring{width:.74em;height:.74em;margin-right:.34em;overflow:visible;flex:none}
+.ring circle,.ring path{fill:none}
+.ring circle,.ring .fl6{transform-origin:50px 50px}
+.ring .rg{stroke:var(--ring);stroke-width:3.2;stroke-dasharray:100;stroke-dashoffset:100;transform:rotate(-90deg);animation:bkDraw 1s cubic-bezier(.4,0,.2,1) .38s forwards}
+.ring .pl{stroke:var(--fg);stroke-width:2.4;stroke-linejoin:round;stroke-dasharray:100;stroke-dashoffset:100;animation:bkDraw .8s cubic-bezier(.4,0,.2,1) calc(1s + var(--j)*.11s) forwards}
+.ring .fl6{animation:bkSpin 24s linear 2.2s infinite}
+.ring .gt{stroke:var(--gt);stroke-width:4.4;stroke-linecap:round;stroke-dasharray:18 82;opacity:0;animation:bkLetter .5s ease-out 2.1s forwards,bkSpin 1.6s linear 2.1s infinite}
+.boot .mut{position:absolute;left:0;right:0;bottom:max(9vh,44px);margin:0;font-size:12px;letter-spacing:.14em;color:var(--mu)}
 .mk .pt{stroke-dasharray:100;stroke-dashoffset:100;animation:bkDraw .9s ease-out calc(.3s + var(--j)*.045s) forwards}
 .mk .ct{transform-box:fill-box;transform-origin:50% 50%;transform:scale(0);animation:bkPop .5s cubic-bezier(.2,.9,.25,1.4) 1s forwards}
 @keyframes bkLetter{to{opacity:1;transform:none}}
@@ -504,9 +507,9 @@ html.lite .bq .pp,html.lite .bq .st,html.lite .bq .fi,html.lite .bq .rb{animatio
 @keyframes bkSpin{to{transform:rotate(360deg)}}
 @keyframes bkTw{0%,100%{opacity:1}50%{opacity:.25}}
 html.lite .boot .dust,html.lite .wm3 span{animation:none;opacity:1;transform:none}html.lite .boot .dust .tw{animation:none}
-html.lite .ring .rg{animation:none;stroke-dashoffset:0}html.lite .ring .gt{animation:none;opacity:0}
+html.lite .ring .rg,html.lite .ring .pl{animation:none;stroke-dashoffset:0}html.lite .ring .fl6{animation:none}html.lite .ring .gt{animation:none;opacity:0}
 html.lite .mk .pt{animation:none;stroke-dashoffset:0}html.lite .mk .ct{animation:none;transform:none}
-@media(prefers-reduced-motion:reduce){.boot .dust,.wm3 span{animation:none;opacity:1;transform:none}.boot .dust .tw{animation:none}.ring .rg{animation:none;stroke-dashoffset:0}.ring .gt{animation:none;opacity:0}.mk .pt{animation:none;stroke-dashoffset:0}.mk .ct{animation:none;transform:none}}
+@media(prefers-reduced-motion:reduce){.boot .dust,.wm3 span{animation:none;opacity:1;transform:none}.boot .dust .tw{animation:none}.ring .rg,.ring .pl{animation:none;stroke-dashoffset:0}.ring .fl6{animation:none}.ring .gt{animation:none;opacity:0}.mk .pt{animation:none;stroke-dashoffset:0}.mk .ct{animation:none;transform:none}}
 /* знак на экране входа: те же тонкие линии, рисуются и медленно вращаются */
 .bootw .mk{width:96px;height:96px;display:block;margin:0 auto;overflow:visible;animation:bkSpin 40s linear 1.4s infinite}
 html.lite .bootw .mk{animation:none}
