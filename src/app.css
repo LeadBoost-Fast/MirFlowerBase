@@ -438,3 +438,12 @@ details[open]>*:not(summary){animation:mvFade var(--m3) var(--eo)}
 .chdl{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 14px;border-bottom:1px solid var(--line);font-size:14px}
 .chdl .btn{min-height:36px;padding:6px 14px}
 .dlw{margin:8px 0}
+
+/* Доска заказов, воронка, подписки, план дня: карточки появляются по колонкам; просроченное мягко мигает дважды */
+@keyframes mvPulse{0%,100%{opacity:1}50%{opacity:.5}}
+#v.mv-in .obc,#v.mv-in .obcol>.card,#v.mv-in .pln,#v.mv-in .dlw{animation:mvIn var(--m3) var(--eo) backwards}
+#v.mv-in .obcol:nth-child(2) .obc,#v.mv-in .obcol:nth-child(2)>.card{animation-delay:40ms}
+#v.mv-in .obcol:nth-child(3) .obc,#v.mv-in .obcol:nth-child(3)>.card{animation-delay:80ms}
+#v.mv-in .obcol:nth-child(4) .obc,#v.mv-in .obcol:nth-child(4)>.card{animation-delay:120ms}
+#v.mv-in .obcol:nth-child(5) .obc,#v.mv-in .obcol:nth-child(5)>.card{animation-delay:160ms}
+#v.mv-in .pln.late b,#v.mv-in .obc.late{animation:mvPulse 1.2s ease-in-out 2}
