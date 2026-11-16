@@ -248,6 +248,11 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await put("orders","remo3",{client:"Уже Заказал",phone:"+7 705 111 22 44",bn:"Розы 25",st:4,p:20000,loc:"main",by:"x",date:ad(-2),time:"12:00",ts:Date.now()});
   await put("orders","remo4",{client:"Давно",phone:"+7 705 111 22 55",bn:"Тюльпаны",st:4,p:9000,loc:"main",by:"x",date:py(ad(40)),time:"12:00",ts:Date.now()-300*864e5});
   await pg.evaluate(async([b,w])=>{await db.collection("customers").doc("77051112266").set({name:"Алия Именинница",phone:"+7 705 111 22 66",bday:"1990"+b.slice(4)});await db.collection("customers").doc("77051112277").set({name:"Марат",phone:"+7 705 111 22 77",dates:[{n:"день рождения жены",d:"2020"+w.slice(4)}]})},[ad(1),ad(5)]);await pg.waitForTimeout(1800);
+  ok(await pg.evaluate(()=>{tab="home";draw();return FX("remind")===false&&remList().length===0&&!document.querySelector('[data-a=rem_o]')}),"напоминания о датах клиентов по умолчанию выключены: на главной и в клиентах их нет");
+  await pg.evaluate(()=>{modal("");cDetail("77051112277")});await pg.waitForTimeout(400);
+  ok(await pg.evaluate(()=>!document.querySelector('#cf [name=dn0]')),"пока функция выключена, поля «Важные даты» в карточке клиента нет");
+  ok(await pg.evaluate(()=>{modal("");const d=document.createElement("div");d.innerHTML=fxCard();const i=d.querySelector('[name=remind]');return !!i&&!i.checked&&/Напоминания о датах клиентов/.test(i.closest("label").textContent)}),"настройки → «Возможности»: переключатель «Напоминания о датах клиентов» (выключен)");
+  await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{remind:true}},{merge:true})});await pg.waitForTimeout(1500);
   const rl=await pg.evaluate(()=>remList().map(r=>r.kind+":"+r.name+":"+r.key));
   ok(rl.length===3&&rl[0].startsWith("b:Алия Именинница")&&rl[1].startsWith("o:Год Назад")&&rl[2].startsWith("d:Марат"),"повод написать: день рождения, заказ годовой давности и важная дата — по порядку дат ("+rl.join(", ")+")");
   ok(!rl.some(x=>/Уже Заказал|Давно/.test(x)),"повод написать: кто недавно заказал или чей заказ не в ближайшую неделю — не показываются");
@@ -261,9 +266,10 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   ok(await pg.evaluate(()=>remList().length===2&&!remList().some(r=>r.kind==="b")&&String((CU["77051112266"].rem||{}).b)===today().slice(0,4)&&document.querySelectorAll("#m .remc").length===2),"«Готово»: напоминание убрано до следующего года (сохранено в карточке клиента)");
   await pg.evaluate(()=>{modal("");cDetail("77051112277")});await pg.waitForTimeout(500);
   ok(await pg.evaluate(()=>document.querySelector('#cf [name=dn0]').value==="день рождения жены"&&!!document.querySelector('#cf [name=dd1]')),"карточка клиента: важные даты видны, есть пустая строка для новой");
-  await pg.locator('#cf [name=dn1]').fill("годовщина свадьбы");await pg.locator('#cf [name=dd1]').fill(ad(3));await pg.locator('#cf button[type=submit]').click();await pg.waitForTimeout(1500);
+  await pg.locator('#cf [name=dn1]').fill("годовщина свадьбы");await pg.locator('#cf [name=dd1]').fill(ad(3));await pg.evaluate(()=>document.getElementById("cf").requestSubmit());await pg.waitForTimeout(1500);
   ok(await pg.evaluate(()=>{const d=CU["77051112277"].dates||[];return d.length===2&&d[1].n==="годовщина свадьбы"&&remList().some(r=>r.why==="годовщина свадьбы")}),"карточка клиента: новая важная дата сохранена и появилась в поводах");
-  await pg.evaluate(async()=>{for(const r of remList().slice())await remDone(r)});await pg.waitForTimeout(800);/* убираем за собой, чтобы не мешать другим проверкам */
+  await pg.evaluate(async()=>{for(const r of remList().slice())await remDone(r);await db.collection("settings").doc("main").set({fx:{remind:false}},{merge:true})});await pg.waitForTimeout(1200);/* убираем за собой, чтобы не мешать другим проверкам */
+  ok(await pg.evaluate(()=>!FX("remind")&&remList().length===0),"функцию можно выключить: напоминания пропадают");
   await pg.context().close()}
  {const pg=await lg("fl@x.kz");await pg.waitForTimeout(600);ok(await pg.evaluate(()=>remList().length===0&&!document.querySelector('[data-a=rem_o]')),"флорист напоминаний о клиентах не видит");await pg.context().close()}
  /* план дня и праздничные даты */
