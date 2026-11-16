@@ -62,7 +62,7 @@ async function ingest(o){
     const lc=o.loc0||await bizLoc(o.ch,o.biz);
     await ref.set({...base,...(o.wi!==undefined?{wi:String(o.wi)}:{}),ch:o.ch,name:name||"Без имени",phone:o.phone||"",handle,ext:String(o.ext||o.key),biz:String(o.biz||""),loc:lc,resp:"",nOut:0,firstTs:ts,firstReplyTs:0,leadId:"",ts});
   }
-  await mref.set({dir:"in",t:o.text||"",...(o.img?{img:o.img}:{}),...(o.aud?{aud:o.aud}:{}),...(o.x||{}),ts});
+  await mref.set({dir:"in",t:o.text||"",...(o.img?{img:o.img}:{}),...(o.aud?{aud:o.aud}:{}),...(o.x||{}),...(o.mid?{mid:String(o.mid).slice(0,200)}:{}),ts}); // mid — чтобы ответить на это сообщение цитатой
 }
 
 function sigOk(req,secret){
@@ -395,21 +395,27 @@ exports.tgSetup=onCall(OPT,async req=>{
 
 // ================= Отправка ответов =================
 const SEND={
-  async wa(c,to,t,img,chat){
+  async wa(c,to,t,img,chat,q){
     {const ci=await cfgOf(iidOf(chat&&chat.wi));if(ci.mode==="evo")c=ci} // номер точки (Evolution API); иначе — официальный Meta
     if(c.mode==="evo"){
       if(!c.evurl)throw new Error("Не задан адрес сервера Evolution API");
       const ext=String((chat&&chat.ext)||""),number=/@lid$/.test(ext)?ext:String(to).replace(/\D/g,""),inst=eNm(c,iidOf(chat&&chat.wi));
       const remember=async r=>{const id=String((r&&r.key&&r.key.id)||"");if(id)await db().doc("waSent/"+safe(id)).set({ts:Date.now(),t:String(t||"").slice(0,300),img:img||""});return id}; // t/img — чтобы показать цитату, если клиент ответит на это сообщение
-      if(img)return await remember(await eCall(c,"POST","/message/sendMedia/"+inst,{number,mediatype:"image",mimetype:"image/jpeg",media:img,fileName:"photo.jpg",...(t?{caption:t.slice(0,1000)}:{})}));
-      else return await remember(await eCall(c,"POST","/message/sendText/"+inst,{number,text:t.slice(0,4000)}));
+      // ответ на сообщение клиента: цитата как в WhatsApp; если сервер WhatsApp цитату не принял — отправляем без неё
+      const quoted=q&&q.mid?{quoted:{key:{id:String(q.mid),remoteJid:/@/.test(ext)?ext:number+"@s.whatsapp.net",fromMe:q.dir==="out"},message:{conversation:String(q.t||"")}}}:{};
+      const go=async qq=>img?await eCall(c,"POST","/message/sendMedia/"+inst,{number,mediatype:"image",mimetype:"image/jpeg",media:img,fileName:"photo.jpg",...(t?{caption:t.slice(0,1000)}:{}),...qq})
+        :await eCall(c,"POST","/message/sendText/"+inst,{number,text:t.slice(0,4000),...qq});
+      let r;try{r=await go(quoted)}catch(e){if(!quoted.quoted)throw e;console.error("evo quoted",e);r=await go({})}
+      return await remember(r);
     }
     // отвечаем с того же номера, на который написал клиент (у точки может быть свой номер)
     const pid=(chat&&chat.biz)||c.phoneId;
     if(!c.token||!pid)throw new Error("Не заданы токен или Phone number ID");
     const body=img?{messaging_product:"whatsapp",to,type:"image",image:{link:img,...(t?{caption:t.slice(0,1000)}:{})}}
       :{messaging_product:"whatsapp",to,type:"text",text:{body:t.slice(0,4000),preview_url:true}};
-    const r=await jf(`${G}/${pid}/messages`,{method:"POST",headers:{...CT,Authorization:"Bearer "+c.token},body:JSON.stringify(body)});
+    if(q&&q.mid&&/^wamid\./.test(String(q.mid)))body.context={message_id:String(q.mid)}; // ответ цитатой
+    let r=await jf(`${G}/${pid}/messages`,{method:"POST",headers:{...CT,Authorization:"Bearer "+c.token},body:JSON.stringify(body)});
+    if(!r.ok&&body.context){delete body.context;r=await jf(`${G}/${pid}/messages`,{method:"POST",headers:{...CT,Authorization:"Bearer "+c.token},body:JSON.stringify(body)})}
     if(!r.ok){const code=r.j.error&&r.j.error.code;throw new Error(code===131047?"WhatsApp: прошло больше 24 часов с последнего сообщения клиента, нужен одобренный шаблон":gerr(r))}
   },
   async ig(c,to,t,img){
@@ -446,7 +452,7 @@ exports.sendChannelMsg=onDocumentCreated({...OPT,minInstances:1,document:"chats/
     const text=String(got.t||"");
     if(!text&&!img)throw new Error("Пустое сообщение");
     const to=k==="wa"?((c.phone||"").replace(/\D/g,"")||cid.slice(3)):String(c.ext||cid.slice(k.length+1));
-    const wid=await SEND[k](await secretsOf(k),to,text,img,c);
+    const wid=await SEND[k](await secretsOf(k),to,text,img,c,got.q||null);
     await ref.update({st:"sent",sentAt:Date.now(),...(wid?{wid:String(wid)}:{})});
   }catch(err){
     console.error("sendChannelMsg",k,err);

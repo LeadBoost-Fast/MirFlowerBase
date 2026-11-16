@@ -613,3 +613,21 @@ html.lite[data-pz="1"] #v h1::after,html.lite[data-pz="1"] #v h1::before,html.li
 :root:not([data-ly=h]) .chw .chsd{background:var(--wa-gr)!important;color:#fff!important}
 :root:not([data-ly=h]) .chw .chpl{color:var(--mut)}
 .chrt{all:unset;display:inline-block;cursor:pointer;font-size:12px;font-weight:700;color:var(--bad,#e5484d);margin:4px 8px 0 0;padding:2px 0}
+
+/* ответ на сообщение: цитата над полем ввода */
+.chrp{display:flex;align-items:center;gap:8px;padding:8px 12px 0;background:color-mix(in srgb,var(--wa-bg,var(--bg)) 70%,var(--card))}
+.chrp>div{flex:1;min-width:0;border-left:4px solid var(--wa-gr,var(--ac));background:var(--wa-in,var(--card));border-radius:8px;padding:6px 10px}
+.chrp b{display:block;font-size:12.5px;color:var(--wa-gr,var(--ac))}.chrp span{display:block;font-size:13.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chrpx{all:unset;flex:none;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;color:var(--mut);cursor:pointer;font-size:15px}
+.chm{touch-action:pan-y}
+/* Быстрые ответы над полем ввода чата */
+.chq{display:flex;gap:6px;overflow-x:auto;padding:6px 10px 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch;background:color-mix(in srgb,var(--wa-bg,var(--bg)) 70%,var(--card))}
+.chq::-webkit-scrollbar{display:none}
+.chqb{all:unset;box-sizing:border-box;flex:none;display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:6px 12px;border-radius:16px;font-size:13px;line-height:1.2;white-space:nowrap;cursor:pointer;background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.chqb .ei{width:15px;height:15px;color:var(--ac)}
+.chqb:active{background:color-mix(in srgb,var(--ac) 14%,var(--card))}
+.chqb:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+/* Склад → Контроль */
+.skc .skr{margin-top:10px}
+.skc .skr .sbar{margin:6px 0 0}
+.tile.warn b{color:var(--bad)}
