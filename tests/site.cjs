@@ -310,6 +310,23 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.evaluate(()=>uizSet("m"));
   ok(await pg.evaluate(()=>{const c=document.getElementById("vp").content,m=c.match(/initial-scale=([\d.]+)/),x=c.match(/maximum-scale=([\d.]+)/);return !!m&&!!x&&m[1]===x[1]&&+m[1]===0.9}),"размер интерфейса: масштаб закреплён, iPhone не увеличивает страницу при нажатии на поле");
   await pg.context().close()}
+ /* безопасность: смены не подделать, журналы не стереть, журнал сервера только для чтения */
+ {const pg=await lg("fl@x.kz");
+  ok(await pg.evaluate(async()=>{try{await db.collection("shiftLog").doc("t_back").set({uid:U.uid,name:"x",start:Date.now()-3*36e5,end:0,loc:""});return "прошло"}catch(e){return e.code}})==="permission-denied","сервер: смену нельзя начать задним числом (на 3 часа раньше)");
+  ok(await pg.evaluate(async()=>{try{await db.collection("shiftLog").doc("t_now").set({uid:U.uid,name:"x",start:Date.now(),end:0,loc:""});return "прошло"}catch(e){return e.code}})==="прошло","смену можно начать сейчас");
+  ok(await pg.evaluate(async()=>{try{await db.collection("shiftLog").doc("t_now").set({start:Date.now()-5*36e5},{merge:true});return "прошло"}catch(e){return e.code}})==="permission-denied","сервер: начало своей смены не передвинуть");
+  ok(await pg.evaluate(async()=>{try{await db.collection("shiftLog").doc("t_now").set({end:Date.now()+5*36e5},{merge:true});return "прошло"}catch(e){return e.code}})==="permission-denied","сервер: конец смены не поставить в будущее");
+  ok(await pg.evaluate(async()=>{try{await db.collection("shiftLog").doc("t_now").set({end:Date.now(),min:1},{merge:true});return "прошло"}catch(e){return e.code}})==="прошло","смену можно закончить");
+  ok(await pg.evaluate(async()=>{try{await db.collection("shiftLog").doc("t_now").set({end:Date.now()+36e5},{merge:true});return "прошло"}catch(e){return e.code}})==="permission-denied","сервер: закрытую смену сотрудник не меняет");
+  ok(await pg.evaluate(async()=>{try{await db.collection("audit").add({x:1});return "прошло"}catch(e){return e.code}})==="permission-denied","сервер: в журнал изменений с сайта не написать");
+  ok(await pg.evaluate(async()=>{try{await db.collection("audit").limit(1).get();return "прочитал"}catch(e){return e.code}})==="permission-denied","сервер: флорист не читает журнал изменений");
+  await pg.context().close()}
+ {const pg=await lg("adm@x.kz");
+  const lid=await pg.evaluate(async()=>{const r=await db.collection("activityLogs").add({act:"проверка",oid:"",name:"",by:U.uid,byName:"Админ",x:"",loc:"main",ts:firebase.firestore.FieldValue.serverTimestamp()});return r.id});
+  ok(await pg.evaluate(async id=>{try{await db.collection("activityLogs").doc(id).delete();return "прошло"}catch(e){return e.code}},lid)==="permission-denied","сервер: админ не может стереть запись журнала действий");
+  ok(await pg.evaluate(async()=>{try{await db.collection("audit").limit(1).get();return "прочитал"}catch(e){return e.code}})==="прочитал","админ читает журнал изменений");
+  ok(await pg.evaluate(async()=>{try{await db.collection("audit").doc("x").set({x:1});return "прошло"}catch(e){return e.code}})==="permission-denied","сервер: админ тоже не пишет в журнал изменений");
+  await pg.context().close()}
  /* ввод текста: курсор и набранный текст не пропадают; форма заказа */
  {const pg=await lg("tilegen615@gmail.com");
   const td=await pg.evaluate(()=>today());
@@ -529,16 +546,43 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await put("orders","lv2",{client:"Лайв2",phone:"+7 700 000 22 22",bn:"Букет Б",st:1,loc:"main",date:td,time:"23:30",by:opId,takenBy:flId,createdAt:now-3.6e6,takenAt:now-3e6,ts:now-3.6e6});
   await put("orders","lv3",{client:"Лайв3",phone:"+7 700 000 33 33",bn:"Букет В",st:1,loc:"main",date:td,time:"00:01",by:opId,createdAt:now-1.4e7,ts:now-1.4e7});
   await pg.reload();await pg.waitForTimeout(2800);
-  ok(await pg.evaluate(()=>(window.TALL||[]).some(t=>t[0]==="live")),"админу доступен раздел «Картина»");
+  ok(await pg.evaluate(()=>(window.TALL||[]).some(t=>t[0]==="ctrl")&&!(window.TALL||[]).some(t=>t[0]==="live")),"админу доступен «Команда → Сейчас» (там же живая картина)");
   const sd=await pg.evaluate(([u,d])=>staffDay(u,d),[flId,td]);ok(sd.counts.taken===2&&sd.counts.asm===1&&sd.cur&&!sd.onShift,"staffDay флориста: взял 2, собрал 1, ведёт заказ, не на смене: "+JSON.stringify(sd.counts));
   const fl2=await pg.evaluate(()=>orderFlow(O.find(o=>o.id==="lv2")).map(x=>x.k).join(","));ok(fl2==="created,taken","orderFlow заказа без «собран»: только имеющиеся этапы ("+fl2+")");
   await pg.evaluate(()=>{tab="live";draw()});await pg.waitForTimeout(900);const lt=await pg.locator("#v").textContent();
-  ok(/Флорист/.test(lt)&&/Оператор/.test(lt)&&/Лента дня/.test(lt)&&!/NaN|undefined/.test(lt),"«Живая картина»: карточки людей и лента дня, без NaN");
+  ok(/Флорист/.test(lt)&&/Оператор/.test(lt)&&/Лента дня/.test(lt)&&!/NaN|undefined/.test(lt),"«Сейчас»: карточки людей и лента дня, без NaN");
+  ok(/Деньги сегодня/.test(lt)&&/Важное: изменения денег/.test(lt)&&/Действия за день/.test(lt)&&/Требует внимания|Срочных дел нет/.test(lt),"«Сейчас»: итоги, требует внимания, деньги, важное, действия за день");
+  ok(await pg.locator(".nwk>div").count()===3,"«Сейчас»: три итога дня сверху (заказы, оплачено, на смене)");
+  if(await pg.locator("#nwcf").count()){await pg.locator("#nwcf input").fill("Проверка связи");await pg.locator("#nwcf button").click();await pg.waitForTimeout(1500);
+   ok(await pg.evaluate(()=>TCM.some(m=>m.t==="Проверка связи")),"«Сейчас»: сообщение команде отправляется прямо отсюда")}
+  ok(await pg.evaluate(()=>!!WG.nowk&&WG.nowk.ok()&&/на смене/.test(WG.nowk.r())&&!!WG.tcw),"блоки для главной: «Команда сейчас» и «Сообщения команды»");
+  ok(await pg.evaluate(()=>/цена 20\s000\s₸ → 15\s000\s₸/.test(audTxt({col:"orders",kind:"update",ch:{p:[20000,15000]},bn:"Розы"}))&&/снята отметка/.test(audTxt({col:"orders",kind:"update",ch:{paid:[true,false]}}))),"запись журнала сервера читается по-человечески");
   ok(await pg.locator(".lvr.late").count()>=1&&await pg.locator(".lvr").count()>=3,"в ленте дня заказы полосками, просроченный выделен");
   await pg.screenshot({path:OUT+"/live.png",fullPage:true});
   await pg.locator('.lvc[data-id="'+flId+'"]').click();await pg.waitForTimeout(500);ok(await pg.locator(".lvd").count()===3,"день сотрудника: 3 отметки на линии");
   await pg.evaluate(()=>modal(""));await pg.context().close()}
  {const pg=await lg("op@x.kz");ok(await pg.evaluate(()=>!(window.TALL||[]).some(t=>t[0]==="live")&&liveBoard()===""),"оператору раздела «Картина» нет");await pg.context().close()}
+ /* как работает команда; первая настройка сотрудника */
+ {const ow=await lg("tilegen615@gmail.com");
+  await ow.evaluate(()=>{tab="team";draw()});await ow.waitForTimeout(600);
+  ok(await ow.evaluate(()=>{const p=document.getElementById("tfpv");return !!p&&/Что увидит сотрудник/.test(p.textContent)}),"при создании сотрудника видно, что он увидит в меню");
+  await ow.evaluate(()=>{const s=document.querySelector("#tf [name=role]");s.value="r:courier";s.dispatchEvent(new Event("change",{bubbles:true}))});await ow.waitForTimeout(200);
+  ok(await ow.evaluate(()=>/График/.test(document.getElementById("tfpv").textContent)),"при смене роли подсказка меняется (курьер: «График»)");
+  await ow.evaluate(()=>{tab="set";SETS="team";draw()});await ow.waitForTimeout(500);
+  ok(await ow.locator("[data-a=tm_set]").count()===2,"в «Команда и доступ» выбор: у каждого своя работа или все помогают друг другу");
+  await ow.locator('[data-a=tm_set][data-id=all]').click();await ow.waitForTimeout(1500);
+  ok(await ow.evaluate(()=>SH.teamMode==="all"),"режим «все помогают друг другу» сохранён");
+  const fl=await lg("fl@x.kz");await fl.waitForTimeout(800);
+  ok(await fl.evaluate(()=>{const n=rolePins();return teamAll()&&n.includes("chats")&&n.includes("orders")&&n.includes("show")}),"флорист в режиме «все помогают» видит в меню и чаты: "+await fl.evaluate(()=>rolePins().join(",")));
+  await fl.evaluate(()=>{STO.set("ob1:"+U.uid,"");obOpen(0)});await fl.waitForTimeout(400);
+  ok(await fl.evaluate(()=>/Здравствуйте/.test(document.querySelector(".obw").textContent)&&document.querySelectorAll(".obw .obr").length===4),"первая настройка: приветствие и 4 главных дела для профессии");
+  await fl.locator('.obw [data-a=ob_go][data-id="1"]').click();await fl.waitForTimeout(300);ok(await fl.evaluate(()=>/Ваше меню/.test(document.querySelector(".obw").textContent)),"шаг 2: меню с пояснениями");
+  await fl.locator('.obw [data-a=ob_go][data-id="2"]').click();await fl.waitForTimeout(300);ok(await fl.locator(".obw [data-a=ob_uz]").count()===3&&await fl.locator(".obw [data-a=ob_pal]").count()>=8,"шаг 3: размер, тема и цвет");
+  await fl.locator('.obw [data-a=ob_go][data-id="3"]').click();await fl.waitForTimeout(300);await fl.locator('.obw [data-a=ob_end]').click();await fl.waitForTimeout(300);
+  ok(await fl.evaluate(()=>STO.get("ob1:"+U.uid)==="1"&&!document.querySelector(".obw")),"шаг 4 и «Готово»: настройка больше не показывается сама");
+  await fl.evaluate(()=>{tab="me";draw()});await fl.waitForTimeout(300);ok(await fl.locator('#v [data-a=ob_go][data-id="0"]').count()===1,"в профиле есть «Первая настройка»");
+  await fl.context().close();
+  await ow.evaluate(async()=>{await db.collection("settings").doc("main").set({teamMode:"own"},{merge:true})});await ow.waitForTimeout(800);await ow.context().close()}
  /* 4o. настроить любой экран */
  {const pg=await lg("fl@x.kz");const uid=await pg.evaluate(()=>U.uid);await pg.evaluate(()=>{tab="orders";draw()});await pg.waitForTimeout(900);
   ok(await pg.locator('[data-a=scr_edit]').count()===1,"на «Заказах» есть «Настроить экран»");

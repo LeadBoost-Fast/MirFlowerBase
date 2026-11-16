@@ -156,10 +156,11 @@ service cloud.firestore {
       allow delete: if isAdmin() || isOwner();
     }
     match /invcost/{id}         { allow read, write: if isOwner(); }
+    // История склада: только добавлять. Удалить запись может только владелец (чтобы списание нельзя было стереть)
     match /stockMovements/{id} {
       allow read, create: if isWork();
       allow update: if false;
-      allow delete: if isAdmin() || isOwner();
+      allow delete: if isOwner();
     }
     // Каталог букетов: удалять могут админы, владельцы, флористы и помощники флориста
     match /bouquets/{id}        { allow read, create, update: if isMgr(); allow delete: if isAdmin() || isOwner() || (isActive() && role() in ['florist','assistant']); }
@@ -235,11 +236,21 @@ service cloud.firestore {
       allow delete: if isAdmin() || isOwner() || (isActive() && resource.data.uid == request.auth.uid && resource.data.st == 'wait');
     }
     // Фактические смены (кнопки «Начать / Закончить смену» на главной)
+    // Начать смену можно только сейчас (±30 мин), не задним числом: от смен зависит оплата. Сотрудник не меняет начало своей смены,
+    // закрытую смену не меняет, конец ставит не позже текущего времени. Исправления делают админ и владелец (их видно в журнале на сервере)
+    function nowMs() { return request.time.toMillis(); }
     match /shiftLog/{id} {
       allow read: if isActive();
-      allow create: if isActive() && request.resource.data.uid == request.auth.uid;
-      allow update: if isActive() && (resource.data.uid == request.auth.uid || isAdmin() || isOwner())
-        && request.resource.data.uid == resource.data.uid;
+      allow create: if isActive() && request.resource.data.uid == request.auth.uid
+        && (isAdmin() || isOwner() || (request.resource.data.start is number
+            && request.resource.data.start > nowMs() - 1800000 && request.resource.data.start < nowMs() + 1800000));
+      allow update: if isActive() && request.resource.data.uid == resource.data.uid
+        && (isAdmin() || isOwner()
+            || (resource.data.uid == request.auth.uid
+                && request.resource.data.get('start', 0) == resource.data.get('start', 0)
+                && (resource.data.get('end', 0) == 0 || request.resource.data.get('end', 0) == resource.data.get('end', 0))
+                && request.resource.data.get('end', 0) <= nowMs() + 1800000
+                && (request.resource.data.get('end', 0) == 0 || request.resource.data.get('end', 0) >= request.resource.data.get('start', 0))));
       allow delete: if isOwner();
     }
     // Точки: создавать и менять могут владелец и админ (техническая настройка), удалять только владелец
@@ -296,11 +307,18 @@ service cloud.firestore {
       allow read: if false;
     }
 
+    // Журнал действий: удалить запись может только владелец (админ свои действия стереть не может)
     match /activityLogs/{id} {
       allow create: if isActive() && request.resource.data.by == request.auth.uid;
       allow read: if isAdmin() || isOwner();
       allow update: if false;
-      allow delete: if isAdmin() || isOwner();
+      allow delete: if isOwner();
+    }
+
+    // Журнал изменений на сервере: пишет только функция (audit*), с сайта ни создать, ни изменить, ни удалить
+    match /audit/{id} {
+      allow read: if isAdmin() || isOwner();
+      allow write: if false;
     }
   }
 }
