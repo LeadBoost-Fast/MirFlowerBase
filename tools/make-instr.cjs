@@ -1,5 +1,5 @@
 // PDF-инструкции для каждой должности из справки сайта (d-help.js) на русском и казахском. Запуск после сборки:
-//   node tools/make-instr.cjs   → docs/instrukcii/Instrukciya-*.pdf
+//   node tools/make-instr.cjs   → docs/instrukcii/Instrukciya-*-kk.pdf (казахские; русские с фото делает make-instr-photo.cjs)
 // Нужен Playwright (есть в tests/node_modules). Дата в шапке — DATE ниже.
 const fs=require("fs"),vm=require("vm"),path=require("path");let PW;try{PW=require("playwright")}catch(e){PW=require(path.join(__dirname,"..","tests","node_modules","playwright"))}const {chromium}=PW;
 const ROOT=path.join(__dirname,"..");
@@ -17,5 +17,5 @@ const html=(r,kk)=>{const A=H.filter(a=>a[2].includes(r[1])),cats=[...new Set(A.
  ${cats.map(c=>`<h2>${esc(kk?KC[c]||c:c)}</h2>${A.filter(a=>a[1]===c).map(a=>`<div class="a"><h3>${esc(kk?kq(a[7]):a[3])}</h3><ol>${(kk?a[8].map(kq):a[5]).map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div>`).join("")}`).join("")}
  <p class="f">${kk?"Сұрақ туса — әкімшіге жазыңыз. Өзгерістер сайтта автоматты жаңарады.":"Остались вопросы — спросите администратора. Справка на сайте обновляется сама."}</p>`};
 (async()=>{const br=await chromium.launch();const pg=await br.newPage();let n=0;
- for(const r of ROLES)for(const kk of [0,1]){await pg.setContent(html(r,kk));const f=path.join(path.join(ROOT,"docs","instrukcii"),"Instrukciya-"+r[0]+(kk?"-kk":"")+".pdf");await pg.pdf({path:f,format:"A4",printBackground:true,preferCSSPageSize:true});n++;console.log(path.basename(f),fs.statSync(f).size)}
+ for(const r of ROLES)for(const kk of (process.env.RU?[0,1]:[1])){/* русские PDF теперь с фото (tools/make-instr-photo.cjs); здесь казахские из справки, RU=1 — ещё и русские текстовые */await pg.setContent(html(r,kk));const f=path.join(path.join(ROOT,"docs","instrukcii"),"Instrukciya-"+r[0]+(kk?"-kk":"")+".pdf");await pg.pdf({path:f,format:"A4",printBackground:true,preferCSSPageSize:true});n++;console.log(path.basename(f),fs.statSync(f).size)}
  await br.close();console.log("pdf",n,"articles",H.length)})();
