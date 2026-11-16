@@ -401,8 +401,8 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   ok(await pg.evaluate(()=>{const was=SH.channels;SH.channels={waI:{x1:{on:true,loc:"main"}}};const a=chLive({ch:"wa"});SH.channels={};const b=chLive({ch:"wa"});SH.channels=was;return a&&!b}),"чаты: WhatsApp через номер точки считается подключённым (нет ложного «канал не подключён»)");
   await pg.evaluate(()=>{tab="chats";chV="list";chF="all";draw()});await pg.waitForTimeout(600);
   ok(await pg.locator('.chi.un[data-id="chq1"] .chun').count()===1&&await pg.locator('.chi.un[data-id="chq1"] .chun').innerText()==="1","чаты: у непрочитанного число в зелёном кружке");
-  await pg.evaluate(async()=>{await db.collection("chats").doc("chq1").collection("msgs").doc("fx1").set({dir:"out",t:"Ваш букет готов",ts:Date.now(),by:U.uid,byName:"x",st:"failed",err:"сбой"})});
-  await pg.evaluate(()=>chStart("chq1"));await pg.waitForTimeout(1500);
+  await pg.evaluate(async()=>{await db.collection("chats").doc("chq2").set({name:"Клиент Повтор",ch:"wa",phone:"77011112222",last:"Ваш букет готов",lastTs:Date.now()-6e4,lastDir:"out",st:"open",unread:0,loc:"main"});await db.collection("chats").doc("chq2").collection("msgs").doc("fx1").set({dir:"out",t:"Ваш букет готов",ts:Date.now(),by:U.uid,byName:"x",st:"failed",err:"сбой"})});await pg.waitForTimeout(1200);
+  await pg.evaluate(()=>chStart("chq2"));await pg.waitForTimeout(1500);
   ok(await pg.locator('[data-a=ch_retry][data-id=fx1]').count()===1,"чаты: у неотправленного сообщения кнопка «Повторить»");
   await pg.locator('[data-a=ch_retry][data-id=fx1]').click();await pg.waitForTimeout(1500);
   ok(await pg.evaluate(()=>{const o=chMsgs.find(m=>m.id==="fx1"),n=chMsgs.filter(m=>m.t==="Ваш букет готов"&&m.id!=="fx1");return o&&o.st==="retried"&&n.length===1&&n[0].st==="pending"}),"«Повторить»: сообщение отправлено ещё раз, старое помечено");
