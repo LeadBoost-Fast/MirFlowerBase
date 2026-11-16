@@ -353,7 +353,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   ok(await pg.locator("#v h1 .scr-ic[data-a=scr_edit]").count()===1,"«Настроить экран» — значок рядом с заголовком");
   await pg.context().close()}
  {const pg=await lg("fl@x.kz");await pg.evaluate(()=>{tab="home";draw()});await pg.waitForTimeout(600);
-  ok(await pg.evaluate(()=>{const c=document.querySelector(".shc");if(!c||!c.querySelector("[data-a=sh_go]"))return false;const many=locs().filter(x=>!LOC||x.id===LOC).length>1;return many?!c.classList.contains("shc1"):c.classList.contains("shc1")}),"флорист: «Вы не на смене» — одна строка с кнопкой (при нескольких точках — кнопки по точкам)");await pg.context().close()}
+  ok(await pg.evaluate(()=>{const w=document.createElement("div");w.innerHTML=shiftCard();const c=w.querySelector(".shc");if(!c||!c.querySelector("[data-a=sh_go]"))return false;const many=locs().length>1;return many?!c.classList.contains("shc1"):c.classList.contains("shc1")}),"флорист: «Вы не на смене» — одна строка с кнопкой (при нескольких точках — кнопки по точкам)");await pg.context().close()}
  /* доска заказов */
  {const pg=await lg("tilegen615@gmail.com");
   await put("orders","brd1",{client:"Доска1",phone:"+7 700 000 01 01",bn:"Доска Букет",st:0,loc:"main",by:"x",date:new Date().toLocaleDateString("sv-SE"),time:new Date().toTimeString().slice(0,5),ts:Date.now()+5});
