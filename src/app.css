@@ -587,6 +587,6 @@ html.lite[data-pz="1"] #v h1::after,html.lite[data-pz="1"] #v h1::before,html.li
 .wgm{margin-top:6px;font-size:13px;line-height:1.35}.wgm div{word-break:break-word}
 
 /* первая настройка сотрудника */
-.obw h1{font-family:var(--fd,inherit)}.obd{display:flex;gap:6px;justify-content:center;margin:0 0 10px}.obd i{width:8px;height:8px;border-radius:50%;background:var(--line)}.obd i.on{background:var(--ac);width:22px;border-radius:4px}.obd i.was{background:color-mix(in srgb,var(--ac) 45%,var(--line))}
+.obw h1{font-family:var(--fd,inherit)}.obdots{display:flex;gap:6px;justify-content:center;margin:0 0 10px}.obdots i{width:8px;height:8px;border-radius:50%;background:var(--line)}.obdots i.on{background:var(--ac);width:22px;border-radius:4px}.obdots i.was{background:color-mix(in srgb,var(--ac) 45%,var(--line))}
 .obl .obr{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}.obl .obr:last-child{border-bottom:0}.obr span{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--ac) 14%,var(--card));color:var(--ac);font-weight:700;font-size:13px}.obr div{line-height:1.4}
 .tfpv{margin:8px 2px 0;font-size:13px;color:var(--mut);line-height:1.4}.tfpv b{color:var(--ink)}

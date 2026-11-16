@@ -166,7 +166,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   const bad=await pg.evaluate(async id=>{try{await db.collection("staff").doc(id).update({perms:{chats:false}});return "прошло"}catch(e){return e.code}},ownId);ok(bad==="permission-denied","админ не может менять доступ владельцу/админу: "+bad);
   await pg.context().close()}
  {const pg=await lg("fl@x.kz");
-  const ids=await pg.evaluate(()=>(window.HPL||[]).map(t=>t[0]));ok(!ids.includes("chats")&&!ids.includes("crm")&&!ids.includes("stock")&&ids.includes("rep")&&ids.includes("show")&&ids.includes("orders"),"у флориста в меню нет чатов, клиентов и склада, остальное осталось: "+ids.join(","));
+  const ids=await pg.evaluate(()=>(window.HPL||[]).map(t=>t[0]));ok(!ids.includes("chats")&&!ids.includes("crm")&&!ids.includes("stock")&&ids.includes("sched")&&await pg.evaluate(()=>(GP.sched||[]).includes("rep"))&&ids.includes("show")&&ids.includes("orders"),"у флориста в меню нет чатов, клиентов и склада, остальное осталось (отчёты внутри «Смены»): "+ids.join(","));
   const R=(q)=>pg.evaluate(async q=>{try{await db.collection(q).limit(1).get();return "прочитал"}catch(e){return e.code}},q);
   ok(await R("chats")==="permission-denied","сервер: флорист без доступа не читает чаты");ok(await R("customers")==="permission-denied","сервер: не читает клиентов");ok(await R("leads")==="permission-denied","сервер: не читает заявки");ok(await R("deals")==="permission-denied","сервер: не читает сделки");
   ok(await pg.evaluate(async()=>{try{await db.collection("chats").doc("wa_77779990001").collection("msgs").limit(1).get();return "прочитал"}catch(e){return e.code}})==="permission-denied","сервер: не читает сообщения чатов");
