@@ -550,7 +550,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   const sd=await pg.evaluate(([u,d])=>staffDay(u,d),[flId,td]);ok(sd.counts.taken===2&&sd.counts.asm===1&&sd.cur&&!sd.onShift,"staffDay флориста: взял 2, собрал 1, ведёт заказ, не на смене: "+JSON.stringify(sd.counts));
   const fl2=await pg.evaluate(()=>orderFlow(O.find(o=>o.id==="lv2")).map(x=>x.k).join(","));ok(fl2==="created,taken","orderFlow заказа без «собран»: только имеющиеся этапы ("+fl2+")");
   await pg.evaluate(()=>{tab="live";draw()});await pg.waitForTimeout(900);const lt=await pg.locator("#v").textContent();
-  ok(/Флорист/.test(lt)&&/Оператор/.test(lt)&&/Лента дня/.test(lt)&&!/NaN|undefined/.test(lt),"«Сейчас»: карточки людей и лента дня, без NaN");
+  ok(/Флорист/.test(lt)&&/Оператор/.test(lt)&&/лента дня/i.test(lt)&&!/NaN|undefined/.test(lt),"«Сейчас»: карточки людей и лента дня, без NaN");
   ok(/Деньги сегодня/.test(lt)&&/Важное: изменения денег/.test(lt)&&/Действия за день/.test(lt)&&/Требует внимания|Срочных дел нет/.test(lt),"«Сейчас»: итоги, требует внимания, деньги, важное, действия за день");
   ok(await pg.locator(".nwk>div").count()===3,"«Сейчас»: три итога дня сверху (заказы, оплачено, на смене)");
   if(await pg.locator("#nwcf").count()){await pg.locator("#nwcf input").fill("Проверка связи");await pg.locator("#nwcf button").click();await pg.waitForTimeout(1500);
@@ -564,6 +564,8 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
  {const pg=await lg("op@x.kz");ok(await pg.evaluate(()=>!(window.TALL||[]).some(t=>t[0]==="live")&&liveBoard()===""),"оператору раздела «Картина» нет");await pg.context().close()}
  /* как работает команда; первая настройка сотрудника */
  {const ow=await lg("tilegen615@gmail.com");
+  await ow.evaluate(()=>{tab="fin";draw()});await ow.waitForTimeout(800);{const g3=(await ow.locator(".gtab button").allTextContents()).map(x=>x.trim()).join("|");ok(g3==="Финансы|Аналитика","владелец: «Деньги» — Финансы и Аналитика: "+g3)}
+  ok(await ow.evaluate(()=>{const v=document.getElementById("v").textContent;return !/Источники заказов/.test(v)&&!/Сохранить наценки/i.test(v)}),"в «Финансах» нет повторов из «Аналитики» и настроек оплаты");
   await ow.evaluate(()=>{tab="team";draw()});await ow.waitForTimeout(600);
   ok(await ow.evaluate(()=>{const p=document.getElementById("tfpv");return !!p&&/Что увидит сотрудник/.test(p.textContent)}),"при создании сотрудника видно, что он увидит в меню");
   await ow.evaluate(()=>{const s=document.querySelector("#tf [name=role]");s.value="r:courier";s.dispatchEvent(new Event("change",{bubbles:true}))});await ow.waitForTimeout(200);
@@ -620,9 +622,8 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.evaluate(()=>{tab="orders";draw()});await pg.waitForTimeout(700);const g1=(await pg.locator(".gtab button").allTextContents()).join("|");ok(/Заказы/.test(g1)&&/Воронка/.test(g1)&&/Сборка/.test(g1)&&/Доставка/.test(g1),"«Заказы» собраны с «Воронкой», «Сборкой» и «Доставкой»: "+g1);
   ok(await pg.locator("#q").count()===1,"в «Заказах» свой отдельный поиск остался");
   await pg.evaluate(()=>{tab="team";draw()});await pg.waitForTimeout(700);const g2=(await pg.locator(".gtab button").allTextContents()).map(x=>x.replace(/\d+/g,"").trim()).join("|");ok(/^Сейчас\|Сотрудники\|График\|Отчёты\|Статистика\|Журнал/.test(g2),"«Команда»: Сейчас, Сотрудники, График, Отчёты, Статистика, Журнал: "+g2);
-  await pg.evaluate(()=>{tab="fin";draw()});await pg.waitForTimeout(700);{const g3=(await pg.locator(".gtab button").allTextContents()).map(x=>x.trim()).join("|");ok(g3==="Финансы|Аналитика","«Деньги»: только Финансы и Аналитика: "+g3)}
-  ok(await pg.evaluate(()=>{const v=document.getElementById("v").innerText;return !/Источники заказов/.test(v)&&!/СОХРАНИТЬ НАЦЕНКИ/i.test(v)}),"в «Финансах» нет повторов из «Аналитики» и настроек оплаты");
-  await pg.evaluate(()=>{tab="live";draw()});await pg.waitForTimeout(600);ok(await pg.evaluate(()=>tab==="ctrl"&&/Кто что делает сегодня/.test(document.getElementById("v").innerText)),"«Живая картина» теперь внутри «Команда → Сейчас»");
+  ok(await pg.evaluate(()=>JSON.stringify(GR.find(g=>g[0]==="fin"))==='["fin","an"]'&&!(window.TALL||[]).some(t=>t[0]==="fin")),"«Деньги»: только Финансы и Аналитика (у админа без прав владельца раздела нет)");
+  await pg.evaluate(()=>{tab="live";draw()});await pg.waitForTimeout(600);ok(await pg.evaluate(()=>tab==="ctrl"&&/кто что делает сегодня/i.test(document.getElementById("v").textContent)),"«Живая картина» теперь внутри «Команда → Сейчас»");
   await pg.evaluate(()=>{tab="set";SETS="sec";draw()});await pg.waitForTimeout(700);ok(await pg.locator('#v [data-a=set_go]').count()>=6,"«Разделы» в настройках: кнопки к настройкам других разделов");
   await pg.locator('#v [data-a=set_go][data-s=shop]').first().click();await pg.waitForTimeout(500);ok(await pg.evaluate(()=>SETS==="shop"&&tab==="set"),"кнопка ведёт в нужную настройку");
   /* общий поиск */
