@@ -631,3 +631,6 @@ html.lite[data-pz="1"] #v h1::after,html.lite[data-pz="1"] #v h1::before,html.li
 .skc .skr{margin-top:10px}
 .skc .skr .sbar{margin:6px 0 0}
 .tile.warn b{color:var(--bad)}
+/* Повод написать клиенту */
+.remc .acts{flex-wrap:wrap}
+.remc a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
