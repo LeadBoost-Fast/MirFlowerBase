@@ -241,6 +241,37 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.context().close()}
  {const pg=await lg("fl@x.kz");await pg.evaluate(()=>{tab="stock";sv="i";draw()});await pg.waitForTimeout(500);
   ok(await pg.locator('#v [data-a=s_sv][data-id=k]').count()===0,"флорист не видит вкладку «Контроль» на складе");await pg.context().close()}
+ /* Повод написать клиенту: день рождения, важная дата, год с прошлого заказа */
+ {const pg=await lg("tilegen615@gmail.com"),td=new Date().toLocaleDateString("sv-SE"),ad=n=>{const d=new Date(td+"T12:00:00");d.setDate(d.getDate()+n);return d.toLocaleDateString("sv-SE")},py=d=>(+d.slice(0,4)-1)+d.slice(4);
+  await put("orders","remo1",{client:"Год Назад",phone:"+7 705 111 22 33",bn:"Пионы 15",st:4,p:15000,loc:"main",by:"x",date:py(ad(2)),time:"12:00",ts:Date.now()-365*864e5});
+  await put("orders","remo2",{client:"Уже Заказал",phone:"+7 705 111 22 44",bn:"Розы 25",st:4,p:20000,loc:"main",by:"x",date:py(ad(3)),time:"12:00",ts:Date.now()-365*864e5});
+  await put("orders","remo3",{client:"Уже Заказал",phone:"+7 705 111 22 44",bn:"Розы 25",st:4,p:20000,loc:"main",by:"x",date:ad(-2),time:"12:00",ts:Date.now()});
+  await put("orders","remo4",{client:"Давно",phone:"+7 705 111 22 55",bn:"Тюльпаны",st:4,p:9000,loc:"main",by:"x",date:py(ad(40)),time:"12:00",ts:Date.now()-300*864e5});
+  await pg.evaluate(async([b,w])=>{await db.collection("customers").doc("77051112266").set({name:"Алия Именинница",phone:"+7 705 111 22 66",bday:"1990"+b.slice(4)});await db.collection("customers").doc("77051112277").set({name:"Марат",phone:"+7 705 111 22 77",dates:[{n:"день рождения жены",d:"2020"+w.slice(4)}]})},[ad(1),ad(5)]);await pg.waitForTimeout(1800);
+  ok(await pg.evaluate(()=>{tab="home";draw();return FX("remind")===false&&remList().length===0&&!document.querySelector('[data-a=rem_o]')}),"напоминания о датах клиентов по умолчанию выключены: на главной и в клиентах их нет");
+  await pg.evaluate(()=>{modal("");cDetail("77051112277")});await pg.waitForTimeout(400);
+  ok(await pg.evaluate(()=>!document.querySelector('#cf [name=dn0]')),"пока функция выключена, поля «Важные даты» в карточке клиента нет");
+  ok(await pg.evaluate(()=>{modal("");const d=document.createElement("div");d.innerHTML=fxCard();const i=d.querySelector('[name=remind]');return !!i&&!i.checked&&/Напоминания о датах клиентов/.test(i.closest("label").textContent)}),"настройки → «Возможности»: переключатель «Напоминания о датах клиентов» (выключен)");
+  await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{remind:true}},{merge:true})});await pg.waitForTimeout(1500);
+  const rl=await pg.evaluate(()=>remList().map(r=>r.kind+":"+r.name+":"+r.key));
+  ok(rl.length===3&&rl[0].startsWith("b:Алия Именинница")&&rl[1].startsWith("o:Год Назад")&&rl[2].startsWith("d:Марат"),"повод написать: день рождения, заказ годовой давности и важная дата — по порядку дат ("+rl.join(", ")+")");
+  ok(!rl.some(x=>/Уже Заказал|Давно/.test(x)),"повод написать: кто недавно заказал или чей заказ не в ближайшую неделю — не показываются");
+  ok(await pg.evaluate(()=>{const r=remList();return /Алия/.test(remText(r[0]))&&/день рождения/.test(remText(r[0]))&&/«Пионы 15»/.test(remText(r[1]))&&/день рождения жены/.test(remText(r[2]))}),"повод написать: готовый текст сообщения под каждый повод");
+  await pg.evaluate(()=>{tab="home";draw()});await pg.waitForTimeout(500);
+  ok(await pg.evaluate(()=>[...document.querySelectorAll('#v .tdi[data-a=rem_o]')].some(x=>/3 клиентам пора написать/.test(x.textContent))),"«Нужно сделать»: строка «3 клиентам пора написать»");
+  await pg.evaluate(()=>{tab="crm";draw()});await pg.waitForTimeout(500);
+  await pg.locator('#v .remb[data-a=rem_o]').click();await pg.waitForTimeout(500);
+  ok(await pg.evaluate(()=>{const c=[...document.querySelectorAll("#m .remc")];return c.length===3&&/завтра/.test(c[0].textContent)&&/Год назад: «Пионы 15»/.test(c[1].textContent)&&!!c[1].querySelector('a[data-a=rem_wa][href*="wa.me/77051112233?text="]')}),"клиенты → «Повод написать»: список с датами и кнопкой «Написать в WhatsApp» с готовым текстом");
+  await pg.locator('#m .remc [data-a=rem_ok]').first().click();await pg.waitForTimeout(1500);
+  ok(await pg.evaluate(()=>remList().length===2&&!remList().some(r=>r.kind==="b")&&String((CU["77051112266"].rem||{}).b)===today().slice(0,4)&&document.querySelectorAll("#m .remc").length===2),"«Готово»: напоминание убрано до следующего года (сохранено в карточке клиента)");
+  await pg.evaluate(()=>{modal("");cDetail("77051112277")});await pg.waitForTimeout(500);
+  ok(await pg.evaluate(()=>document.querySelector('#cf [name=dn0]').value==="день рождения жены"&&!!document.querySelector('#cf [name=dd1]')),"карточка клиента: важные даты видны, есть пустая строка для новой");
+  await pg.locator('#cf [name=dn1]').fill("годовщина свадьбы");await pg.locator('#cf [name=dd1]').fill(ad(3));await pg.evaluate(()=>document.getElementById("cf").requestSubmit());await pg.waitForTimeout(1500);
+  ok(await pg.evaluate(()=>{const d=CU["77051112277"].dates||[];return d.length===2&&d[1].n==="годовщина свадьбы"&&remList().some(r=>r.why==="годовщина свадьбы")}),"карточка клиента: новая важная дата сохранена и появилась в поводах");
+  await pg.evaluate(async()=>{for(const r of remList().slice())await remDone(r);await db.collection("settings").doc("main").set({fx:{remind:false}},{merge:true})});await pg.waitForTimeout(1200);/* убираем за собой, чтобы не мешать другим проверкам */
+  ok(await pg.evaluate(()=>!FX("remind")&&remList().length===0),"функцию можно выключить: напоминания пропадают");
+  await pg.context().close()}
+ {const pg=await lg("fl@x.kz");await pg.waitForTimeout(600);ok(await pg.evaluate(()=>remList().length===0&&!document.querySelector('[data-a=rem_o]')),"флорист напоминаний о клиентах не видит");await pg.context().close()}
  /* план дня и праздничные даты */
  {const pg=await lg("tilegen615@gmail.com"),td=new Date().toLocaleDateString("sv-SE");
   await put("orders","plan1",{client:"П1",phone:"+7 700 000 00 01",bn:"План Утро",st:0,loc:"main",by:"x",date:td,time:"09:00",ts:Date.now()});
@@ -527,7 +558,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.evaluate(()=>{SETS="adv";draw()});await pg.waitForTimeout(500);ok(await pg.locator("details.adv").count()>=3&&await pg.locator("details.adv[open]").count()===0,"«Дополнительно»: блоки свёрнуты");
   await pg.evaluate(()=>{SETS="fx";draw()});await pg.waitForTimeout(500);ok(await pg.locator("details.adv[open] #fxf").count()===1,"старое значение «fx» открывает «Дополнительно» с раскрытыми возможностями");
   const lens=await pg.evaluate(()=>Object.keys(FXD).map(k=>(FXS[k]||"").length));ok(lens.every(n=>n>0&&n<45),"подписи переключателей короткие: "+lens.join(","));
-  ok(await pg.locator("#fxf .hint-btn").count()===16,"у каждого переключателя есть значок «?»");
+  ok(await pg.locator("#fxf .hint-btn").count()===17&&await pg.locator("#fxf input[type=checkbox]").count()===17,"у каждого переключателя есть значок «?»");
   await pg.locator("#fxf .hint-btn").first().click();await pg.waitForTimeout(400);ok((await pg.locator("#modal, .modal, [role=dialog]").first().textContent().catch(()=>"" )).length>20||await pg.locator('[data-a=x]').count()>0,"по значку «?» открывается пояснение");
   await pg.evaluate(()=>modal(""));
   await pg.evaluate(()=>{tab="home";draw()});await pg.waitForTimeout(800);ok(!(await pg.locator("#v").textContent()).includes("Срочных дел нет"),"на главной нет пустой карточки «Всё сделано»");
