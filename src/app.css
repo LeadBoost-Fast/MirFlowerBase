@@ -467,13 +467,20 @@ details[open]>*:not(summary){animation:mvFade var(--m3) var(--eo)}
 html.lite #petals{display:none}
 @media(prefers-reduced-motion:reduce){#petals{display:none}}
 
-/* Заставка: цветок распускается слой за слоем (лепестки растут от центра), потом дышит, пока идёт подключение */
-.boot{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:14vh;text-align:center}
-.bloom{width:132px;height:132px;display:block;margin:0 auto;overflow:visible;animation:blmBreath 3.4s ease-in-out 1.6s infinite}
-.bloom .pt{transform:scale(0);opacity:0;animation:blm .85s cubic-bezier(.2,.9,.25,1.15) var(--k,0s) forwards}
-@keyframes blm{0%{transform:scale(0);opacity:0}55%{opacity:1}100%{transform:scale(1);opacity:1}}
-@keyframes blmBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
-.bootw .bloom{width:112px;height:112px}
-html.lite .bloom,.bloom.st{animation:none}
-html.lite .bloom .pt,.bloom.st .pt{animation:none;transform:none;opacity:1}
-@media(prefers-reduced-motion:reduce){.bloom{animation:none}.bloom .pt{animation:none;transform:none;opacity:1}}
+/* Заставка: букет собирается так же, как его собирает флорист: бумага, стебли, цветы по одному, лента. Потом чуть покачивается, пока идёт подключение */
+.boot{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:12vh;text-align:center}
+.bq{width:150px;height:172px;display:block;margin:0 auto;overflow:visible;transform-origin:50% 100%;animation:bqSway 4.2s ease-in-out 2.4s infinite}
+.bq .pp{transform:translateY(26px);opacity:0;animation:bqPaper .65s cubic-bezier(.16,1,.3,1) 0s forwards}
+.bq .st{transform:scaleY(0);transform-box:fill-box;transform-origin:50% 100%;animation:bqGrow .7s cubic-bezier(.16,1,.3,1) var(--k,0s) forwards}
+.bq .lf{transform-origin:0 100%}
+.bq .fl{transform-box:fill-box;transform-origin:50% 50%}
+.bq .fi{transform:scale(0);opacity:0;transform-box:fill-box;transform-origin:50% 50%;animation:bqPop .6s cubic-bezier(.2,.9,.25,1.35) var(--k,0s) forwards}
+.bq .rb{transform:scale(0);opacity:0;transform-box:fill-box;transform-origin:50% 30%;animation:bqPop .55s cubic-bezier(.2,.9,.25,1.4) 1.45s forwards}
+@keyframes bqPaper{to{transform:none;opacity:1}}
+@keyframes bqGrow{to{transform:scaleY(1)}}
+@keyframes bqPop{0%{transform:scale(0);opacity:0}50%{opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes bqSway{0%,100%{transform:rotate(-1.4deg)}50%{transform:rotate(1.4deg)}}
+.bootw .bq{width:112px;height:128px}
+html.lite .bq{animation:none}
+html.lite .bq .pp,html.lite .bq .st,html.lite .bq .fi,html.lite .bq .rb{animation:none;transform:none;opacity:1}
+@media(prefers-reduced-motion:reduce){.bq{animation:none}.bq .pp,.bq .st,.bq .fi,.bq .rb{animation:none;transform:none;opacity:1}}

@@ -358,7 +358,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Тинт"&&!document.getElementById("petals")),"другая палитра: цветочное оформление и лепестки убираются");
   await pg.evaluate(()=>setPal("Цветник"));await pg.waitForTimeout(500);
   ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Цветник"&&(LITE||!!document.getElementById("petals"))),"палитра «Цветник» включается снова");
-  ok(await pg.evaluate(()=>typeof BLOOM==="string"&&BLOOM.includes('class="bloom"')&&(BLOOM.match(/class="pt/g)||[]).length>=25),"заставка: цветок из лепестков для экрана входа и подключения");
+  ok(await pg.evaluate(()=>typeof BLOOM==="string"&&BLOOM.includes('class="bq"')&&(BLOOM.match(/class="fl"|class="fl /g)||[]).length>=5&&BLOOM.includes('class="rb"')),"заставка: букет (бумага, стебли, цветы, лента) для экрана входа и подключения");
   /* один раз всем включается «Цветник», дальше каждый меняет сам */
   await pg.evaluate(()=>{STO.set("th",JSON.stringify({ui:"g",g1:1,p:"Мята",acl:"#ff0000"}));applyTheme()});
   ok(await pg.evaluate(()=>{const t=thGet();return t.p==="Цветник"&&t.fl1===1&&!t.acl&&document.documentElement.dataset.pal==="Цветник"}),"оформление: при первом заходе всем включается «Цветник» (и сбрасывается свой цвет)");
