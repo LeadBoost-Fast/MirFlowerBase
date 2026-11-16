@@ -352,13 +352,14 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
  {const pg=await lg("tilegen615@gmail.com");
   ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Цветник"&&PAL0==="Цветник"&&!!PALS["Цветник"]),"оформление: по умолчанию палитра «Цветник»");
   ok(await pg.evaluate(()=>LITE||!!document.getElementById("petals")),"оформление «Цветник»: лепестки на фоне (если не лёгкий режим)");
-  ok(await pg.evaluate(()=>!!document.getElementById("flfont")),"оформление «Цветник»: подключён шрифт заголовков");
+  ok(await pg.evaluate(()=>!!document.querySelector('link[href*="Lora"]')),"оформление «Цветник»: подключён шрифт заголовков");
   ok(await pg.evaluate(()=>{tab="home";draw();const h=document.querySelector(".bento .b-hero");return !!h&&getComputedStyle(h,"::after").backgroundImage.includes("svg")}),"оформление «Цветник»: пион в углу главной карточки");
   await pg.evaluate(()=>setPal("Тинт"));await pg.waitForTimeout(500);
   ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Тинт"&&!document.getElementById("petals")),"другая палитра: цветочное оформление и лепестки убираются");
   await pg.evaluate(()=>setPal("Цветник"));await pg.waitForTimeout(500);
   ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Цветник"&&(LITE||!!document.getElementById("petals"))),"палитра «Цветник» включается снова");
-  ok(await pg.evaluate(()=>typeof BLOOM==="string"&&BLOOM.includes('class="bq"')&&(BLOOM.match(/class="fl"|class="fl /g)||[]).length>=5&&BLOOM.includes('class="rb"')),"заставка: букет (бумага, стебли, цветы, лента) для экрана входа и подключения");
+  ok(await pg.evaluate(()=>typeof BLOOM==="string"&&BLOOM.includes('class="mk"')&&(BLOOM.match(/class="pt"/g)||[]).length===16),"экран входа: знак цветка из тонких линий");
+  {const ih=await (await fetch("http://127.0.0.1:5078/")).text();ok(ih.includes('aria-label="Posy"')&&ih.includes('class="wm3"')&&ih.includes('class="ring"')&&!ih.includes("gl_FragColor")&&ih.includes('aria-label="Posy"')&&ih.includes("Подключение"),"заставка подключения: чёрно-белая, слово POSY с кольцом вместо «O», надпись «Подключение…» осталась")}
   /* один раз всем включается «Цветник», дальше каждый меняет сам */
   await pg.evaluate(()=>{STO.set("th",JSON.stringify({ui:"g",g1:1,p:"Мята",acl:"#ff0000"}));applyTheme()});
   ok(await pg.evaluate(()=>{const t=thGet();return t.p==="Цветник"&&t.fl1===1&&!t.acl&&document.documentElement.dataset.pal==="Цветник"}),"оформление: при первом заходе всем включается «Цветник» (и сбрасывается свой цвет)");

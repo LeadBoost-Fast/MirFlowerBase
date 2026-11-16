@@ -74,10 +74,10 @@ export function bundle(slug,out){
   // страница и скрипты
   let page=rd("index.html");const m=/assets\/app\.([0-9a-f]{8})\.js/.exec(page);if(!m)die("в index.html нет скрипта (сначала node build/build.mjs)");
   const appOld="assets/app."+m[1]+".js";let app=swap(rd(appOld));
-  const appName="assets/app."+hash(app)+".js";page=page.split(appOld).join(appName).replace(/<h1>База флористики<\/h1>/g,()=>"<h1>"+name.replace(/[<&]/g,"")+"</h1>");
+  const appName="assets/app."+hash(app)+".js";page=page.split(appOld).join(appName).replace(/<h1>Posy<\/h1>/g,()=>"<h1>"+name.replace(/[<&]/g,"")+"</h1>");
   wr(appName,app);wr("index.html",page);
   const css=/assets\/app\.[0-9a-f]{8}\.css/.exec(page);if(css)wr(css[0],rd(css[0]));
-  for(const f of fs.readdirSync(ROOT).filter(f=>/^d-[a-z]+\.js$/.test(f)))wr(f,rd(f).split('SH.name||"База флористики"').join('SH.name||(window.SHOP_CFG||{}).name||""'));
+  for(const f of fs.readdirSync(ROOT).filter(f=>/^d-[a-z]+\.js$/.test(f)))wr(f,rd(f).split('SH.name||"Posy"').join('SH.name||(window.SHOP_CFG||{}).name||""'));
   wr("shop.config.js",cfgTxt);
   wr("vitrina.html",swap(rd("vitrina.html")));
   wr("status.html",swap(rd("status.html")).replace('d.shop||"Mirflowers"',()=>"d.shop||"+jsq(name)).replace('id="shop">Mirflowers<',()=>'id="shop">'+name.replace(/[<&"]/g,"")+"<"));
