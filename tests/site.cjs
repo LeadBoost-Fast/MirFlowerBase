@@ -394,7 +394,19 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
  /* воронка: сделка из чата, авто-закрытие по заказу, сделки без движения */
  {const pg=await lg("tilegen615@gmail.com"),td=new Date().toLocaleDateString("sv-SE");
   await pg.evaluate(async()=>{await db.collection("chats").doc("chq1").set({name:"Клиент Чат",ch:"wa",phone:"77011110000",last:"Хочу букет на завтра к обеду",lastTs:Date.now(),lastDir:"in",st:"open",unread:1,loc:"main"})});await pg.waitForTimeout(1500);
-  ok(await pg.evaluate(()=>{const c=CHS.find(x=>x.id==="chq1");return !!c&&chDealBar(c).includes("В воронку")&&chDealBar(c).includes("ch_dl1")}),"воронка из чата: если сделки нет, в чате кнопка «В воронку»");
+  ok(await pg.evaluate(()=>{const c=CHS.find(x=>x.id==="chq1");return !!c&&chDealBar(c)===""}),"воронка из чата: если сделки нет, лишней полосы в чате нет (добавить — в меню ⋮)");
+  /* чаты как в WhatsApp */
+  ok(await pg.evaluate(()=>chNm(CHS.find(x=>x.id==="chq1"))==="Клиент Чат"&&chNm({name:"Без имени",phone:"77011110000"})==="+7 701 111 00 00"),"чаты: в списке имя клиента, а не номер (номер — если имени нет)");
+  ok(await pg.evaluate(()=>chDay(Date.now())===chTs(Date.now())&&chDay(Date.now()-864e5-60e3).length>0&&/вчера|\./.test(chDay(new Date(new Date().setHours(0,0,0,0)).getTime()-36e5))),"чаты: вчерашнее сообщение подписано «вчера», а не только часами");
+  ok(await pg.evaluate(()=>{const was=SH.channels;SH.channels={waI:{x1:{on:true,loc:"main"}}};const a=chLive({ch:"wa"});SH.channels={};const b=chLive({ch:"wa"});SH.channels=was;return a&&!b}),"чаты: WhatsApp через номер точки считается подключённым (нет ложного «канал не подключён»)");
+  await pg.evaluate(()=>{tab="chats";chV="list";chF="all";draw()});await pg.waitForTimeout(600);
+  ok(await pg.locator('.chi.un[data-id="chq1"] .chun').count()===1&&await pg.locator('.chi.un[data-id="chq1"] .chun').innerText()==="1","чаты: у непрочитанного число в зелёном кружке");
+  await pg.evaluate(async()=>{await db.collection("chats").doc("chq1").collection("msgs").doc("fx1").set({dir:"out",t:"Ваш букет готов",ts:Date.now(),by:U.uid,byName:"x",st:"failed",err:"сбой"})});
+  await pg.evaluate(()=>chStart("chq1"));await pg.waitForTimeout(1500);
+  ok(await pg.locator('[data-a=ch_retry][data-id=fx1]').count()===1,"чаты: у неотправленного сообщения кнопка «Повторить»");
+  await pg.locator('[data-a=ch_retry][data-id=fx1]').click();await pg.waitForTimeout(1500);
+  ok(await pg.evaluate(()=>{const o=chMsgs.find(m=>m.id==="fx1"),n=chMsgs.filter(m=>m.t==="Ваш букет готов"&&m.id!=="fx1");return o&&o.st==="retried"&&n.length===1&&n[0].st==="pending"}),"«Повторить»: сообщение отправлено ещё раз, старое помечено");
+  await pg.evaluate(()=>{chStop();draw()});
   await pg.evaluate(()=>chDealQuick(CHS.find(x=>x.id==="chq1")));await pg.waitForTimeout(1800);
   {const dj=await pg.evaluate(()=>{const d=DL.find(x=>x.chat==="chq1");return d?JSON.stringify({t:d.title,s:d.src,p:d.phone,st:d.st,c:d.client}):"нет"});const dd=dj==="нет"?null:JSON.parse(dj);ok(!!dd&&dd.t.includes("Хочу букет")&&dd.s==="WhatsApp"&&dd.p==="+77011110000"&&+dd.st===0&&!!dd.c,"воронка из чата: сделка создана одним нажатием (название из сообщения, источник, телефон) "+dj)}
   ok(await pg.evaluate(()=>{const c=CHS.find(x=>x.id==="chq1"),h=chDealBar(c);return h.includes("Сделка:")&&!h.includes("ch_dl1")}),"воронка из чата: когда сделка есть, в чате видно её этап");

@@ -593,3 +593,23 @@ html.lite[data-pz="1"] #v h1::after,html.lite[data-pz="1"] #v h1::before,html.li
 
 .tdoff{flex:none;width:30px;height:30px;min-height:0;padding:0;margin:0 2px 0 6px;border:0;border-radius:50%;background:transparent;color:var(--mut);font-size:14px;line-height:30px;cursor:pointer}
 .chnh{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 2px}.chnh .chip{font-size:12px}
+
+/* Чаты как в WhatsApp: фон переписки с узором, зелёные исходящие, число непрочитанных зелёным кружком */
+:root{--wa-bg:#efeae2;--wa-out:#d9fdd3;--wa-in:#ffffff;--wa-gr:#25d366;--wa-tk:#53bdeb}
+:root[data-t=dark]{--wa-bg:#0b141a;--wa-out:#005c4b;--wa-in:#202c33;--wa-gr:#00a884}
+:root:not([data-ly=h]) .chw .cht{background-color:var(--wa-bg)!important;background-image:radial-gradient(color-mix(in srgb,var(--ink) 7%,transparent) 1px,transparent 1.2px),radial-gradient(color-mix(in srgb,var(--ink) 5%,transparent) 1px,transparent 1.2px)!important;background-size:22px 22px,22px 22px!important;background-position:0 0,11px 11px!important}
+:root:not([data-ly=h]) .chm.in{background:var(--wa-in)!important;color:var(--ink)!important}
+:root:not([data-ly=h]) .chm.out{background:var(--wa-out)!important;color:var(--ink)!important}
+:root[data-t=dark]:not([data-ly=h]) .chm.out{color:#e9edef!important}
+:root:not([data-ly=h]) .chm .chmt .chtk.rd{color:var(--wa-tk)}
+:root:not([data-ly=h]) .chd{background:color-mix(in srgb,var(--wa-in) 92%,transparent)!important}
+.chi .rt{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.chun{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--wa-gr);color:#fff;font-size:12px;font-weight:700;line-height:1}
+.chi.un .bd b{font-weight:700}.chi.un .chtm{color:var(--wa-gr);font-weight:600}.chi.un .bd span{color:var(--ink)}
+.chsep{flex:none;width:1px;align-self:stretch;background:var(--line);margin:4px 2px}
+
+:root:not([data-ly=h]) .chw .chf2{background:color-mix(in srgb,var(--wa-bg) 70%,var(--card))!important;border-top:0!important}
+:root:not([data-ly=h]) .chw .chf2 textarea{background:var(--wa-in)!important;border:0!important;box-shadow:0 1px 1px rgba(0,0,0,.08)!important;outline:none}
+:root:not([data-ly=h]) .chw .chsd{background:var(--wa-gr)!important;color:#fff!important}
+:root:not([data-ly=h]) .chw .chpl{color:var(--mut)}
+.chrt{all:unset;display:inline-block;cursor:pointer;font-size:12px;font-weight:700;color:var(--bad,#e5484d);margin:4px 8px 0 0;padding:2px 0}
