@@ -433,3 +433,125 @@ details[open]>*:not(summary){animation:mvFade var(--m3) var(--eo)}
 .obc{margin:6px 0;display:flex;flex-direction:column;gap:8px}.obt{cursor:pointer;display:flex;flex-direction:column;gap:2px}
 .obc.late{border-left:3px solid var(--bad)}
 @media(min-width:900px){.obcol{flex:1;width:auto;min-width:200px}}
+
+/* Воронка: полоса в чате и блок внимания */
+.chdl{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 14px;border-bottom:1px solid var(--line);font-size:14px}
+.chdl .btn{min-height:36px;padding:6px 14px}
+.dlw{margin:8px 0}
+
+/* Доска заказов, воронка, подписки, план дня: карточки появляются по колонкам; просроченное мягко мигает дважды */
+@keyframes mvPulse{0%,100%{opacity:1}50%{opacity:.5}}
+#v.mv-in .obc,#v.mv-in .obcol>.card,#v.mv-in .pln,#v.mv-in .dlw{animation:mvIn var(--m3) var(--eo) backwards}
+#v.mv-in .obcol:nth-child(2) .obc,#v.mv-in .obcol:nth-child(2)>.card{animation-delay:40ms}
+#v.mv-in .obcol:nth-child(3) .obc,#v.mv-in .obcol:nth-child(3)>.card{animation-delay:80ms}
+#v.mv-in .obcol:nth-child(4) .obc,#v.mv-in .obcol:nth-child(4)>.card{animation-delay:120ms}
+#v.mv-in .obcol:nth-child(5) .obc,#v.mv-in .obcol:nth-child(5)>.card{animation-delay:160ms}
+#v.mv-in .pln.late b,#v.mv-in .obc.late{animation:mvPulse 1.2s ease-in-out 2}
+
+/* ===== Цветник: цветочное оформление (палитра «Цветник» в Оформлении) ===== */
+/* один запоминающийся элемент: пион в углу главной карточки; остальное тихое: засечный шрифт заголовков, лоза под заголовком, мягкие тона, лепестки на фоне */
+:root[data-pal="Цветник"]{--fd:Lora,Georgia,"Times New Roman",serif;--s0:#8A5CC4;--s1:#C9852F;--s2:#3F8A5B;--s3:#B8325F;--s4:#8B7F8E;--s5:#C0392B}
+:root[data-pal="Цветник"][data-t=dark]{--s0:#B697EA;--s1:#F0B35E;--s2:#7FD0A0;--s3:#F08CB0;--s4:#A89BAE;--s5:#F28B82}
+:root[data-pal="Цветник"] body{background-image:radial-gradient(60% 38% at 100% 0%,color-mix(in srgb,var(--ac) 15%,transparent),transparent 72%),radial-gradient(55% 34% at 0% 100%,rgba(94,140,106,.15),transparent 72%);background-attachment:fixed}
+:root[data-pal="Цветник"] #v h1,:root[data-pal="Цветник"] .bento .btv,:root[data-pal="Цветник"] .wgn{font-family:var(--fd);font-weight:400;letter-spacing:0}
+:root[data-pal="Цветник"] #v h1::after{content:"";display:block;width:132px;height:16px;margin-top:6px;background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 132 16%22%3E%3Cpath d=%22M2 8 C 22 2, 42 14, 66 8 S 108 2, 130 8%22 fill=%22none%22 stroke=%22%236B9A78%22 stroke-width=%221.6%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M30 8 C 34 0, 44 0, 46 5 C 40 9, 34 10, 30 8Z%22 fill=%22%236B9A78%22/%3E%3Cpath d=%22M78 9 C 82 16, 92 16, 94 11 C 88 7, 82 6, 78 9Z%22 fill=%22%237BAA86%22/%3E%3Ccircle cx=%2266%22 cy=%228%22 r=%223.2%22 fill=%22%23C94A78%22/%3E%3C/svg%3E") no-repeat left center/contain}
+:root[data-pal="Цветник"] .bento .b-hero{position:relative;overflow:hidden;border-radius:30px 12px 30px 12px}
+:root[data-pal="Цветник"] .bento .b-hero::after{content:"";position:absolute;right:-20px;bottom:-24px;width:158px;height:158px;background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%22-80 -80 160 160%22%3E%3Cg%3E%3Cpath d=%22M0 0 C 14 -20 38 -22 52 -8 C 38 8 14 10 0 0Z%22 fill=%22%236B9A78%22 transform=%22rotate(-35) translate(26 0)%22/%3E%3Cpath d=%22M0 0 C 14 -20 38 -22 52 -8 C 38 8 14 10 0 0Z%22 fill=%22%235E8C6A%22 transform=%22rotate(25) translate(26 0)%22/%3E%3Cpath d=%22M0 0 C 14 -20 38 -22 52 -8 C 38 8 14 10 0 0Z%22 fill=%22%237BAA86%22 transform=%22rotate(95) translate(26 0)%22/%3E%3C/g%3E%3Cg transform=%22rotate(8)%22%3E%3Cellipse cx=%220%22 cy=%22-30%22 rx=%2217%22 ry=%2226%22 fill=%22%23C94A78%22 opacity=%220.95%22 transform=%22rotate(0.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-30%22 rx=%2217%22 ry=%2226%22 fill=%22%23C94A78%22 opacity=%220.95%22 transform=%22rotate(45.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-30%22 rx=%2217%22 ry=%2226%22 fill=%22%23C94A78%22 opacity=%220.95%22 transform=%22rotate(90.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-30%22 rx=%2217%22 ry=%2226%22 fill=%22%23C94A78%22 opacity=%220.95%22 transform=%22rotate(135.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-30%22 rx=%2217%22 ry=%2226%22 fill=%22%23C94A78%22 opacity=%220.95%22 transform=%22rotate(180.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-30%22 rx=%2217%22 ry=%2226%22 fill=%22%23C94A78%22 opacity=%220.95%22 transform=%22rotate(225.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-30%22 rx=%2217%22 ry=%2226%22 fill=%22%23C94A78%22 opacity=%220.95%22 transform=%22rotate(270.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-30%22 rx=%2217%22 ry=%2226%22 fill=%22%23C94A78%22 opacity=%220.95%22 transform=%22rotate(315.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-23%22 rx=%2215%22 ry=%2222%22 fill=%22%23E26A97%22 opacity=%220.95%22 transform=%22rotate(20.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-23%22 rx=%2215%22 ry=%2222%22 fill=%22%23E26A97%22 opacity=%220.95%22 transform=%22rotate(71.4)%22/%3E%3Cellipse cx=%220%22 cy=%22-23%22 rx=%2215%22 ry=%2222%22 fill=%22%23E26A97%22 opacity=%220.95%22 transform=%22rotate(122.9)%22/%3E%3Cellipse cx=%220%22 cy=%22-23%22 rx=%2215%22 ry=%2222%22 fill=%22%23E26A97%22 opacity=%220.95%22 transform=%22rotate(174.3)%22/%3E%3Cellipse cx=%220%22 cy=%22-23%22 rx=%2215%22 ry=%2222%22 fill=%22%23E26A97%22 opacity=%220.95%22 transform=%22rotate(225.7)%22/%3E%3Cellipse cx=%220%22 cy=%22-23%22 rx=%2215%22 ry=%2222%22 fill=%22%23E26A97%22 opacity=%220.95%22 transform=%22rotate(277.1)%22/%3E%3Cellipse cx=%220%22 cy=%22-23%22 rx=%2215%22 ry=%2222%22 fill=%22%23E26A97%22 opacity=%220.95%22 transform=%22rotate(328.6)%22/%3E%3Cellipse cx=%220%22 cy=%22-16%22 rx=%2212%22 ry=%2217%22 fill=%22%23F08CB0%22 opacity=%221%22 transform=%22rotate(10.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-16%22 rx=%2212%22 ry=%2217%22 fill=%22%23F08CB0%22 opacity=%221%22 transform=%22rotate(70.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-16%22 rx=%2212%22 ry=%2217%22 fill=%22%23F08CB0%22 opacity=%221%22 transform=%22rotate(130.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-16%22 rx=%2212%22 ry=%2217%22 fill=%22%23F08CB0%22 opacity=%221%22 transform=%22rotate(190.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-16%22 rx=%2212%22 ry=%2217%22 fill=%22%23F08CB0%22 opacity=%221%22 transform=%22rotate(250.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-16%22 rx=%2212%22 ry=%2217%22 fill=%22%23F08CB0%22 opacity=%221%22 transform=%22rotate(310.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-9%22 rx=%228%22 ry=%2211%22 fill=%22%23F9B9CE%22 opacity=%221%22 transform=%22rotate(30.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-9%22 rx=%228%22 ry=%2211%22 fill=%22%23F9B9CE%22 opacity=%221%22 transform=%22rotate(102.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-9%22 rx=%228%22 ry=%2211%22 fill=%22%23F9B9CE%22 opacity=%221%22 transform=%22rotate(174.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-9%22 rx=%228%22 ry=%2211%22 fill=%22%23F9B9CE%22 opacity=%221%22 transform=%22rotate(246.0)%22/%3E%3Cellipse cx=%220%22 cy=%22-9%22 rx=%228%22 ry=%2211%22 fill=%22%23F9B9CE%22 opacity=%221%22 transform=%22rotate(318.0)%22/%3E%3C/g%3E%3Ccircle r=%225%22 fill=%22%23F2C14E%22/%3E%3C/svg%3E") no-repeat center/contain;pointer-events:none}
+:root[data-pal="Цветник"] .bento .b-hero .btv{padding-right:64px}
+:root[data-pal="Цветник"] .bento .bt:not(.b-hero){border-radius:22px 8px 22px 8px}
+:root[data-pal="Цветник"] .wgt{border-radius:22px 8px 22px 8px}
+:root[data-pal="Цветник"] nav button.on{background:color-mix(in srgb,var(--ac) 16%,var(--card));color:var(--ac)}
+#petals{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+#petals i{position:absolute;top:-24px;left:var(--x);width:calc(17px*var(--s));height:calc(17px*var(--s));background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22%3E%3Cpath d=%22M3 17 C 0 8, 6 1, 12 2 C 18 3, 19 10, 14 15 C 11 18, 6 19, 3 17Z%22 fill=%22%23E87CA3%22/%3E%3Cpath d=%22M4 16 C 7 11, 10 7, 14 4%22 stroke=%22%23C94A78%22 stroke-width=%22.8%22 fill=%22none%22 opacity=%22.6%22/%3E%3C/svg%3E") no-repeat center/contain;opacity:0;animation:ptFall var(--d) linear var(--t) infinite}
+@keyframes ptFall{0%{transform:translate3d(0,-30px,0) rotate(0);opacity:0}8%{opacity:.55}50%{transform:translate3d(30px,55vh,0) rotate(170deg);opacity:.5}92%{opacity:.4}100%{transform:translate3d(-16px,108vh,0) rotate(350deg);opacity:0}}
+html.lite #petals{display:none}
+@media(prefers-reduced-motion:reduce){#petals{display:none}}
+
+/* Заставка: букет собирается так же, как его собирает флорист: бумага, стебли, цветы по одному, лента. Потом чуть покачивается, пока идёт подключение */
+.boot{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:12vh;text-align:center}
+.bq{width:150px;height:172px;display:block;margin:0 auto;overflow:visible;transform-origin:50% 100%;animation:bqSway 4.2s ease-in-out 2.4s infinite}
+.bq .pp{transform:translateY(26px);opacity:0;animation:bqPaper .65s cubic-bezier(.16,1,.3,1) 0s forwards}
+.bq .st{transform:scaleY(0);transform-box:fill-box;transform-origin:50% 100%;animation:bqGrow .7s cubic-bezier(.16,1,.3,1) var(--k,0s) forwards}
+.bq .lf{transform-origin:0 100%}
+.bq .fl{transform-box:fill-box;transform-origin:50% 50%}
+.bq .fi{transform:scale(0);opacity:0;transform-box:fill-box;transform-origin:50% 50%;animation:bqPop .6s cubic-bezier(.2,.9,.25,1.35) var(--k,0s) forwards}
+.bq .rb{transform:scale(0);opacity:0;transform-box:fill-box;transform-origin:50% 30%;animation:bqPop .55s cubic-bezier(.2,.9,.25,1.4) 1.45s forwards}
+@keyframes bqPaper{to{transform:none;opacity:1}}
+@keyframes bqGrow{to{transform:scaleY(1)}}
+@keyframes bqPop{0%{transform:scale(0);opacity:0}50%{opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes bqSway{0%,100%{transform:rotate(-1.4deg)}50%{transform:rotate(1.4deg)}}
+.bootw .bq{width:112px;height:128px}
+html.lite .bq{animation:none}
+html.lite .bq .pp,html.lite .bq .st,html.lite .bq .fi,html.lite .bq .rb{animation:none;transform:none;opacity:1}
+@media(prefers-reduced-motion:reduce){.bq{animation:none}.bq .pp,.bq .st,.bq .fi,.bq .rb{animation:none;transform:none;opacity:1}}
+
+/* Заставка подключения: чёрно-белая. Слово POSY тонкими буквами, вместо «O» ровное кольцо. Кольцо рисуется, внутри него по одному раскрываются шесть лепестков из тонких линий (цветок), потом по кольцу бежит блик, пока сайт подключается. Цвета заданы переменными в .boot и не зависят от темы, которая подключается позже */
+.boot{--bg:var(--bbg,#070708);--gl:var(--bgl,rgba(255,255,255,.075));--fg:var(--bfg,#f2f2f0);--ring:var(--brg,#7c7c7c);--gt:var(--bac,#fff);--pl:var(--bac,#f2f2f0);--mu:var(--bmu,#6e6e6e);position:fixed;inset:0;margin:0;gap:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;color:var(--fg);overflow:hidden;background:radial-gradient(95vmin 80vmin at 50% 42%,var(--gl),transparent 70%),var(--bg)}
+.boot .dust{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;animation:bkLetter 2s ease-out .2s forwards}
+.boot .dust .tw{animation:bkTw 3.6s ease-in-out var(--d) infinite}
+.wm3{position:relative;display:flex;align-items:center;justify-content:center;font-family:"Cormorant Garamond",Georgia,"Times New Roman",serif;font-weight:500;font-size:clamp(42px,13vw,62px);line-height:1;letter-spacing:.34em;margin-right:-.34em}
+.wm3 span{display:inline-block;opacity:0;transform:translateY(.12em);animation:bkLetter 1s cubic-bezier(.2,.8,.2,1) calc(.25s + var(--i)*.13s) forwards}
+.wm3 .ring{width:.74em;height:.74em;margin-right:.34em;overflow:visible;flex:none}
+.ring circle,.ring path{fill:none}
+.ring circle,.ring .fl6{transform-origin:50px 50px}
+.ring .rg{stroke:var(--ring);stroke-width:3.2;stroke-dasharray:100;stroke-dashoffset:100;transform:rotate(-90deg);animation:bkDraw 1s cubic-bezier(.4,0,.2,1) .38s forwards}
+.ring .pl{stroke:var(--pl);stroke-width:2.4;stroke-linejoin:round;stroke-dasharray:100;stroke-dashoffset:100;animation:bkDraw .8s cubic-bezier(.4,0,.2,1) calc(1s + var(--j)*.11s) forwards}
+.ring .fl6{animation:bkSpin 24s linear 2.2s infinite}
+.ring .gt{stroke:var(--gt);stroke-width:4.4;stroke-linecap:round;stroke-dasharray:18 82;opacity:0;animation:bkLetter .5s ease-out 2.1s forwards,bkSpin 1.6s linear 2.1s infinite}
+.boot .mut{position:absolute;left:0;right:0;bottom:max(9vh,44px);margin:0;font-size:12px;letter-spacing:.14em;color:var(--mu)}
+.mk .pt{stroke-dasharray:100;stroke-dashoffset:100;animation:bkDraw .9s ease-out calc(.3s + var(--j)*.045s) forwards}
+.mk .ct{transform-box:fill-box;transform-origin:50% 50%;transform:scale(0);animation:bkPop .5s cubic-bezier(.2,.9,.25,1.4) 1s forwards}
+@keyframes bkLetter{to{opacity:1;transform:none}}
+@keyframes bkDraw{to{stroke-dashoffset:0}}
+@keyframes bkPop{to{transform:scale(1)}}
+@keyframes bkSpin{to{transform:rotate(360deg)}}
+@keyframes bkTw{0%,100%{opacity:1}50%{opacity:.25}}
+html.lite .boot .dust,html.lite .wm3 span{animation:none;opacity:1;transform:none}html.lite .boot .dust .tw{animation:none}
+html.lite .ring .rg,html.lite .ring .pl{animation:none;stroke-dashoffset:0}html.lite .ring .fl6{animation:none}html.lite .ring .gt{animation:none;opacity:0}
+html.lite .mk .pt{animation:none;stroke-dashoffset:0}html.lite .mk .ct{animation:none;transform:none}
+@media(prefers-reduced-motion:reduce){.boot .dust,.wm3 span{animation:none;opacity:1;transform:none}.boot .dust .tw{animation:none}.ring .rg,.ring .pl{animation:none;stroke-dashoffset:0}.ring .fl6{animation:none}.ring .gt{animation:none;opacity:0}.mk .pt{animation:none;stroke-dashoffset:0}.mk .ct{animation:none;transform:none}}
+@media(prefers-color-scheme:light){.boot{--bg:var(--bbg,#fff);--gl:var(--bgl,rgba(0,0,0,.035));--fg:var(--bfg,#0b0b0b);--ring:var(--brg,#8a8a8a);--gt:var(--bac,#000);--pl:var(--bac,#0b0b0b);--mu:var(--bmu,#7a7a7a)}}
+/* знак на экране входа: те же тонкие линии, рисуются и медленно вращаются */
+.bootw .mk{width:96px;height:96px;display:block;margin:0 auto;overflow:visible;animation:bkSpin 40s linear 1.4s infinite}
+html.lite .bootw .mk{animation:none}
+@media(prefers-reduced-motion:reduce){.bootw .mk{animation:none}}
+
+/* Оформление Posy (чёрно-белое и нежные цвета, список PZ в app.js). У каждого цвета свой цветок из тонких линий (PZA в app.js): applyTheme красит его в цвет оформления и кладёт в переменные --pza (большой рисунок) и --pzd (значок с линией). Места: линия под заголовком экрана, цветок справа от заголовка, главная карточка Bento (вращается или покачивается), пустые экраны, кнопки выбора цвета. Заголовки тем же шрифтом, что слово на заставке. Двигаются только сдвиг, поворот и прозрачность */
+:root[data-pz="1"]{--fd:"Cormorant Garamond",Georgia,"Times New Roman",serif}
+:root[data-pz="1"] body{background-image:radial-gradient(110vmin 60vmin at 50% -6%,color-mix(in srgb,var(--ac) 7%,transparent),transparent 70%);background-repeat:no-repeat}
+:root[data-pz="1"]:not([data-ly=p]):not([data-ly=h]) #v h1{font-family:var(--fd);font-weight:600;font-size:1.95em;letter-spacing:.005em;line-height:1.08}
+:root[data-pz="1"][data-ly=g] #v h1{font-size:32px;letter-spacing:.005em}
+:root[data-pz="1"]:not([data-ly=h]) #v h1::after{content:"";display:block;width:120px;height:16px;margin-top:7px;background:var(--pzd) left center/contain no-repeat;opacity:.8;transform-origin:0 50%}
+:root[data-pz="1"] #v.mv-in h1::after{animation:pzDiv .9s cubic-bezier(.2,.8,.2,1) both}
+/* цветок справа от заголовка (в Bento и «Командном центре»); лежит под содержимым и ничего не перекрывает */
+:root[data-pz="1"]:is([data-ly=g],[data-ly=m]) #v h1{position:relative}
+:root[data-pz="1"]:is([data-ly=g],[data-ly=m]) #v h1::before{content:"";position:absolute;right:2px;top:-10px;width:78px;height:78px;z-index:-1;background:var(--pza) center/contain no-repeat;opacity:.5;pointer-events:none}
+:root[data-pz="1"] #v.mv-in h1::before{animation:pzArt 1.1s cubic-bezier(.2,.8,.2,1) both}
+:root[data-pz="1"]:is([data-ly=g],[data-ly=m]) #v .deco{display:none}
+/* главная карточка */
+:root[data-pz="1"] .bento .b-hero{position:relative;overflow:hidden;background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 13%,var(--gl,var(--card))),var(--gl,var(--card)))}
+:root[data-pz="1"] .bento .b-hero::after{content:"";position:absolute;pointer-events:none;background:var(--pza) center/contain no-repeat;opacity:.28}
+:root[data-pz="1"][data-pzm=spin] .bento .b-hero::after{right:-38px;bottom:-38px;width:176px;height:176px;animation:bkSpin 90s linear infinite}
+:root[data-pz="1"][data-pzm=sway] .bento .b-hero::after{right:-4px;bottom:-14px;width:150px;height:150px;transform-origin:50% 100%;animation:pzSway 6s ease-in-out infinite alternate}
+:root[data-pz="1"] .bento .b-hero .btv{padding-right:70px}
+:root[data-pz="1"] .wgn{letter-spacing:.01em}
+/* цветок на пустых экранах и в «Атласе» */
+:root[data-pz="1"] .fl{width:84px;height:84px;opacity:.85}
+.pa-fl{width:96px;height:96px;display:block;margin:0 auto}
+:root[data-pz="1"] .fl.pz-sway,:root[data-pz="1"] .pa-fl.pz-sway{transform-origin:50% 100%;animation:pzSway 6s ease-in-out infinite alternate}
+:root[data-pz="1"] .fl.pz-spin,:root[data-pz="1"] .pa-fl.pz-spin{animation:bkSpin 90s linear infinite}
+:root[data-pz="1"] .btn{transition:transform .15s ease,opacity .15s ease}:root[data-pz="1"] .btn:active{transform:scale(.97)}
+@keyframes pzDiv{from{opacity:0;transform:scaleX(.35)}to{opacity:.8;transform:none}}
+@keyframes pzArt{from{opacity:0;transform:translateY(8px) scale(.92)}to{opacity:.5;transform:none}}
+@keyframes pzSway{from{transform:rotate(-2.2deg)}to{transform:rotate(2.2deg)}}
+html.lite[data-pz="1"] #v h1::after,html.lite[data-pz="1"] #v h1::before,html.lite[data-pz="1"] .bento .b-hero::after{animation:none}
+@media(prefers-reduced-motion:reduce){:root[data-pz="1"] #v h1::after,:root[data-pz="1"] #v h1::before,:root[data-pz="1"] .bento .b-hero::after,:root[data-pz="1"] .fl,:root[data-pz="1"] .pa-fl{animation:none}}
+/* выбор цвета: спокойные цвета с названиями */
+.pzl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media(min-width:560px){.pzl{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.pzt{display:flex;align-items:center;gap:10px;min-height:46px;padding:8px 12px;border:1px solid var(--line);border-radius:14px;background:var(--b);color:var(--c);font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.pzt svg{flex:none;width:24px;height:24px;stroke:var(--a);stroke-width:1}
+.pzt i{flex:none;width:18px;height:18px;border-radius:50%;background:var(--a);box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 25%,transparent)}
+.pzt.on{box-shadow:0 0 0 2px var(--ac)}
+/* знак на экране входа берёт цвет оформления */
+.bootw{color:var(--ac)}
