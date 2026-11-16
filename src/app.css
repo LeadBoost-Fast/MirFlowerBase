@@ -486,7 +486,7 @@ html.lite .bq .pp,html.lite .bq .st,html.lite .bq .fi,html.lite .bq .rb{animatio
 @media(prefers-reduced-motion:reduce){.bq{animation:none}.bq .pp,.bq .st,.bq .fi,.bq .rb{animation:none;transform:none;opacity:1}}
 
 /* Заставка подключения: чёрно-белая. Слово POSY тонкими буквами, вместо «O» ровное кольцо. Кольцо рисуется, внутри него по одному раскрываются шесть лепестков из тонких линий (цветок), потом по кольцу бежит блик, пока сайт подключается. Цвета заданы переменными в .boot и не зависят от темы, которая подключается позже */
-.boot{--bg:#070708;--gl:rgba(255,255,255,.075);--fg:#f2f2f0;--ring:rgba(242,242,240,.5);--gt:#fff;--mu:rgba(242,242,240,.42);position:fixed;inset:0;margin:0;gap:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;color:var(--fg);overflow:hidden;background:radial-gradient(95vmin 80vmin at 50% 42%,var(--gl),transparent 70%),var(--bg)}
+.boot{--bg:var(--bbg,#070708);--gl:var(--bgl,rgba(255,255,255,.075));--fg:var(--bfg,#f2f2f0);--ring:var(--brg,#7c7c7c);--gt:var(--bac,#fff);--pl:var(--bac,#f2f2f0);--mu:var(--bmu,#6e6e6e);position:fixed;inset:0;margin:0;gap:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;color:var(--fg);overflow:hidden;background:radial-gradient(95vmin 80vmin at 50% 42%,var(--gl),transparent 70%),var(--bg)}
 .boot .dust{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;animation:bkLetter 2s ease-out .2s forwards}
 .boot .dust .tw{animation:bkTw 3.6s ease-in-out var(--d) infinite}
 .wm3{position:relative;display:flex;align-items:center;justify-content:center;font-family:"Cormorant Garamond",Georgia,"Times New Roman",serif;font-weight:500;font-size:clamp(42px,13vw,62px);line-height:1;letter-spacing:.34em;margin-right:-.34em}
@@ -495,7 +495,7 @@ html.lite .bq .pp,html.lite .bq .st,html.lite .bq .fi,html.lite .bq .rb{animatio
 .ring circle,.ring path{fill:none}
 .ring circle,.ring .fl6{transform-origin:50px 50px}
 .ring .rg{stroke:var(--ring);stroke-width:3.2;stroke-dasharray:100;stroke-dashoffset:100;transform:rotate(-90deg);animation:bkDraw 1s cubic-bezier(.4,0,.2,1) .38s forwards}
-.ring .pl{stroke:var(--fg);stroke-width:2.4;stroke-linejoin:round;stroke-dasharray:100;stroke-dashoffset:100;animation:bkDraw .8s cubic-bezier(.4,0,.2,1) calc(1s + var(--j)*.11s) forwards}
+.ring .pl{stroke:var(--pl);stroke-width:2.4;stroke-linejoin:round;stroke-dasharray:100;stroke-dashoffset:100;animation:bkDraw .8s cubic-bezier(.4,0,.2,1) calc(1s + var(--j)*.11s) forwards}
 .ring .fl6{animation:bkSpin 24s linear 2.2s infinite}
 .ring .gt{stroke:var(--gt);stroke-width:4.4;stroke-linecap:round;stroke-dasharray:18 82;opacity:0;animation:bkLetter .5s ease-out 2.1s forwards,bkSpin 1.6s linear 2.1s infinite}
 .boot .mut{position:absolute;left:0;right:0;bottom:max(9vh,44px);margin:0;font-size:12px;letter-spacing:.14em;color:var(--mu)}
@@ -510,7 +510,32 @@ html.lite .boot .dust,html.lite .wm3 span{animation:none;opacity:1;transform:non
 html.lite .ring .rg,html.lite .ring .pl{animation:none;stroke-dashoffset:0}html.lite .ring .fl6{animation:none}html.lite .ring .gt{animation:none;opacity:0}
 html.lite .mk .pt{animation:none;stroke-dashoffset:0}html.lite .mk .ct{animation:none;transform:none}
 @media(prefers-reduced-motion:reduce){.boot .dust,.wm3 span{animation:none;opacity:1;transform:none}.boot .dust .tw{animation:none}.ring .rg,.ring .pl{animation:none;stroke-dashoffset:0}.ring .fl6{animation:none}.ring .gt{animation:none;opacity:0}.mk .pt{animation:none;stroke-dashoffset:0}.mk .ct{animation:none;transform:none}}
+@media(prefers-color-scheme:light){.boot{--bg:var(--bbg,#fff);--gl:var(--bgl,rgba(0,0,0,.035));--fg:var(--bfg,#0b0b0b);--ring:var(--brg,#8a8a8a);--gt:var(--bac,#000);--pl:var(--bac,#0b0b0b);--mu:var(--bmu,#7a7a7a)}}
 /* знак на экране входа: те же тонкие линии, рисуются и медленно вращаются */
 .bootw .mk{width:96px;height:96px;display:block;margin:0 auto;overflow:visible;animation:bkSpin 40s linear 1.4s infinite}
 html.lite .bootw .mk{animation:none}
 @media(prefers-reduced-motion:reduce){.bootw .mk{animation:none}}
+
+/* Оформление Posy (чёрно-белое и нежные цвета, список PZ в app.js): заголовки тем же шрифтом, что слово на заставке, под заголовком цветок в кольце с тонкой линией, на главной карточке большой цветок из линий медленно вращается. Двигаются только сдвиг, поворот и прозрачность */
+:root[data-pz="1"]{--fd:"Cormorant Garamond",Georgia,"Times New Roman",serif}
+:root[data-pz="1"] body{background-image:radial-gradient(110vmin 60vmin at 50% -6%,color-mix(in srgb,var(--ac) 7%,transparent),transparent 70%);background-repeat:no-repeat}
+:root[data-pz="1"]:not([data-ly=p]):not([data-ly=h]) #v h1{font-family:var(--fd);font-weight:600;font-size:1.95em;letter-spacing:.005em;line-height:1.08}
+:root[data-pz="1"][data-ly=g] #v h1{font-size:32px;letter-spacing:.005em}
+:root[data-pz="1"]:not([data-ly=h]) #v h1::after{content:"";display:block;width:120px;height:16px;margin-top:7px;background:var(--ac);opacity:.75;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 16%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%228%22 cy=%228%22 r=%227%22/%3E%3Cpath d=%22M8 8A7 7 0 0 1 8.00 1.00A7 7 0 0 1 8 8%22/%3E%3Cpath d=%22M8 8A7 7 0 0 1 14.06 4.50A7 7 0 0 1 8 8%22/%3E%3Cpath d=%22M8 8A7 7 0 0 1 14.06 11.50A7 7 0 0 1 8 8%22/%3E%3Cpath d=%22M8 8A7 7 0 0 1 8.00 15.00A7 7 0 0 1 8 8%22/%3E%3Cpath d=%22M8 8A7 7 0 0 1 1.94 11.50A7 7 0 0 1 8 8%22/%3E%3Cpath d=%22M8 8A7 7 0 0 1 1.94 4.50A7 7 0 0 1 8 8%22/%3E%3Cpath d=%22M22 8H120%22/%3E%3C/svg%3E") left center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 16%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%228%22 cy=%228%22 r=%227%22/%3E%3Cpath d=%22M8 8A7 7 0 0 1 8.00 1.00A7 7 0 0 1 8 8%22/%3E%3Cpath d=%22M8 8A7 7 0 0 1 14.06 4.50A7 7 0 0 1 8 8%22/%3E%3Cpath d=%22M8 8A7 7 0 0 1 14.06 11.50A7 7 0 0 1 8 8%22/%3E%3Cpath d=%22M8 8A7 7 0 0 1 8.00 15.00A7 7 0 0 1 8 8%22/%3E%3Cpath d=%22M8 8A7 7 0 0 1 1.94 11.50A7 7 0 0 1 8 8%22/%3E%3Cpath d=%22M8 8A7 7 0 0 1 1.94 4.50A7 7 0 0 1 8 8%22/%3E%3Cpath d=%22M22 8H120%22/%3E%3C/svg%3E") left center/contain no-repeat;transform-origin:0 50%}
+:root[data-pz="1"] #v.mv-in h1::after{animation:pzDiv .9s cubic-bezier(.2,.8,.2,1) both}
+:root[data-pz="1"] .bento .b-hero{position:relative;overflow:hidden;background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 13%,var(--gl,var(--card))),var(--gl,var(--card)))}
+:root[data-pz="1"] .bento .b-hero::after{content:"";position:absolute;right:-38px;bottom:-38px;width:176px;height:176px;background:var(--ac);opacity:.2;pointer-events:none;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.3%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2247%22/%3E%3Cpath d=%22M50 50A47 47 0 0 1 50.00 3.00A47 47 0 0 1 50 50%22/%3E%3Cpath d=%22M50 50A47 47 0 0 1 90.70 26.50A47 47 0 0 1 50 50%22/%3E%3Cpath d=%22M50 50A47 47 0 0 1 90.70 73.50A47 47 0 0 1 50 50%22/%3E%3Cpath d=%22M50 50A47 47 0 0 1 50.00 97.00A47 47 0 0 1 50 50%22/%3E%3Cpath d=%22M50 50A47 47 0 0 1 9.30 73.50A47 47 0 0 1 50 50%22/%3E%3Cpath d=%22M50 50A47 47 0 0 1 9.30 26.50A47 47 0 0 1 50 50%22/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.3%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2247%22/%3E%3Cpath d=%22M50 50A47 47 0 0 1 50.00 3.00A47 47 0 0 1 50 50%22/%3E%3Cpath d=%22M50 50A47 47 0 0 1 90.70 26.50A47 47 0 0 1 50 50%22/%3E%3Cpath d=%22M50 50A47 47 0 0 1 90.70 73.50A47 47 0 0 1 50 50%22/%3E%3Cpath d=%22M50 50A47 47 0 0 1 50.00 97.00A47 47 0 0 1 50 50%22/%3E%3Cpath d=%22M50 50A47 47 0 0 1 9.30 73.50A47 47 0 0 1 50 50%22/%3E%3Cpath d=%22M50 50A47 47 0 0 1 9.30 26.50A47 47 0 0 1 50 50%22/%3E%3C/svg%3E") center/contain no-repeat;animation:bkSpin 90s linear infinite}
+:root[data-pz="1"] .bento .b-hero .btv{padding-right:70px}
+:root[data-pz="1"] .wgn{letter-spacing:.01em}
+:root[data-pz="1"] .btn{transition:transform .15s ease,opacity .15s ease}:root[data-pz="1"] .btn:active{transform:scale(.97)}
+@keyframes pzDiv{from{opacity:0;transform:scaleX(.35)}to{opacity:.75;transform:none}}
+html.lite[data-pz="1"] #v h1::after,html.lite[data-pz="1"] .bento .b-hero::after{animation:none}
+@media(prefers-reduced-motion:reduce){:root[data-pz="1"] #v h1::after,:root[data-pz="1"] .bento .b-hero::after{animation:none}}
+/* выбор цвета: спокойные цвета с названиями */
+.pzl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media(min-width:560px){.pzl{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.pzt{display:flex;align-items:center;gap:10px;min-height:46px;padding:8px 12px;border:1px solid var(--line);border-radius:14px;background:var(--b);color:var(--c);font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.pzt i{flex:none;width:18px;height:18px;border-radius:50%;background:var(--a);box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 25%,transparent)}
+.pzt.on{box-shadow:0 0 0 2px var(--ac)}
+/* знак на экране входа берёт цвет оформления */
+.bootw{color:var(--ac)}

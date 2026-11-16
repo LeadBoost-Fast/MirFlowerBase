@@ -348,24 +348,32 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({dealStale:10},{merge:true})});await pg.waitForTimeout(1200);
   ok(await pg.evaluate(()=>dealStaleN()===10&&!dealAttn().includes("Давняя сделка")),"воронка: порог «без движения» меняется в настройках");
   await pg.evaluate(async(a)=>{await db.collection("settings").doc("main").set({dealStale:3},{merge:true});await db.collection("deals").doc(a).delete()},sid);await pg.context().close()}
- /* цветочное оформление «Цветник» */
+ /* оформление Posy: чёрно-белое по умолчанию, нежные цвета, «Цветник» остаётся в списке */
  {const pg=await lg("tilegen615@gmail.com");
-  ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Цветник"&&PAL0==="Цветник"&&!!PALS["Цветник"]),"оформление: по умолчанию палитра «Цветник»");
-  ok(await pg.evaluate(()=>LITE||!!document.getElementById("petals")),"оформление «Цветник»: лепестки на фоне (если не лёгкий режим)");
-  ok(await pg.evaluate(()=>!!document.querySelector('link[href*="Lora"]')),"оформление «Цветник»: подключён шрифт заголовков");
-  ok(await pg.evaluate(()=>{tab="home";draw();const h=document.querySelector(".bento .b-hero");return !!h&&getComputedStyle(h,"::after").backgroundImage.includes("svg")}),"оформление «Цветник»: пион в углу главной карточки");
+  ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Ч/Б"&&PAL0==="Ч/Б"&&document.documentElement.dataset.pz==="1"&&Object.keys(PALS)[0]==="Ч/Б"),"оформление: по умолчанию чёрно-белое, оно первое в списке");
+  ok(await pg.evaluate(()=>["Жемчуг","Нежная роза","Персик","Лаванда","Мята","Сумерки","Туман"].every(n=>PALS[n]&&PALS[n].l.length===6&&PALS[n].d.length===6&&PZ.includes(n))),"оформление: нежные цвета есть в списке (светлый и тёмный вид)");
+  ok(await pg.evaluate(()=>{const c=x=>{const n=parseInt(x.slice(1),16),f=v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(n>>16&255)+.7152*f(n>>8&255)+.0722*f(n&255)},k=(a,b)=>{const x=c(a),y=c(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)};return PZ.every(n=>["l","d"].every(m=>{const P=PALS[n][m];return k(P[3],P[0])>=7&&k(P[4],P[5])>=4.5&&k(P[4],P[0])>=3}))}),"оформление: во всех спокойных цветах текст и кнопки читаются (контраст)");
+  ok(await pg.evaluate(()=>!!document.querySelector('link[href*="Cormorant"]')),"оформление: подключён шрифт заголовков");
+  ok(await pg.evaluate(()=>{tab="home";draw();const h=document.querySelector(".bento .b-hero"),t=document.querySelector("#v h1");const m=e=>{const g=getComputedStyle(e,"::after");return (g.maskImage||g.webkitMaskImage||"").includes("svg")};return !!h&&m(h)&&!!t&&m(t)&&getComputedStyle(t).fontFamily.includes("Cormorant")}),"оформление Posy: цветок из линий на главной карточке и под заголовком, заголовок шрифтом заставки");
+  ok(await pg.evaluate(()=>{const b=JSON.parse(STO.get("bp"));return b.bg===PALS["Ч/Б"][document.documentElement.dataset.t==="dark"?"d":"l"][0]&&/^#[0-9a-f]{6}$/i.test(b.ac)}),"заставка: запоминает цвета выбранного оформления");
+  await pg.evaluate(()=>{tab="set";draw()});await pg.waitForTimeout(400);
+  ok(await pg.evaluate(()=>{tab="me";draw();const b=[...document.querySelectorAll(".pzt")];return b.length===PZ.length&&b[0].textContent.trim()==="Чёрно-белое"&&b[0].classList.contains("on")}),"профиль: спокойные цвета выбираются кнопками с названиями, чёрно-белое первое и отмечено");
+  await pg.evaluate(()=>[...document.querySelectorAll(".pzt")].find(b=>b.textContent.trim()==="Персик").click());await pg.waitForTimeout(500);
+  ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Персик"&&document.documentElement.dataset.pz==="1"&&JSON.parse(STO.get("bp")).bg===PALS["Персик"][document.documentElement.dataset.t==="dark"?"d":"l"][0]),"цвет «Персик» включается кнопкой, заставка берёт его цвета");
   await pg.evaluate(()=>setPal("Тинт"));await pg.waitForTimeout(500);
-  ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Тинт"&&!document.getElementById("petals")),"другая палитра: цветочное оформление и лепестки убираются");
+  ok(await pg.evaluate(()=>{tab="home";draw();const t=document.querySelector("#v h1");return document.documentElement.dataset.pal==="Тинт"&&!document.documentElement.dataset.pz&&!getComputedStyle(t).fontFamily.includes("Cormorant")}),"другой цвет из прежних: оформление Posy снимается");
   await pg.evaluate(()=>setPal("Цветник"));await pg.waitForTimeout(500);
-  ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Цветник"&&(LITE||!!document.getElementById("petals"))),"палитра «Цветник» включается снова");
-  ok(await pg.evaluate(()=>typeof BLOOM==="string"&&BLOOM.includes('class="mk"')&&(BLOOM.match(/class="pt"/g)||[]).length===16),"экран входа: знак цветка из тонких линий");
+  ok(await pg.evaluate(()=>document.documentElement.dataset.pal==="Цветник"&&(LITE||!!document.getElementById("petals"))),"«Цветник» остался в списке и включается (лепестки на фоне)");
+  await pg.evaluate(()=>setPal("Ч/Б"));await pg.waitForTimeout(300);
+  ok(await pg.evaluate(()=>!document.getElementById("petals")),"после «Цветника» лепестки убираются");
+  ok(await pg.evaluate(()=>typeof BLOOM==="string"&&BLOOM.includes('class="mk"')&&(BLOOM.match(/class="pt"/g)||[]).length===7&&BLOOM.includes("currentColor")),"экран входа: кольцо и шесть лепестков в цвете оформления");
   {const ih=await (await fetch("http://127.0.0.1:5078/")).text();ok(ih.includes('aria-label="Posy"')&&ih.includes('class="wm3"')&&ih.includes('class="ring"')&&(ih.match(/class="pl"/g)||[]).length===6&&!ih.includes("gl_FragColor")&&ih.includes('aria-label="Posy"')&&ih.includes("Подключение"),"заставка подключения: чёрно-белая, слово POSY, в кольце вместо «O» раскрывается цветок из шести лепестков, надпись «Подключение…» осталась")}
-  /* один раз всем включается «Цветник», дальше каждый меняет сам */
-  await pg.evaluate(()=>{STO.set("th",JSON.stringify({ui:"g",g1:1,p:"Мята",acl:"#ff0000"}));applyTheme()});
-  ok(await pg.evaluate(()=>{const t=thGet();return t.p==="Цветник"&&t.fl1===1&&!t.acl&&document.documentElement.dataset.pal==="Цветник"}),"оформление: при первом заходе всем включается «Цветник» (и сбрасывается свой цвет)");
+  /* один раз всем включается чёрно-белое, дальше каждый меняет сам */
+  await pg.evaluate(()=>{STO.set("th",JSON.stringify({ui:"g",g1:1,fl1:1,p:"Мята",acl:"#ff0000"}));applyTheme()});
+  ok(await pg.evaluate(()=>{const t=thGet();return t.p==="Ч/Б"&&t.pz1===1&&!t.acl&&document.documentElement.dataset.pal==="Ч/Б"}),"оформление: один раз всем включается чёрно-белое (и сбрасывается свой цвет)");
   await pg.evaluate(()=>{setPal("Мята");applyTheme()});
-  ok(await pg.evaluate(()=>thGet().p==="Мята"&&document.documentElement.dataset.pal==="Мята"),"оформление: после этого палитру можно сменить, она больше не сбрасывается");
-  await pg.evaluate(()=>{STO.set("th",JSON.stringify({ui:"g",g1:1,fl1:1}));applyTheme()});await pg.context().close()}
+  ok(await pg.evaluate(()=>thGet().p==="Мята"&&document.documentElement.dataset.pal==="Мята"),"оформление: после этого цвет можно сменить, он больше не сбрасывается");
+  await pg.evaluate(()=>{STO.set("th",JSON.stringify({ui:"g",g1:1,fl1:1,pz1:1}));applyTheme()});await pg.context().close()}
  {const pg=await lg("tilegen615@gmail.com");ok(await pg.evaluate(()=>!CFG.wizard),"у Mirflowers мастер настройки сам не открывается (wizard не задан)");
   ok(await pg.evaluate(()=>wzCard().includes('data-a="wz_open"')),"владелец: в «Магазине» есть кнопка «Мастер настройки магазина»");
   await pg.evaluate(()=>{wizard()});await pg.waitForTimeout(600);ok(await pg.locator("#wzf").count()===1,"мастер открылся: название, телефон, адрес, шаблон, доставка");
