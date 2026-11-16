@@ -299,7 +299,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.evaluate(()=>uizSet("m"));await pg.context().close()}
  /* доска заказов */
  {const pg=await lg("tilegen615@gmail.com");
-  await put("orders","brd1",{client:"Доска1",phone:"+7 700 000 01 01",bn:"Доска Букет",st:0,loc:"main",by:"x",date:new Date().toLocaleDateString("sv-SE"),time:"23:50",ts:Date.now()+5});
+  await put("orders","brd1",{client:"Доска1",phone:"+7 700 000 01 01",bn:"Доска Букет",st:0,loc:"main",by:"x",date:new Date().toLocaleDateString("sv-SE"),time:new Date().toTimeString().slice(0,5),ts:Date.now()+5});
   await pg.waitForTimeout(1500);
   await pg.evaluate(()=>{tab="orders";draw()});await pg.waitForTimeout(500);
   ok(await pg.evaluate(()=>ovwOn())&&await pg.locator('.chip[data-a=obv]').count()===2,"доска заказов: переключатель «Список» и «Доска» есть");
@@ -317,6 +317,37 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{ordBoard:false}},{merge:true})});await pg.waitForTimeout(1200);
   ok(await pg.evaluate(()=>{tab="orders";draw();return !ovwOn()})&&await pg.locator('.chip[data-a=obv]').count()===0,"доска заказов: выключается в настройках, переключателя нет");
   await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{ordBoard:true}},{merge:true});STO.set("obv","list")});await pg.waitForTimeout(800);await pg.context().close()}
+ /* воронка: сделка из чата, авто-закрытие по заказу, сделки без движения */
+ {const pg=await lg("tilegen615@gmail.com"),td=new Date().toLocaleDateString("sv-SE");
+  await pg.evaluate(async()=>{await db.collection("chats").doc("chq1").set({name:"Клиент Чат",ch:"wa",phone:"77011110000",last:"Хочу букет на завтра к обеду",lastTs:Date.now(),lastDir:"in",st:"open",unread:1,loc:"main"})});await pg.waitForTimeout(1500);
+  ok(await pg.evaluate(()=>{const c=CHS.find(x=>x.id==="chq1");return !!c&&chDealBar(c).includes("В воронку")&&chDealBar(c).includes("ch_dl1")}),"воронка из чата: если сделки нет, в чате кнопка «В воронку»");
+  await pg.evaluate(()=>chDealQuick(CHS.find(x=>x.id==="chq1")));await pg.waitForTimeout(1800);
+  {const dj=await pg.evaluate(()=>{const d=DL.find(x=>x.chat==="chq1");return d?JSON.stringify({t:d.title,s:d.src,p:d.phone,st:d.st,c:d.client}):"нет"});const dd=dj==="нет"?null:JSON.parse(dj);ok(!!dd&&dd.t.includes("Хочу букет")&&dd.s==="WhatsApp"&&dd.p==="+77011110000"&&+dd.st===0&&!!dd.c,"воронка из чата: сделка создана одним нажатием (название из сообщения, источник, телефон) "+dj)}
+  ok(await pg.evaluate(()=>{const c=CHS.find(x=>x.id==="chq1"),h=chDealBar(c);return h.includes("Сделка:")&&!h.includes("ch_dl1")}),"воронка из чата: когда сделка есть, в чате видно её этап");
+  const n0=await pg.evaluate(()=>DL.length);await pg.evaluate(()=>chDealQuick(CHS.find(x=>x.id==="chq1")));await pg.waitForTimeout(800);
+  ok(await pg.evaluate(n=>DL.length===n,n0),"воронка из чата: вторая сделка по тому же клиенту не создаётся");
+  /* авто-закрытие */
+  await put("orders","dlo1",{client:"Сделка Заказ",phone:"+7 700 000 03 01",bn:"Авто Букет",st:3,loc:"main",by:"x",date:td,time:"12:00",ts:Date.now()+9});
+  await pg.waitForTimeout(1200);
+  const did=await pg.evaluate(async()=>{const r=await db.collection("deals").add({fid:"sales",client:"Сделка Заказ",phone:"+7 700 000 03 01",title:"Авто Букет",p:10000,src:"WhatsApp",loc:"main",oid:"dlo1",st:1,by:U.uid,ts:Date.now(),last:Date.now(),hist:[]});return r.id});await pg.waitForTimeout(1200);
+  await pg.evaluate(async()=>{await db.collection("orders").doc("dlo1").update({st:4})});await pg.waitForTimeout(1200);
+  await pg.evaluate(()=>{DLSY=0;dealSync()});await pg.waitForTimeout(2500);
+  ok(await pg.evaluate(async id=>{const d=(await db.collection("deals").doc(id).get()).data(),f=fOf(d);return f.st[+d.st].k==="won"&&d.auto==="won"&&d.res==="Заказ выдан"&&+d.prevSt===1&&(d.hist||[]).some(h=>/закрыта автоматически/.test(h.x))},did),"воронка: когда заказ выдан, связанная сделка сама закрывается («Успешно»)");
+  await pg.evaluate(async()=>{await db.collection("orders").doc("dlo1").update({st:5})});await pg.waitForTimeout(1200);
+  await pg.evaluate(()=>{DLSY=0;dealSync()});await pg.waitForTimeout(2500);
+  ok(await pg.evaluate(async id=>{const d=(await db.collection("deals").doc(id).get()).data(),f=fOf(d);return f.st[+d.st].k==="open"&&+d.st===1&&!d.auto&&!d.res&&(d.hist||[]).some(h=>/открыта снова/.test(h.x))},did),"воронка: если заказ отменили, сделка открывается снова на прежнем этапе");
+  await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{dealAuto:false}},{merge:true})});await pg.waitForTimeout(1200);
+  await pg.evaluate(async()=>{await db.collection("orders").doc("dlo1").update({st:4})});await pg.waitForTimeout(1200);
+  await pg.evaluate(()=>{DLSY=0;dealSync()});await pg.waitForTimeout(2000);
+  ok(await pg.evaluate(async id=>{const d=(await db.collection("deals").doc(id).get()).data();return +d.st===1&&!d.auto},did),"воронка: при выключенном переключателе сделка сама не закрывается");
+  await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{dealAuto:true}},{merge:true})});await pg.waitForTimeout(800);
+  /* сделки без движения */
+  const sid=await pg.evaluate(async()=>{const r=await db.collection("deals").add({fid:"sales",client:"Давний Клиент",phone:"+7 700 000 03 02",title:"Давняя сделка",p:5000,src:"Instagram",loc:"main",oid:"",st:0,by:U.uid,ts:Date.now()-6*864e5,last:Date.now()-5*864e5,hist:[]});return r.id});await pg.waitForTimeout(1200);
+  ok(await pg.evaluate(()=>{const d=DL.find(x=>x.title==="Давняя сделка");return !!d&&dealStale(d)&&dealAttn().includes("Давняя сделка")&&dealAttn().includes("Требует внимания")}),"воронка: сделка без движения 5 дней попадает в «Требует внимания»");
+  ok(await pg.evaluate(()=>WG.funw.r().includes("без движения")),"воронка: блок на главной показывает число сделок без движения");
+  await pg.evaluate(async()=>{await db.collection("settings").doc("main").set({dealStale:10},{merge:true})});await pg.waitForTimeout(1200);
+  ok(await pg.evaluate(()=>dealStaleN()===10&&!dealAttn().includes("Давняя сделка")),"воронка: порог «без движения» меняется в настройках");
+  await pg.evaluate(async(a)=>{await db.collection("settings").doc("main").set({dealStale:3},{merge:true});await db.collection("deals").doc(a).delete()},sid);await pg.context().close()}
  {const pg=await lg("tilegen615@gmail.com");ok(await pg.evaluate(()=>!CFG.wizard),"у Mirflowers мастер настройки сам не открывается (wizard не задан)");
   ok(await pg.evaluate(()=>wzCard().includes('data-a="wz_open"')),"владелец: в «Магазине» есть кнопка «Мастер настройки магазина»");
   await pg.evaluate(()=>{wizard()});await pg.waitForTimeout(600);ok(await pg.locator("#wzf").count()===1,"мастер открылся: название, телефон, адрес, шаблон, доставка");
@@ -342,7 +373,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.evaluate(()=>{SETS="adv";draw()});await pg.waitForTimeout(500);ok(await pg.locator("details.adv").count()>=3&&await pg.locator("details.adv[open]").count()===0,"«Дополнительно»: блоки свёрнуты");
   await pg.evaluate(()=>{SETS="fx";draw()});await pg.waitForTimeout(500);ok(await pg.locator("details.adv[open] #fxf").count()===1,"старое значение «fx» открывает «Дополнительно» с раскрытыми возможностями");
   const lens=await pg.evaluate(()=>Object.keys(FXD).map(k=>(FXS[k]||"").length));ok(lens.every(n=>n>0&&n<45),"подписи переключателей короткие: "+lens.join(","));
-  ok(await pg.locator("#fxf .hint-btn").count()===15,"у каждого переключателя есть значок «?»");
+  ok(await pg.locator("#fxf .hint-btn").count()===16,"у каждого переключателя есть значок «?»");
   await pg.locator("#fxf .hint-btn").first().click();await pg.waitForTimeout(400);ok((await pg.locator("#modal, .modal, [role=dialog]").first().textContent().catch(()=>"" )).length>20||await pg.locator('[data-a=x]').count()>0,"по значку «?» открывается пояснение");
   await pg.evaluate(()=>modal(""));
   await pg.evaluate(()=>{tab="home";draw()});await pg.waitForTimeout(800);ok(!(await pg.locator("#v").textContent()).includes("Срочных дел нет"),"на главной нет пустой карточки «Всё сделано»");
@@ -408,7 +439,7 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   ok(await fl.evaluate(()=>!layLocked()),"замок снят: флорист снова может расставлять");
   await ow.evaluate(()=>db.collection("layouts").doc("role_florist").delete());await ow.context().close();await fl.context().close()}
  /* 4n. живая картина */
- {const pg=await lg("adm@x.kz");const flId=await pg.evaluate(()=>Object.keys(SF).find(i=>SF[i].email==="fl@x.kz")),opId=await pg.evaluate(()=>Object.keys(SF).find(i=>SF[i].email==="op@x.kz")),td=new Date().toLocaleDateString("sv-SE"),now=Date.now();
+ {const pg=await lg("adm@x.kz");const flId=await pg.evaluate(()=>Object.keys(SF).find(i=>SF[i].email==="fl@x.kz")),opId=await pg.evaluate(()=>Object.keys(SF).find(i=>SF[i].email==="op@x.kz")),td=new Date().toLocaleDateString("sv-SE"),now=Math.max(Date.now(),new Date().setHours(4,0,0,0));/* ночью события «3 часа назад» попали бы во вчера */
   await put("orders","lv1",{client:"Лайв1",phone:"+7 700 000 11 11",bn:"Букет А",st:2,loc:"main",date:td,time:"23:30",by:opId,takenBy:flId,asm:flId,createdAt:now-1.2e7,takenAt:now-1.1e7,readyAt:now-7.2e6,ts:now-1.2e7});
   await put("orders","lv2",{client:"Лайв2",phone:"+7 700 000 22 22",bn:"Букет Б",st:1,loc:"main",date:td,time:"23:30",by:opId,takenBy:flId,createdAt:now-3.6e6,takenAt:now-3e6,ts:now-3.6e6});
   await put("orders","lv3",{client:"Лайв3",phone:"+7 700 000 33 33",bn:"Букет В",st:1,loc:"main",date:td,time:"00:01",by:opId,createdAt:now-1.4e7,ts:now-1.4e7});
