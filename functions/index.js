@@ -517,3 +517,29 @@ exports.auditOrders=audFn("orders");
 exports.auditShowcase=audFn("showcase");
 exports.auditShifts=audFn("shiftLog");
 exports.auditStaff=audFn("staff");
+
+// ===== Склад под контролем: правка остатка без записи в истории =====
+// Сайт меняет остаток и пишет запись в «Историю склада» (stockMovements) одной операцией.
+// Если остаток изменился, а записи нет (правка в обход сайта, ошибка) или позицию удалили с остатком,
+// сервер пишет в журнал audit отметку «важное» с именем сотрудника. Подделать имя нельзя: берётся вход сотрудника.
+const invQ=d=>{if(!d)return{};if(d.qs&&typeof d.qs==="object"){const r={};Object.keys(d.qs).forEach(k=>{r[k]=+d.qs[k]||0});return r}return{"":+d.qty||0}};
+exports.auditInventory=onDocumentWrittenWithAuthContext({document:"inventory/{id}"},async e=>{
+  const b=e.data&&e.data.before&&e.data.before.exists?e.data.before.data():null;
+  const a=e.data&&e.data.after&&e.data.after.exists?e.data.after.data():null;
+  if(!b)return;// новая позиция: не правка
+  const db=admin.firestore(),id=e.params.id,qb=invQ(b),qa=invQ(a),locs=new Set([...Object.keys(qb),...Object.keys(qa)]),bad=[];
+  if(!a){const left=Object.values(qb).reduce((s,v)=>s+v,0);if(left>0)bad.push(["",left,0])}
+  else for(const L of locs){const x=qb[L]||0,y=qa[L]||0;if(x===y)continue;
+    let ok=false;
+    // запись истории с тем же «стало» (по точке или общим остатком) за последние 10 минут
+    const near=async v=>{const s=await db.collection("stockMovements").where("iid","==",id).where("after","==",v).get(),now=Date.now();
+      return s.docs.some(d=>{const t=d.data().ts;const ms=t&&typeof t.toMillis==="function"?t.toMillis():0;return Math.abs(now-ms)<10*60*1000})};
+    try{ok=await near(y)||(L!==""&&await near(+a.qty||0))}catch(x){ok=true}
+    if(!ok)bad.push([L,x,y])}
+  if(!bad.length)return;
+  const uid=String(e.authId||"");let who="";
+  if(uid){try{const s=await db.doc("staff/"+uid).get();who=(s.exists&&s.data().name)||""}catch(x){}}
+  else who=e.authType==="system"?"сервер":(e.authType||"");
+  for(const[L,x,y] of bad)await db.collection("audit").add({ms:Date.now(),col:"inventory",id,kind:a?"update":"delete",uid,who,ch:{qty:[x,y]},flag:true,
+    bn:String((a||b).name||"").slice(0,120),unit:String((a||b).unit||""),client:"",loc:L||String((a||b).loc||""),sum:0});
+});
