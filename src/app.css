@@ -660,3 +660,25 @@ html.lite[data-pz="1"] #v h1::after,html.lite[data-pz="1"] #v h1::before,html.li
 .pvo{margin-top:8px;font-size:13px}.pvo .ln{padding:5px 0}.pvo .ln span:last-child{text-align:right}
 .pvths{display:flex;gap:8px;margin-top:8px;cursor:pointer}.pvthumb{width:72px;height:72px;object-fit:cover;border-radius:10px;display:block;background:var(--c2)}
 .rcpt{white-space:pre-wrap;font:inherit;font-size:14px;line-height:1.5;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:8px 0}
+/* Задачи на смену */
+.ckc summary{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;list-style:none}
+.ckc summary::-webkit-details-marker{display:none}
+.ckc .sbar{margin:10px 0 6px}
+.cki{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:10px 2px;border-top:1px solid var(--line);cursor:pointer;font-size:15px;line-height:1.35}
+.cki:first-of-type{border-top:0}
+.cki .ckb{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:15px;font-weight:700;color:var(--on);background:transparent}
+.cki.on .ckb{background:var(--ok,#16a34a);border-color:var(--ok,#16a34a);color:#fff}
+.cki .ckt{flex:1;min-width:0}
+.cki.on .ckt{color:var(--mut);text-decoration:line-through}
+.cki small{flex:none;color:var(--mut);font-size:12px}
+.cki .ckp{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:var(--ac);text-decoration:none;white-space:nowrap}
+.cki .ckp .ei{width:13px;height:13px}
+.cki:focus-visible{outline:2px solid var(--ac);outline-offset:2px;border-radius:8px}
+.ckc.done{opacity:.92}
+/* Премия за план дня */
+.prc .prv{display:flex;align-items:baseline;gap:8px;margin:8px 0 2px}.prc .prv b{font-size:24px}
+.prt{overflow-x:auto;margin:8px 0}
+.prh,.prr{display:grid;grid-template-columns:repeat(5,minmax(84px,1fr));gap:6px;min-width:440px}
+.prh span{font-size:12px;color:var(--mut);line-height:1.2;padding:0 2px}
+.prr{margin-bottom:6px}.prr input{min-height:42px;padding:8px}
+details .prr{grid-template-columns:repeat(4,minmax(70px,1fr));min-width:0}

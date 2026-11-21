@@ -319,6 +319,12 @@ service cloud.firestore {
     }
 
     // Журнал изменений на сервере: пишет только функция (audit*), с сайта ни создать, ни изменить, ни удалить
+    // Задачи на смену: сотрудник пишет только свои отметки (документ {uid}_{день}); читают сам сотрудник, админ и владелец
+    match /checks/{id} {
+      allow read: if isAdmin() || isOwner() || (isActive() && id.matches(request.auth.uid + '_.*'));
+      allow create, update: if isActive() && id.matches(request.auth.uid + '_.*') && request.resource.data.uid == request.auth.uid;
+      allow delete: if isOwner();
+    }
     match /audit/{id} {
       allow read: if isAdmin() || isOwner();
       allow write: if false;
