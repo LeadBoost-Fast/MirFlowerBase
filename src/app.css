@@ -705,3 +705,7 @@ details .prr{grid-template-columns:repeat(4,minmax(70px,1fr));min-width:0}
 /* «Ещё»: число у вкладки — рядом с названием, а не поверх букв */
 .mg.mg2 .mgs .nb{position:static;display:inline-grid;place-items:center;margin-left:6px;min-width:20px;height:20px;padding:0 6px;font-size:11px;line-height:1}
 .mg.mg2 .mgh .nb{position:static;display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 7px;font-size:12px}
+.pkc{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.pkc button{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:4px 10px;min-height:30px;font-size:12px;cursor:pointer}
+.pkc button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chrsb{display:flex;gap:12px;flex:none}
