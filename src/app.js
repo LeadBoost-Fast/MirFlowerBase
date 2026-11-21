@@ -222,7 +222,7 @@ st.textContent=`:root[data-t=${e}]{--bg:${P[0]};--card:${P[1]};--c2:${P[2]};--in
 if(tc)tc.content=P[0];try{floraSync(pn)}catch(e){eLog(e)}try{dsgAfter()}catch(e){}}
 const UIS=["g","h","m","p"];/* у каждого — своя архитектура экранов */
 /* Тяжёлые дизайны лежат в отдельных файлах и грузятся только когда выбраны (пока файл не загрузился, работает Bento) */
-const DLIB={h:"d-cosmos.js",m:"d-command.js",p:"d-atlas.js"},DSTAT={},DSG_V=window.DSGV||"20261121n",
+const DLIB={h:"d-cosmos.js",m:"d-command.js",p:"d-atlas.js"},DSTAT={},DSG_V=window.DSGV||"20261121o",
  dsgReady=k=>k==="g"||DSTAT[k]===2,uiSel=()=>{try{const u=JSON.parse(STO.get("th")||"{}").ui;return UIS.includes(u)?u:"g"}catch(e){return"g"}},
  dsgAfter=()=>{const x=SHELL[LY()];if(x&&x.after)x.after()};
 function dsgLoad(k){if(!DLIB[k]||DSTAT[k]===1||DSTAT[k]===2)return;DSTAT[k]=1;const e=document.createElement("script");e.src=DLIB[k]+"?v="+DSG_V;e.async=true;
