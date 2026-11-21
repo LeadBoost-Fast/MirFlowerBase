@@ -222,7 +222,7 @@ st.textContent=`:root[data-t=${e}]{--bg:${P[0]};--card:${P[1]};--c2:${P[2]};--in
 if(tc)tc.content=P[0];try{floraSync(pn)}catch(e){eLog(e)}try{dsgAfter()}catch(e){}}
 const UIS=["g","h","m","p"];/* у каждого — своя архитектура экранов */
 /* Тяжёлые дизайны лежат в отдельных файлах и грузятся только когда выбраны (пока файл не загрузился, работает Bento) */
-const DLIB={h:"d-cosmos.js",m:"d-command.js",p:"d-atlas.js"},DSTAT={},DSG_V=window.DSGV||"20261121p",
+const DLIB={h:"d-cosmos.js",m:"d-command.js",p:"d-atlas.js"},DSTAT={},DSG_V=window.DSGV||"20261121q",
  dsgReady=k=>k==="g"||DSTAT[k]===2,uiSel=()=>{try{const u=JSON.parse(STO.get("th")||"{}").ui;return UIS.includes(u)?u:"g"}catch(e){return"g"}},
  dsgAfter=()=>{const x=SHELL[LY()];if(x&&x.after)x.after()};
 function dsgLoad(k){if(!DLIB[k]||DSTAT[k]===1||DSTAT[k]===2)return;DSTAT[k]=1;const e=document.createElement("script");e.src=DLIB[k]+"?v="+DSG_V;e.async=true;
@@ -383,7 +383,7 @@ function login(msg){subs.forEach(u=>u());subs=[];$("nav").hidden=true;$("v").inn
  $("rs").onclick=()=>run(async()=>{const m=$("em").value.trim();if(!m)return toast("Введите email");await auth.sendPasswordResetEmail(m);toast("Письмо для сброса отправлено")})}
 
 let __authDone=0;setTimeout(()=>{if(!__authDone&&typeof login==="function"){try{login("Нет ответа от входа. Проверьте интернет и Authorized domains в Firebase.")}catch(e){eLog(e)}}},10000);
-auth.onAuthStateChanged(async u=>{await FSREADY;__authDone=1;U=u;S=null;if(typeof draw==="function")draw.ob=0;O=[];ON=0;OX=new Map();OXR={date:[],ts:[]};UPON=0;SF={};PRS=[];INV=[];INV0=[];CST={};DL=[];SB=[];if(SBSUB){try{SBSUB()}catch(e){}SBSUB=null}BQ=[];GLR=[];LG=[];AUD=[];VS=[];CU={};SC=[];LD=[];EX=[];SHL=[];SR=[];RP=[];BL=[];CHS=[];CHERR="";chStop();ORD0=false;TCM=[];TCERR="";tcLast=0;NP=null;subs.forEach(f=>f());subs=[];if(!u)return login();
+auth.onAuthStateChanged(async u=>{await FSREADY;__authDone=1;try{sessionStorage.removeItem("bootRl")}catch(e){}U=u;S=null;if(typeof draw==="function")draw.ob=0;O=[];ON=0;OX=new Map();OXR={date:[],ts:[]};UPON=0;SF={};PRS=[];INV=[];INV0=[];CST={};DL=[];SB=[];if(SBSUB){try{SBSUB()}catch(e){}SBSUB=null}BQ=[];GLR=[];LG=[];AUD=[];VS=[];CU={};SC=[];LD=[];EX=[];SHL=[];SR=[];RP=[];BL=[];CHS=[];CHERR="";chStop();ORD0=false;TCM=[];TCERR="";tcLast=0;NP=null;subs.forEach(f=>f());subs=[];if(!u)return login();
  try{const d=await db.collection("staff").doc(u.uid).get();const s=d.exists?d.data():null;if(s&&s.active===true&&(s.role==="owner"||isOwnEm(u.email))){s.own=true;s.head=String(u.email||"").toLowerCase()===HEAD_EM;s.role="admin"}
   if(!s||s.active!==true||!RL[s.role]){await auth.signOut();return login(!s?"Профиль сотрудника не создан. Обратитесь к администратору.":"Аккаунт отключён или роль не задана.")}
   S=s;try{const hd=localStorage.getItem("hangDiag");if(hd){localStorage.removeItem("hangDiag");setTimeout(()=>log("Связь зависла (диагностика)",{bn:""},hd.slice(0,2000)),3000)}}catch(e){eLog(e)}if(s.role!=="admin"&&s.role!=="courier"&&s.loc)LOC=s.loc;try{if(!sessionStorage.getItem("lg")){sessionStorage.setItem("lg","1");log("Вход в систему",{bn:""})}}catch(x){eLog(x)}
