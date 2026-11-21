@@ -682,3 +682,5 @@ html.lite[data-pz="1"] #v h1::after,html.lite[data-pz="1"] #v h1::before,html.li
 .prh span{font-size:12px;color:var(--mut);line-height:1.2;padding:0 2px}
 .prr{margin-bottom:6px}.prr input{min-height:42px;padding:8px}
 details .prr{grid-template-columns:repeat(4,minmax(70px,1fr));min-width:0}
+.pkl{margin-top:6px;font-size:13px;color:var(--mut)}.pkl b{color:var(--ink)}
+.skcat{margin:10px 0 4px}
