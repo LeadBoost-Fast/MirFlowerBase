@@ -693,3 +693,12 @@ details .prr{grid-template-columns:repeat(4,minmax(70px,1fr));min-width:0}
 .mg.mg2 .mgs button{flex-direction:row;padding:8px 12px;border-radius:999px;font-size:13px;font-weight:600;gap:4px;background:color-mix(in srgb,var(--ink) 5%,transparent);border:0}
 .chrs{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 14px;font-size:13px;color:var(--mut);background:color-mix(in srgb,var(--ink) 4%,transparent)}
 .chrs.free{color:var(--ink);background:color-mix(in srgb,var(--warn,#f59e0b) 12%,transparent)}
+/* Главная: у каждого блока свой цвет-метка, чтобы блоки не сливались в одну страницу */
+.shc{border-left:4px solid var(--ok,#16a34a)}.shc.shc1,.shc:not(.on){border-left-color:color-mix(in srgb,var(--mut) 55%,transparent)}
+.nxt{border-left:4px solid #7c5cff}.nxt.empty{border-left-color:color-mix(in srgb,#7c5cff 40%,transparent)}
+.prc{border-left:4px solid #16a34a;background:linear-gradient(135deg,color-mix(in srgb,#16a34a 7%,var(--card)),var(--card) 60%)}
+.ckc{border-left:4px solid #f59e0b;background:linear-gradient(135deg,color-mix(in srgb,#f59e0b 7%,var(--card)),var(--card) 60%)}
+.ckc.done{border-left-color:#16a34a}
+.tdt{border-left:4px solid #ef4444}
+.wgt{border-left:4px solid color-mix(in srgb,var(--ac) 60%,transparent);padding-left:12px}
+#v>.card+.card,#v>details.card+.card,#v>.card+details.card{margin-top:14px}
