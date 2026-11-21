@@ -191,9 +191,9 @@ service cloud.firestore {
       allow delete: if isAdmin() || isOwner();
     }
     match /reports/{id} {
-      allow read: if isAdmin() || isOwner() || (isWork() && resource.data.by == request.auth.uid);
+      allow read: if isAdmin() || isOwner() || abil('woOk') || (isWork() && resource.data.by == request.auth.uid);
       allow create: if isWork() && request.resource.data.by == request.auth.uid;
-      allow update: if isAdmin() || isOwner();
+      allow update: if isAdmin() || isOwner() || (isWork() && abil('woOk'));
       allow delete: if isAdmin() || isOwner();
     }
 
@@ -279,6 +279,23 @@ service cloud.firestore {
 
     // Онлайн-витрина (страница vitrina.html для клиентов): один документ pubShop/main, читать может кто угодно по адресу.
     // Настройки, список фото и отзывы пишут владелец и админ. Здесь нет персональных данных.
+    // Заявки с каталога для клиентов (vitrina.html): создать может любой посетитель, только эти поля и короткие;
+    // читать и разбирать — сотрудники с доступом к клиентам. Сайт сам переносит их в «Заявки» / «Воронку».
+    match /webLeads/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['name','phone','item','iid','price','date','time','dv','addr','wish','st','ts'])
+        && request.resource.data.st == 'new'
+        && request.resource.data.name is string && request.resource.data.name.size() <= 60
+        && request.resource.data.phone is string && request.resource.data.phone.size() <= 20
+        && request.resource.data.item is string && request.resource.data.item.size() <= 80
+        && request.resource.data.iid is string && request.resource.data.iid.size() <= 40
+        && request.resource.data.addr is string && request.resource.data.addr.size() <= 160
+        && request.resource.data.wish is string && request.resource.data.wish.size() <= 400
+        && request.resource.data.date is string && request.resource.data.date.size() <= 10
+        && request.resource.data.time is string && request.resource.data.time.size() <= 5
+        && request.resource.data.price is int && request.resource.data.dv is bool && request.resource.data.ts is int;
+      allow read, update: if canCrm();
+      allow delete: if isAdmin() || isOwner();
+    }
     match /pubShop/{id} {
       allow get: if true;
       allow create, update: if (isOwner() || isAdmin())
