@@ -74,6 +74,8 @@ service cloud.firestore {
       return setsSelfOrEmpty(d, k, 'paidBy')
         && setsSelfOrEmpty(d, k, 'accBy')
         && setsSelfOrEmpty(d, k, 'asm')
+        // проверку оплаты (подтвердить / не принять) ставят только админ и владелец
+        && (!k.hasAny(['pvSt','pvSig','pvBy','pvAt','pvNote']) || boss)
         // взять в работу: свободный/новый заказ или передача, адресованная мне
         && (!k.hasAny(['takenBy']) || boss
             || (d.takenBy == request.auth.uid
@@ -98,6 +100,7 @@ service cloud.firestore {
       // Курьер читает заказы (в интерфейсе показываем только доставки: свои и свободные)
       allow read: if isWork() || isCourier();
       allow create: if isMgr() && (request.resource.data.get('paid', false) != true || isOpRole())
+        && (!('pvSt' in request.resource.data) || isAdmin() || isOwner())
         && request.resource.data.get('by', request.auth.uid) == request.auth.uid
         && request.resource.data.get('paidBy', request.auth.uid) == request.auth.uid;
       allow update: if (isWork() && orderMarksOk()

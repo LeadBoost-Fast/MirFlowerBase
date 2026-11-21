@@ -634,3 +634,29 @@ html.lite[data-pz="1"] #v h1::after,html.lite[data-pz="1"] #v h1::before,html.li
 /* Повод написать клиенту */
 .remc .acts{flex-wrap:wrap}
 .remc a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+/* Выбор файла: своя кнопка вместо системной */
+.fpick{position:relative;display:flex;align-items:center;gap:10px;min-height:48px;padding:6px;border:1px dashed var(--line);border-radius:12px;background:var(--card);cursor:pointer;margin:4px 0 8px}
+.fpick .fhid{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;margin:0;padding:0}
+.fpick .fpb{flex:none;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:var(--ac);color:var(--on);font-size:14px;font-weight:600;text-transform:none;letter-spacing:0}
+.fpick .fpb .ei{width:18px;height:18px;color:var(--on)}
+.fpick .fpn{flex:1;min-width:0;font-size:13px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:none;letter-spacing:0}
+.fpick.on{border-style:solid;border-color:var(--ac)}
+.fpick.on .fpn{color:var(--ink)}
+.fpick:focus-within{outline:2px solid var(--ac);outline-offset:2px}
+.dtr{display:block;margin:-4px 2px 8px;font-size:13px}
+.dtr:empty{display:none}
+/* фото в отчётах видны всегда, и в лёгком режиме */
+.rpimg{width:84px;height:84px;object-fit:cover;border-radius:12px;display:block;background:var(--c2)}
+/* плашка «есть обновление»: не мешает работать, нажатие обновляет сайт */
+.updb{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 8px);z-index:90;border:0;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;background:var(--ink);color:var(--bg);box-shadow:0 4px 14px rgba(0,0,0,.18);cursor:pointer}
+/* форма заказа: «Время уточняется» и «Откуда клиент» — кнопками */
+.tuchip,.srcch .chip{position:relative;cursor:pointer;user-select:none}
+.tuchip{display:inline-flex;margin:2px 0 8px}
+.tuchip input,.srcch .chip input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.tuchip:has(input:checked),.srcch .chip:has(input:checked){background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tuchip:focus-within,.srcch .chip:focus-within{outline:2px solid var(--ac);outline-offset:2px}
+/* Проверка оплат */
+.pvc{padding:14px 16px}.pvh{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.pvh b{min-width:0}.pvs{display:inline-flex;align-items:center;gap:4px;flex:none}.pvs .ei{width:13px;height:13px;flex:none}.pvm{margin-top:4px;font-size:13px}.pvn{margin:8px 0 2px;padding:8px 12px;border-radius:12px;background:color-mix(in srgb,var(--warn) 10%,transparent);font-size:13px;line-height:1.4}
+.pvo{margin-top:8px;font-size:13px}.pvo .ln{padding:5px 0}.pvo .ln span:last-child{text-align:right}
+.pvths{display:flex;gap:8px;margin-top:8px;cursor:pointer}.pvthumb{width:72px;height:72px;object-fit:cover;border-radius:10px;display:block;background:var(--c2)}
+.rcpt{white-space:pre-wrap;font:inherit;font-size:14px;line-height:1.5;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:8px 0}
