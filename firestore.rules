@@ -157,7 +157,7 @@ service cloud.firestore {
       allow read, create: if isWork();
       allow update: if isAdmin() || isOwner() || (isWork() && abil('stockEdit'))
         || (isWork() && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['qty','qs','lt','recv','updatedAt','img','shelf','sup']));
+              .hasOnly(['qty','qs','lt','recv','updatedAt','img','shelf','sup','pkOpen','pkHist','pkAuto']));
       allow delete: if isAdmin() || isOwner();
     }
     match /invcost/{id}         { allow read, write: if isOwner(); }
