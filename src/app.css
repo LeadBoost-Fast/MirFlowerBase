@@ -634,3 +634,71 @@ html.lite[data-pz="1"] #v h1::after,html.lite[data-pz="1"] #v h1::before,html.li
 /* Повод написать клиенту */
 .remc .acts{flex-wrap:wrap}
 .remc a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+/* Выбор файла: своя кнопка вместо системной */
+.fpick{position:relative;display:flex;align-items:center;gap:10px;min-height:48px;padding:6px;border:1px dashed var(--line);border-radius:12px;background:var(--card);cursor:pointer;margin:4px 0 8px}
+.fpick .fhid{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;margin:0;padding:0}
+.fpick .fpb{flex:none;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:var(--ac);color:var(--on);font-size:14px;font-weight:600;text-transform:none;letter-spacing:0}
+.fpick .fpb .ei{width:18px;height:18px;color:var(--on)}
+.fpick .fpn{flex:1;min-width:0;font-size:13px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:none;letter-spacing:0}
+.fpick.on{border-style:solid;border-color:var(--ac)}
+.fpick.on .fpn{color:var(--ink)}
+.fpick:focus-within{outline:2px solid var(--ac);outline-offset:2px}
+.dtr{display:block;margin:-4px 2px 8px;font-size:13px}
+.dtr:empty{display:none}
+/* фото в отчётах видны всегда, и в лёгком режиме */
+.rpimg{width:84px;height:84px;object-fit:cover;border-radius:12px;display:block;background:var(--c2)}
+/* плашка «есть обновление»: не мешает работать, нажатие обновляет сайт */
+.updb{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 8px);z-index:90;border:0;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;background:var(--ink);color:var(--bg);box-shadow:0 4px 14px rgba(0,0,0,.18);cursor:pointer}
+/* форма заказа: «Время уточняется» и «Откуда клиент» — кнопками */
+.tuchip,.srcch .chip{position:relative;cursor:pointer;user-select:none}
+.tuchip{display:inline-flex;margin:2px 0 8px}
+.tuchip input,.srcch .chip input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.tuchip:has(input:checked),.srcch .chip:has(input:checked){background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tuchip:focus-within,.srcch .chip:focus-within{outline:2px solid var(--ac);outline-offset:2px}
+/* Проверка оплат */
+.pvc{padding:14px 16px}.pvh{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.pvh b{min-width:0}.pvs{display:inline-flex;align-items:center;gap:4px;flex:none}.pvs .ei{width:13px;height:13px;flex:none}.pvm{margin-top:4px;font-size:13px}.pvn{margin:8px 0 2px;padding:8px 12px;border-radius:12px;background:color-mix(in srgb,var(--warn) 10%,transparent);font-size:13px;line-height:1.4}
+.pvo{margin-top:8px;font-size:13px}.pvo .ln{padding:5px 0}.pvo .ln span:last-child{text-align:right}
+.pvths{display:flex;gap:8px;margin-top:8px;cursor:pointer}.pvthumb{width:72px;height:72px;object-fit:cover;border-radius:10px;display:block;background:var(--c2)}
+.rcpt{white-space:pre-wrap;font:inherit;font-size:14px;line-height:1.5;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:8px 0}
+/* Задачи на смену */
+.ckc summary{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;list-style:none}
+.ckc summary::-webkit-details-marker{display:none}
+.ckc .sbar{margin:10px 0 6px}
+.cki{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:10px 2px;border-top:1px solid var(--line);cursor:pointer;font-size:15px;line-height:1.35}
+.cki:first-of-type{border-top:0}
+.cki .ckb{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:15px;font-weight:700;color:var(--on);background:transparent}
+.cki.on .ckb{background:var(--ok,#16a34a);border-color:var(--ok,#16a34a);color:#fff}
+.cki .ckt{flex:1;min-width:0}
+.cki.on .ckt{color:var(--mut);text-decoration:line-through}
+.cki small{flex:none;color:var(--mut);font-size:12px}
+.cki .ckp{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:var(--ac);text-decoration:none;white-space:nowrap}
+.cki .ckp .ei{width:13px;height:13px}
+.cki:focus-visible{outline:2px solid var(--ac);outline-offset:2px;border-radius:8px}
+.ckc.done{opacity:.92}
+/* Премия за план дня */
+.prc .prv{display:flex;align-items:baseline;gap:8px;margin:8px 0 2px}.prc .prv b{font-size:24px}
+.prt{overflow-x:auto;margin:8px 0}
+.prh,.prr{display:grid;grid-template-columns:repeat(5,minmax(84px,1fr));gap:6px;min-width:440px}
+.prh span{font-size:12px;color:var(--mut);line-height:1.2;padding:0 2px}
+.prr{margin-bottom:6px}.prr input{min-height:42px;padding:8px}
+details .prr{grid-template-columns:repeat(4,minmax(70px,1fr));min-width:0}
+.pkl{margin-top:6px;font-size:13px;color:var(--mut)}.pkl b{color:var(--ink)}
+.skcat{margin:10px 0 4px}
+/* «Ещё»: раздел и его вкладки */
+.mg.mg2{grid-template-columns:1fr;gap:10px}
+.mg2 .mgc{background:var(--card);border:1px solid color-mix(in srgb,var(--line) 55%,transparent);border-radius:20px;padding:6px}
+.mg.mg2 .mgh{width:100%;flex-direction:row;justify-content:flex-start;gap:12px;padding:10px 10px;border:0;background:transparent;font-size:16px;border-radius:14px}
+.mg2 .mgh .nb{margin-left:auto}
+.mg2 .mgs{display:flex;flex-wrap:wrap;gap:6px;padding:0 8px 8px 8px}
+.mg.mg2 .mgs button{flex-direction:row;padding:8px 12px;border-radius:999px;font-size:13px;font-weight:600;gap:4px;background:color-mix(in srgb,var(--ink) 5%,transparent);border:0}
+.chrs{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 14px;font-size:13px;color:var(--mut);background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.chrs.free{color:var(--ink);background:color-mix(in srgb,var(--warn,#f59e0b) 12%,transparent)}
+/* Главная: у каждого блока свой цвет-метка, чтобы блоки не сливались в одну страницу */
+.shc{border-left:4px solid var(--ok,#16a34a)}.shc.shc1,.shc:not(.on){border-left-color:color-mix(in srgb,var(--mut) 55%,transparent)}
+.nxt{border-left:4px solid #7c5cff}.nxt.empty{border-left-color:color-mix(in srgb,#7c5cff 40%,transparent)}
+.prc{border-left:4px solid #16a34a;background:linear-gradient(135deg,color-mix(in srgb,#16a34a 7%,var(--card)),var(--card) 60%)}
+.ckc{border-left:4px solid #f59e0b;background:linear-gradient(135deg,color-mix(in srgb,#f59e0b 7%,var(--card)),var(--card) 60%)}
+.ckc.done{border-left-color:#16a34a}
+.tdt{border-left:4px solid #ef4444}
+.wgt{border-left:4px solid color-mix(in srgb,var(--ac) 60%,transparent);padding-left:12px}
+#v>.card+.card,#v>details.card+.card,#v>.card+details.card{margin-top:14px}

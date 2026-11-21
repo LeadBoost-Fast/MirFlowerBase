@@ -477,7 +477,7 @@ exports.reviewIn=onDocumentCreated({...OPT,document:"reviews/{tok}"},async e=>{
 // Следим только за полями, где могут «пропасть» деньги: цена, доставка, предоплата, скидка, оплата, способ оплаты,
 // отмена, бонусы, гонорар курьеру; витрина (продажа, списание, цена); смены (начало и конец); роли и доступ сотрудников.
 const AUDF={
-  orders:["p","fee","pre","disc","paid","pay","st","bu","cpay","wrap"],
+  orders:["p","fee","pre","disc","paid","pay","st","bu","cpay","wrap","pvSt","chk","pchk"],
   showcase:["st","price"],
   shiftLog:["start","end"],
   staff:["role","perms","active","title","loc"]
@@ -488,7 +488,7 @@ function audFlag(col,kind,b,a,ch){
   if(col==="orders"){
     if(kind==="create")return false;
     const dn=k=>ch[k]&&(+ch[k][1]||0)<(+ch[k][0]||0),up=k=>ch[k]&&(+ch[k][1]||0)>(+ch[k][0]||0);
-    return !!(dn("p")||dn("fee")||up("disc")||up("bu")||(ch.paid&&ch.paid[0]===true&&ch.paid[1]!==true)||(ch.st&&+ch.st[1]===5&&(b&&b.paid))||(ch.pay&&b&&b.paid));
+    return !!(dn("p")||dn("fee")||up("disc")||up("bu")||(ch.paid&&ch.paid[0]===true&&ch.paid[1]!==true)||(ch.st&&+ch.st[1]===5&&(b&&b.paid))||(ch.pay&&b&&b.paid)||(ch.chk&&b&&b.chk&&b.pvSt==="ok")||(ch.pchk&&b&&b.pchk&&b.pvSt==="ok"));
   }
   if(col==="showcase")return !!((ch.st&&ch.st[1]==="wo")||(ch.price&&(+ch.price[1]||0)<(+ch.price[0]||0)));
   if(col==="shiftLog")return kind==="update"&&!!(ch.start||(ch.end&&+ch.end[0]>0));

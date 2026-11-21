@@ -241,6 +241,44 @@ const PNG=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
   await pg.context().close()}
  {const pg=await lg("fl@x.kz");await pg.evaluate(()=>{tab="stock";sv="i";draw()});await pg.waitForTimeout(500);
   ok(await pg.locator('#v [data-a=s_sv][data-id=k]').count()===0,"флорист не видит вкладку «Контроль» на складе");await pg.context().close()}
+ /* Окончательная версия: задачи на смену, премия за план, пачки, разделы склада, проверка оплат, квитанция, доступ, чаты, 24/7 */
+ {const td=new Date().toLocaleDateString("sv-SE");
+  await put("orders","fz1",{client:"Айгерим",phone:"+7 701 222 33 44",bn:"Розы 25",st:2,loc:"main",by:"x",date:td,time:"18:00",ts:Date.now()-5e6,p:300000,pre:50000});
+  await put("orders","fz2",{client:"Бота",phone:"+7 701 222 33 45",bn:"Пионы",st:1,loc:"main",by:"x",date:td,time:"19:00",ts:Date.now()-4e6,p:250000});
+  await put("inventory","ev1",{name:"Эвкалипт",cat:"Зелень",unit:"пачка",qty:3,pk:6,sell:6000,buy:3000});
+  const ow=await lg("tilegen615@gmail.com");
+  ok(await ow.evaluate(()=>FX("ckl")===false&&FX("prem")===false),"задачи на смену и премия по умолчанию выключены");
+  await ow.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{ckl:true,prem:true},pvFrom:Date.now()-864e5},{merge:true})});await ow.waitForTimeout(1500);
+  const fl=await lg("fl@x.kz");await fl.evaluate(()=>{tab="home";draw()});await fl.waitForTimeout(1500);
+  ok(await fl.evaluate(()=>document.querySelectorAll(".ckc .cki").length===8),"флорист видит задачи на смену своей профессии (список магазина)");
+  ok(await fl.evaluate(()=>{const x=(document.querySelector(".prc")||{}).textContent||"",r=premRev(wDay(),premLocOf(myLoc())),i=premIdx(r);return r>=550000&&x.includes(M(r))&&(i<0||x.includes(M(premAmt(U.uid,i))))}),"план дня: выручка за день и премия по ступени");
+  await fl.locator(".cki").first().click();await fl.waitForTimeout(1500);
+  ok(await fl.evaluate(()=>CKME&&CKME.n===1&&document.querySelectorAll(".cki.on").length===1),"задача отмечается одним нажатием");
+  await ow.evaluate(()=>{tab="ctrl";draw()});await ow.waitForTimeout(1500);
+  ok(await ow.evaluate(()=>/1 из 8/.test((document.querySelector(".ckl")||{}).textContent||"")&&[...document.querySelectorAll("#v h2")].some(h=>/План дня и премия/.test(h.textContent))),"владелец видит в «Сейчас», кто сколько задач выполнил, и план дня");
+  await ow.evaluate(()=>{tab="set";SETS="team";draw()});await ow.waitForTimeout(800);
+  ok(await ow.evaluate(()=>!!document.getElementById("ckfm")&&!!document.getElementById("prfm")&&document.querySelectorAll("#prfm .prr").length>=5),"настройки: свои задачи по ролям и ступени премии");
+  /* пачки */
+  await ow.evaluate(()=>{tab="stock";sv="i";SKCAT="";draw()});await ow.waitForTimeout(800);
+  ok(await ow.evaluate(()=>/хватит примерно на 18 букетов/.test(document.getElementById("v").textContent)),"пачка: 3 пачки по 6 букетов — «хватит примерно на 18 букетов»");
+  ok(await ow.evaluate(()=>pkStep("ev1")===0.167&&qRnd("ev1",0.1666)===0.167&&pkStep({unit:"шт"})===1),"пачка: расход на букет 1/6 ≈ 0,167");
+  ok(await ow.evaluate(()=>[...document.querySelectorAll(".skcat .chip")].some(c=>/Зелень/.test(c.textContent))),"склад: разделы склада кнопками");
+  /* проверка оплат и квитанция */
+  await ow.evaluate(()=>{tab="pv";draw()});await ow.waitForTimeout(600);
+  ok(await ow.evaluate(()=>/Проверка оплат/.test(document.getElementById("v").textContent)),"раздел «Проверка оплат» на месте");
+  await ow.evaluate(()=>{detail("fz1")});await ow.waitForTimeout(800);await ow.locator("[data-a=o_rcpt]").first().click();await ow.waitForTimeout(500);
+  ok(await ow.evaluate(()=>{const x=(document.querySelector(".rcpt")||{}).textContent||"";return /Предоплата: 50 000/.test(x)&&/К оплате при получении: 250 000/.test(x)}),"квитанция клиенту: предоплата и остаток к оплате");
+  /* форма заказа */
+  await ow.evaluate(()=>{modal("");form()});await ow.waitForTimeout(600);
+  ok(await ow.evaluate(()=>{const tm=document.querySelector("#of [name=time]").value,d=new Date(Date.now()+36e5);return !!tm&&Math.abs((+tm.slice(0,2)*60+ +tm.slice(3))-(d.getHours()*60+d.getMinutes()))<=10||d.getHours()===23}),"новый заказ: время клиенту сразу через час");
+  ok(await ow.evaluate(()=>(document.querySelector("#of [name=src]:checked")||{}).value==="WhatsApp"&&!!document.querySelector("#of .tuchip")),"новый заказ: источник WhatsApp, «Время уточняется» кнопкой");
+  /* подробный доступ */
+  await ow.evaluate(()=>{modal("")});
+  ok(await ow.evaluate(()=>ABIL.length>=5&&typeof abl==="function"&&abl("disc")),"подробный доступ: владельцу можно всё без запроса");
+  ok(await fl.evaluate(()=>!abl("disc")&&!abl("cancel")),"флористу без галочки — через запрос");
+  /* 24/7 */
+  ok(await ow.evaluate(()=>{SH.h24=true;const a=hrsTxt();SH.h24=false;return a==="круглосуточно"}),"круглосуточная работа отображается");
+  await fl.context().close();await ow.evaluate(async()=>{await db.collection("settings").doc("main").set({fx:{ckl:false,prem:false},pvFrom:0},{merge:true})});await ow.context().close()}
  /* Повод написать клиенту: день рождения, важная дата, год с прошлого заказа */
  {const pg=await lg("tilegen615@gmail.com"),td=new Date().toLocaleDateString("sv-SE"),ad=n=>{const d=new Date(td+"T12:00:00");d.setDate(d.getDate()+n);return d.toLocaleDateString("sv-SE")},py=d=>(+d.slice(0,4)-1)+d.slice(4);
   await put("orders","remo1",{client:"Год Назад",phone:"+7 705 111 22 33",bn:"Пионы 15",st:4,p:15000,loc:"main",by:"x",date:py(ad(2)),time:"12:00",ts:Date.now()-365*864e5});

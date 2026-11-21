@@ -16,6 +16,8 @@ service cloud.firestore {
         && staffDoc().active == true;
     }
     function role()      { return staffDoc().role; }
+    // что сотрудник может без запроса (ставит владелец или админ в «Доступ»)
+    function abil(k)     { return isActive() && staffDoc().get('abil', {}).get(k, false) == true; }
     // Владелец и главный админ: финансы, настройки, точки, всё
     function isOwner()   { return isActive() && (request.auth.token.email != null
                            && isTopMail(request.auth.token.email)); }
@@ -74,6 +76,8 @@ service cloud.firestore {
       return setsSelfOrEmpty(d, k, 'paidBy')
         && setsSelfOrEmpty(d, k, 'accBy')
         && setsSelfOrEmpty(d, k, 'asm')
+        // проверку оплаты (подтвердить / не принять) ставят только админ и владелец
+        && (!k.hasAny(['pvSt','pvSig','pvBy','pvAt','pvNote']) || boss || abil('pvOk'))
         // взять в работу: свободный/новый заказ или передача, адресованная мне
         && (!k.hasAny(['takenBy']) || boss
             || (d.takenBy == request.auth.uid
@@ -86,8 +90,8 @@ service cloud.firestore {
             || r.get('asm', '') != request.auth.uid)
         // отмена и снижение цены — сам сотрудник только отправляет запрос (rqK); разрешает или отклоняет
         // любой другой сотрудник (не автор запроса; курьер сюда не попадает — у него своя ветка), админ или владелец
-        && ((!(k.hasAny(['st']) && d.get('st', 0) == 5 && r.get('st', 0) != 5)
-             && !(k.hasAny(['p']) && d.get('p', 0) < r.get('p', 0))
+        && (((!(k.hasAny(['st']) && d.get('st', 0) == 5 && r.get('st', 0) != 5) || abil('cancel'))
+             && (!(k.hasAny(['p']) && d.get('p', 0) < r.get('p', 0)) || abil('disc'))
              && !(k.hasAny(['rqK']) && d.get('rqBy', '') != request.auth.uid)) || boss
             || (r.get('rqK', '') != '' && r.get('rqBy', '') != request.auth.uid && d.get('rqK', '') == ''
                 && (!(k.hasAny(['st']) && d.get('st', 0) == 5 && r.get('st', 0) != 5) || r.get('rqK', '') == 'cx')
@@ -98,6 +102,7 @@ service cloud.firestore {
       // Курьер читает заказы (в интерфейсе показываем только доставки: свои и свободные)
       allow read: if isWork() || isCourier();
       allow create: if isMgr() && (request.resource.data.get('paid', false) != true || isOpRole())
+        && (!('pvSt' in request.resource.data) || isAdmin() || isOwner())
         && request.resource.data.get('by', request.auth.uid) == request.auth.uid
         && request.resource.data.get('paidBy', request.auth.uid) == request.auth.uid;
       allow update: if (isWork() && orderMarksOk()
@@ -150,7 +155,7 @@ service cloud.firestore {
     // меняют только админ и владелец (сотрудник отправляет запрос, kind ed в stockReqs)
     match /inventory/{id} {
       allow read, create: if isWork();
-      allow update: if isAdmin() || isOwner()
+      allow update: if isAdmin() || isOwner() || (isWork() && abil('stockEdit'))
         || (isWork() && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['qty','qs','lt','recv','updatedAt','img','shelf','sup']));
       allow delete: if isAdmin() || isOwner();
@@ -316,6 +321,12 @@ service cloud.firestore {
     }
 
     // Журнал изменений на сервере: пишет только функция (audit*), с сайта ни создать, ни изменить, ни удалить
+    // Задачи на смену: сотрудник пишет только свои отметки (документ {uid}_{день}); читают сам сотрудник, админ и владелец
+    match /checks/{id} {
+      allow read: if isAdmin() || isOwner() || (isActive() && id.matches(request.auth.uid + '_.*'));
+      allow create, update: if isActive() && id.matches(request.auth.uid + '_.*') && request.resource.data.uid == request.auth.uid;
+      allow delete: if isOwner();
+    }
     match /audit/{id} {
       allow read: if isAdmin() || isOwner();
       allow write: if false;
