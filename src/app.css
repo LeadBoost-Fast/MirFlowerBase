@@ -684,3 +684,12 @@ html.lite[data-pz="1"] #v h1::after,html.lite[data-pz="1"] #v h1::before,html.li
 details .prr{grid-template-columns:repeat(4,minmax(70px,1fr));min-width:0}
 .pkl{margin-top:6px;font-size:13px;color:var(--mut)}.pkl b{color:var(--ink)}
 .skcat{margin:10px 0 4px}
+/* «Ещё»: раздел и его вкладки */
+.mg.mg2{grid-template-columns:1fr;gap:10px}
+.mg2 .mgc{background:var(--card);border:1px solid color-mix(in srgb,var(--line) 55%,transparent);border-radius:20px;padding:6px}
+.mg.mg2 .mgh{width:100%;flex-direction:row;justify-content:flex-start;gap:12px;padding:10px 10px;border:0;background:transparent;font-size:16px;border-radius:14px}
+.mg2 .mgh .nb{margin-left:auto}
+.mg2 .mgs{display:flex;flex-wrap:wrap;gap:6px;padding:0 8px 8px 8px}
+.mg.mg2 .mgs button{flex-direction:row;padding:8px 12px;border-radius:999px;font-size:13px;font-weight:600;gap:4px;background:color-mix(in srgb,var(--ink) 5%,transparent);border:0}
+.chrs{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 14px;font-size:13px;color:var(--mut);background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.chrs.free{color:var(--ink);background:color-mix(in srgb,var(--warn,#f59e0b) 12%,transparent)}
